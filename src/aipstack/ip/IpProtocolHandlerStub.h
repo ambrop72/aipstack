@@ -153,7 +153,7 @@ public:
      * Destruct the protocol handler.
      * 
      * Protocol handlers are destructed as the first part of the
-     * @ref IpStack::~IpStack destructor, in the reverse order of how they were
+     * IpStack::~IpStack destructor, in the reverse order of how they were
      * constructed.
      */
     ~IpProtocolHandlerStub ()

@@ -701,7 +701,7 @@ public:
      * the address. Also if there is no route for the address then the min is
      * not done.
      * 
-     * If the Path MTU estimate was lowered, then all existing @ref MtuRef setup
+     * If the Path MTU estimate was lowered, then all existing MtuRef setup
      * for this address are notified (@ref MtuRef::pmtuChanged are called),
      * directly from this function.
      * 
@@ -724,7 +724,7 @@ public:
      * the address is routed has changed, because this is a local issue and would
      * not be detected via an ICMP message.
      * 
-     * If the Path MTU estimate was lowered, then all existing @ref MtuRef setup
+     * If the Path MTU estimate was lowered, then all existing MtuRef setup
      * for this address are notified (@ref MtuRef::pmtuChanged are called),
      * directly from this function.
      * 

@@ -45,6 +45,8 @@
 
 namespace AIpStack {
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 template <typename Arg>
 class IpReassembly;
 
@@ -470,8 +472,10 @@ private:
     }
 };
 
+#endif
+
 /**
- * Service definition for @ref IpReassembly.
+ * Service definition for IpReassembly.
  * 
  * An instantiation of this template must be passed to @ref IpStackService.
  * 

@@ -67,9 +67,11 @@ struct EthIfaceState {
 template <typename Arg>
 class EthIpIface;
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <typename Arg>
 AIPSTACK_DECL_TIMERS_CLASS(EthIpIfaceTimers, typename Arg::PlatformImpl,
                            EthIpIface<Arg>, (ArpTimer))
+#endif
 
 template <typename Arg>
 class EthIpIface :

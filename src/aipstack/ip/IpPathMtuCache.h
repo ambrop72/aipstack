@@ -50,6 +50,8 @@
 
 namespace AIpStack {
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 template <typename Arg>
 class IpPathMtuCache;
 
@@ -587,8 +589,10 @@ private:
     }
 };
 
+#endif
+
 /**
- * Configuration parameters for @ref IpPathMtuCache.
+ * Configuration parameters for the Path MTU cache.
  * 
  * @tparam Param_NumMtuEntries Number of PMTU cache entries (must be >0).
  * @tparam Param_MtuTimeoutMinutes PMTU cache entry timeout in minutes (must be >0).
@@ -602,6 +606,8 @@ APRINTER_ALIAS_STRUCT(IpPathMtuParams, (
     APRINTER_AS_VALUE(uint8_t, MtuTimeoutMinutes),
     APRINTER_AS_TYPE(MtuIndexService)
 ))
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 /**
  * Service definition for @ref IpPathMtuCache.
@@ -619,6 +625,8 @@ APRINTER_ALIAS_STRUCT_EXT(IpPathMtuCacheService, (
         APRINTER_DEF_INSTANCE(Compose, IpPathMtuCache)
     ))
 ))
+
+#endif
 
 }
 

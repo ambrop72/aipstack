@@ -177,9 +177,11 @@ public:
 template <typename Arg>
 class IpDhcpClient;
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <typename Arg>
 AIPSTACK_DECL_TIMERS_CLASS(IpDhcpClientTimers, typename Arg::PlatformImpl,
                            IpDhcpClient<Arg>, (DhcpTimer))
+#endif
 
 /**
  * DHCP client implementation.
@@ -1375,8 +1377,10 @@ private:
     }
 };
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <typename Arg>
 char const IpDhcpClient<Arg>::DeclineMessageArpResponse[] = "ArpResponse";
+#endif
 
 /**
  * DHCP client static configuration.
