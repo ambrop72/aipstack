@@ -30,7 +30,7 @@
 namespace AIpStack {
 
 /**
- * Error code enumeration used in various places, e.g. for sending packets.
+ * Error code enumeration used in various places, e.g.\ for sending packets.
  */
 enum class IpErr : uint8_t {
     SUCCESS         = 0, /**< The operation was successful. */

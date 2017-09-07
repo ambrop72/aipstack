@@ -225,7 +225,7 @@ private:
      */
     struct TcpPcb :
         // Send retry request (inherited for efficiency).
-        public IpSendRetry::Request,
+        public IpSendRetryRequest,
         // PCB timers.
         public PcbMultiTimer,
         // Local/remote IP address and port
@@ -444,7 +444,7 @@ private:
         AMBRO_ASSERT(!pcb->tim(AbrtTimer()).isSet())
         AMBRO_ASSERT(!pcb->tim(OutputTimer()).isSet())
         AMBRO_ASSERT(!pcb->tim(RtxTimer()).isSet())
-        AMBRO_ASSERT(!pcb->IpSendRetry::Request::isActive())
+        AMBRO_ASSERT(!pcb->IpSendRetryRequest::isActive())
         AMBRO_ASSERT(pcb->tcp == this)
         AMBRO_ASSERT(pcb->state == TcpState::CLOSED)
         AMBRO_ASSERT(pcb->con == nullptr)
@@ -501,7 +501,7 @@ private:
         
         // Reset other relevant fields to initial state.
         pcb->PcbMultiTimer::unsetAll();
-        pcb->IpSendRetry::Request::reset();
+        pcb->IpSendRetryRequest::reset();
         pcb->state = TcpState::CLOSED;
         
         tcp->pcb_assert_closed(pcb);

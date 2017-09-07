@@ -30,6 +30,8 @@
 
 namespace APrinter {
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 class ObserverNotificationPrivate
 {
     struct ListNode {
@@ -212,6 +214,8 @@ public:
         }
     };
 };
+
+#endif
 
 template <typename ObserverDerived>
 class Observable;

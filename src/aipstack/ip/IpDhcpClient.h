@@ -194,7 +194,7 @@ class IpDhcpClient :
     private Arg::IpStack::IfaceListener,
     private Arg::IpStack::IfaceStateObserver,
     private IpDhcpClientTimers<Arg>::Timers,
-    private IpSendRetry::Request,
+    private IpSendRetryRequest,
     private IpEthHw::ArpObserver,
     private APrinter::NonCopyable<IpDhcpClient<Arg>>
 {
@@ -708,7 +708,7 @@ private:
         // Retry sending a message after a send error, probably due to ARP cache miss.
         // To be complete we support retrying for all message types even broadcasts.
         
-        // Note that send_dhcp_message calls IpSendRetry::Request::reset before
+        // Note that send_dhcp_message calls IpSendRetryRequest::reset before
         // trying to send a message. This is enough to avoid spurious retransmissions,
         // because entry to all states which we handle here involves send_dhcp_message,
         // and we ignore this callback in other states.
@@ -989,7 +989,7 @@ private:
                 
                 // Reset resources to prevent undesired callbacks.
                 ArpObserver::reset();
-                IpSendRetry::Request::reset();
+                IpSendRetryRequest::reset();
                 tim(DhcpTimer()).unset();
                 
                 // If we had a lease, unbind and notify user.
@@ -1295,7 +1295,7 @@ private:
                             Ip4Addr ciaddr, Ip4Addr dst_addr)
     {
         // Reset send-retry (not interested in retrying sending previous messages).
-        IpSendRetry::Request::reset();
+        IpSendRetryRequest::reset();
         
         // Add client identifier if configured.
         if (m_client_id.len > 0) {

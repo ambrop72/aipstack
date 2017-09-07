@@ -313,7 +313,7 @@ public:
      */
     APRINTER_NO_INLINE
     IpErr sendIp4Dgram (Ip4Addrs const &addrs, Ip4TtlProto ttl_proto, IpBufRef dgram,
-                        Iface *iface, IpSendRetry::Request *retryReq,
+                        Iface *iface, IpSendRetryRequest *retryReq,
                         IpSendFlags send_flags)
     {
         AMBRO_ASSERT(dgram.tot_len <= std::numeric_limits<uint16_t>::max())
@@ -396,7 +396,7 @@ public:
     
 private:
     IpErr send_fragmented (IpBufRef pkt, Ip4RouteInfo route_info,
-                           IpSendFlags send_flags, IpSendRetry::Request *retryReq)
+                           IpSendFlags send_flags, IpSendRetryRequest *retryReq)
     {
         // Recalculate pkt_send_len (not passed for optimization).
         uint16_t pkt_send_len =
@@ -572,7 +572,7 @@ public:
      */
     AMBRO_ALWAYS_INLINE
     IpErr sendIp4DgramFast (Ip4SendPrepared const &prep, IpBufRef dgram,
-                            IpSendRetry::Request *retryReq)
+                            IpSendRetryRequest *retryReq)
     {
         AMBRO_ASSERT(dgram.tot_len <= std::numeric_limits<uint16_t>::max())
         AMBRO_ASSERT(dgram.offset >= Ip4Header::Size)
@@ -1168,7 +1168,7 @@ public:
          * @return Success or error code.
          */
         virtual IpErr driverSendIp4Packet (IpBufRef pkt, Ip4Addr ip_addr,
-                                           IpSendRetry::Request *sendRetryReq) = 0;
+                                           IpSendRetryRequest *sendRetryReq) = 0;
         
         /**
          * Driver function to get the driver-provided interface state.
