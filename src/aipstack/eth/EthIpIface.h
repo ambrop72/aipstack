@@ -50,7 +50,7 @@
 #include <aipstack/misc/SendRetry.h>
 #include <aipstack/misc/TxAllocHelper.h>
 #include <aipstack/misc/Err.h>
-#include <aipstack/misc/Config.h>
+#include <aipstack/misc/Options.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/proto/ArpProto.h>

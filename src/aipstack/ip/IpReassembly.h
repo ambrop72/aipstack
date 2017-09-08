@@ -38,7 +38,7 @@
 
 #include <aipstack/misc/Struct.h>
 #include <aipstack/misc/Buf.h>
-#include <aipstack/misc/Config.h>
+#include <aipstack/misc/Options.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/platform/PlatformFacade.h>
@@ -502,12 +502,15 @@ struct IpReassemblyOptions {
 };
 
 /**
- * Service definition for IpReassembly.
+ * Service definition for the IP Reassembly implementation.
  * 
  * An instantiation of this template must be passed to @ref IpStackService.
  * 
- * @tparam Options Option assignments, available options are defined
- *         in @ref IpReassemblyOptions.
+ * The template parameters are assignments of options defined in
+ * @ref IpReassemblyOptions, for example:
+ * AIpStack::IpReassemblyOptions::MaxReassEntrys::Is\<5\>.
+ * 
+ * @tparam Options Assignments of options defined in @ref IpReassemblyOptions.
  */
 template <typename... Options>
 class IpReassemblyService {

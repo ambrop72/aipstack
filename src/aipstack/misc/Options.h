@@ -22,8 +22,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_CONFIG_H
-#define AIPSTACK_CONFIG_H
+#ifndef AIPSTACK_OPTIONS_H
+#define AIPSTACK_OPTIONS_H
 
 #include <aprinter/meta/BasicMetaUtils.h>
 #include <aprinter/meta/TypeListUtils.h>
@@ -31,7 +31,7 @@
 
 namespace AIpStack {
 
-namespace ConfigPrivate {
+namespace OptionsPrivate {
     template <typename Derived, typename DefaultValue, typename... Options>
     using GetValue = APrinter::TypeDictGetOrDefault<
         APrinter::TypeListReverse<APrinter::MakeTypeList<Options...>>, Derived, DefaultValue
@@ -63,7 +63,7 @@ public:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     template <typename... Options>
     struct Config {
-        static constexpr ValueType Value = ConfigPrivate::GetValue<
+        static constexpr ValueType Value = OptionsPrivate::GetValue<
             Derived, APrinter::WrapValue<ValueType, DefaultValue>, Options...
         >::Value;
     };
@@ -94,7 +94,7 @@ public:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     template <typename... Options>
     struct Config {
-        using Value = ConfigPrivate::GetValue<Derived, DefaultValue, Options...>;
+        using Value = OptionsPrivate::GetValue<Derived, DefaultValue, Options...>;
     };
 #endif
 };

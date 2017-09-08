@@ -245,8 +245,9 @@ private:
  * This type would be passed as an element of the ProtocolServicesList
  * template parameter to @ref IpStackService::Compose.
  * 
- * Note that the service definition for a real protocol handler will
- * typically be a template to allow some configurable parameters.
+ * Note that the service definition for a real protocol handler will typically
+ * be a template accepting option assignments based on the options system, to
+ * allow compile-time configuration.
  */
 struct IpProtocolHandlerStubService {
     /**
@@ -270,16 +271,24 @@ struct IpProtocolHandlerStubService {
      * is used to obtain the actual protocol handler class type, in this
      * case an @ref IpProtocolHandlerStub template class. 
      * 
-     * @tparam Param_PlatformImpl The platform implementation class as used by
-     *         the stack. Note that this is the original PlatformImpl type
-     *         provided by to @ref IpStackService::Compose and not the
+     * @tparam PlatformImpl_ The platform implementation class as used by
+     *         the stack. Note that this is the original %PlatformImpl type
+     *         provided to @ref IpStackService::Compose and not the
      *         @ref PlatformFacade.
-     * @tparam Param_TheIpStack The @ref IpStack template class type.
+     * @tparam TheIpStack_ The @ref IpStack template class type.
      */
-    APRINTER_ALIAS_STRUCT_EXT(Compose, (
-        APRINTER_AS_TYPE(PlatformImpl),
-        APRINTER_AS_TYPE(TheIpStack)
-    ), (
+    template <typename PlatformImpl_, typename TheIpStack_>
+    struct Compose {
+        /**
+         * Exposes the platform implementation template parameter.
+         */
+        using PlatformImpl = PlatformImpl_;
+        
+        /**
+         * Exposes the @ref IpStack class template parameter.
+         */
+        using TheIpStack = TheIpStack_;
+        
         /**
          * Alias for accessing the service definition.
          */
@@ -289,7 +298,7 @@ struct IpProtocolHandlerStubService {
          * Template alias to instantiate the service.
          */
         APRINTER_DEF_INSTANCE(Compose, IpProtocolHandlerStub)
-    ))
+    };
 };
 
 }
