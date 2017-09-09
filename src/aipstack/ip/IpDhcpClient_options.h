@@ -30,7 +30,6 @@
 #include <string.h>
 
 #include <aprinter/base/LoopUtils.h>
-#include <aprinter/base/MemRef.h>
 #include <aprinter/base/OneOf.h>
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/Preprocessor.h>
@@ -38,6 +37,7 @@
 #include <aipstack/misc/Buf.h>
 #include <aipstack/misc/Struct.h>
 #include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/MemRef.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/DhcpProto.h>
 
@@ -77,8 +77,6 @@ class IpDhcpClient_options
     static size_t const ParameterRequestListSize = 3;
     
 public:
-    using MemRef = APrinter::MemRef;
-    
     // Maximum size of options that we could possibly transmit.
     static size_t const MaxOptionsSendSize =
         // DHCP message type

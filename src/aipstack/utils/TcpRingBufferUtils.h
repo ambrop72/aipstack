@@ -30,17 +30,16 @@
 
 #include <aprinter/base/Preprocessor.h>
 #include <aprinter/base/Assert.h>
-#include <aprinter/base/WrapBuffer.h>
-#include <aprinter/base/MemRef.h>
 
 #include <aipstack/misc/Buf.h>
 #include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/MemRef.h>
+#include <aipstack/misc/WrapBuffer.h>
 
 namespace AIpStack {
 
 template <typename TcpProto>
 class TcpRingBufferUtils {
-    APRINTER_USE_TYPES2(APrinter, (WrapBuffer, MemRef))
     APRINTER_USE_TYPES2(AIpStack, (IpBufNode, IpBufRef))
     APRINTER_USE_TYPES1(TcpProto, (SeqType, TcpConnection))
     

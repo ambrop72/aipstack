@@ -36,11 +36,11 @@
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/OneOf.h>
 #include <aprinter/base/Hints.h>
-#include <aprinter/base/BinaryTools.h>
 
 #include <aipstack/misc/Buf.h>
 #include <aipstack/misc/Chksum.h>
 #include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/BinaryTools.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Tcp4Proto.h>
 #include <aipstack/proto/Icmp4Proto.h>

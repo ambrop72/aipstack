@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Ambroz Bizjak
+ * Copyright (c) 2017 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,48 +22,79 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AMBROLIB_BINARY_TOOLS_H
-#define AMBROLIB_BINARY_TOOLS_H
+#ifndef AIPSTACK_BINARY_TOOLS_H
+#define AIPSTACK_BINARY_TOOLS_H
 
 #include <stdint.h>
 
-#include <aprinter/meta/IntTypeInfo.h>
-#include <aprinter/meta/ChooseInt.h>
-#include <aprinter/meta/BasicMetaUtils.h>
+#include <type_traits>
+#include <limits>
+
 #include <aprinter/base/Hints.h>
 
-namespace APrinter {
+namespace AIpStack {
 
-namespace Private {
-    template <int Bits>
-    using UnsignedType = ChooseInt<Bits, false>;
+namespace BinaryToolsPrivate {
     
-    template <int Bits, bool BigEndian>
+    template <typename T>
+    constexpr bool IsValidType ()
+    {
+        return std::is_integral<T>::value && std::numeric_limits<T>::radix == 2;
+    }
+    
+    template <int Bits>
+    struct RepresentativeImpl;
+
+    #define AIPSTACK_DEFINE_REPRESENTATIVE(bits, repr_type) \
+    template <> \
+    struct RepresentativeImpl<bits> { \
+        using Type = repr_type; \
+    };
+
+    AIPSTACK_DEFINE_REPRESENTATIVE(8,  uint8_t)
+    AIPSTACK_DEFINE_REPRESENTATIVE(16, uint16_t)
+    AIPSTACK_DEFINE_REPRESENTATIVE(32, uint32_t)
+    AIPSTACK_DEFINE_REPRESENTATIVE(64, uint64_t)
+
+    #undef AIPSTACK_DEFINE_REPRESENTATIVE
+    
+    template <typename T>
+    struct RepresentativeCheck {
+        static_assert(IsValidType<T>(), "");
+        static_assert(std::is_unsigned<T>::value, "");
+        
+        using Type = typename RepresentativeImpl<std::numeric_limits<T>::digits>::Type;
+    };
+    
+    template <typename T>
+    using Representative = typename RepresentativeCheck<T>::Type;
+    
+    template <typename T, bool BigEndian>
     struct ReadUnsigned {
-        using IntType = UnsignedType<Bits>;
+        static int const Bits = std::numeric_limits<T>::digits;
         static_assert(Bits % 8 == 0, "");
         static int const Bytes = Bits / 8;
         
         AMBRO_ALWAYS_INLINE APRINTER_UNROLL_LOOPS
-        static IntType readInt (char const *src)
+        static T readInt (char const *src)
         {
-            IntType val = 0;
+            T val = 0;
             for (int i = 0; i < Bytes; i++) {
                 int j = BigEndian ? (Bytes - 1 - i) : i;
-                val |= (IntType)((unsigned char)src[i] & 0xFF) << (8 * j);
+                val |= (T)((unsigned char)src[i] & 0xFF) << (8 * j);
             }
             return val;
         }
     };
     
-    template <int Bits, bool BigEndian>
+    template <typename T, bool BigEndian>
     struct WriteUnsigned {
-        using IntType = UnsignedType<Bits>;
+        static int const Bits = std::numeric_limits<T>::digits;
         static_assert(Bits % 8 == 0, "");
         static int const Bytes = Bits / 8;
         
         AMBRO_ALWAYS_INLINE APRINTER_UNROLL_LOOPS
-        static void writeInt (IntType value, char *dst)
+        static void writeInt (T value, char *dst)
         {
             for (int i = 0; i < Bytes; i++) {
                 int j = BigEndian ? (Bytes - 1 - i) : i;
@@ -76,9 +107,9 @@ namespace Private {
     (__ARM_ARCH >= 7 && __ARM_FEATURE_UNALIGNED)
     
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-#define APRINTER_BINARYTOOLS_BIG_ENDIAN 0
+#define AIPSTACK_BINARYTOOLS_BIG_ENDIAN 0
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-#define APRINTER_BINARYTOOLS_BIG_ENDIAN 1
+#define AIPSTACK_BINARYTOOLS_BIG_ENDIAN 1
 #else
 #error "Unknown endian"
 #endif
@@ -97,43 +128,43 @@ namespace Private {
      */
     
     template <bool BigEndian>
-    struct ReadUnsigned<32, BigEndian> {
+    struct ReadUnsigned<uint32_t, BigEndian> {
         AMBRO_ALWAYS_INLINE
         static uint32_t readInt (char const *src)
         {
             uint32_t w;
             __builtin_memcpy(&w, src, sizeof(w));
-            return BigEndian != APRINTER_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap32(w) : w;
+            return BigEndian != AIPSTACK_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap32(w) : w;
         }
     };
     
     template <bool BigEndian>
-    struct WriteUnsigned<32, BigEndian> {
+    struct WriteUnsigned<uint32_t, BigEndian> {
         AMBRO_ALWAYS_INLINE
         static void writeInt (uint32_t value, char *dst)
         {
-            uint32_t w = BigEndian != APRINTER_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap32(value) : value;
+            uint32_t w = BigEndian != AIPSTACK_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap32(value) : value;
             __builtin_memcpy(dst, &w, sizeof(w));
         }
     };
     
     template <bool BigEndian>
-    struct ReadUnsigned<16, BigEndian> {
+    struct ReadUnsigned<uint16_t, BigEndian> {
         AMBRO_ALWAYS_INLINE
         static uint16_t readInt (char const *src)
         {
             uint16_t w;
             __builtin_memcpy(&w, src, sizeof(w));
-            return BigEndian != APRINTER_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap16(w) : w;
+            return BigEndian != AIPSTACK_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap16(w) : w;
         }
     };
     
     template <bool BigEndian>
-    struct WriteUnsigned<16, BigEndian> {
+    struct WriteUnsigned<uint16_t, BigEndian> {
         AMBRO_ALWAYS_INLINE
         static void writeInt (uint16_t value, char *dst)
         {
-            uint16_t w = BigEndian != APRINTER_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap16(value) : value;
+            uint16_t w = BigEndian != AIPSTACK_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap16(value) : value;
             __builtin_memcpy(dst, &w, sizeof(w));
         }
     };
@@ -141,68 +172,72 @@ namespace Private {
 #endif
     
     template <bool IsSigned>
-    struct BinaryToolsHelper {
-        template <typename Type, bool BigEndian>
-        inline static Type read_it (char const *src)
+    struct SignHelper {
+        template <typename T, bool BigEndian>
+        inline static T read_it (char const *src)
         {
-            static_assert(!IntTypeInfo<Type>::Signed, "");
+            static_assert(std::is_unsigned<T>::value, "");
             
-            return ReadUnsigned<IntTypeInfo<Type>::NumBits, BigEndian>::readInt(src);
+            return ReadUnsigned<Representative<T>, BigEndian>::readInt(src);
         }
         
-        template <typename Type, bool BigEndian>
-        inline static void write_it (Type value, char *dst)
+        template <typename T, bool BigEndian>
+        inline static void write_it (T value, char *dst)
         {
-            static_assert(!IntTypeInfo<Type>::Signed, "");
+            static_assert(std::is_unsigned<T>::value, "");
             
-            return WriteUnsigned<IntTypeInfo<Type>::NumBits, BigEndian>::writeInt(value, dst);
+            return WriteUnsigned<Representative<T>, BigEndian>::writeInt(value, dst);
         }
     };
     
     template <>
-    struct BinaryToolsHelper<true> {
-        template <typename Type, bool BigEndian>
-        inline static Type read_it (char const *src)
+    struct SignHelper<true> {
+        template <typename T, bool BigEndian>
+        inline static T read_it (char const *src)
         {
-            static_assert(IntTypeInfo<Type>::Signed, "");
-            using UType = ChooseInt<IntTypeInfo<Type>::NumBits, false>;
+            static_assert(std::is_signed<T>::value, "");
+            using UT = std::make_unsigned_t<T>;
             
-            UType uval = BinaryToolsHelper<false>::template read_it<UType, BigEndian>(src);
-            return reinterpret_cast<Type const &>(uval);
+            UT uval = SignHelper<false>::template read_it<UT, BigEndian>(src);
+            return reinterpret_cast<T const &>(uval);
         }
         
-        template <typename Type, bool BigEndian>
-        inline static void write_it (Type value, char *dst)
+        template <typename T, bool BigEndian>
+        inline static void write_it (T value, char *dst)
         {
-            static_assert(IntTypeInfo<Type>::Signed, "");
-            using UType = ChooseInt<IntTypeInfo<Type>::NumBits, false>;
+            static_assert(std::is_signed<T>::value, "");
+            using UT = std::make_unsigned_t<T>;
             
-            UType uval = value;
-            BinaryToolsHelper<false>::template write_it<UType, BigEndian>(uval, dst);
+            UT uval = value;
+            return SignHelper<false>::template write_it<UT, BigEndian>(uval, dst);
         }
     };
 }
 
-template <bool TBigEndian>
+template <bool BigEndian_>
 struct BinaryEndian {
-    static bool const BigEndian = TBigEndian;
+    static bool const BigEndian = BigEndian_;
 };
 
 using BinaryLittleEndian = BinaryEndian<false>;
 using BinaryBigEndian = BinaryEndian<true>;
 
-template <typename Type, typename Endian>
-inline Type ReadBinaryInt (char const *src)
+template <typename T, typename Endian>
+inline T ReadBinaryInt (char const *src)
 {
-    using TypeInfo = IntTypeInfo<Type>;
-    return Private::BinaryToolsHelper<TypeInfo::Signed>::template read_it<Type, Endian::BigEndian>(src);
+    static_assert(BinaryToolsPrivate::IsValidType<T>(), "");
+    
+    return BinaryToolsPrivate::SignHelper<std::is_signed<T>::value>::
+        template read_it<T, Endian::BigEndian>(src);
 }
 
-template <typename Type, typename Endian>
-inline void WriteBinaryInt (Type value, char *dst)
+template <typename T, typename Endian>
+inline void WriteBinaryInt (T value, char *dst)
 {
-    using TypeInfo = IntTypeInfo<Type>;
-    return Private::BinaryToolsHelper<TypeInfo::Signed>::template write_it<Type, Endian::BigEndian>(value, dst);
+    static_assert(BinaryToolsPrivate::IsValidType<T>(), "");
+    
+    return BinaryToolsPrivate::SignHelper<std::is_signed<T>::value>::
+        template write_it<T, Endian::BigEndian>(value, dst);
 }
 
 }

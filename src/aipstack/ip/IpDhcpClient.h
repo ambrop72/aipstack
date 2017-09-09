@@ -36,7 +36,6 @@
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/Hints.h>
 #include <aprinter/base/OneOf.h>
-#include <aprinter/base/MemRef.h>
 #include <aprinter/base/NonCopyable.h>
 
 #include <aipstack/misc/Buf.h>
@@ -45,6 +44,7 @@
 #include <aipstack/misc/SendRetry.h>
 #include <aipstack/misc/Options.h>
 #include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/MemRef.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Udp4Proto.h>
@@ -145,8 +145,8 @@ public:
      * Constructor which sets default values.
      */
     inline IpDhcpClientInitOptions ()
-    : client_id(APrinter::MemRef::Null()),
-      vendor_class_id(APrinter::MemRef::Null()),
+    : client_id(MemRef::Null()),
+      vendor_class_id(MemRef::Null()),
       request_ip_address(Ip4Addr::ZeroAddr())
     {}
     
@@ -156,7 +156,7 @@ public:
      * If given, the pointed-to memory must be valid as long as
      * the DHCP client is initialized.
      */
-    APrinter::MemRef client_id;
+    MemRef client_id;
     
     /**
      * Vendor class identifier, empty/null to not send.
@@ -164,7 +164,7 @@ public:
      * If given, the pointed-to memory must be valid as long as
      * the DHCP client is initialized.
      */
-    APrinter::MemRef vendor_class_id;
+    MemRef vendor_class_id;
     
     /**
      * Address to request, zero for none.
@@ -310,8 +310,8 @@ public:
 private:
     IpStack *m_ipstack;
     IpDhcpClientCallback *m_callback;
-    APrinter::MemRef m_client_id;
-    APrinter::MemRef m_vendor_class_id;
+    MemRef m_client_id;
+    MemRef m_vendor_class_id;
     uint32_t m_xid;
     uint8_t m_rtx_timeout;
     DhcpState m_state;

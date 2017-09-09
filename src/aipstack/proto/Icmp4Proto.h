@@ -27,9 +27,8 @@
 
 #include <stdint.h>
 
-#include <aprinter/base/BinaryTools.h>
-
 #include <aipstack/misc/Struct.h>
+#include <aipstack/misc/BinaryTools.h>
 
 namespace AIpStack {
 
@@ -57,7 +56,7 @@ static uint8_t const Icmp4CodeDestUnreachFragNeeded = 4;
 
 inline static uint16_t const Icmp4GetMtuFromRest (Icmp4RestType rest)
 {
-    return APrinter::ReadBinaryInt<uint16_t, APrinter::BinaryBigEndian>((char const *)rest.data + 2);
+    return ReadBinaryInt<uint16_t, BinaryBigEndian>((char const *)rest.data + 2);
 }
 
 }

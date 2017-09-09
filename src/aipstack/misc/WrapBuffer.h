@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Ambroz Bizjak
+ * Copyright (c) 2017 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,16 +22,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AMBROLIB_WRAP_BUFFER_H
-#define AMBROLIB_WRAP_BUFFER_H
+#ifndef AIPSTACK_WRAP_BUFFER_H
+#define AIPSTACK_WRAP_BUFFER_H
 
 #include <stddef.h>
 #include <string.h>
 
-#include <aprinter/meta/MinMax.h>
-#include <aprinter/base/MemRef.h>
+#include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/MemRef.h>
 
-namespace APrinter {
+namespace AIpStack {
 
 struct WrapBuffer {
     WrapBuffer () = default;

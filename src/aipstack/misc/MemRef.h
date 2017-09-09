@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Ambroz Bizjak
+ * Copyright (c) 2017 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,15 +22,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef APRINTER_MEMREF_H
-#define APRINTER_MEMREF_H
+#ifndef AIPSTACK_MEMREF_H
+#define AIPSTACK_MEMREF_H
 
 #include <stddef.h>
 #include <string.h>
 
 #include <aprinter/base/Assert.h>
 
-namespace APrinter {
+namespace AIpStack {
 
 struct MemRef {
     char const *ptr;
