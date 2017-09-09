@@ -40,14 +40,14 @@
 #include <aprinter/structure/LinkModel.h>
 #include <aprinter/structure/LinkedList.h>
 
-#include <aipstack/misc/Struct.h>
-#include <aipstack/misc/Buf.h>
-#include <aipstack/misc/SendRetry.h>
-#include <aipstack/misc/TxAllocHelper.h>
-#include <aipstack/misc/Err.h>
-#include <aipstack/misc/Options.h>
+#include <aipstack/common/Struct.h>
+#include <aipstack/common/Buf.h>
+#include <aipstack/common/SendRetry.h>
+#include <aipstack/common/TxAllocHelper.h>
+#include <aipstack/common/Err.h>
+#include <aipstack/common/Options.h>
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/misc/ObserverNotification.h>
+#include <aipstack/common/ObserverNotification.h>
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
 #include <aipstack/structure/TimerQueue.h>

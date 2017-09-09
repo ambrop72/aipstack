@@ -43,9 +43,9 @@
 #include <aprinter/structure/LinkedList.h>
 #include <aprinter/structure/LinkModel.h>
 
-#include <aipstack/misc/Buf.h>
-#include <aipstack/misc/SendRetry.h>
-#include <aipstack/misc/Options.h>
+#include <aipstack/common/Buf.h>
+#include <aipstack/common/SendRetry.h>
+#include <aipstack/common/Options.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/ResourceArray.h>
 #include <aipstack/misc/NonCopyable.h>

@@ -36,8 +36,8 @@
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/Hints.h>
 
-#include <aipstack/misc/Buf.h>
-#include <aipstack/misc/Chksum.h>
+#include <aipstack/common/Buf.h>
+#include <aipstack/common/Chksum.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/BinaryTools.h>
 #include <aipstack/misc/OneOf.h>

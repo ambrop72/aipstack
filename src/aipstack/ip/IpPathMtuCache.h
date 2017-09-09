@@ -39,7 +39,7 @@
 #include <aprinter/structure/LinkedList.h>
 #include <aprinter/structure/OperatorKeyCompare.h>
 
-#include <aipstack/misc/Options.h>
+#include <aipstack/common/Options.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/OneOf.h>

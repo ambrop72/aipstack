@@ -33,10 +33,10 @@
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/Preprocessor.h>
 
-#include <aipstack/misc/Buf.h>
-#include <aipstack/misc/Struct.h>
+#include <aipstack/common/Buf.h>
+#include <aipstack/common/Struct.h>
 #include <aipstack/misc/MinMax.h>
-#include <aipstack/misc/MemRef.h>
+#include <aipstack/common/MemRef.h>
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/DhcpProto.h>
