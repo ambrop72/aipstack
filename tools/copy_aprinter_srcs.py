@@ -32,7 +32,7 @@ def main():
         'aprinter_dir': args.aprinter_dir,
         'pending_files': set(),
         'processed_files': set(),
-        'include_regex': re.compile(r'^ *# *include *<(aprinter/.+)> *$', re.MULTILINE),
+        'include_regex': re.compile(r'^ *# *include *(?:<(aprinter/.+)>|"(.+)") *$', re.MULTILINE),
     }
     
     collect_files(state, '')
@@ -83,9 +83,15 @@ def process_file(state, file_path):
     processed_files = state['processed_files']
     
     for match in state['include_regex'].finditer(file_content):
-        inc_path = match.group(1)
-        if inc_path not in pending_files and inc_path not in processed_files:
-            pending_files.add(inc_path)
+        aprinter_inc = match.group(1)
+        quoted_inc = match.group(2)
+        
+        if aprinter_inc is None and file_is_from_aprinter(file_path):
+            aprinter_inc = os.path.join(os.path.dirname(file_path), quoted_inc)
+        
+        if aprinter_inc is not None:
+            if aprinter_inc not in pending_files and aprinter_inc not in processed_files:
+                pending_files.add(aprinter_inc)
 
 def copy_aprinter_files(state):    
     aprinter_files = filter(file_is_from_aprinter, state['processed_files'])
