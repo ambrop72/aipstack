@@ -22,8 +22,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef APRINTER_IPSTACK_STRUCT_H
-#define APRINTER_IPSTACK_STRUCT_H
+#ifndef AIPSTACK_STRUCT_H
+#define AIPSTACK_STRUCT_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -31,9 +31,9 @@
 
 #include <type_traits>
 
-#include <aprinter/meta/TypeListUtils.h>
-#include <aprinter/meta/BasicMetaUtils.h>
-#include <aprinter/base/Preprocessor.h>
+#include <aipstack/meta/TypeListUtils.h>
+#include <aipstack/meta/BasicMetaUtils.h>
+#include <aipstack/misc/Preprocessor.h>
 
 #include <aipstack/misc/BinaryTools.h>
 #include <aipstack/misc/EnumUtils.h>
@@ -117,7 +117,7 @@ class StructBase {
     template <int FieldIndex, typename Dummy>
     struct FieldInfo {
         using PrevFieldInfo = FieldInfo<FieldIndex-1, void>;
-        using Field = APrinter::TypeListGet<Fields<>, FieldIndex>;
+        using Field = TypeListGet<Fields<>, FieldIndex>;
         
         using Handler = StructFieldHandler<typename Field::StructFieldType>;
         using ValType = typename Handler::ValType;
@@ -126,10 +126,10 @@ class StructBase {
     };
     
     template <typename Field, typename This=StructBase>
-    using GetFieldInfo = FieldInfo<APrinter::TypeListIndex<Fields<This>, Field>::Value, void>;
+    using GetFieldInfo = FieldInfo<TypeListIndex<Fields<This>, Field>::Value, void>;
     
     template <typename This=StructBase>
-    using LastFieldInfo = FieldInfo<APrinter::TypeListLength<Fields<This>>::Value-1, void>;
+    using LastFieldInfo = FieldInfo<TypeListLength<Fields<This>>::Value-1, void>;
     
 public:
     class Ref;
@@ -410,7 +410,7 @@ inline void WriteSingleField (char *ptr, StructFieldValType<FieldType> value)
 #define AIPSTACK_DEFINE_STRUCT(StructName, Fields) \
 struct StructName : public AIpStack::StructBase<StructName> { \
     AIPSTACK_DEFINE_STRUCT__ADD_END(AIPSTACK_DEFINE_STRUCT__FIELD_1 Fields) \
-    using StructFields = APrinter::MakeTypeList< \
+    using StructFields = AIpStack::MakeTypeList< \
         AIPSTACK_DEFINE_STRUCT__ADD_END(AIPSTACK_DEFINE_STRUCT__LIST_0 Fields) \
     >; \
     static size_t const Size = StructName::GetStructSize(); \
@@ -470,8 +470,8 @@ public:
 
 #define AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(IntType) \
 template <typename Type> \
-struct StructTypeHandler<Type, std::enable_if_t<IsSameOrEnumWithBaseType<Type, IntType>()>> { \
-    using Handler = StructBinaryTypeHandler<Type>; \
+struct StructTypeHandler<Type, std::enable_if_t<AIpStack::IsSameOrEnumWithBaseType<Type, IntType>()>> { \
+    using Handler = AIpStack::StructBinaryTypeHandler<Type>; \
 };
 
 AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(uint8_t)
@@ -676,7 +676,7 @@ public:
  */
 template <typename Type>
 struct StructTypeHandler<Type, std::enable_if_t<std::is_base_of<StructIntArray<typename Type::ElemType, Type::Length>, Type>::value>> {
-    using Handler = APrinter::If<
+    using Handler = If<
         std::is_base_of<StructByteArray<Type::Length>, Type>::value,
         StructByteArrayTypeHandler<Type>,
         StructIntArrayTypeHandler<Type>

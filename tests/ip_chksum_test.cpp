@@ -52,8 +52,8 @@ int main ()
         uint16_t chksum = IpChksum(IpBufRef{&node[0], 0, 1023});
         
         uint16_t good_chksum = IpChksum(data, 1023);
-        AMBRO_ASSERT_FORCE(chksum == good_chksum)
-        AMBRO_ASSERT_FORCE(chksum == 0xFF)
+        AIPSTACK_ASSERT_FORCE(chksum == good_chksum)
+        AIPSTACK_ASSERT_FORCE(chksum == 0xFF)
     }
     
     char buf[BufSize];
@@ -73,28 +73,28 @@ int main ()
             node[0] = {buf, break1_pos, &node[1]};
             node[1] = {buf+break1_pos, BufSize-break1_pos, nullptr};
             uint16_t chksum = IpChksum(IpBufRef{&node[0], 0, BufSize});
-            AMBRO_ASSERT_FORCE(chksum == good_chksum)
+            AIPSTACK_ASSERT_FORCE(chksum == good_chksum)
             
             for (int break2 = break1+1; break2 < num_break_pos; break2++) {
                 size_t break2_pos = break_poss[break2];
-                AMBRO_ASSERT_FORCE(break2_pos > break1_pos)
+                AIPSTACK_ASSERT_FORCE(break2_pos > break1_pos)
                 
                 node[0] = {buf, break1_pos, &node[1]};
                 node[1] = {buf+break1_pos, break2_pos-break1_pos, &node[2]};
                 node[2] = {buf+break2_pos, BufSize-break2_pos, nullptr};
                 uint16_t chksum = IpChksum(IpBufRef{&node[0], 0, BufSize});
-                AMBRO_ASSERT_FORCE(chksum == good_chksum)
+                AIPSTACK_ASSERT_FORCE(chksum == good_chksum)
                 
                 for (int break3 = break2+1; break3 < num_break_pos; break3++) {
                     size_t break3_pos = break_poss[break3];
-                    AMBRO_ASSERT_FORCE(break3_pos > break2_pos)
+                    AIPSTACK_ASSERT_FORCE(break3_pos > break2_pos)
                     
                     node[0] = {buf, break1_pos, &node[1]};
                     node[1] = {buf+break1_pos, break2_pos-break1_pos, &node[2]};
                     node[2] = {buf+break2_pos, break3_pos-break2_pos, &node[3]};
                     node[3] = {buf+break3_pos, BufSize-break3_pos, nullptr};
                     uint16_t chksum = IpChksum(IpBufRef{&node[0], 0, BufSize});
-                    AMBRO_ASSERT_FORCE(chksum == good_chksum)
+                    AIPSTACK_ASSERT_FORCE(chksum == good_chksum)
                 }
             }
         }
