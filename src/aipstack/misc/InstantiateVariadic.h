@@ -22,25 +22,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef APRINTER_EXCEPTION_UTILS_H
-#define APRINTER_EXCEPTION_UTILS_H
+#ifndef AIPSTACK_INSTANTIATE_VARIADIC_H
+#define AIPSTACK_INSTANTIATE_VARIADIC_H
 
-#ifdef __GNUC__
-    #if __EXCEPTIONS
-        #define APRINTER_HAS_EXCEPTIONS 1
-    #else
-        #define APRINTER_HAS_EXCEPTIONS 0
-    #endif
-#else
-    #define APRINTER_HAS_EXCEPTIONS 1
-#endif
+#include <aprinter/meta/TypeSequence.h>
+#include <aprinter/meta/TypeSequenceFromList.h>
 
-#if APRINTER_HAS_EXCEPTIONS
-#define APRINTER_TRY try
-#define APRINTER_CATCH(catch_exception, catch_block) catch (catch_exception) catch_block
-#else
-#define APRINTER_TRY
-#define APRINTER_CATCH(catch_exception, catch_block)
-#endif
+namespace AIpStack {
+
+template <template<typename...> class Template, typename Sequence>
+struct InstantiateVariadicHelper;
+
+template <template<typename...> class Template, typename... Args>
+struct InstantiateVariadicHelper<Template, APrinter::TypeSequence<Args...>> {
+    using Result = Template<Args...>;
+};
+
+template <template<typename...> class Template, typename List>
+using InstantiateVariadic = typename InstantiateVariadicHelper<
+    Template, APrinter::TypeSequenceFromList<List>>::Result;
+
+}
 
 #endif

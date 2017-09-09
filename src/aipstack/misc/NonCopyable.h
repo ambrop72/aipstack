@@ -22,14 +22,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_INDEX_STRUCTURES_H
-#define AIPSTACK_INDEX_STRUCTURES_H
+#ifndef AIPSTACK_NONCOPYABLE_H
+#define AIPSTACK_NONCOPYABLE_H
 
-// This header is not meant to be actually included but is here to ensure that
-// the available "index" data structure headers (and their dependencies) are
-// copied by tools/copy_aprinter_srcs.py.
+namespace AIpStack {
 
-#include <aprinter/structure/index/AvlTreeIndex.h>
-#include <aprinter/structure/index/MruListIndex.h>
+template <typename Derived = void>
+class NonCopyable {
+public:
+    NonCopyable () = default;
+    NonCopyable (NonCopyable const &) = delete;
+    NonCopyable & operator= (NonCopyable const &) = delete;
+};
+
+}
 
 #endif

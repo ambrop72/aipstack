@@ -22,26 +22,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef APRINTER_INSTANTIATE_VARIADIC_H
-#define APRINTER_INSTANTIATE_VARIADIC_H
+#ifndef AIPSTACK_POWER_OF_TWO_H
+#define AIPSTACK_POWER_OF_TWO_H
 
-#include <aprinter/meta/TypeSequence.h>
-#include <aprinter/meta/TypeSequenceFromList.h>
+namespace AIpStack {
 
-namespace APrinter {
-
-template <template<typename...> class Template, typename Sequence>
-struct InstantiateVariadicHelper;
-
-template <template<typename...> class Template, typename... Args>
-struct InstantiateVariadicHelper<Template, TypeSequence<Args...>> {
-    using Result = Template<Args...>;
-};
-
-template <template<typename...> class Template, typename List>
-using InstantiateVariadic = typename InstantiateVariadicHelper<
-    Template, TypeSequenceFromList<List>>::Result;
+template <typename T>
+constexpr T PowerOfTwo (int e)
+{
+    return (e == 0) ? 1 : 2 * PowerOfTwo<T>(e - 1);
+}
 
 }
 
 #endif
+

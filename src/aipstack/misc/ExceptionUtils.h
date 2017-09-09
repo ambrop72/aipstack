@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Ambroz Bizjak
+ * Copyright (c) 2017 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,48 +22,25 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AMBROLIB_POWER_OF_TWO_H
-#define AMBROLIB_POWER_OF_TWO_H
+#ifndef AIPSTACK_EXCEPTION_UTILS_H
+#define AIPSTACK_EXCEPTION_UTILS_H
 
-namespace APrinter {
-
-template <typename T, int E>
-struct PowerOfTwo {
-    static constexpr T Value = 2 * PowerOfTwo<T, E - 1>::Value;
-};
-
-template <typename T>
-struct PowerOfTwo<T, 0> {
-    static constexpr T Value = 1;
-};
-
-template <typename T, int E>
-struct PowerOfTwoMinusOne {
-    static constexpr T Value = 2 * PowerOfTwoMinusOne<T, E - 1>::Value + 1;
-};
-
-template <typename T>
-struct PowerOfTwoMinusOne<T, 0> {
-    static constexpr T Value = 0;
-};
-
-template <typename T, int E>
-struct MinusPowerOfTwo {
-    static constexpr T Value = 2 * MinusPowerOfTwo<T, E - 1>::Value;
-};
-
-template <typename T>
-struct MinusPowerOfTwo<T, 0> {
-    static constexpr T Value = -1;
-};
-
-template <typename T>
-constexpr T PowerOfTwoFunc (int e)
-{
-    return (e == 0) ? 1 : 2 * PowerOfTwoFunc<T>(e - 1);
-}
-
-}
-
+#ifdef __GNUC__
+    #if __EXCEPTIONS
+        #define AIPSTACK_HAS_EXCEPTIONS 1
+    #else
+        #define AIPSTACK_HAS_EXCEPTIONS 0
+    #endif
+#else
+    #define AIPSTACK_HAS_EXCEPTIONS 1
 #endif
 
+#if AIPSTACK_HAS_EXCEPTIONS
+#define AIPSTACK_TRY try
+#define AIPSTACK_CATCH(catch_exception, catch_block) catch (catch_exception) catch_block
+#else
+#define AIPSTACK_TRY
+#define AIPSTACK_CATCH(catch_exception, catch_block)
+#endif
+
+#endif

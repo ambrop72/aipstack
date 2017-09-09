@@ -22,15 +22,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef APRINTER_STRUCTURE_RAII_WRAPPER_H
-#define APRINTER_STRUCTURE_RAII_WRAPPER_H
+#ifndef AIPSTACK_STRUCTURE_RAII_WRAPPER_H
+#define AIPSTACK_STRUCTURE_RAII_WRAPPER_H
 
 #include <type_traits>
 
 #include <aprinter/base/Assert.h>
-#include <aprinter/base/NonCopyable.h>
 
-namespace APrinter {
+#include <aipstack/misc/NonCopyable.h>
+
+namespace AIpStack {
 
 enum class StructureDestructAction {None, AssertEmpty};
 
