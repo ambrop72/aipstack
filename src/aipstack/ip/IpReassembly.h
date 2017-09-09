@@ -33,12 +33,11 @@
 #include <aipstack/meta/Instance.h>
 #include <aipstack/misc/Preprocessor.h>
 #include <aipstack/misc/Assert.h>
-
+#include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/NonCopyable.h>
 #include <aipstack/common/Struct.h>
 #include <aipstack/common/Buf.h>
 #include <aipstack/common/Options.h>
-#include <aipstack/misc/MinMax.h>
-#include <aipstack/misc/NonCopyable.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/platform/PlatformFacade.h>

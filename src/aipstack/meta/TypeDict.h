@@ -28,7 +28,6 @@
 #include <type_traits>
 
 #include <aipstack/meta/TypeList.h>
-#include <aipstack/meta/BasicMetaUtils.h>
 
 namespace AIpStack {
 

@@ -41,18 +41,17 @@
 #include <aipstack/misc/Preprocessor.h>
 #include <aipstack/misc/LoopUtils.h>
 #include <aipstack/misc/Accessor.h>
-#include <aipstack/structure/LinkedList.h>
-#include <aipstack/structure/LinkModel.h>
-
-#include <aipstack/common/Buf.h>
-#include <aipstack/common/SendRetry.h>
-#include <aipstack/common/Options.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/ResourceArray.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/PowerOfTwo.h>
 #include <aipstack/misc/OneOf.h>
+#include <aipstack/structure/LinkedList.h>
+#include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
+#include <aipstack/common/Buf.h>
+#include <aipstack/common/SendRetry.h>
+#include <aipstack/common/Options.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Tcp4Proto.h>
