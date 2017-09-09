@@ -36,7 +36,7 @@
 
 namespace AIpStack {
 
-#define AIPSTACK_LINKED_HEAP_VERIFY 1
+//#define AIPSTACK_LINKED_HEAP_VERIFY 1
 
 template <typename, typename, typename, typename>
 class LinkedHeap;
