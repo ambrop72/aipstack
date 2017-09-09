@@ -31,7 +31,7 @@
 
 #include <limits>
 
-#include <aprinter/meta/ServiceUtils.h>
+#include <aprinter/meta/Instance.h>
 #include <aprinter/meta/MinMax.h>
 #include <aprinter/meta/BitsInFloat.h>
 #include <aprinter/meta/PowerOfTwo.h>

@@ -31,7 +31,7 @@
 
 #include <limits>
 
-#include <aprinter/meta/ServiceUtils.h>
+#include <aprinter/meta/Instance.h>
 #include <aprinter/meta/MinMax.h>
 #include <aprinter/base/Preprocessor.h>
 #include <aprinter/base/Assert.h>

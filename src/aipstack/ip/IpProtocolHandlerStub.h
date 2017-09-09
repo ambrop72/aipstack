@@ -27,7 +27,7 @@
 
 #include <stdint.h>
 
-#include <aprinter/meta/ServiceUtils.h>
+#include <aprinter/meta/Instance.h>
 #include <aprinter/meta/BasicMetaUtils.h>
 #include <aprinter/base/NonCopyable.h>
 

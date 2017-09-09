@@ -30,7 +30,7 @@
 
 #include <limits>
 
-#include <aprinter/meta/ServiceUtils.h>
+#include <aprinter/meta/Instance.h>
 #include <aprinter/meta/ChooseInt.h>
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/OneOf.h>

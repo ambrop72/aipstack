@@ -30,7 +30,7 @@
 
 #include <algorithm>
 
-#include <aprinter/meta/ServiceUtils.h>
+#include <aprinter/meta/Instance.h>
 #include <aprinter/meta/ChooseInt.h>
 #include <aprinter/base/Preprocessor.h>
 #include <aprinter/base/Assert.h>
