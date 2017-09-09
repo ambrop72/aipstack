@@ -27,17 +27,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef AMBROLIB_AVR
-#include <avr/pgmspace.h>
-#endif
 
 #include <aipstack/misc/Preprocessor.h>
 #include <aipstack/misc/Hints.h>
-#include <aipstack/misc/ProgramMemory.h>
 
 #define AIPSTACK_ASSERT_ABORT(msg) \
     do { \
-        AIpStack_AssertAbort(AIPSTACK_PSTR(msg)); \
+        AIpStack_AssertAbort((msg)); \
     } while (0)
 
 #define AIPSTACK_ASSERT_FORCE(e) \
@@ -67,11 +63,7 @@ inline void AIpStack_AssertAbort (char const *msg)
 #endif
     
 #if !defined(AMBROLIB_NO_PRINT)
-#ifdef AMBROLIB_AVR
-    puts_P(msg);
-#else
     puts(msg);
-#endif
 #endif
     
 #ifdef AMBROLIB_ABORT_ACTION
