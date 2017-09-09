@@ -22,12 +22,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef APRINTER_ONE_OF_H
-#define APRINTER_ONE_OF_H
+#ifndef AIPSTACK_ONE_OF_H
+#define AIPSTACK_ONE_OF_H
 
 #include <aprinter/base/Hints.h>
 
-namespace APrinter {
+namespace AIpStack {
 
 template <typename...>
 struct OneOfStruct;
@@ -92,17 +92,6 @@ OneOfStruct<OptType...> OneOf (OptType ... opt)
 {
     return OneOfStruct<OptType...>(opt...);
 }
-
-/**
- * Defines a OneOf function serving as an alias for OneOf.
- * This is useful so one does not need to write APrinter::OneOf
- * when using from another namespace.
- */
-#define APRINTER_USE_ONEOF \
-template <typename... APrinter_OneOf_OptType> \
-AMBRO_ALWAYS_INLINE \
-static auto OneOf(APrinter_OneOf_OptType... APrinter_OneOf_opt) \
-{ return APrinter::OneOf(APrinter_OneOf_opt...); }
 
 }
 
