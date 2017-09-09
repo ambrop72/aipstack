@@ -32,7 +32,6 @@
 
 #include <aprinter/meta/Instance.h>
 #include <aprinter/meta/ChooseInt.h>
-#include <aipstack/misc/MinMax.h>
 #include <aprinter/base/Preprocessor.h>
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/Accessor.h>
@@ -44,6 +43,7 @@
 #include <aprinter/structure/StructureRaiiWrapper.h>
 
 #include <aipstack/misc/Options.h>
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/platform/PlatformFacade.h>

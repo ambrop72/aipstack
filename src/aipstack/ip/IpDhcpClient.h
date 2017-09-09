@@ -32,7 +32,6 @@
 #include <limits>
 
 #include <aprinter/meta/Instance.h>
-#include <aipstack/misc/MinMax.h>
 #include <aprinter/base/Preprocessor.h>
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/Hints.h>
@@ -45,6 +44,7 @@
 #include <aipstack/misc/TxAllocHelper.h>
 #include <aipstack/misc/SendRetry.h>
 #include <aipstack/misc/Options.h>
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Udp4Proto.h>

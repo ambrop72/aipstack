@@ -29,7 +29,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <aipstack/misc/MinMax.h>
 #include <aprinter/base/LoopUtils.h>
 #include <aprinter/base/MemRef.h>
 #include <aprinter/base/OneOf.h>
@@ -38,6 +37,7 @@
 
 #include <aipstack/misc/Buf.h>
 #include <aipstack/misc/Struct.h>
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/DhcpProto.h>
 

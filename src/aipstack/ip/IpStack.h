@@ -31,7 +31,6 @@
 #include <limits>
 
 #include <aprinter/meta/Instance.h>
-#include <aipstack/misc/MinMax.h>
 #include <aprinter/meta/ListForEach.h>
 #include <aprinter/meta/TypeListUtils.h>
 #include <aprinter/meta/FuncUtils.h>
@@ -55,6 +54,7 @@
 #include <aipstack/misc/SendRetry.h>
 #include <aipstack/misc/TxAllocHelper.h>
 #include <aipstack/misc/Options.h>
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Icmp4Proto.h>

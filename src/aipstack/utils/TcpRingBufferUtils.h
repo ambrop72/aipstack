@@ -28,13 +28,13 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <aipstack/misc/MinMax.h>
 #include <aprinter/base/Preprocessor.h>
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/WrapBuffer.h>
 #include <aprinter/base/MemRef.h>
 
 #include <aipstack/misc/Buf.h>
+#include <aipstack/misc/MinMax.h>
 
 namespace AIpStack {
 

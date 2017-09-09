@@ -32,7 +32,6 @@
 #include <limits>
 
 #include <aprinter/meta/Instance.h>
-#include <aipstack/misc/MinMax.h>
 #include <aprinter/meta/BitsInFloat.h>
 #include <aprinter/meta/PowerOfTwo.h>
 #include <aprinter/meta/ChooseInt.h>
@@ -52,6 +51,7 @@
 #include <aipstack/misc/Buf.h>
 #include <aipstack/misc/SendRetry.h>
 #include <aipstack/misc/Options.h>
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Tcp4Proto.h>

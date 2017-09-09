@@ -29,10 +29,10 @@
 
 #include <limits>
 
-#include <aipstack/misc/MinMax.h>
 #include <aprinter/meta/BitsInInt.h>
 #include <aprinter/base/Preprocessor.h>
 
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/proto/Tcp4Proto.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/tcp/TcpUtils.h>

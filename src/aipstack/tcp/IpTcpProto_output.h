@@ -30,7 +30,6 @@
 
 #include <limits>
 
-#include <aipstack/misc/MinMax.h>
 #include <aprinter/base/Preprocessor.h>
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/Hints.h>
@@ -40,6 +39,7 @@
 #include <aipstack/misc/Chksum.h>
 #include <aipstack/misc/TxAllocHelper.h>
 #include <aipstack/misc/Err.h>
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/proto/Tcp4Proto.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/tcp/TcpUtils.h>

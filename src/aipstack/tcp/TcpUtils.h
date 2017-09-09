@@ -30,12 +30,12 @@
 
 #include <limits>
 
-#include <aipstack/misc/MinMax.h>
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/BinaryTools.h>
 #include <aprinter/base/OneOf.h>
 
 #include <aipstack/misc/Buf.h>
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Tcp4Proto.h>
 

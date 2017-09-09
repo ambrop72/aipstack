@@ -32,7 +32,6 @@
 #include <limits>
 #include <type_traits>
 
-#include <aipstack/misc/MinMax.h>
 #include <aprinter/base/Preprocessor.h>
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/NonCopyable.h>
@@ -40,6 +39,7 @@
 
 #include <aipstack/misc/Buf.h>
 #include <aipstack/misc/Err.h>
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/tcp/TcpUtils.h>
 

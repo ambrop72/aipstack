@@ -28,9 +28,10 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <aipstack/misc/MinMax.h>
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/Hints.h>
+
+#include <aipstack/misc/MinMax.h>
 
 namespace AIpStack {
 
