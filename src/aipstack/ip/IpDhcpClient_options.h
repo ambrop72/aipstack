@@ -29,7 +29,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <aprinter/meta/MinMax.h>
+#include <aipstack/misc/MinMax.h>
 #include <aprinter/base/LoopUtils.h>
 #include <aprinter/base/MemRef.h>
 #include <aprinter/base/OneOf.h>
@@ -471,7 +471,7 @@ private:
     static void write_memref_option (char *&opt_writeptr, DhcpOptionType opt_type,
                                      uint8_t max_len, MemRef val)
     {
-        uint8_t eff_len = APrinter::MinValueU(max_len, val.len);
+        uint8_t eff_len = MinValueU(max_len, val.len);
         
         write_option(opt_writeptr, opt_type, [&](char *opt_data) {
             ::memcpy(opt_data, val.ptr, eff_len);

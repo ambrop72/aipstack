@@ -30,7 +30,7 @@
 
 #include <limits>
 
-#include <aprinter/meta/MinMax.h>
+#include <aipstack/misc/MinMax.h>
 #include <aprinter/meta/BasicMetaUtils.h>
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/BinaryTools.h>

@@ -32,7 +32,7 @@
 #include <limits>
 #include <type_traits>
 
-#include <aprinter/meta/MinMax.h>
+#include <aipstack/misc/MinMax.h>
 #include <aprinter/base/Preprocessor.h>
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/NonCopyable.h>
@@ -202,7 +202,7 @@ public:
          */
         void setInitialReceiveWindow (size_t rcv_wnd)
         {
-            m_initial_rcv_wnd = APrinter::MinValueU(Constants::MaxWindow, rcv_wnd);
+            m_initial_rcv_wnd = MinValueU(Constants::MaxWindow, rcv_wnd);
         }
         
     protected:

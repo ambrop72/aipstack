@@ -30,7 +30,7 @@
 
 #include <limits>
 
-#include <aprinter/meta/MinMax.h>
+#include <aipstack/misc/MinMax.h>
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/BinaryTools.h>
 #include <aprinter/base/OneOf.h>
@@ -300,7 +300,7 @@ public:
     {
         uint16_t req_mss = ((tcp_opts.options & OptionFlags::MSS) != 0) ?
             tcp_opts.mss : 536;
-        uint16_t mss = APrinter::MinValue(iface_mss, req_mss);
+        uint16_t mss = MinValue(iface_mss, req_mss);
         if (mss < MinAllowedMss) {
             return false;
         }

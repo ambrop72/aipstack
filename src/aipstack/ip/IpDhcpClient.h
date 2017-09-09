@@ -32,7 +32,7 @@
 #include <limits>
 
 #include <aprinter/meta/Instance.h>
-#include <aprinter/meta/MinMax.h>
+#include <aipstack/misc/MinMax.h>
 #include <aprinter/base/Preprocessor.h>
 #include <aprinter/base/Assert.h>
 #include <aprinter/base/Hints.h>
@@ -262,7 +262,7 @@ class IpDhcpClient :
     // due to limited span of TimeType. For possibly longer periods
     // (start of renewal, lease timeout), multiple timer expirations
     // are used with keeping track of leftover seconds.
-    static uint32_t const MaxTimerSeconds = APrinter::MinValueU(
+    static uint32_t const MaxTimerSeconds = MinValueU(
         std::numeric_limits<uint32_t>::max(),
         Platform::WorkingTimeSpanTicks / (TimeType)Platform::TimeFreq);
     
@@ -675,12 +675,12 @@ private:
             // Time to next retransmission.
             // NOTE: Retransmission may actually be done earlier if this is
             // greater than MaxTimerSeconds, that is all right.
-            uint32_t rtx_rel_sec = APrinter::MaxValue(
+            uint32_t rtx_rel_sec = MaxValue(
                 (uint32_t)Params::MinRenewRtxTimeoutSeconds,
                 (uint32_t)(next_state_rel_sec / 2));
             
             // Timer should expire at the earlier of the above two.
-            timer_rel_sec = APrinter::MinValue(next_state_rel_sec, rtx_rel_sec);
+            timer_rel_sec = MinValue(next_state_rel_sec, rtx_rel_sec);
             
             // Send a request.
             send_request();
@@ -692,7 +692,7 @@ private:
         }
         
         // Limit to how far into the future the timer can be set.
-        timer_rel_sec = APrinter::MinValue(timer_rel_sec, MaxTimerSeconds);
+        timer_rel_sec = MinValue(timer_rel_sec, MaxTimerSeconds);
         
         // Set the timer and update m_lease_time_passed as deciced above. Note that
         // we need to account for the extra time passed by which m_lease_time_passed
@@ -1098,7 +1098,7 @@ private:
         }
         // Make sure the renewal time does not exceed the lease time.
         opts.renewal_time =
-            APrinter::MinValue(opts.ip_address_lease_time, opts.renewal_time);
+            MinValue(opts.ip_address_lease_time, opts.renewal_time);
         
         // If there is no rebinding time, assume a default.
         if (!opts.have.rebinding_time) {
@@ -1107,8 +1107,8 @@ private:
         }
         // Make sure the rebinding time is between the renewal time and the lease time.
         opts.rebinding_time =
-            APrinter::MaxValue(opts.renewal_time,
-            APrinter::MinValue(opts.ip_address_lease_time, opts.rebinding_time));
+            MaxValue(opts.renewal_time,
+            MinValue(opts.ip_address_lease_time, opts.rebinding_time));
         
         return true;
     }
@@ -1186,7 +1186,7 @@ private:
         }
         
         // Limit to how far into the future the timer can be set.
-        timer_rel_sec = APrinter::MinValue(timer_rel_sec, MaxTimerSeconds);
+        timer_rel_sec = MinValue(timer_rel_sec, MaxTimerSeconds);
         
         // Set the timer and update m_lease_time_passed to reflect the time
         // that the timer is being set for.
