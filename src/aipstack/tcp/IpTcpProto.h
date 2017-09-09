@@ -40,7 +40,6 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Preprocessor.h>
 #include <aipstack/misc/LoopUtils.h>
-#include <aipstack/misc/Accessor.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/ResourceArray.h>
 #include <aipstack/misc/NonCopyable.h>
@@ -49,6 +48,7 @@
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
+#include <aipstack/structure/Accessor.h>
 #include <aipstack/common/Buf.h>
 #include <aipstack/common/SendRetry.h>
 #include <aipstack/common/Options.h>

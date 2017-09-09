@@ -36,13 +36,13 @@
 #include <aipstack/misc/LoopUtils.h>
 #include <aipstack/misc/Preprocessor.h>
 #include <aipstack/misc/Hints.h>
-#include <aipstack/misc/Accessor.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
 #include <aipstack/structure/TimerQueue.h>
+#include <aipstack/structure/Accessor.h>
 #include <aipstack/common/Struct.h>
 #include <aipstack/common/Buf.h>
 #include <aipstack/common/SendRetry.h>

@@ -38,7 +38,6 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Preprocessor.h>
 #include <aipstack/misc/Hints.h>
-#include <aipstack/misc/Accessor.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/EnumBitfieldUtils.h>
 #include <aipstack/misc/NonCopyable.h>
@@ -47,6 +46,7 @@
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
+#include <aipstack/structure/Accessor.h>
 #include <aipstack/common/Err.h>
 #include <aipstack/common/Buf.h>
 #include <aipstack/common/Chksum.h>
