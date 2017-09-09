@@ -676,7 +676,7 @@ public:
  */
 template <typename Type>
 struct StructTypeHandler<Type, std::enable_if_t<std::is_base_of<StructIntArray<typename Type::ElemType, Type::Length>, Type>::value>> {
-    using Handler = If<
+    using Handler = std::conditional_t<
         std::is_base_of<StructByteArray<Type::Length>, Type>::value,
         StructByteArrayTypeHandler<Type>,
         StructIntArrayTypeHandler<Type>

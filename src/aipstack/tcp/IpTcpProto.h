@@ -30,6 +30,7 @@
 #include <limits.h>
 
 #include <limits>
+#include <type_traits>
 
 #include <aipstack/meta/Instance.h>
 #include <aipstack/meta/BitsInFloat.h>
@@ -891,7 +892,7 @@ private:
     
     // Define the link model for data structures of PCBs.
     struct PcbArrayAccessor;
-    struct PcbLinkModel : public If<LinkWithArrayIndices,
+    struct PcbLinkModel : public std::conditional_t<LinkWithArrayIndices,
         ArrayLinkModelWithAccessor<
             TcpPcb, PcbIndexType, PcbIndexNull, IpTcpProto, PcbArrayAccessor>,
         PointerLinkModel<TcpPcb>
