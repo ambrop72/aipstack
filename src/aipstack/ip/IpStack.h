@@ -35,13 +35,13 @@
 #include <aipstack/meta/TypeListUtils.h>
 #include <aipstack/meta/FuncUtils.h>
 #include <aipstack/meta/MemberType.h>
+#include <aipstack/meta/InstantiateVariadic.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Preprocessor.h>
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/EnumBitfieldUtils.h>
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/misc/InstantiateVariadic.h>
 #include <aipstack/misc/ResourceTuple.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/LinkModel.h>
