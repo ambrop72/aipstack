@@ -33,7 +33,7 @@
 
 namespace AIpStack {
 
-APRINTER_TSTRUCT(Ip4Header,
+AIPSTACK_DEFINE_STRUCT(Ip4Header,
     (VersionIhlDscpEcn, uint16_t)
     (TotalLen,          uint16_t)
     (Ident,             uint16_t)

@@ -54,7 +54,7 @@ public:
     }
 };
 
-APRINTER_TSTRUCT(EthHeader,
+AIPSTACK_DEFINE_STRUCT(EthHeader,
     (DstMac,  MacAddr)
     (SrcMac,  MacAddr)
     (EthType, uint16_t)

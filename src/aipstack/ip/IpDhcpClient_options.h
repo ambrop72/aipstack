@@ -61,7 +61,7 @@ class IpDhcpClient_options
     }
     
     // Calculates the size of a DHCP option.
-    // OptDataType is the payload type declared with APRINTER_TSTRUCT.
+    // OptDataType is the payload type declared with AIPSTACK_DEFINE_STRUCT.
     template <typename OptDataType>
     static constexpr size_t OptSize ()
     {

@@ -33,7 +33,7 @@
 
 namespace AIpStack {
 
-APRINTER_TSTRUCT(Tcp4Header,
+AIPSTACK_DEFINE_STRUCT(Tcp4Header,
     (SrcPort,     uint16_t)
     (DstPort,     uint16_t)
     (SeqNum,      uint32_t)

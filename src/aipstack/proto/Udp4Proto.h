@@ -31,7 +31,7 @@
 
 namespace AIpStack {
 
-APRINTER_TSTRUCT(Udp4Header,
+AIPSTACK_DEFINE_STRUCT(Udp4Header,
     (SrcPort,     uint16_t)
     (DstPort,     uint16_t)
     (Length,      uint16_t)

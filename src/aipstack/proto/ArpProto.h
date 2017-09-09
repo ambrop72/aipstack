@@ -33,7 +33,7 @@
 
 namespace AIpStack {
 
-APRINTER_TSTRUCT(ArpIp4Header,
+AIPSTACK_DEFINE_STRUCT(ArpIp4Header,
     (HwType,       uint16_t)
     (ProtoType,    uint16_t)
     (HwAddrLen,    uint8_t)

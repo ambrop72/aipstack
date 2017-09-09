@@ -91,7 +91,7 @@ class IpReassembly :
     static uint16_t const ReassNullLink = std::numeric_limits<uint16_t>::max();
     
     // Hole descriptor structure, placed at the beginning of a hole.
-    APRINTER_TSTRUCT(HoleDescriptor,
+    AIPSTACK_DEFINE_STRUCT(HoleDescriptor,
         (HoleSize,       StructRawField<uint16_t>)
         (NextHoleOffset, StructRawField<uint16_t>)
     )

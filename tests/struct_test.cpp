@@ -27,12 +27,12 @@
 
 #include <aipstack/common/Struct.h>
 
-APRINTER_TSTRUCT(HeaderFoo,
+AIPSTACK_DEFINE_STRUCT(HeaderFoo,
     (FieldA, int8_t)
     (FieldB, int64_t)
 )
 
-APRINTER_TSTRUCT(HeaderBar,
+AIPSTACK_DEFINE_STRUCT(HeaderBar,
     (FieldC,   int8_t)
     (FieldD,   uint32_t)
     (FieldFoo, HeaderFoo)

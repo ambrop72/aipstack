@@ -36,7 +36,7 @@ using Icmp4RestType = StructByteArray<4>;
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-APRINTER_TSTRUCT(Icmp4Header,
+AIPSTACK_DEFINE_STRUCT(Icmp4Header,
     (Type,         uint8_t)
     (Code,         uint8_t)
     (Chksum,       uint16_t)

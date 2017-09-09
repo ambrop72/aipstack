@@ -43,12 +43,6 @@ namespace AIpStack {
 template <typename Type, typename Dummy=void>
 struct StructTypeHandler;
 
-#define APRINTER_STRUCT_REGISTER_TYPE(Type, TypeHandler) \
-template <> \
-struct StructTypeHandler<Type, void> { \
-    using Handler = TypeHandler; \
-};
-
 template <typename TType>
 struct StructField {
     using StructFieldType = TType;
@@ -75,11 +69,11 @@ using StructFieldRefType = typename StructFieldHandler<FieldType>::RefType;
  * - Support for nested structures.
  * - Ability to define custom field types.
  * 
- * Structures should be defined through the APRINTER_TSTRUCT macro which
+ * Structures should be defined through the AIPSTACK_DEFINE_STRUCT macro which
  * results in a struct type inheriting StructBase. Example:
  * 
  * \code
- * APRINTER_TSTRUCT(MyHeader,
+ * AIPSTACK_DEFINE_STRUCT(MyHeader,
  *     (FieldA, uint32_t)
  *     (FieldB, uint64_t)
  * )
@@ -96,7 +90,7 @@ using StructFieldRefType = typename StructFieldHandler<FieldType>::RefType;
  * Note that the structure type itself (MyHeader) has no runtime use, it
  * is a zero-sized structure.
  * 
- * Note, internally APRINTER_TSTRUCT will expand to something like this:
+ * Note, internally AIPSTACK_DEFINE_STRUCT will expand to something like this:
  * 
  * struct MyHeader : public StructBase\<MyHeader\> {
  *      struct FieldA : public StructField\<uint32_t\>;
@@ -161,7 +155,7 @@ public:
     /**
      * Returns the size of the structure.
      * This is a function because of issues with eager resolution.
-     * The APRINTER_TSTRUCT macro defines a static Size member which
+     * The AIPSTACK_DEFINE_STRUCT macro defines a static Size member which
      * should be used instead of this.
      */
     inline static constexpr size_t GetStructSize () 
@@ -413,35 +407,35 @@ inline void WriteSingleField (char *ptr, StructFieldValType<FieldType> value)
  * Macro for defining structures.
  * @see StructBase
  */
-#define APRINTER_TSTRUCT(StructName, Fields) \
+#define AIPSTACK_DEFINE_STRUCT(StructName, Fields) \
 struct StructName : public AIpStack::StructBase<StructName> { \
-    APRINTER_TSTRUCT__ADD_END(APRINTER_TSTRUCT__FIELD_1 Fields) \
+    AIPSTACK_DEFINE_STRUCT__ADD_END(AIPSTACK_DEFINE_STRUCT__FIELD_1 Fields) \
     using StructFields = APrinter::MakeTypeList< \
-        APRINTER_TSTRUCT__ADD_END(APRINTER_TSTRUCT__LIST_0 Fields) \
+        AIPSTACK_DEFINE_STRUCT__ADD_END(AIPSTACK_DEFINE_STRUCT__LIST_0 Fields) \
     >; \
     static size_t const Size = StructName::GetStructSize(); \
 };
 
-#define APRINTER_TSTRUCT__ADD_END(...) APRINTER_TSTRUCT__ADD_END_2(__VA_ARGS__)
-#define APRINTER_TSTRUCT__ADD_END_2(...) __VA_ARGS__ ## _END
+#define AIPSTACK_DEFINE_STRUCT__ADD_END(...) AIPSTACK_DEFINE_STRUCT__ADD_END_2(__VA_ARGS__)
+#define AIPSTACK_DEFINE_STRUCT__ADD_END_2(...) __VA_ARGS__ ## _END
 
-#define APRINTER_TSTRUCT__FIELD_1(FieldName, FieldType) \
+#define AIPSTACK_DEFINE_STRUCT__FIELD_1(FieldName, FieldType) \
 struct FieldName : public AIpStack::StructField<FieldType> {}; \
-APRINTER_TSTRUCT__FIELD_2
+AIPSTACK_DEFINE_STRUCT__FIELD_2
 
-#define APRINTER_TSTRUCT__FIELD_2(FieldName, FieldType) \
+#define AIPSTACK_DEFINE_STRUCT__FIELD_2(FieldName, FieldType) \
 struct FieldName : public AIpStack::StructField<FieldType> {}; \
-APRINTER_TSTRUCT__FIELD_1
+AIPSTACK_DEFINE_STRUCT__FIELD_1
 
-#define APRINTER_TSTRUCT__FIELD_1_END
-#define APRINTER_TSTRUCT__FIELD_2_END
+#define AIPSTACK_DEFINE_STRUCT__FIELD_1_END
+#define AIPSTACK_DEFINE_STRUCT__FIELD_2_END
 
-#define APRINTER_TSTRUCT__LIST_0(FieldName, FieldType) FieldName APRINTER_TSTRUCT__LIST_1
-#define APRINTER_TSTRUCT__LIST_1(FieldName, FieldType) , FieldName APRINTER_TSTRUCT__LIST_2
-#define APRINTER_TSTRUCT__LIST_2(FieldName, FieldType) , FieldName APRINTER_TSTRUCT__LIST_1
+#define AIPSTACK_DEFINE_STRUCT__LIST_0(FieldName, FieldType) FieldName AIPSTACK_DEFINE_STRUCT__LIST_1
+#define AIPSTACK_DEFINE_STRUCT__LIST_1(FieldName, FieldType) , FieldName AIPSTACK_DEFINE_STRUCT__LIST_2
+#define AIPSTACK_DEFINE_STRUCT__LIST_2(FieldName, FieldType) , FieldName AIPSTACK_DEFINE_STRUCT__LIST_1
 
-#define APRINTER_TSTRUCT__LIST_1_END
-#define APRINTER_TSTRUCT__LIST_2_END
+#define AIPSTACK_DEFINE_STRUCT__LIST_1_END
+#define AIPSTACK_DEFINE_STRUCT__LIST_2_END
 
 /**
  * Structure field type handler for integer types using
@@ -474,20 +468,20 @@ public:
     }
 };
 
-#define APRINTER_STRUCT_REGISTER_BINARY_TYPE(IntType) \
+#define AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(IntType) \
 template <typename Type> \
 struct StructTypeHandler<Type, std::enable_if_t<IsSameOrEnumWithBaseType<Type, IntType>()>> { \
     using Handler = StructBinaryTypeHandler<Type>; \
 };
 
-APRINTER_STRUCT_REGISTER_BINARY_TYPE(uint8_t)
-APRINTER_STRUCT_REGISTER_BINARY_TYPE(uint16_t)
-APRINTER_STRUCT_REGISTER_BINARY_TYPE(uint32_t)
-APRINTER_STRUCT_REGISTER_BINARY_TYPE(uint64_t)
-APRINTER_STRUCT_REGISTER_BINARY_TYPE(int8_t)
-APRINTER_STRUCT_REGISTER_BINARY_TYPE(int16_t)
-APRINTER_STRUCT_REGISTER_BINARY_TYPE(int32_t)
-APRINTER_STRUCT_REGISTER_BINARY_TYPE(int64_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(uint8_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(uint16_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(uint32_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(uint64_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(int8_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(int16_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(int32_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(int64_t)
 
 /**
  * Type handler for structure types, allowing nesting of structures.
