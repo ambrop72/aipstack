@@ -31,6 +31,7 @@
 
 #include <aipstack/meta/BasicMetaUtils.h>
 #include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/MinMax.h>
 
 namespace AIpStack {
 
@@ -230,13 +231,23 @@ public:
     
     static_assert(TimeFreq >= 100.0, "");
     
+private:
+    static constexpr TimeType BaseRelativeTimeLimit =
+        7 * ((TimeType)1 << (TimeBits - 4));
+    
+    static constexpr TimeType ImplRelativeTimeLimit = Impl::RelativeTimeLimit;
+    static_assert(ImplRelativeTimeLimit > 0, "");
+    
+public:
     /**
      * The maximum relative time in the future or past that a \ref Timer may be
      * set to exire at.
      * 
-     * See @ref PlatformImplStub::TimeType for the reasoning behind this definition.
+     * See @ref PlatformImplStub::TimeType and @ref PlatformImplStub::RelativeTimeLimit
+     * for details.
      */
-    static TimeType const WorkingTimeSpanTicks = 7 * ((TimeType)1 << (TimeBits - 4));
+    static TimeType const WorkingTimeSpanTicks =
+        MinValue(BaseRelativeTimeLimit, ImplRelativeTimeLimit);
     
     /**
      * @ref WorkingTimeSpanTicks converted from ticks to seconds.

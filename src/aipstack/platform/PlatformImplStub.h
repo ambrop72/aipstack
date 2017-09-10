@@ -25,6 +25,8 @@
 #ifndef AIPSTACK_PLATFORM_IMPL_STUB_H
 #define AIPSTACK_PLATFORM_IMPL_STUB_H
 
+#include <limits>
+
 #include <stdint.h>
 
 #include <aipstack/misc/NonCopyable.h>
@@ -95,9 +97,8 @@ public:
      * to be in the past (addition and subtraction are modulo ClockPeriodTicks). This
      * is important for the implementation of @ref Timer.
      * 
-     * In practice the stack will not set a @ref Timer to expire more than
-     * 7/16*ClockPeriodTicks in the future or in the past. This tolerance of
-     * 1/16*ClockPeriodTicks is to account for event processing latencies.
+     * In practice the stack will avoid setting a @ref Timer to expire more than a
+     * specific time in the future or the past; see @ref RelativeTimeLimit.
      */
     using TimeType = uint64_t;
     
@@ -109,11 +110,28 @@ public:
      * the resolution of @ref TimeType must be at least 10 ms.
      * 
      * Additionally, the stacks requires that it is able to set a @ref Timer to expire
-     * at least 600 s in the future or past. Together with the tolerance as described in
-     * @ref TimeType, this means that (7/16*ClockPeriodTicks)/TimeFreq >= 600 must hold,
-     * where ClockPeriodTicks is the maximum value representable in @ref TimeType.
+     * at least 600 s in the future or past. This means that
+     * EffectiveRelativeTimeLimit/TimeFreq >= 600 must hold, where
+     * EffectiveRelativeTimeLimit is as described in @ref RelativeTimeLimit.
      */
     static constexpr double TimeFreq = 1000.0;
+    
+    /**
+     * Defines a relative time limit for timers to be respected by the stack.
+     * 
+     * The stack will always avoid setting a @ref Timer to expire more than
+     * 7/16*ClockPeriodTicks in the future or in the past (the tolerance of
+     * 1/16*ClockPeriodTicks is to account for event processing latencies). This
+     * constant can enforce an additional limit on top of that. If an additional limit
+     * is not needed, this can be set to the maximum representable value.
+     * 
+     * Setting an additional limit is useful when implementing @ref TimeType on top
+     * of a clock which is not supposed to wrap, because in those cases the default
+     * relative time limit may be too large. This is especially relevant if the
+     * original type representing time is signed and its values are being converted
+     * to unsigned as required for @ref TimeType.
+     */
+    static constexpr TimeType RelativeTimeLimit = std::numeric_limits<TimeType>::max();
     
     /**
      * Get the current time in ticks.
