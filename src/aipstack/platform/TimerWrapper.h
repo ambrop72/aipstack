@@ -98,7 +98,7 @@ using TimerWrapperName::tim;
 
 #define AIPSTACK_DECL_TIMERS_CLASS(ClassName, PlatformImpl, Derived, TheTimers) \
 class ClassName { \
-    friend Derived; \
+public: \
     AIPSTACK_DECL_TIMERS(Timers, PlatformImpl, Derived, TheTimers) \
 };
 

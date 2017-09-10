@@ -943,10 +943,10 @@ class IpTcpProtoService {
     AIPSTACK_OPTION_CONFIG_TYPE(IpTcpProtoOptions, PcbIndexService)
     AIPSTACK_OPTION_CONFIG_VALUE(IpTcpProtoOptions, LinkWithArrayIndices)
     
+public:
     // This tells IpStack which IP protocol we receive packets for.
     using IpProtocolNumber = WrapValue<uint8_t, Ip4ProtocolTcp>;
     
-public:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     template <typename PlatformImpl_, typename TheIpStack_>
     struct Compose {
