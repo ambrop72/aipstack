@@ -18,7 +18,10 @@ let
                     set -x
                     c++ -std=c++14 -I src ${defines} ${optFlags} \
                         examples/aipstack_example.cpp \
-                        -luv -o $out/bin/aipstack_example
+                        examples/libuv_platform.cpp \
+                        examples/libuv_app_helper.cpp \
+                        -luv \
+                        -o $out/bin/aipstack_example
                 )
             '';
             dontStrip = true;

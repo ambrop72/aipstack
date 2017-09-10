@@ -122,9 +122,7 @@ public:
         std::numeric_limits<TimeType>::max() / 64;
     
 public:
-    PlatformImplLibuv (uv_loop_t *loop) :
-        m_loop(loop)
-    {}
+    PlatformImplLibuv (uv_loop_t *loop);
     
     inline TimeType getTime ()
     {
@@ -150,17 +148,9 @@ public:
         UvHandleWrapper<uv_timer_t> m_handle;
         
     public:
-        Timer (ThePlatformRef ref) :
-            ThePlatformRef(ref),
-            m_is_set(false)
-        {
-            int res = m_handle.initialize([&](uv_timer_t *dst) {
-                return uv_timer_init(platformImpl()->m_loop, dst);
-            });
-            assert(res == 0); (void)res;
-            
-            m_handle.get()->data = this;
-        }
+        Timer (ThePlatformRef ref);
+        
+        ~Timer ();
         
         using ThePlatformRef::ref;
         
@@ -201,22 +191,8 @@ public:
         virtual void handleTimerExpired () = 0;
         
     private:
-        static void uvTimerHandlerTrampoline (uv_timer_t *timer)
-        {
-            Timer *obj = reinterpret_cast<Timer *>(timer->data);
-            assert(timer == obj->m_handle.get());
-            
-            obj->uvTimerHandler();
-        }
-        
-        void uvTimerHandler ()
-        {
-            assert(m_is_set);
-            
-            m_is_set = false;
-            
-            handleTimerExpired();
-        }
+        static void uvTimerHandlerTrampoline (uv_timer_t *timer);
+        void uvTimerHandler ();
     };
 };
 

@@ -22,47 +22,48 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_LIBUV_APP_HELPER_H
-#define AIPSTACK_LIBUV_APP_HELPER_H
-
-#include <csignal>
-#include <type_traits>
-
-#include <uv.h>
-
-#include <aipstack/misc/NonCopyable.h>
+#include <cassert>
 
 #include "libuv_platform.h"
 
 namespace AIpStackExamples {
 
-static int const WatchedSignals[] = {SIGINT, SIGTERM, SIGHUP, SIGQUIT};
-static int const NumWatchedSignals = std::extent<decltype(WatchedSignals)>::value;
-
-class LibuvAppHelper :
-    public AIpStack::NonCopyable<LibuvAppHelper>
+PlatformImplLibuv::PlatformImplLibuv (uv_loop_t *loop) :
+    m_loop(loop)
 {
-private:
-    uv_loop_t m_loop;
-    UvHandleWrapper<uv_signal_t> m_signals[NumWatchedSignals];
-    
-public:
-    LibuvAppHelper ();
-    
-    ~LibuvAppHelper ();
-    
-    inline uv_loop_t * getLoop ()
-    {
-        return &m_loop;
-    }
-    
-    int run ();
-    
-private:
-    static void signalHandlerTrampoline (uv_signal_t *handle, int signum);
-    void signalHandler (int signum);
-};
-
 }
 
-#endif
+PlatformImplLibuv::Timer::Timer (ThePlatformRef ref) :
+    ThePlatformRef(ref),
+    m_is_set(false)
+{
+    int res = m_handle.initialize([&](uv_timer_t *dst) {
+        return uv_timer_init(platformImpl()->m_loop, dst);
+    });
+    assert(res == 0); (void)res;
+    
+    m_handle.get()->data = this;
+}
+
+PlatformImplLibuv::Timer::~Timer ()
+{
+}
+
+void PlatformImplLibuv::Timer::uvTimerHandlerTrampoline (uv_timer_t *timer)
+{
+    Timer *obj = reinterpret_cast<Timer *>(timer->data);
+    assert(timer == obj->m_handle.get());
+    
+    obj->uvTimerHandler();
+}
+
+void PlatformImplLibuv::Timer::uvTimerHandler ()
+{
+    assert(m_is_set);
+    
+    m_is_set = false;
+    
+    handleTimerExpired();
+}
+
+}
