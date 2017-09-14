@@ -879,7 +879,8 @@ public:
     
 private:
     using IfaceListenerList = LinkedList<
-        AIPSTACK_MEMBER_ACCESSOR_TN(&IfaceListener::m_list_node),
+        MemberAccessor<IfaceListener, LinkedListNode<IfaceListenerLinkModel>,
+                       &IfaceListener::m_list_node>,
         IfaceListenerLinkModel, false>;
     
 public:
@@ -1252,7 +1253,8 @@ public:
     
 private:
     using IfaceList = LinkedList<
-        AIPSTACK_MEMBER_ACCESSOR_TN(&Iface::m_iface_list_node), IfaceLinkModel, false>;
+        MemberAccessor<Iface, LinkedListNode<IfaceLinkModel>, &Iface::m_iface_list_node>,
+        IfaceLinkModel, false>;
     
     using BaseMtuRef = typename PathMtuCache::MtuRef;
     

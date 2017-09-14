@@ -27,6 +27,8 @@
 
 #include <type_traits>
 
+#include <aipstack/meta/BasicMetaUtils.h>
+
 namespace AIpStack {
 
 template <typename EnumType>
@@ -60,16 +62,14 @@ namespace EnumUtilsPrivate {
 };
 
 template <typename Type, typename BaseType>
-constexpr bool IsEnumWithBaseType ()
-{
-    return EnumUtilsPrivate::EnumWithBaseTypeHelper<std::is_enum<Type>::value, Type, BaseType>::IsEnumWithBaseType;
-}
+using IsEnumWithBaseType = WrapBool<
+    EnumUtilsPrivate::EnumWithBaseTypeHelper<std::is_enum<Type>::value, Type, BaseType>::IsEnumWithBaseType
+>;
 
 template <typename Type, typename BaseType>
-constexpr bool IsSameOrEnumWithBaseType ()
-{
-    return std::is_same<Type, BaseType>::value || IsEnumWithBaseType<Type, BaseType>();
-}
+using IsSameOrEnumWithBaseType = WrapBool<
+    std::is_same<Type, BaseType>::value || IsEnumWithBaseType<Type, BaseType>::Value
+>;
 
 template <typename Type>
 using GetSameOrEnumBaseType = typename EnumUtilsPrivate::GetSameOrBaseTypeHelper<std::is_enum<Type>::value, Type>::ResultType;

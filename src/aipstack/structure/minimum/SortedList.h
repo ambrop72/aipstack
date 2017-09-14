@@ -56,7 +56,7 @@ class SortedList
     
     using ListNodeAccessor = ComposedAccessor<
         Accessor,
-        AIPSTACK_MEMBER_ACCESSOR_TN(&Node::list_node)
+        MemberAccessor<Node, LinkedListNode<LinkModel>, &Node::list_node>
     >;
     
     using List = LinkedList<ListNodeAccessor, LinkModel, true>;

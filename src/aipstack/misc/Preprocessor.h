@@ -33,6 +33,8 @@
 
 #define AIPSTACK_REMOVE_PARENS(...) __VA_ARGS__
 
+#define AIPSTACK_EXPAND(x) x
+
 #include "Preprocessor_MacroMap.h"
 
 #define AIPSTACK_USE_TYPE1(namespace, type_name) using type_name = typename namespace::type_name;

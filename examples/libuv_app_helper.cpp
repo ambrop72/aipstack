@@ -37,7 +37,9 @@ static char const * GetSignalName (int signum)
     return (signum == SIGINT)  ? "SIGINT" :
            (signum == SIGTERM) ? "SIGTERM" :
            (signum == SIGHUP)  ? "SIGHUP" :
+#ifndef _WIN32
            (signum == SIGQUIT) ? "SIGQUIT" :
+#endif
            "???";
 }
 

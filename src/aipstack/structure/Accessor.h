@@ -47,11 +47,6 @@ struct MakeMemberAccessorHelper {
 template <typename Object, typename Member>
 inline MakeMemberAccessorHelper<Object, Member> MakeMemberAccessorHelperFunc(Member Object::*memberPtr);
 
-#define AIPSTACK_MEMBER_ACCESSOR(member) \
-decltype(AIpStack::MakeMemberAccessorHelperFunc((member)))::template Make<(member)>
-
-#define AIPSTACK_MEMBER_ACCESSOR_TN(member) typename AIPSTACK_MEMBER_ACCESSOR(member)
-
 template <typename Object, typename Member, typename Base, Member Base::*MemberPtr>
 struct MemberAccessorWithBase {
     using ObjectType = Object;

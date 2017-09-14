@@ -48,45 +48,29 @@ struct TypeDictNotFound {
 };
 
 namespace Private {
-    template <typename EntriesList>
-    struct TypeDictHelper;
-
-    template <typename Key, typename Value, typename Tail>
-    struct TypeDictHelper<ConsTypeList<TypeDictEntry<Key, Value>, Tail>>
-    : public TypeDictHelper<Tail>
-    {
-    };
-
-    template <>
-    struct TypeDictHelper<EmptyTypeList> {
-    };
-
-    template <typename Key, typename Value, typename Tail>
-    TypeDictFound<Value> TypeDictGetHelper(TypeDictHelper<ConsTypeList<TypeDictEntry<Key, Value>, Tail>>);
-
+    template <typename Key, typename EntriesList>
+    struct TypeDictFindHelper;
+    
     template <typename Key>
-    TypeDictNotFound TypeDictGetHelper(TypeDictHelper<EmptyTypeList>);
-    
-    template <typename, typename>
-    struct TypeDictRemoveDuplicatesHelper;
-    
-    template <typename Current, typename Key, typename Value, typename Tail>
-    struct TypeDictRemoveDuplicatesHelper<Current, ConsTypeList<TypeDictEntry<Key, Value>, Tail>> {
-        using Result = typename TypeDictRemoveDuplicatesHelper<
-            std::conditional_t<
-                decltype(TypeDictGetHelper<Key>(TypeDictHelper<Current>()))::Found,
-                Current,
-                ConsTypeList<TypeDictEntry<Key, Value>, Current>
-            >,
-            Tail
-        >::Result;
+    struct TypeDictFindHelper<Key, EmptyTypeList> {
+        using Result = TypeDictNotFound;
     };
     
-    template <typename Current>
-    struct TypeDictRemoveDuplicatesHelper<Current, EmptyTypeList> {
-        using Result = Current;
+    template <typename Key, typename Value, typename Tail>
+    struct TypeDictFindHelper<Key, ConsTypeList<TypeDictEntry<Key, Value>, Tail>> {
+        using Result = TypeDictFound<Value>;
     };
     
+    template <typename Key, typename OtherKey, typename Value, typename Tail>
+    struct TypeDictFindHelper<Key, ConsTypeList<TypeDictEntry<OtherKey, Value>, Tail>> {
+        using Result = typename TypeDictFindHelper<Key, Tail>::Result;
+    };
+}
+
+template <typename EntriesList, typename Key>
+using TypeDictFind = typename Private::TypeDictFindHelper<Key, EntriesList>::Result;
+
+namespace Private {
     template <typename Default, typename FindResult>
     struct TypeDictDefaultHelper {
         using Result = typename FindResult::Result;
@@ -97,15 +81,6 @@ namespace Private {
         using Result = Default;
     };
 }
-
-template <typename EntriesList, typename Key>
-using TypeDictFindNoDupl = decltype(Private::TypeDictGetHelper<Key>(Private::TypeDictHelper<EntriesList>()));
-
-template <typename EntriesList>
-using TypeDictRemoveDuplicatesAndReverse = typename Private::TypeDictRemoveDuplicatesHelper<EmptyTypeList, EntriesList>::Result;
-
-template <typename EntriesList, typename Key>
-using TypeDictFind = TypeDictFindNoDupl<TypeDictRemoveDuplicatesAndReverse<EntriesList>, Key>;
 
 template <typename EntriesList, typename Key, typename Default>
 using TypeDictGetOrDefault = typename Private::template TypeDictDefaultHelper<Default, TypeDictFind<EntriesList, Key>>::Result;

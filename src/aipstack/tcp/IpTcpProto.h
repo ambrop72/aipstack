@@ -374,7 +374,8 @@ private:
     };
     
     // Define the hook accessor for the PCB index.
-    struct PcbIndexAccessor : public AIPSTACK_MEMBER_ACCESSOR(&TcpPcb::index_hook) {};
+    struct PcbIndexAccessor : public MemberAccessor<TcpPcb, typename PcbIndex::Node,
+                                                    &TcpPcb::index_hook> {};
     
 public:
     /**
@@ -900,11 +901,13 @@ private:
     
 private:
     using ListenersList = LinkedList<
-        AIPSTACK_MEMBER_ACCESSOR_TN(&TcpListener::m_listeners_node),
+        MemberAccessor<TcpListener, LinkedListNode<ListenerLinkModel>,
+                       &TcpListener::m_listeners_node>,
         ListenerLinkModel, false>;
     
     using UnrefedPcbsList = LinkedList<
-        AIPSTACK_MEMBER_ACCESSOR_TN(&TcpPcb::unrefed_list_node), PcbLinkModel, true>;
+        MemberAccessor<TcpPcb, LinkedListNode<PcbLinkModel>, &TcpPcb::unrefed_list_node>,
+        PcbLinkModel, true>;
     
     TheIpStack *m_stack;
     StructureRaiiWrapper<ListenersList> m_listeners_list;
@@ -917,7 +920,9 @@ private:
     StructureRaiiWrapper<typename PcbIndex::Index> m_pcb_index_timewait;
     ResourceArray<TcpPcb, NumTcpPcbs> m_pcbs;
     
-    struct PcbArrayAccessor : public AIPSTACK_MEMBER_ACCESSOR(&IpTcpProto::m_pcbs) {};
+    struct PcbArrayAccessor : public
+        MemberAccessor<IpTcpProto, ResourceArray<TcpPcb, NumTcpPcbs>,
+                       &IpTcpProto::m_pcbs> {};
 };
 
 struct IpTcpProtoOptions {

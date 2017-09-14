@@ -153,11 +153,13 @@ private:
     struct PrevLink : public Link {};
     struct NextLink : public Link {};
     
+    using FreeListNode = LinkedListNode<MtuLinkModel>;
+    
     // MTU entry structure.
     struct MtuEntry {
         typename MtuIndex::Node index_node;
         union {
-            LinkedListNode<MtuLinkModel> free_list_node;
+            FreeListNode free_list_node;
             Link first_ref;
         };
         uint16_t mtu;
@@ -167,9 +169,10 @@ private:
     };
     
     // Node accessors for the data structures.
-    struct MtuIndexAccessor : public AIPSTACK_MEMBER_ACCESSOR(&MtuEntry::index_node) {};
-    struct MtuFreeListAccessor :
-        public AIPSTACK_MEMBER_ACCESSOR(&MtuEntry::free_list_node) {};
+    struct MtuIndexAccessor : public
+        MemberAccessor<MtuEntry, typename MtuIndex::Node, &MtuEntry::index_node> {};
+    struct MtuFreeListAccessor : public
+        MemberAccessor<MtuEntry, FreeListNode, &MtuEntry::free_list_node> {};
     
     struct MtuIndexKeyFuncs : public OperatorKeyCompare {
         // Returns the key of an MTU entry for the index.
@@ -186,8 +189,9 @@ private:
     MtuEntry m_mtu_entries[NumMtuEntries];
     
     // Accessor for the m_mtu_entries array.
-    struct MtuEntriesAccessor :
-        public AIPSTACK_MEMBER_ACCESSOR(&IpPathMtuCache::m_mtu_entries) {};
+    struct MtuEntriesAccessor : public
+        MemberAccessor<IpPathMtuCache, MtuEntry[NumMtuEntries],
+                       &IpPathMtuCache::m_mtu_entries> {};
     
 public:
     IpPathMtuCache (Platform platform, IpStack *ip_stack) :

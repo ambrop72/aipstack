@@ -149,7 +149,7 @@ using TypeDictMakeIndexToSublistMap = typename Private::TypeDictIndexToSublistMa
 namespace Private {
     template <typename List, int Index>
     struct ListIndexGetHelper {
-        using FindRes = TypeDictFindNoDupl<TypeDictMakeIndexToSublistMap<List>, WrapInt<Index>>;
+        using FindRes = TypeDictFind<TypeDictMakeIndexToSublistMap<List>, WrapInt<Index>>;
         static_assert(FindRes::Found, "Element index is outside the range of the list.");
         using Result = typename FindRes::Result::Head;
     };

@@ -468,7 +468,7 @@ public:
 
 #define AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(IntType) \
 template <typename Type> \
-struct StructTypeHandler<Type, std::enable_if_t<AIpStack::IsSameOrEnumWithBaseType<Type, IntType>()>> { \
+struct StructTypeHandler<Type, std::enable_if_t<AIpStack::IsSameOrEnumWithBaseType<Type, IntType>::Value>> { \
     using Handler = AIpStack::StructBinaryTypeHandler<Type>; \
 };
 

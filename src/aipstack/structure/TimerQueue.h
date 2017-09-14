@@ -82,7 +82,8 @@ class TimerQueue
     
     // Create the accessor type for TimerQueueNode::timers_structure_node.
     struct TimersStructureNodeAccessor : public ComposedAccessor<
-        Accessor, AIPSTACK_MEMBER_ACCESSOR_TN(&Node::timers_structure_node)> {};
+        Accessor, MemberAccessor<Node, typename Node::TimersStructureNode,
+                                 &Node::timers_structure_node>> {};
     
     // Define the comparator for comparing timers, based on TreeCompare.
     class KeyFuncs;

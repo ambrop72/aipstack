@@ -50,7 +50,7 @@ public:
     class Index {
         using ListNodeAccessor = ComposedAccessor<
             HookAccessor,
-            AIPSTACK_MEMBER_ACCESSOR_TN(&Node::list_node)
+            MemberAccessor<Node, ListNode, &Node::list_node>
         >;
         using EntryList = LinkedList<ListNodeAccessor, LinkModel, false>;
         

@@ -188,9 +188,10 @@ class EthIpIface :
     
     // Accessors for data structure nodes.
     struct ArpEntryListNodeAccessor :
-        public AIPSTACK_MEMBER_ACCESSOR(&ArpEntry::list_node) {};
+        public MemberAccessor<ArpEntry, ArpEntryListNode, &ArpEntry::list_node>{};
     struct ArpEntryTimerQueueNodeAccessor :
-        public AIPSTACK_MEMBER_ACCESSOR(&ArpEntry::timer_queue_node) {};
+        public MemberAccessor<ArpEntry, ArpEntryTimerQueueNode,
+                              &ArpEntry::timer_queue_node> {};
     
     // Linked list type.
     using ArpEntryList = LinkedList<
@@ -819,7 +820,8 @@ private:
     ArpEntry m_arp_entries[NumArpEntries];
     
     struct ArpEntriesAccessor :
-        public AIPSTACK_MEMBER_ACCESSOR(&EthIpIface::m_arp_entries) {};
+        public MemberAccessor<EthIpIface, ArpEntry[NumArpEntries],
+                              &EthIpIface::m_arp_entries> {};
 };
 
 struct EthIpIfaceOptions {

@@ -52,7 +52,7 @@ public:
     class Index {
         using TreeNodeAccessor = ComposedAccessor<
             HookAccessor,
-            AIPSTACK_MEMBER_ACCESSOR_TN(&Node::tree_node)
+            MemberAccessor<Node, TreeNode, &Node::tree_node>
         >;
         
         struct TheTreeCompare : public TreeCompare<LinkModel, KeyFuncs> {};

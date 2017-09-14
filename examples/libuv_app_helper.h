@@ -36,7 +36,13 @@
 
 namespace AIpStackExamples {
 
-static int const WatchedSignals[] = {SIGINT, SIGTERM, SIGHUP, SIGQUIT};
+static int const WatchedSignals[] = {
+SIGINT, SIGTERM, SIGHUP
+#ifndef _WIN32
+,SIGQUIT
+#endif
+};
+
 static int const NumWatchedSignals = std::extent<decltype(WatchedSignals)>::value;
 
 class LibuvAppHelper :
