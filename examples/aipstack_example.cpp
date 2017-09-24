@@ -27,33 +27,31 @@
 #include <string>
 #include <stdexcept>
 
+#include <aipstack/meta/Instance.h>
+#include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/structure/index/AvlTreeIndex.h>
 #include <aipstack/structure/index/MruListIndex.h>
 #include <aipstack/structure/minimum/LinkedHeap.h>
+#include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/ip/IpPathMtuCache.h>
 #include <aipstack/ip/IpReassembly.h>
 #include <aipstack/tcp/IpTcpProto.h>
 #include <aipstack/eth/EthIpIface.h>
 
-#ifdef _WIN32
-#include "tap_windows/tap_windows.h"
-#else
-#include "tap_linux/tap_linux.h"
-#endif
-
 #include "libuv_platform.h"
 #include "libuv_app_helper.h"
+#include "tap_iface.h"
 
 // Address configuration
-static AIpStack::MacAddr const DeviceMacAddr =
-    AIpStack::MacAddr::Make(0x8e, 0x86, 0x90, 0x97, 0x65, 0xd5);
 static AIpStack::Ip4Addr const DeviceIpAddr =
     AIpStack::Ip4Addr::FromBytes(192, 168, 64, 10);
 static uint8_t const DevicePrefixLength = 24;
 static AIpStack::Ip4Addr const DeviceGatewayAddr =
     AIpStack::Ip4Addr::FromBytes(192, 168, 64, 1);
+static AIpStack::MacAddr const DeviceMacAddr =
+    AIpStack::MacAddr::Make(0x8e, 0x86, 0x90, 0x97, 0x65, 0xd5);
 
 static int const MaxConnections = 1024;
 
@@ -75,7 +73,7 @@ using MyIpStackService = AIpStack::IpStackService<
     AIpStack::IpStackOptions::ReassemblyService::Is<
         AIpStack::IpReassemblyService<
             AIpStack::IpReassemblyOptions::MaxReassEntrys::Is<16>,
-            AIpStack::IpReassemblyOptions::MaxReassSize::Is<1480>
+            AIpStack::IpReassemblyOptions::MaxReassSize::Is<60000>
         >
     >
 >;
@@ -104,45 +102,8 @@ using Platform = AIpStack::PlatformFacade<PlatformImpl>;
 AIPSTACK_MAKE_INSTANCE(MyIpStack, (MyIpStackService::template Compose<
     PlatformImpl, ProtocolServicesList>))
 
-using Iface = typename MyIpStack::Iface;
-
-AIPSTACK_MAKE_INSTANCE(MyEthIpIface, (MyEthIpIfaceService::template Compose<
-    PlatformImpl, Iface>))
-
-class TapIface :
-    private AIpStackExamples::TapDevice,
-    public MyEthIpIface
-{
-public:
-    TapIface (::Platform platform, MyIpStack *stack, std::string const &device_id) :
-        TapDevice(platform.ref().platformImpl()->loop(), device_id),
-        MyEthIpIface(platform, stack, {
-            /*eth_mtu=*/ TapDevice::getMtu(),
-            /*mac_addr=*/ &DeviceMacAddr
-        })
-    {}
-    
-private:
-    // Implement TapDevice::frameReceived
-    void frameReceived (AIpStack::IpBufRef frame) override final
-    {
-        return MyEthIpIface::recvFrameFromDriver(frame);
-    }
-    
-    // Implement MyEthIpIface::driverSendFrame
-    AIpStack::IpErr driverSendFrame (AIpStack::IpBufRef frame) override final
-    {
-        return TapDevice::sendFrame(frame);
-    }
-    
-    // Implement MyEthIpIface::driverGetEthState
-    AIpStack::EthIfaceState driverGetEthState () override final
-    {
-        AIpStack::EthIfaceState state = {};
-        state.link_up = true;
-        return state;
-    }
-};
+using MyTapIface = AIpStackExamples::TapIface<
+    typename MyIpStack::Iface, MyEthIpIfaceService>;
 
 int main (int argc, char *argv[])
 {
@@ -156,9 +117,9 @@ int main (int argc, char *argv[])
     
     std::unique_ptr<MyIpStack> stack{new MyIpStack(platform)};
     
-    std::unique_ptr<TapIface> iface;
+    std::unique_ptr<MyTapIface> iface;
     try {
-        iface.reset(new TapIface(platform, &*stack, device_id));
+        iface.reset(new MyTapIface(platform, &*stack, device_id, DeviceMacAddr));
     }
     catch (std::runtime_error const &ex) {
         std::fprintf(stderr, "Error initializing TAP interface: %s\n",
