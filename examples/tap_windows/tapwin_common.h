@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Ambroz Bizjak
+ * Copyright (c) 2017 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,34 +22,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_TYPE_SEQUENCE_FROM_LIST_H
-#define AIPSTACK_TYPE_SEQUENCE_FROM_LIST_H
+#ifndef AIPSTACK_TAPWIN_COMMON_H
+#define AIPSTACK_TAPWIN_COMMON_H
 
-#include <aipstack/meta/TypeSequence.h>
-#include <aipstack/meta/TypeListUtils.h>
+#define TAP_IOCTL_CONFIG_TUN            CTL_CODE(FILE_DEVICE_UNKNOWN, 10, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define TAP_IOCTL_GET_MTU               CTL_CODE(FILE_DEVICE_UNKNOWN, 3, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define TAP_IOCTL_SET_MEDIA_STATUS      CTL_CODE(FILE_DEVICE_UNKNOWN, 6, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
-namespace AIpStack {
-
-template <typename, typename>
-struct TypeSequenceFromListHelper;
-
-template <typename List, typename... Indices>
-struct TypeSequenceFromListHelper<List, TypeSequence<Indices...>> {
-#ifdef _MSC_VER
-    template <int Index>
-    struct Hack {
-        using Elem = TypeListGet<List, Index>;
-    };
-    
-    using Result = TypeSequence<typename Hack<Indices::Value>::Elem...>;
-#else
-    using Result = TypeSequence<TypeListGet<List, Indices::Value>...>;
-#endif
-};
-
-template <typename List>
-using TypeSequenceFromList = typename TypeSequenceFromListHelper<List, TypeSequenceMakeInt<TypeListLength<List>::Value>>::Result;
-
-}
+#define ADAPTER_KEY "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
+#define NETWORK_CONNECTIONS_KEY "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}"
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Ambroz Bizjak
+ * Copyright (c) 2017 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,33 +22,66 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_TYPE_SEQUENCE_FROM_LIST_H
-#define AIPSTACK_TYPE_SEQUENCE_FROM_LIST_H
+#ifndef AIPSTACK_WIN_HANDLE_WRAPPER_H
+#define AIPSTACK_WIN_HANDLE_WRAPPER_H
 
-#include <aipstack/meta/TypeSequence.h>
-#include <aipstack/meta/TypeListUtils.h>
+#include <windows.h>
 
-namespace AIpStack {
+#include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/Assert.h>
 
-template <typename, typename>
-struct TypeSequenceFromListHelper;
+namespace AIpStackExamples {
 
-template <typename List, typename... Indices>
-struct TypeSequenceFromListHelper<List, TypeSequence<Indices...>> {
-#ifdef _MSC_VER
-    template <int Index>
-    struct Hack {
-        using Elem = TypeListGet<List, Index>;
-    };
+class WinHandleWrapper :
+    private AIpStack::NonCopyable<WinHandleWrapper>
+{
+private:
+    HANDLE m_handle;
     
-    using Result = TypeSequence<typename Hack<Indices::Value>::Elem...>;
-#else
-    using Result = TypeSequence<TypeListGet<List, Indices::Value>...>;
-#endif
+public:
+    WinHandleWrapper () :
+        m_handle(INVALID_HANDLE_VALUE)
+    {}
+    
+    WinHandleWrapper (WinHandleWrapper &&other) :
+        m_handle(other.m_handle)
+    {
+        other.m_handle = INVALID_HANDLE_VALUE;
+    }
+    
+    explicit WinHandleWrapper (HANDLE handle) :
+        m_handle(handle)
+    {}
+    
+    ~WinHandleWrapper ()
+    {
+        close_it();
+    }
+    
+    WinHandleWrapper & operator= (WinHandleWrapper &&other)
+    {
+        if (&other != this) {
+            close_it();
+            m_handle = other.m_handle;
+            other.m_handle = INVALID_HANDLE_VALUE;
+        }
+        return *this;
+    }
+    
+    inline HANDLE get () const
+    {
+        return m_handle;
+    }
+    
+private:
+    void close_it ()
+    {
+        if (m_handle != INVALID_HANDLE_VALUE) {
+            AIPSTACK_ASSERT_FORCE(CloseHandle(m_handle))
+            m_handle = INVALID_HANDLE_VALUE;
+        }
+    }
 };
-
-template <typename List>
-using TypeSequenceFromList = typename TypeSequenceFromListHelper<List, TypeSequenceMakeInt<TypeListLength<List>::Value>>::Result;
 
 }
 

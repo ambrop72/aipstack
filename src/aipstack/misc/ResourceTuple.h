@@ -31,6 +31,8 @@
 #include <utility>
 #include <tuple>
 
+#include <aipstack/meta/BasicMetaUtils.h>
+
 namespace AIpStack {
 
 struct ResourceTupleInitSame {};
@@ -98,13 +100,13 @@ public:
     }
     
     template <size_t Index>
-    ElemType<Index> & get ()
+    ElemType<Index> & get (WrapSize<Index> = WrapSize<Index>())
     {
         return static_cast<ElemHelperType<Index> &>(*this).m_elem;
     }
     
     template <size_t Index>
-    ElemType<Index> const & get () const
+    ElemType<Index> const & get (WrapSize<Index> = WrapSize<Index>()) const
     {
         return static_cast<ElemHelperType<Index> const &>(*this).m_elem;
     }

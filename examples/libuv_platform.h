@@ -36,7 +36,9 @@
 
 namespace AIpStackExamples {
 
-template <typename HandleType>
+class UvHandleWrapperEmptyUserData {};
+
+template <typename HandleType, typename UserData = UvHandleWrapperEmptyUserData>
 class UvHandleWrapper :
     private AIpStack::NonCopyable<UvHandleWrapper<HandleType>>
 {
@@ -88,9 +90,17 @@ public:
         return &m_dyn->handle;
     }
     
+    UserData & user ()
+    {
+        assert(m_dyn != nullptr);
+        
+        return m_dyn->user_data;
+    }
+    
 private:
     struct DynAllocPart {
         HandleType handle;
+        UserData user_data;
     };
     
     static void closeHandler (uv_handle_t *handle_arg)
@@ -123,6 +133,11 @@ public:
     
 public:
     PlatformImplLibuv (uv_loop_t *loop);
+    
+    inline uv_loop_t * loop () const
+    {
+        return m_loop;
+    }
     
     inline TimeType getTime ()
     {

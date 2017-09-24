@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Ambroz Bizjak
+ * Copyright (c) 2017 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,33 +22,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_TYPE_SEQUENCE_FROM_LIST_H
-#define AIPSTACK_TYPE_SEQUENCE_FROM_LIST_H
+#ifndef AIPSTACK_TAPWIN_FUNCS_H
+#define AIPSTACK_TAPWIN_FUNCS_H
 
-#include <aipstack/meta/TypeSequence.h>
-#include <aipstack/meta/TypeListUtils.h>
+#include <string>
 
-namespace AIpStack {
+namespace AIpStackExamples {
 
-template <typename, typename>
-struct TypeSequenceFromListHelper;
+bool tapwin_parse_tap_spec (std::string const &name,
+                            std::string &out_component_id,
+                            std::string &out_human_name);
 
-template <typename List, typename... Indices>
-struct TypeSequenceFromListHelper<List, TypeSequence<Indices...>> {
-#ifdef _MSC_VER
-    template <int Index>
-    struct Hack {
-        using Elem = TypeListGet<List, Index>;
-    };
-    
-    using Result = TypeSequence<typename Hack<Indices::Value>::Elem...>;
-#else
-    using Result = TypeSequence<TypeListGet<List, Indices::Value>...>;
-#endif
-};
-
-template <typename List>
-using TypeSequenceFromList = typename TypeSequenceFromListHelper<List, TypeSequenceMakeInt<TypeListLength<List>::Value>>::Result;
+bool tapwin_find_device (std::string const &device_component_id,
+                         std::string const &device_name,
+                         std::string &out_device_path);
 
 }
 

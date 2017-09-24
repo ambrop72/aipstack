@@ -48,6 +48,19 @@ public:
         return result;
     }
     
+    static inline constexpr MacAddr Make (uint8_t b1, uint8_t b2, uint8_t b3,
+                                          uint8_t b4, uint8_t b5, uint8_t b6)
+    {
+        MacAddr result = {};
+        result.data[0] = b1;
+        result.data[1] = b2;
+        result.data[2] = b3;
+        result.data[3] = b4;
+        result.data[4] = b5;
+        result.data[5] = b6;
+        return result;
+    }
+    
     inline static MacAddr decode (char const *bytes)
     {
         return StructByteArray<6>::template decodeTo<MacAddr>(bytes);

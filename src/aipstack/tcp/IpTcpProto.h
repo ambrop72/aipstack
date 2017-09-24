@@ -235,7 +235,7 @@ private:
     {
         using PcbMultiTimer::platform;
         
-        inline TcpPcb (Platform platform, IpTcpProto *tcp) :
+        inline TcpPcb (typename IpTcpProto::Platform platform, IpTcpProto *tcp) :
             PcbMultiTimer(platform),
             tcp(tcp),
             state(TcpState::CLOSED)
@@ -282,7 +282,7 @@ private:
         SeqType rcv_ann_wnd; // ensured to fit in size_t (in case size_t is 16-bit)
         
         // Round-trip-time and retransmission time management.
-        TimeType rtt_test_time;
+        typename IpTcpProto::TimeType rtt_test_time;
         RttType rto;
         
         // The maximum segment size we will send.

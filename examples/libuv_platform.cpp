@@ -38,7 +38,7 @@ PlatformImplLibuv::Timer::Timer (ThePlatformRef ref) :
     m_is_set(false)
 {
     int res = m_handle.initialize([&](uv_timer_t *dst) {
-        return uv_timer_init(platformImpl()->m_loop, dst);
+        return uv_timer_init(platformImpl()->loop(), dst);
     });
     assert(res == 0); (void)res;
     
