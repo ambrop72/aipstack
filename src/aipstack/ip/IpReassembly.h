@@ -78,7 +78,6 @@ class IpReassembly :
     AIPSTACK_USE_TYPES1(Platform, (TimeType))
     
     AIPSTACK_USE_TIMERS_CLASS(IpReassemblyTimers<Arg>, (PurgeTimer)) 
-    using IpReassemblyTimers<Arg>::Timers::platform;
     
     static_assert(MaxReassEntrys > 0, "");
     static_assert(MaxReassSize >= Ip4RequiredRecvSize, "");
@@ -149,6 +148,8 @@ public:
             reass.first_hole_offset = ReassNullLink;
         }
     }
+    
+    using IpReassemblyTimers<Arg>::Timers::platform;
     
     /**
      * Process a received packet and possibly return a reassembled datagram.

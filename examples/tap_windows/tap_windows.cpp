@@ -130,6 +130,7 @@ AIpStack::IpErr TapDevice::sendFrame (AIpStack::IpBufRef frame)
     }
     
     if (m_send_count >= NumSendBuffers) {
+        //std::fprintf(stderr, "TAP send: out of buffers\n");
         return AIpStack::IpErr::BUFFER_FULL;
     }
     

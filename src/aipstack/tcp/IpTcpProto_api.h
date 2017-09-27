@@ -452,6 +452,22 @@ public:
         }
         
         /**
+         * Set the window update threshold as a proportion of the expected
+         * receive buffer size.
+         * 
+         * The 'div' defines the proportion as a division of buffer_size, it must
+         * be greater than or equal to 2.
+         */
+        void setProportionalWindowUpdateThreshold(size_t buffer_size, int div)
+        {
+            AIPSTACK_ASSERT(div >= 2)
+            
+            SeqType max_rx_window = MinValueU(buffer_size, TcpProto::MaxRcvWnd);
+            SeqType thres = MaxValue((SeqType)1, (SeqType)(max_rx_window / div));
+            setWindowUpdateThreshold(thres);
+        }
+        
+        /**
          * Returns the last announced receive window.
          * May only be called in CONNECTED state.
          * This is intended to be used when a connection is accepted to determine

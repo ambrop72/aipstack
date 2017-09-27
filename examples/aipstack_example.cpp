@@ -43,6 +43,7 @@
 #include "libuv_platform.h"
 #include "libuv_app_helper.h"
 #include "tap_iface.h"
+#include "example_server.h"
 
 // Address configuration
 static AIpStack::Ip4Addr const DeviceIpAddr =
@@ -53,8 +54,6 @@ static AIpStack::Ip4Addr const DeviceGatewayAddr =
 static AIpStack::MacAddr const DeviceMacAddr =
     AIpStack::MacAddr::Make(0x8e, 0x86, 0x90, 0x97, 0x65, 0xd5);
 
-static int const MaxConnections = 1024;
-
 using PlatformImpl = AIpStackExamples::PlatformImplLibuv;
 
 using IndexService = AIpStack::AvlTreeIndexService;
@@ -64,7 +63,7 @@ using MyIpStackService = AIpStack::IpStackService<
     AIpStack::IpStackOptions::HeaderBeforeIp::Is<AIpStack::EthHeader::Size>,
     AIpStack::IpStackOptions::PathMtuCacheService::Is<
         AIpStack::IpPathMtuCacheService<
-            AIpStack::IpPathMtuCacheOptions::NumMtuEntries::Is<MaxConnections>,
+            AIpStack::IpPathMtuCacheOptions::NumMtuEntries::Is<512>,
             AIpStack::IpPathMtuCacheOptions::MtuIndexService::Is<
                 IndexService
             >
@@ -80,7 +79,7 @@ using MyIpStackService = AIpStack::IpStackService<
 
 using ProtocolServicesList = AIpStack::MakeTypeList<
     AIpStack::IpTcpProtoService<
-        AIpStack::IpTcpProtoOptions::NumTcpPcbs::Is<MaxConnections>,
+        AIpStack::IpTcpProtoOptions::NumTcpPcbs::Is<2048>,
         AIpStack::IpTcpProtoOptions::PcbIndexService::Is<
             IndexService
         >
@@ -104,6 +103,13 @@ AIPSTACK_MAKE_INSTANCE(MyIpStack, (MyIpStackService::template Compose<
 
 using MyTapIface = AIpStackExamples::TapIface<
     typename MyIpStack::Iface, MyEthIpIfaceService>;
+
+using MyExampleServerService = AIpStackExamples::ExampleServerService<
+    // use defaults
+>;
+
+AIPSTACK_MAKE_INSTANCE(MyExampleServer, (MyExampleServerService::template Compose<
+    MyIpStack>))
 
 int main (int argc, char *argv[])
 {
@@ -129,6 +135,8 @@ int main (int argc, char *argv[])
     
     iface->setIp4Addr({true, DevicePrefixLength, DeviceIpAddr});
     iface->setIp4Gateway({true, DeviceGatewayAddr});
+    
+    std::unique_ptr<MyExampleServer> example_server{new MyExampleServer(&*stack)};
     
     std::fprintf(stderr, "Initialized, entering event loop.\n");
     

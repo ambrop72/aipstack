@@ -80,11 +80,22 @@ template <typename Arg>
 class IpStack :
     private NonCopyable<IpStack<Arg>>
 {
-    AIPSTACK_USE_TYPES1(Arg, (Params, PlatformImpl, ProtocolServicesList))
+    AIPSTACK_USE_TYPES1(Arg, (Params, ProtocolServicesList))
     AIPSTACK_USE_VALS(Params, (HeaderBeforeIp, IcmpTTL, AllowBroadcastPing))
     AIPSTACK_USE_TYPES1(Params, (PathMtuCacheService, ReassemblyService))
     
+public:
+    /**
+     * The platform implementation type, as given to @ref IpStackService::Compose.
+     */
+    using PlatformImpl = typename Arg::PlatformImpl;
+    
+    /**
+     * The platform facade type corresponding to @ref PlatformImpl.
+     */
     using Platform = PlatformFacade<PlatformImpl>;
+    
+private:
     AIPSTACK_USE_TYPE1(Platform, TimeType)
     
     AIPSTACK_MAKE_INSTANCE(Reassembly, (ReassemblyService::template Compose<PlatformImpl>))
@@ -201,6 +212,16 @@ public:
     ~IpStack ()
     {
         AIPSTACK_ASSERT(m_iface_list.isEmpty())
+    }
+    
+    /**
+     * Return the platform facade.
+     * 
+     * @return The platform facade.
+     */
+    inline Platform platform () const
+    {
+        return m_reassembly.platform();
     }
     
     /**

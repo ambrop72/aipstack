@@ -44,7 +44,7 @@ namespace AIpStackExamples {
 class TapDevice :
     private AIpStack::NonCopyable<TapDevice>
 {
-    static std::size_t const NumSendBuffers = 64;
+    static std::size_t const NumSendBuffers = 16;
     
     struct OverlappedUserData {
         TapDevice *parent;
