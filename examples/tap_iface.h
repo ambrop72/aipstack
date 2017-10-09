@@ -49,9 +49,7 @@ class TapIface;
 
 namespace Private {
     template <typename IpIface, typename TheEthIpIfaceService>
-    class TapIfaceHelper {
-        friend TapIface<IpIface, TheEthIpIfaceService>;
-        
+    struct TapIfaceHelper {
         AIPSTACK_MAKE_INSTANCE(TheEthIpIface, (TheEthIpIfaceService::template Compose<
             PlatformImplLibuv, IpIface>))
     };

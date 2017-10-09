@@ -20,6 +20,7 @@ let
                         examples/aipstack_example.cpp \
                         examples/libuv_platform.cpp \
                         examples/libuv_app_helper.cpp \
+                        examples/tap_linux/tap_linux.cpp \
                         -luv \
                         -o $out/bin/aipstack_example
                 )

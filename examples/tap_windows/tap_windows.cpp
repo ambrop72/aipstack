@@ -29,9 +29,6 @@
 #include <uv.h>
 
 #include <windows.h>
-//#include <winioctl.h>
-//#include <objbase.h>
-//#include <wtypes.h>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/proto/EthernetProto.h>
