@@ -62,10 +62,10 @@
 #include <aipstack/platform/MultiTimer.h>
 
 #include "IpTcpProto_constants.h"
-#include "IpTcpProto_api.h"
 #include "IpTcpProto_input.h"
 #include "IpTcpProto_output.h"
 #include "TcpListener.h"
+#include "TcpConnection.h"
 
 namespace AIpStack {
 
@@ -94,17 +94,17 @@ class IpTcpProto :
     static_assert(EphemeralPortFirst <= EphemeralPortLast, "");
     
     template <typename> friend class IpTcpProto_constants;
-    template <typename> friend class IpTcpProto_api;
     template <typename> friend class IpTcpProto_input;
     template <typename> friend class IpTcpProto_output;
     template <typename> friend class TcpListener;
+    template <typename> friend class TcpConnection;
+    template <typename> friend class TcpConnectionMtuRefHelper;
     
 public:
     AIPSTACK_USE_TYPES1(TcpUtils, (SeqType, PortType))
     
 private:
     using Constants = IpTcpProto_constants<IpTcpProto>;
-    using Api = IpTcpProto_api<IpTcpProto>;
     using Input = IpTcpProto_input<IpTcpProto>;
     using Output = IpTcpProto_output<IpTcpProto>;
     
@@ -195,9 +195,8 @@ private:
     using ListenerLinkModel = PointerLinkModel<TcpListener<IpTcpProto>>;
     
 public:
-    AIPSTACK_USE_TYPES1(Api, (TcpConnection))
-    
     using Listener = TcpListener<IpTcpProto>;
+    using Connection = TcpConnection<IpTcpProto>;
     
     static SeqType const MaxRcvWnd = Constants::MaxWindow;
     
@@ -227,7 +226,7 @@ private:
     /**
      * A TCP Protocol Control Block.
      * These are maintained internally within the stack and may
-     * survive deinit/reset of an associated TcpConnection object.
+     * survive deinit/reset of an associated Connection object.
      */
     struct TcpPcb :
         // Send retry request (inherited for efficiency).
@@ -273,8 +272,8 @@ private:
             // Pointer to the associated Listener, if in SYN_RCVD.
             Listener *lis;
             
-            // Pointer to any associated TcpConnection, otherwise.
-            TcpConnection *con;
+            // Pointer to any associated Connection, otherwise.
+            Connection *con;
         };
         
         // Sender variables.
@@ -481,8 +480,8 @@ private:
             // Disassociate the Listener.
             pcb_unlink_lis(pcb);
         } else {
-            // Disassociate any TcpConnection. This will call the
-            // connectionAborted callback if we do have a TcpConnection.
+            // Disassociate any Connection. This will call the
+            // connectionAborted callback if we do have a Connection.
             pcb_unlink_con(pcb, true);
         }
         
@@ -521,8 +520,8 @@ private:
         AIPSTACK_ASSERT(pcb->state != OneOf(TcpState::CLOSED, TcpState::SYN_RCVD,
                                          TcpState::TIME_WAIT))
         
-        // Disassociate any TcpConnection. This will call the
-        // connectionAborted callback if we do have a TcpConnection.
+        // Disassociate any Connection. This will call the
+        // connectionAborted callback if we do have a Connection.
         pcb_unlink_con(pcb, false);
         
         // Set snd_nxt to snd_una in order to not accept any more acknowledgements.
@@ -581,7 +580,7 @@ private:
             // Note that the PCB is not yet on the list of unreferenced
             // PCBs, which protects it from being aborted by allocate_pcb
             // during this callback.
-            TcpConnection *con = pcb->con;
+            Connection *con = pcb->con;
             AIPSTACK_ASSERT(con->m_v.pcb == pcb)
             con->pcb_aborted();
             
@@ -625,16 +624,16 @@ private:
         pcb->con = nullptr;
     }
     
-    // This is called from TcpConnection::reset when the TcpConnection
+    // This is called from Connection::reset when the Connection
     // is abandoning the PCB.
     static void pcb_abandoned (TcpPcb *pcb, bool snd_buf_nonempty, SeqType rcv_ann_thres)
     {
         AIPSTACK_ASSERT(pcb->state == TcpState::SYN_SENT || state_is_active(pcb->state))
-        AIPSTACK_ASSERT(pcb->con == nullptr) // TcpConnection just cleared it
+        AIPSTACK_ASSERT(pcb->con == nullptr) // Connection just cleared it
         IpTcpProto *tcp = pcb->tcp;
         
         // Add the PCB to the unreferenced PCBs list.
-        // This has not been done by TcpConnection.
+        // This has not been done by Connection.
         tcp->m_unrefed_pcbs_list.append({*pcb, *tcp}, *tcp);
         
         // Clear any RTT_PENDING flag since we've lost the variables
@@ -727,7 +726,7 @@ private:
         }
     }
     
-    IpErr create_connection (TcpConnection *con, Ip4Addr remote_addr, PortType remote_port,
+    IpErr create_connection (Connection *con, Ip4Addr remote_addr, PortType remote_port,
                              size_t user_rcv_wnd, uint16_t pmtu, TcpPcb **out_pcb)
     {
         AIPSTACK_ASSERT(con != nullptr)

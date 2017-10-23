@@ -40,12 +40,12 @@ namespace AIpStack {
 template <typename TcpProto>
 class TcpRingBufferUtils {
     AIPSTACK_USE_TYPES2(AIpStack, (IpBufNode, IpBufRef))
-    AIPSTACK_USE_TYPES1(TcpProto, (SeqType, TcpConnection))
+    AIPSTACK_USE_TYPES1(TcpProto, (SeqType, Connection))
     
 public:
     class SendRingBuffer {
     public:
-        void setup (TcpConnection &con, char *buf, size_t buf_size)
+        void setup (Connection &con, char *buf, size_t buf_size)
         {
             AIPSTACK_ASSERT(buf != nullptr)
             AIPSTACK_ASSERT(buf_size > 0)
@@ -55,26 +55,26 @@ public:
             con.setSendBuf(IpBufRef{&m_buf_node, (size_t)0, (size_t)0});
         }
         
-        size_t getFreeLen (TcpConnection &con)
+        size_t getFreeLen (Connection &con)
         {
             return m_buf_node.len - get_send_buf(con).tot_len;
         }
         
-        WrapBuffer getWritePtr (TcpConnection &con)
+        WrapBuffer getWritePtr (Connection &con)
         {
             IpBufRef snd_buf = get_send_buf(con);
             size_t write_offset = add_modulo(snd_buf.offset, snd_buf.tot_len, m_buf_node.len);
             return WrapBuffer(m_buf_node.len - write_offset, m_buf_node.ptr + write_offset, m_buf_node.ptr);
         }
         
-        void provideData (TcpConnection &con, size_t amount)
+        void provideData (Connection &con, size_t amount)
         {
             AIPSTACK_ASSERT(amount <= getFreeLen(con))
             
             con.extendSendBuf(amount);
         }
         
-        void writeData (TcpConnection &con, MemRef data)
+        void writeData (Connection &con, MemRef data)
         {
             AIPSTACK_ASSERT(data.len <= getFreeLen(con))
             
@@ -83,7 +83,7 @@ public:
         }
         
     private:
-        inline IpBufRef get_send_buf (TcpConnection &con)
+        inline IpBufRef get_send_buf (Connection &con)
         {
             IpBufRef snd_buf = con.getSendBuf();
             AIPSTACK_ASSERT(snd_buf.tot_len <= m_buf_node.len)
@@ -100,7 +100,7 @@ public:
         // NOTE: If using mirror region and initial_rx_data is not empty, it is
         // you may need to call updateMirrorAfterDataReceived to make sure initial
         // data is mirrored as applicable.
-        void setup (TcpConnection &con, char *buf, size_t buf_size, int wnd_upd_div,
+        void setup (Connection &con, char *buf, size_t buf_size, int wnd_upd_div,
                     IpBufRef initial_rx_data)
         {
             AIPSTACK_ASSERT(buf != nullptr)
@@ -130,26 +130,26 @@ public:
             con.setRecvBuf(recv_buf);
         }
         
-        size_t getUsedLen (TcpConnection &con)
+        size_t getUsedLen (Connection &con)
         {
             return m_buf_node.len - get_recv_buf(con).tot_len;
         }
         
-        WrapBuffer getReadPtr (TcpConnection &con)
+        WrapBuffer getReadPtr (Connection &con)
         {
             IpBufRef rcv_buf = get_recv_buf(con);
             size_t read_offset = add_modulo(rcv_buf.offset, rcv_buf.tot_len, m_buf_node.len);
             return WrapBuffer(m_buf_node.len - read_offset, m_buf_node.ptr + read_offset, m_buf_node.ptr);
         }
         
-        void consumeData (TcpConnection &con, size_t amount)
+        void consumeData (Connection &con, size_t amount)
         {
             AIPSTACK_ASSERT(amount <= getUsedLen(con))
             
             con.extendRecvBuf(amount);
         }
         
-        void readData (TcpConnection &con, MemRef data)
+        void readData (Connection &con, MemRef data)
         {
             AIPSTACK_ASSERT(data.len <= getUsedLen(con))
             
@@ -157,7 +157,7 @@ public:
             con.extendRecvBuf(data.len);
         }
         
-        void updateMirrorAfterDataReceived (TcpConnection &con, size_t mirror_size, size_t amount)
+        void updateMirrorAfterDataReceived (Connection &con, size_t mirror_size, size_t amount)
         {
             AIPSTACK_ASSERT(mirror_size > 0)
             AIPSTACK_ASSERT(mirror_size < m_buf_node.len)
@@ -186,7 +186,7 @@ public:
         }
         
     private:
-        inline IpBufRef get_recv_buf (TcpConnection &con)
+        inline IpBufRef get_recv_buf (Connection &con)
         {
             IpBufRef rcv_buf = con.getRecvBuf();
             AIPSTACK_ASSERT(rcv_buf.tot_len <= m_buf_node.len)

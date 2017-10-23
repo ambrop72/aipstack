@@ -58,10 +58,10 @@ struct RingBufRange {
  * @ref IpBufNode whose 'next' pointer points back to the same node.
  * 
  * For example:
- * - When used with @ref IpTcpProto_api::TcpConnection::getRecvBuf (which describes the
+ * - When used with @ref TcpConnection::getRecvBuf (which describes the
  *   available space for newly received data), this function computes the range of
  *   received unprocessed data.
- * - When used with @ref IpTcpProto_api::TcpConnection::getSendBuf (which describes the
+ * - When used with @ref TcpConnection::getSendBuf (which describes the
  *   data submitted for sending but not yet acknowledged), this function computes the
  *   range of free space where new data to be sent should be written.
  * 

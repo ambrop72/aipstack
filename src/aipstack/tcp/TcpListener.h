@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Ambroz Bizjak
+ * Copyright (c) 2017 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ namespace AIpStack {
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     template <typename> class IpTcpProto;
     template <typename> class IpTcpProto_input;
-    template <typename> class IpTcpProto_api;
+    template <typename> class TcpConnection;
 #endif
     
     /**
@@ -63,7 +63,7 @@ namespace AIpStack {
     {
         template <typename> friend class IpTcpProto;
         template <typename> friend class IpTcpProto_input;
-        template <typename> friend class IpTcpProto_api;
+        template <typename> friend class TcpConnection;
         
         AIPSTACK_USE_TYPES2(TcpUtils, (PortType, SeqType))
         AIPSTACK_USE_TYPES1(TcpProto, (TcpPcb, Constants))

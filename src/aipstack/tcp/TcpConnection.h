@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Ambroz Bizjak
+ * Copyright (c) 2017 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,21 +22,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_IP_TCP_PROTO_API_H
-#define AIPSTACK_IP_TCP_PROTO_API_H
+#ifndef AIPSTACK_TCP_CONNECTION_H
+#define AIPSTACK_TCP_CONNECTION_H
 
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 
-#include <limits>
 #include <type_traits>
+#include <limits>
 
 #include <aipstack/misc/Preprocessor.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/structure/LinkedList.h>
+#include <aipstack/misc/Hints.h>
 #include <aipstack/common/Buf.h>
 #include <aipstack/common/Err.h>
 #include <aipstack/proto/IpAddr.h>
@@ -44,23 +44,21 @@
 #include <aipstack/tcp/TcpListener.h>
 
 namespace AIpStack {
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-template <typename> class IpTcpProto;
-template <typename> class IpTcpProto_input;
-template <typename> class IpTcpProto_output;
-#endif
-
-template <typename TcpProto>
-class IpTcpProto_api
-{
-    AIPSTACK_USE_TYPES1(TcpUtils, (TcpState, PortType, SeqType))
-    AIPSTACK_USE_VALS(TcpUtils, (state_is_active, snd_open_in_state))
-    AIPSTACK_USE_TYPES1(TcpProto, (TcpPcb, Input, Output, Constants, MtuRef, OosBuffer,
-                                   RttType))
     
-public:
-    class TcpConnection;
+    #ifndef DOXYGEN_SHOULD_SKIP_THIS
+    
+    template <typename> class IpTcpProto;
+    template <typename> class IpTcpProto_input;
+    template <typename> class IpTcpProto_output;
+    
+    // Access control hack to allow TcpConnection to inherit MtuRef.
+    template <typename TcpProto>
+    class TcpConnectionMtuRefHelper {
+    public:
+        using Type = typename TcpProto::MtuRef;
+    };
+    
+    #endif
     
     /**
      * Represents a TCP connection.
@@ -70,15 +68,21 @@ public:
      *              is in progress.
      * - CLOSED: There was a connection but is no more.
      */
+    template <typename TcpProto>
     class TcpConnection :
-        private NonCopyable<TcpConnection>,
+        private NonCopyable<TcpConnection<TcpProto>>,
         // MTU reference.
         // It is setup if and only if SYN_SENT or (PCB referenced and can_output_in_state).
-        private MtuRef
+        private TcpConnectionMtuRefHelper<TcpProto>::Type
     {
         template <typename> friend class IpTcpProto;
         template <typename> friend class IpTcpProto_input;
         template <typename> friend class IpTcpProto_output;
+        
+        AIPSTACK_USE_TYPES2(TcpUtils, (TcpState, PortType, SeqType))
+        AIPSTACK_USE_VALS(TcpUtils, (state_is_active, snd_open_in_state))
+        AIPSTACK_USE_TYPES1(TcpProto, (TcpPcb, Input, Output, Constants, MtuRef, OosBuffer,
+                                       RttType))
         
     public:
         /**
@@ -339,7 +343,7 @@ public:
          * The 'div' defines the proportion as a division of buffer_size, it must
          * be greater than or equal to 2.
          */
-        void setProportionalWindowUpdateThreshold(size_t buffer_size, int div)
+        void setProportionalWindowUpdateThreshold (size_t buffer_size, int div)
         {
             AIPSTACK_ASSERT(div >= 2)
             
@@ -627,7 +631,7 @@ public:
         void assert_init ()
         {
             AIPSTACK_ASSERT(!m_v.started && !m_v.snd_closed &&
-                         !m_v.end_sent && !m_v.end_received)
+                            !m_v.end_sent && !m_v.end_received)
             AIPSTACK_ASSERT(m_v.pcb == nullptr)
         }
         
@@ -635,10 +639,10 @@ public:
         {
             AIPSTACK_ASSERT(m_v.started)
             AIPSTACK_ASSERT(m_v.pcb == nullptr || m_v.pcb->state == TcpState::SYN_SENT ||
-                state_is_active(m_v.pcb->state))
+                            state_is_active(m_v.pcb->state))
             AIPSTACK_ASSERT(m_v.pcb == nullptr || m_v.pcb->con == this)
             AIPSTACK_ASSERT(m_v.pcb == nullptr || m_v.pcb->state == TcpState::SYN_SENT ||
-                snd_open_in_state(m_v.pcb->state) == !m_v.snd_closed)
+                            snd_open_in_state(m_v.pcb->state) == !m_v.snd_closed)
         }
         
         void assert_connected ()
@@ -789,8 +793,7 @@ public:
         
         Vars m_v;
     };
-};
-
+    
 }
 
 #endif

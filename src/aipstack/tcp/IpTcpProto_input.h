@@ -56,7 +56,7 @@ class IpTcpProto_input
     AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lte, seq_lt2, tcplen,
                                  can_output_in_state, accepting_data_in_state,
                                  state_is_synsent_synrcvd, snd_open_in_state))
-    AIPSTACK_USE_TYPES1(TcpProto, (Ip4RxInfo, Listener, TcpConnection, TcpPcb, PcbFlags,
+    AIPSTACK_USE_TYPES1(TcpProto, (Ip4RxInfo, Listener, Connection, TcpPcb, PcbFlags,
                                    Output, Constants, AbrtTimer, RtxTimer, OutputTimer,
                                    TheIpStack))
     AIPSTACK_USE_VALS(TcpProto, (pcb_aborted_in_callback))
@@ -324,7 +324,7 @@ public:
     
     // This is called at transition to ESTABLISHED in order to initialize
     // certain variables which can only be initialized once these is an
-    // associated TcpConnection object.
+    // associated Connection object.
     static void pcb_complete_established_transition (TcpPcb *pcb, uint16_t pmtu)
     {
         AIPSTACK_ASSERT(pcb->state == TcpState::ESTABLISHED)
@@ -354,7 +354,7 @@ public:
         pcb->snd_una = pcb->snd_nxt;
         
         // Initialize some variables.
-        TcpConnection *con = pcb->con;
+        Connection *con = pcb->con;
         con->m_v.snd_wnd = snd_wnd;
         con->m_v.cwnd = TcpUtils::calc_initial_cwnd(pcb->snd_mss);
         pcb->setFlag(PcbFlags::CWND_INIT);
@@ -878,8 +878,8 @@ private:
             // Make sure the ACK to the SYN-ACK is sent.
             pcb->setFlag(PcbFlags::ACK_PENDING);
             
-            // We have a TcpConnection (if it went away the PCB would have been aborted).
-            TcpConnection *con = pcb->con;
+            // We have a Connection (if it went away the PCB would have been aborted).
+            Connection *con = pcb->con;
             AIPSTACK_ASSERT(con != nullptr)
             AIPSTACK_ASSERT(con->m_v.pcb == pcb)
             
@@ -911,7 +911,7 @@ private:
             AIPSTACK_ASSERT(lis->m_accept_pcb == nullptr)
             
             // In the listener, point m_accept_pcb to this PCB, so that
-            // the connection can be accepted using TcpConnection::acceptConnection.
+            // the connection can be accepted using Connection::acceptConnection.
             lis->m_accept_pcb = pcb;
             
             // Remove the PCB from the list of unreferenced PCBs. This protects
@@ -992,9 +992,9 @@ private:
             size_t data_acked = data_acked_seq;
             
             if (AIPSTACK_LIKELY(data_acked > 0)) {
-                // We necessarily still have a TcpConnection, if the connection was
+                // We necessarily still have a Connection, if the connection was
                 // abandoned with unsent/unacked data, it would have been aborted.
-                TcpConnection *con = pcb->con;
+                Connection *con = pcb->con;
                 AIPSTACK_ASSERT(con != nullptr)
                 AIPSTACK_ASSERT(data_acked <= con->m_v.snd_buf.tot_len)
                 AIPSTACK_ASSERT(con->m_v.snd_buf_cur.tot_len <= con->m_v.snd_buf.tot_len)
@@ -1045,8 +1045,8 @@ private:
                 AIPSTACK_ASSERT(pcb->state == OneOf(TcpState::FIN_WAIT_1, TcpState::CLOSING,
                                                  TcpState::LAST_ACK))
                 
-                // Tell TcpConnection and application (if any) about end sent.
-                TcpConnection *con = pcb->con;
+                // Tell Connection and application (if any) about end sent.
+                Connection *con = pcb->con;
                 if (AIPSTACK_LIKELY(con != nullptr)) {
                     con->end_sent();
                     if (AIPSTACK_UNLIKELY(pcb_aborted_in_callback(pcb))) {
@@ -1157,7 +1157,7 @@ private:
                              std::numeric_limits<size_t>::max() - eff_rel_seq)
         }
         
-        TcpConnection *con = pcb->con;
+        Connection *con = pcb->con;
         
         // This will be the in-sequence data or FIN that we will process.
         size_t rcv_datalen;
@@ -1297,8 +1297,8 @@ private:
         
         // Processing any data?
         if (AIPSTACK_LIKELY(rcv_datalen > 0)) {
-            // Must have TcpConnection here (or we would have bailed out before).
-            TcpConnection *con = pcb->con;
+            // Must have Connection here (or we would have bailed out before).
+            Connection *con = pcb->con;
             AIPSTACK_ASSERT(con != nullptr)
             
             // Due to window scaling the reduction of rcv_ann_wnd may permit announcing more
@@ -1320,8 +1320,8 @@ private:
         
         // Processing a FIN?
         if (AIPSTACK_UNLIKELY(rcv_seqlen > rcv_datalen)) {
-            // Tell TcpConnection and application (if any) about end received.
-            TcpConnection *con = pcb->con;
+            // Tell Connection and application (if any) about end received.
+            Connection *con = pcb->con;
             if (AIPSTACK_LIKELY(con != nullptr)) {
                 con->end_received();
                 if (AIPSTACK_UNLIKELY(pcb_aborted_in_callback(pcb))) {

@@ -54,7 +54,7 @@ class IpTcpProto_output
                                  can_output_in_state, snd_open_in_state))
     AIPSTACK_USE_TYPES1(TcpProto, (Ip4RxInfo, TcpPcb, PcbFlags, Input, TimeType, RttType,
                                    RttNextType, Constants, OutputTimer, RtxTimer,
-                                   TheIpStack, MtuRef, TcpConnection, PcbKey))
+                                   TheIpStack, MtuRef, Connection, PcbKey))
     AIPSTACK_USE_VALS(TcpProto, (RttTypeMax))
     AIPSTACK_USE_VALS(TheIpStack, (HeaderBeforeIp4Dgram))
     
@@ -210,9 +210,9 @@ public:
             return true;
         }
         
-        // PCB must still have a TcpConnection, if not sending would
+        // PCB must still have a Connection, if not sending would
         // have been closed not open.
-        TcpConnection *con = pcb->con;
+        Connection *con = pcb->con;
         AIPSTACK_ASSERT(con != nullptr)
         
         // Check whether there is any data in the send buffer.
@@ -226,7 +226,7 @@ public:
     {
         AIPSTACK_ASSERT(can_output_in_state(pcb->state))
         
-        TcpConnection *con = pcb->con;
+        Connection *con = pcb->con;
         return
             (AIPSTACK_LIKELY(con != nullptr) &&
                 con->m_v.snd_buf_cur.tot_len < con->m_v.snd_buf.tot_len) ||
@@ -251,7 +251,7 @@ public:
         AIPSTACK_ASSERT(pcb_has_snd_outstanding(pcb))
         AIPSTACK_ASSERT(pcb->con != nullptr)
         
-        TcpConnection *con = pcb->con;
+        Connection *con = pcb->con;
         
         IpBufRef *snd_buf_cur;
         SeqType rem_wnd;
@@ -526,7 +526,7 @@ public:
             // avoids clearing this flag and redundantly stopping the timer.
             pcb->clearFlag(PcbFlags::IDLE_TIMER);
             
-            TcpConnection *con = pcb->con;
+            Connection *con = pcb->con;
             
             // Reduce the CWND (RFC 5681 section 4.1).
             // Also reset cwnd_acked to avoid old accumulated value
@@ -570,7 +570,7 @@ public:
             return;
         }
         
-        TcpConnection *con = pcb->con;
+        Connection *con = pcb->con;
         
         if (con == nullptr || con->m_v.snd_wnd == 0) {
             // This is for:
@@ -624,7 +624,7 @@ public:
         AIPSTACK_ASSERT(can_output_in_state(pcb->state))
         
         // Requeue data.
-        TcpConnection *con = pcb->con;
+        Connection *con = pcb->con;
         if (AIPSTACK_LIKELY(con != nullptr)) {
             con->m_v.snd_buf_cur = con->m_v.snd_buf;
         }
@@ -646,12 +646,12 @@ public:
         // Clear the RTX_ACTIVE flag since any retransmission has now been acked.
         pcb->clearFlag(PcbFlags::RTX_ACTIVE);
         
-        TcpConnection *con = pcb->con;
+        Connection *con = pcb->con;
         
         // Handle end of round-trip-time measurement.
         if (pcb->hasFlag(PcbFlags::RTT_PENDING)) {
             // If we have RTT_PENDING outside of SYN_SENT/SYN_RCVD we must
-            // also have a TcpConnection (see pcb_abandoned, pcb_start_rtt_measurement).
+            // also have a Connection (see pcb_abandoned, pcb_start_rtt_measurement).
             AIPSTACK_ASSERT(con != nullptr)
             
             if (seq_lt2(con->m_v.rtt_test_seq, ack_num)) {
@@ -761,7 +761,7 @@ public:
         // Do the retransmission.
         pcb_output(pcb, true);
         
-        TcpConnection *con = pcb->con;
+        Connection *con = pcb->con;
         if (AIPSTACK_LIKELY(con != nullptr)) {
             // Set recover.
             pcb->setFlag(PcbFlags::RECOVER);
@@ -814,7 +814,7 @@ public:
         TimeType time_diff = pcb->platform().getTime() - pcb->rtt_test_time;
         RttType this_rtt = MinValueU(RttTypeMax, time_diff >> TcpProto::RttShift);
         
-        TcpConnection *con = pcb->con;
+        Connection *con = pcb->con;
         
         // Update RTTVAR and SRTT.
         if (!pcb->hasFlag(PcbFlags::RTT_VALID)) {
@@ -909,7 +909,7 @@ public:
         // Update the snd_mss.
         pcb->snd_mss = new_snd_mss;
         
-        TcpConnection *con = pcb->con;
+        Connection *con = pcb->con;
         
         // Make sure that ssthresh does not become lesser than snd_mss.
         if (con->m_v.ssthresh < pcb->snd_mss) {
@@ -953,7 +953,7 @@ public:
         AIPSTACK_ASSERT(new_snd_wnd <= Constants::MaxWindow)
         
         // If the connection has been abandoned we no longer keep snd_wnd.
-        TcpConnection *con = pcb->con;
+        Connection *con = pcb->con;
         if (AIPSTACK_UNLIKELY(con == nullptr)) {
             return;
         }
@@ -1140,7 +1140,7 @@ private:
         // Did we send anything new?
         if (AIPSTACK_LIKELY(seq_lt2(pcb->snd_nxt, seg_endseq))) {
             // Start a round-trip-time measurement if not already started
-            // and if we still have a TcpConnection.
+            // and if we still have a Connection.
             if (!pcb->hasFlag(PcbFlags::RTT_PENDING)) {
                 pcb_start_rtt_measurement(pcb, false);
             }
