@@ -65,6 +65,7 @@
 #include "IpTcpProto_api.h"
 #include "IpTcpProto_input.h"
 #include "IpTcpProto_output.h"
+#include "TcpListener.h"
 
 namespace AIpStack {
 
@@ -96,6 +97,7 @@ class IpTcpProto :
     template <typename> friend class IpTcpProto_api;
     template <typename> friend class IpTcpProto_input;
     template <typename> friend class IpTcpProto_output;
+    template <typename> friend class TcpListener;
     
 public:
     AIPSTACK_USE_TYPES1(TcpUtils, (SeqType, PortType))
@@ -190,10 +192,12 @@ private:
     AIPSTACK_MAKE_INSTANCE(PcbIndex, (PcbIndexService::template Index<
         PcbIndexAccessor, PcbIndexLookupKeyArg, PcbIndexKeyFuncs, PcbLinkModel>))
     
-    using ListenerLinkModel = PointerLinkModel<typename Api::TcpListener>;
+    using ListenerLinkModel = PointerLinkModel<TcpListener<IpTcpProto>>;
     
 public:
-    AIPSTACK_USE_TYPES1(Api, (TcpConnection, TcpListenParams, TcpListener))
+    AIPSTACK_USE_TYPES1(Api, (TcpConnection))
+    
+    using Listener = TcpListener<IpTcpProto>;
     
     static SeqType const MaxRcvWnd = Constants::MaxWindow;
     
@@ -266,8 +270,8 @@ private:
         IpTcpProto *tcp;    
         
         union {
-            // Pointer to the associated TcpListener, if in SYN_RCVD.
-            TcpListener *lis;
+            // Pointer to the associated Listener, if in SYN_RCVD.
+            Listener *lis;
             
             // Pointer to any associated TcpConnection, otherwise.
             TcpConnection *con;
@@ -474,7 +478,7 @@ private:
         }
         
         if (pcb->state == TcpState::SYN_RCVD) {
-            // Disassociate the TcpListener.
+            // Disassociate the Listener.
             pcb_unlink_lis(pcb);
         } else {
             // Disassociate any TcpConnection. This will call the
@@ -599,7 +603,7 @@ private:
         AIPSTACK_ASSERT(pcb->state == TcpState::SYN_RCVD)
         AIPSTACK_ASSERT(pcb->lis != nullptr)
         
-        TcpListener *lis = pcb->lis;
+        Listener *lis = pcb->lis;
         
         // Decrement the listener's PCB count.
         AIPSTACK_ASSERT(lis->m_num_pcbs > 0)
@@ -700,9 +704,9 @@ private:
         return platform().getTime();
     }
     
-    TcpListener * find_listener (Ip4Addr addr, PortType port)
+    Listener * find_listener (Ip4Addr addr, PortType port)
     {
-        for (TcpListener *lis = m_listeners_list.first();
+        for (Listener *lis = m_listeners_list.first();
              lis != nullptr; lis = m_listeners_list.next(*lis))
         {
             AIPSTACK_ASSERT(lis->m_listening)
@@ -713,7 +717,7 @@ private:
         return nullptr;
     }
     
-    void unlink_listener (TcpListener *lis)
+    void unlink_listener (Listener *lis)
     {
         // Abort any PCBs associated with the listener (without RST).
         for (TcpPcb &pcb : m_pcbs) {
@@ -864,9 +868,9 @@ private:
     
     // Find a listener by local address and port. This also considers listeners bound
     // to wildcard address since it is used to associate received segments with a listener.
-    TcpListener * find_listener_for_rx (Ip4Addr local_addr, PortType local_port)
+    Listener * find_listener_for_rx (Ip4Addr local_addr, PortType local_port)
     {
-        for (TcpListener *lis = m_listeners_list.first();
+        for (Listener *lis = m_listeners_list.first();
              lis != nullptr; lis = m_listeners_list.next(*lis))
         {
             AIPSTACK_ASSERT(lis->m_listening)
@@ -901,8 +905,8 @@ private:
     
 private:
     using ListenersList = LinkedList<
-        MemberAccessor<TcpListener, LinkedListNode<ListenerLinkModel>,
-                       &TcpListener::m_listeners_node>,
+        MemberAccessor<Listener, LinkedListNode<ListenerLinkModel>,
+                       &Listener::m_listeners_node>,
         ListenerLinkModel, false>;
     
     using UnrefedPcbsList = LinkedList<

@@ -56,7 +56,7 @@ class IpTcpProto_input
     AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lte, seq_lt2, tcplen,
                                  can_output_in_state, accepting_data_in_state,
                                  state_is_synsent_synrcvd, snd_open_in_state))
-    AIPSTACK_USE_TYPES1(TcpProto, (Ip4RxInfo, TcpListener, TcpConnection, TcpPcb, PcbFlags,
+    AIPSTACK_USE_TYPES1(TcpProto, (Ip4RxInfo, Listener, TcpConnection, TcpPcb, PcbFlags,
                                    Output, Constants, AbrtTimer, RtxTimer, OutputTimer,
                                    TheIpStack))
     AIPSTACK_USE_VALS(TcpProto, (pcb_aborted_in_callback))
@@ -136,7 +136,7 @@ public:
         }
         
         // Try to handle using a listener.
-        TcpListener *lis = tcp->find_listener_for_rx(ip_info.dst_addr, tcp_meta.local_port);
+        Listener *lis = tcp->find_listener_for_rx(ip_info.dst_addr, tcp_meta.local_port);
         if (lis != nullptr) {
             return listen_input(lis, ip_info, tcp_meta, tcp_data.tot_len);
         }
@@ -363,7 +363,7 @@ public:
     }
     
 private:
-    static void listen_input (TcpListener *lis, Ip4RxInfo const &ip_info,
+    static void listen_input (Listener *lis, Ip4RxInfo const &ip_info,
                               TcpSegMeta const &tcp_meta, size_t tcp_data_len)
     {
         do {
@@ -411,7 +411,7 @@ private:
             // Initially advertised receive window, at most 16-bit wide since
             // SYN-ACK segments have unscaled window.
             // NOTE: rcv_ann_wnd fits into size_t as required since m_initial_rcv_wnd
-            // also does (TcpListener::setInitialReceiveWindow).
+            // also does (Listener::setInitialReceiveWindow).
             AIPSTACK_ASSERT(lis->m_initial_rcv_wnd <= std::numeric_limits<size_t>::max())
             SeqType rcv_wnd = MinValueU(std::numeric_limits<uint16_t>::max(),
                                                   lis->m_initial_rcv_wnd);
@@ -905,8 +905,8 @@ private:
             // Possible transitions in callback (except to CLOSED):
             // - ESTABLISHED->FIN_WAIT_1
         } else {
-            // We have a TcpListener (if it went away the PCB would have been aborted).
-            TcpListener *lis = pcb->lis;
+            // We have a Listener (if it went away the PCB would have been aborted).
+            Listener *lis = pcb->lis;
             AIPSTACK_ASSERT(lis->m_listening)
             AIPSTACK_ASSERT(lis->m_accept_pcb == nullptr)
             

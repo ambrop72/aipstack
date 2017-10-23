@@ -59,7 +59,7 @@ class ExampleServer :
     using TcpProto = typename TheIpStack::template GetProtocolType<
         AIpStack::Ip4ProtocolTcp>;
     
-    using TcpListener = typename TcpProto::TcpListener;
+    using TcpListener = typename TcpProto::Listener;
     using TcpConnection = typename TcpProto::TcpConnection;
     
     class MyListener : public TcpListener {
