@@ -435,6 +435,54 @@ public:
         }
         
         /**
+         * Return the local port number.
+         * 
+         * May only be called in CONNECTED state.
+         */
+        uint16_t getLocalPort ()
+        {
+            AIPSTACK_ASSERT(isConnected())
+            
+            return m_v.pcb->local_port;
+        }
+        
+        /**
+         * Return the remote port number.
+         * 
+         * May only be called in CONNECTED state.
+         */
+        uint16_t getRemotePort ()
+        {
+            AIPSTACK_ASSERT(isConnected())
+            
+            return m_v.pcb->remote_port;
+        }
+        
+        /**
+         * Return the local IPv4 address.
+         * 
+         * May only be called in CONNECTED state.
+         */
+        Ip4Addr getLocalIp4Addr ()
+        {
+            AIPSTACK_ASSERT(isConnected())
+            
+            return m_v.pcb->local_addr;
+        }
+        
+        /**
+         * Return the remote IPv4 address.
+         * 
+         * May only be called in CONNECTED state.
+         */
+        Ip4Addr getRemoteIp4Addr ()
+        {
+            AIPSTACK_ASSERT(isConnected())
+            
+            return m_v.pcb->remote_addr;
+        }
+        
+        /**
          * Sets the window update threshold.
          * If the threshold is being raised outside of initializing a new
          * connection, is advised to then call extendRecvBuf(0) which will
