@@ -59,8 +59,26 @@
 namespace AIpStack {
 
 /**
- * Type of DHCP client event as reported by
- * @ref IpDhcpClientCallback::dhcpClientEvent.
+ * @defgroup dhcp-client DHCP client
+ * @brief DHCP client implementation.
+ * 
+ * This module provides an implementation of a DHCP client compliant with RFC 2131
+ * and (as applicable) RFC 2132.
+ * 
+ * The DHCP client is started by creating an instance of the @ref IpDhcpClient class.
+ * Once created, this objects operates the DHCP protocol and manages applicable
+ * configuration of the network interface. It can optionally report significant
+ * DHCP events to the user via virtual functions in the @ref IpDhcpClientCallback class.
+ * 
+ * The DHCP client currently supports only Ethernet network interfaces; more
+ * specifically, the @ref IpHwType::Ethernet hardware-type specific interface
+ * must be implemented by the network interface (see @ref IpEthHw).
+ * 
+ * @{
+ */
+
+/**
+ * Type of DHCP client event as reported by @ref IpDhcpClientCallback::dhcpClientEvent.
  */
 enum class IpDhcpClientEvent {
     /**
@@ -137,6 +155,8 @@ public:
 
 /**
  * Initialization options for the DHCP client.
+ * 
+ * These are passed to the @ref IpDhcpClient::IpDhcpClient constructor.
  */
 class IpDhcpClientInitOptions {
 public:
@@ -177,7 +197,7 @@ public:
 template <typename Arg>
 class IpDhcpClient;
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef IN_DOXYGEN
 template <typename Arg>
 AIPSTACK_DECL_TIMERS_CLASS(IpDhcpClientTimers, typename Arg::PlatformImpl,
                            IpDhcpClient<Arg>, (DhcpTimer))
@@ -286,7 +306,12 @@ class IpDhcpClient :
         UdpDhcpHeaderSize + Options::MaxOptionsSendSize;
     
 public:
-    // Contains all the information about a lease.
+    /**
+     * Encapsulates information about the current lease.
+     * 
+     * A reference to this type of structure if returned by
+     * @ref getLeaseInfoMustHaveLease.
+     */
     struct LeaseInfo {
         // These two are set already when the offer is received.
         Ip4Addr ip_address; // in LinkDown defines the address to reboot with or none
@@ -333,7 +358,7 @@ public:
      * @param stack The IP stack.
      * @param iface The interface to run on. It must be an Ethernet based interface
      *              and support the @ref IpHwType::Ethernet hardware-type
-     *              specific interface (@ref IpEthHw).
+     *              specific interface (see @ref IpEthHw).
      * @param opts Initialization options. This structure itself is copied but
      *             any referenced memory is not.
      * @param callback Object which will receive callbacks about the status
@@ -1375,7 +1400,7 @@ private:
     }
 };
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef IN_DOXYGEN
 template <typename Arg>
 char const IpDhcpClient<Arg>::DeclineMessageArpResponse[] = "ArpResponse";
 #endif
@@ -1511,7 +1536,7 @@ public:
      */
     template <typename PlatformImpl_, typename IpStack_>
     struct Compose {
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef IN_DOXYGEN
         using PlatformImpl = PlatformImpl_;
         using IpStack = IpStack_;
         using Params = IpDhcpClientService;
@@ -1519,6 +1544,8 @@ public:
 #endif
     };
 };
+
+/** @} */
 
 }
 

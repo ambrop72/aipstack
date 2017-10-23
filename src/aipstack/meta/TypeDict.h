@@ -31,6 +31,11 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup meta
+ * @{
+ */
+
 template <typename TKey, typename TValue>
 struct TypeDictEntry {
     using Key = TKey;
@@ -46,6 +51,8 @@ struct TypeDictFound {
 struct TypeDictNotFound {
     static bool const Found = false;
 };
+
+#ifndef IN_DOXYGEN
 
 namespace Private {
     template <typename Key, typename EntriesList>
@@ -67,8 +74,17 @@ namespace Private {
     };
 }
 
+#endif
+
 template <typename EntriesList, typename Key>
-using TypeDictFind = typename Private::TypeDictFindHelper<Key, EntriesList>::Result;
+using TypeDictFind =
+#ifdef IN_DOXYGEN
+implementation_hidden;
+#else
+typename Private::TypeDictFindHelper<Key, EntriesList>::Result;
+#endif
+
+#ifndef IN_DOXYGEN
 
 namespace Private {
     template <typename Default, typename FindResult>
@@ -82,8 +98,17 @@ namespace Private {
     };
 }
 
+#endif
+
 template <typename EntriesList, typename Key, typename Default>
-using TypeDictGetOrDefault = typename Private::template TypeDictDefaultHelper<Default, TypeDictFind<EntriesList, Key>>::Result;
+using TypeDictGetOrDefault =
+#ifdef IN_DOXYGEN
+implementation_hidden;
+#else
+typename Private::template TypeDictDefaultHelper<Default, TypeDictFind<EntriesList, Key>>::Result;
+#endif
+
+/** @} */
 
 }
 

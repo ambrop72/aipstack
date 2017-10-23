@@ -64,6 +64,33 @@
 namespace AIpStack {
 
 /**
+ * @defgroup ip-stack IP network layer
+ * @brief Implements the IP network layer and manages IP protocol handlers.
+ * 
+ * This module contains the @ref IpStack class which implements the IP network
+ * layer and manages the configured IP protocol handlers (e.g. TCP, UDP).
+ * 
+ * This module also contains the service definitions for certain internal classes
+ * used by @ref IpStack but which need to be configured by the application.
+ * Specifically, the application needs to provide instantiated
+ * @ref IpReassemblyService and @ref IpPathMtuCacheService.
+ * 
+ * Protocol handlers are configured statically by passing a compile-time list of
+ * protocor-handler services to @ref IpStackService::Compose. The required API for
+ * protocol handlers is documented as part of the @ref IpProtocolHandlerStub class.
+ * 
+ * Network interfaces are added by constructing instances of classes derived from
+ * @ref IpStack::Iface. The @ref IpStack maintains a list of network interfaces
+ * in order to implement IP functionality, but does not otherwise manage them.
+ * 
+ * Application code which uses different transport-layer protocols (such as TCP) is
+ * expected to go through @ref IpStack to gain access to the appropriate protocol
+ * handlers, using @ref IpStack::GetProtocolType and @ref IpStack::getProtocol.
+ * 
+ * @{
+ */
+
+/**
  * IPv4 network layer implementation.
  * 
  * This class provides basic IPv4 services. It communicates with interface
@@ -231,11 +258,16 @@ public:
      *         It must be the number of one of the configured procotols.
      */
     template <uint8_t ProtocolNumber>
-    using GetProtocolType = typename TypeListGetMapped<
-        ProtocolHelpersList,
-        typename MemberTypeIpProtocolNumber::Get,
-        WrapValue<uint8_t, ProtocolNumber>
-    >::Protocol;
+    using GetProtocolType =
+    #ifdef IN_DOXYGEN
+        implementation_hidden;
+    #else
+        typename TypeListGetMapped<
+            ProtocolHelpersList,
+            typename MemberTypeIpProtocolNumber::Get,
+            WrapValue<uint8_t, ProtocolNumber>
+        >::Protocol;
+    #endif
     
     /**
      * Get the pointer to a protocol instance given the protocol instance type.
@@ -1797,7 +1829,7 @@ public:
      */
     template <typename PlatformImpl_, typename ProtocolServicesList_>
     struct Compose {
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef IN_DOXYGEN
         using PlatformImpl = PlatformImpl_;
         using ProtocolServicesList = ProtocolServicesList_;
         using Params = IpStackService;
@@ -1805,6 +1837,8 @@ public:
 #endif
     };
 };
+
+/** @} */
 
 }
 

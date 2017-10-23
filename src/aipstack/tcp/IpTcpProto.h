@@ -955,7 +955,7 @@ public:
     // This tells IpStack which IP protocol we receive packets for.
     using IpProtocolNumber = WrapValue<uint8_t, Ip4ProtocolTcp>;
     
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef IN_DOXYGEN
     template <typename PlatformImpl_, typename TheIpStack_>
     struct Compose {
         using PlatformImpl = PlatformImpl_;

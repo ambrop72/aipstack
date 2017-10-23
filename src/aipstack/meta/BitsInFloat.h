@@ -27,6 +27,13 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup meta
+ * @{
+ */
+
+#ifndef IN_DOXYGEN
+
 template <typename T>
 static constexpr int BitsInFloatHelper1 (T x)
 {
@@ -39,11 +46,15 @@ static constexpr int BitsInFloatHelper2 (T x)
     return (x > 0.5) ? 0 : (BitsInFloatHelper2(x * 2) - 1);
 }
 
+#endif
+
 template <typename T>
 static constexpr int BitsInFloat (T x)
 {
     return (x >= 0.5) ? BitsInFloatHelper1(x) : BitsInFloatHelper2(x);
 }
+
+/** @} */
 
 }
 

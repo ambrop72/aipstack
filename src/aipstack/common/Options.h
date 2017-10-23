@@ -60,7 +60,7 @@ public:
     template <ValueType Value>
     using Is = TypeDictEntry<Derived, WrapValue<ValueType, Value>>;
     
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef IN_DOXYGEN
     template <typename... Options>
     struct Config {
         static constexpr ValueType Value = OptionsPrivate::GetValue<
@@ -91,7 +91,7 @@ public:
     template <typename Value>
     using Is = TypeDictEntry<Derived, Value>;
     
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef IN_DOXYGEN
     template <typename... Options>
     struct Config {
         using Value = OptionsPrivate::GetValue<Derived, DefaultValue, Options...>;

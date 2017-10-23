@@ -50,7 +50,12 @@
 
 namespace AIpStack {
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/**
+ * @addtogroup ip-stack
+ * @{
+ */
+
+#ifndef IN_DOXYGEN
 
 template <typename Arg>
 class IpPathMtuCache;
@@ -638,7 +643,7 @@ class IpPathMtuCacheService {
     AIPSTACK_OPTION_CONFIG_TYPE(IpPathMtuCacheOptions, MtuIndexService)
     
 public:
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef IN_DOXYGEN
     template <typename PlatformImpl_, typename IpStack_>
     struct Compose {
         using PlatformImpl = PlatformImpl_;
@@ -648,6 +653,8 @@ public:
     };
 #endif
 };
+
+/** @} */
 
 }
 

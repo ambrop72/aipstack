@@ -80,10 +80,10 @@ inline constexpr bool operator!= (EnumType arg1, AIpStack::EnumZeroType) \
  * The operators ~, |, &, ^, |=, &=, ^= will be defined to do the
  * corresponding bitwise operation on the underlying type.
  * 
- * Operators == and != will be defined for @ref EnumZeroType as the second
+ * Operators == and != will be defined for @ref AIpStack::EnumZeroType as the second
  * operand which check if the first operand (EnumType) is or is not zero
- * respectively. These are intended to be used with @ref EnumZero as follows:
- * e == EnumZero, e != EnumZero.
+ * respectively. These are intended to be used with @ref AIpStack::EnumZero as follows:
+ * `e == EnumZero`, `e != EnumZero`.
  */
 #define AIPSTACK_ENUM_BITFIELD_OPS(EnumType) \
 AIPSTACK_ENUM_UN_OP(EnumType, ~) \

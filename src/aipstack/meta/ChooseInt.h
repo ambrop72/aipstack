@@ -33,6 +33,13 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup meta
+ * @{
+ */
+
+#ifndef IN_DOXYGEN
+
 template <int NumBits, bool Signed>
 class ChooseIntHelper {
 public:
@@ -52,11 +59,20 @@ public:
         void>>>>>>>>;
 };
 
+#endif
+
 template <int NumBits, bool Signed = false>
-using ChooseInt = typename ChooseIntHelper<NumBits, Signed>::Result;
+using ChooseInt =
+#ifdef IN_DOXYGEN
+implementation_hidden;
+#else
+typename ChooseIntHelper<NumBits, Signed>::Result;
+#endif
 
 template <uintmax_t N, bool Signed = false>
 using ChooseIntForMax = ChooseInt<BitsInInt<N>::Value, Signed>;
+
+/** @} */
 
 }
 

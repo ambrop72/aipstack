@@ -37,6 +37,11 @@
 namespace AIpStack {
 
 /**
+ * @addtogroup ip-stack
+ * @{
+ */
+
+/**
  * Stub IP protocol handler documenting the required interface.
  * 
  * This dummy class exists to document the interface for protocol handlers
@@ -299,6 +304,8 @@ struct IpProtocolHandlerStubService {
         AIPSTACK_DEF_INSTANCE(Compose, IpProtocolHandlerStub)
     };
 };
+
+/** @} */
 
 }
 

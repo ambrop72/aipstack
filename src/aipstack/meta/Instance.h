@@ -28,6 +28,11 @@
 #include <aipstack/misc/Preprocessor.h>
 
 /**
+ * @addtogroup meta
+ * @{
+ */
+
+/**
  * Convenience macro for declaring the Instance template-alias
  * in a service definition.
  */
@@ -41,5 +46,7 @@ using Instance = class<Instance_self>;
 #define AIPSTACK_MAKE_INSTANCE(service_name, arg_expr_parens) \
 struct service_name##_arg : public AIPSTACK_REMOVE_PARENS arg_expr_parens {}; \
 using service_name = typename service_name##_arg::template Instance<service_name##_arg>;
+
+/** @} */
 
 #endif

@@ -29,6 +29,13 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup meta
+ * @{
+ */
+
+#ifndef IN_DOXYGEN
+
 template <int Base, uintmax_t N>
 struct DigitsInInt {
     static const int Value = 1 + DigitsInInt<Base, N / Base>::Value;
@@ -39,11 +46,25 @@ struct DigitsInInt<Base, 0> {
     static const int Value = 0;
 };
 
-template <uintmax_t N>
-using BitsInInt = DigitsInInt<2, N>;
+#endif
 
 template <uintmax_t N>
-using HexDigitsInInt = DigitsInInt<16, N>;
+using BitsInInt =
+#ifdef IN_DOXYGEN
+implementation_hidden;
+#else
+DigitsInInt<2, N>;
+#endif
+
+template <uintmax_t N>
+using HexDigitsInInt =
+#ifdef IN_DOXYGEN
+implementation_hidden;
+#else
+DigitsInInt<16, N>;
+#endif
+
+/** @} */
 
 }
 

@@ -34,7 +34,7 @@ namespace AIpStack {
 
 using Icmp4RestType = StructByteArray<4>;
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef IN_DOXYGEN
 
 AIPSTACK_DEFINE_STRUCT(Icmp4Header,
     (Type,         uint8_t)

@@ -45,7 +45,7 @@
 
 namespace AIpStack {
     
-    #ifndef DOXYGEN_SHOULD_SKIP_THIS
+    #ifndef IN_DOXYGEN
     
     template <typename> class IpTcpProto;
     template <typename> class IpTcpProto_input;

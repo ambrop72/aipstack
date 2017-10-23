@@ -27,6 +27,11 @@
 
 #include <aipstack/meta/BasicMetaUtils.h>
 
+/**
+ * @addtogroup meta
+ * @{
+ */
+
 #define AIPSTACK_DECLARE_HAS_MEMBER_TYPE_FUNC(ClassName, TypeMemberName) \
 struct ClassName { \
     template <typename T> \
@@ -59,5 +64,7 @@ struct ClassName { \
     AIPSTACK_DECLARE_HAS_MEMBER_TYPE_FUNC(Has, MemberName) \
     AIPSTACK_DECLARE_GET_MEMBER_TYPE_FUNC(Get, MemberName) \
 };
+
+/** @} */
 
 #endif

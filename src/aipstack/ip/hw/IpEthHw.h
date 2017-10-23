@@ -35,6 +35,11 @@
 namespace AIpStack {
 
 /**
+ * @addtogroup ip-stack
+ * @{
+ */
+
+/**
  * A collection of abstract interfaces specific to Ethernet-based
  * network interfaced.
  *
@@ -158,6 +163,8 @@ public:
         virtual void arpInfoReceived (Ip4Addr ip_addr, MacAddr mac_addr) = 0;
     };
 };
+
+/** @} */
 
 }
 

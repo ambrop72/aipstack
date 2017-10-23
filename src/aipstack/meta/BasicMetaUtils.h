@@ -29,6 +29,11 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup meta
+ * @{
+ */
+
 // WrapType
 
 template <typename TType>
@@ -56,6 +61,8 @@ using WrapSize = WrapValue<size_t, Value>;
 
 // GetReturnType
 
+#ifndef IN_DOXYGEN
+
 template <typename Func>
 struct GetReturnTypeHelper;
 
@@ -69,8 +76,17 @@ struct GetReturnTypeHelper<Ret(Args...)const> {
     using Result = Ret;
 };
 
+#endif
+
 template <typename Func>
-using GetReturnType = typename GetReturnTypeHelper<Func>::Result;
+using GetReturnType =
+#ifdef IN_DOXYGEN
+implementation_hidden;
+#else
+typename GetReturnTypeHelper<Func>::Result;
+#endif
+
+/** @} */
 
 }
 

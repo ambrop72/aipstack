@@ -35,6 +35,11 @@
 namespace AIpStack {
 
 /**
+ * @addtogroup platform
+ * @{
+ */
+
+/**
  * Stub platform implementation documenting the required interface.
  * 
  * This documents the platform implementation required by the stack. A type
@@ -309,6 +314,8 @@ public:
         virtual void handleTimerExpired () = 0;
     };
 };
+
+/** @} */
 
 }
 

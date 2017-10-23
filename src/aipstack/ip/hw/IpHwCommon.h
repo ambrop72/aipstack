@@ -30,6 +30,11 @@
 namespace AIpStack {
 
 /**
+ * @addtogroup ip-stack
+ * @{
+ */
+
+/**
  * Enumeration of types of hardware-type-specific interfaces provided
  * by network interfaces.
  * 
@@ -47,6 +52,8 @@ enum class IpHwType : uint8_t {
      */
     Ethernet = 1,
 };
+
+/** @} */
 
 }
 

@@ -30,6 +30,13 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup meta
+ * @{
+ */
+
+#ifndef IN_DOXYGEN
+
 template <template<typename...> class Template, typename Sequence>
 struct InstantiateVariadicHelper;
 
@@ -38,10 +45,19 @@ struct InstantiateVariadicHelper<Template, TypeSequence<Args...>> {
     using Result = Template<Args...>;
 };
 
+#endif
+
 template <template<typename...> class Template, typename List>
-using InstantiateVariadic = typename InstantiateVariadicHelper<
+using InstantiateVariadic =
+#ifdef IN_DOXYGEN
+implementation_hidden;
+#else
+typename InstantiateVariadicHelper<
     Template, TypeSequenceFromList<List>>::Result;
+#endif
 
 }
+
+/** @} */
 
 #endif

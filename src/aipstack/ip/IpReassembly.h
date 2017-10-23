@@ -45,7 +45,12 @@
 
 namespace AIpStack {
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+/**
+ * @addtogroup ip-stack
+ * @{
+ */
+
+#ifndef IN_DOXYGEN
 
 template <typename Arg>
 class IpReassembly;
@@ -523,7 +528,7 @@ class IpReassemblyService {
     AIPSTACK_OPTION_CONFIG_VALUE(IpReassemblyOptions, MaxReassTimeSeconds)
     
 public:
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef IN_DOXYGEN
     template <typename PlatformImpl_>
     struct Compose {
         using PlatformImpl = PlatformImpl_;
@@ -532,6 +537,8 @@ public:
     };
 #endif
 };
+
+/** @} */
 
 }
 

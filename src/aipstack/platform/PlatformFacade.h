@@ -35,10 +35,24 @@
 
 namespace AIpStack {
 
+/**
+ * @defgroup platform Platform abstractions
+ * @brief Defines platform abstractions needed by AIpStack.
+ * 
+ * For applications, the most important part here is @ref PlatformImplStub which
+ * describes the platform facilities that must be provided by the application.
+ * 
+ * The class @ref PlatformFacade is a thin wrapper around the implementation
+ * of the platform facilities which performs various sanity checks including
+ * type checks.
+ * 
+ * @{
+ */
+
 template <typename Impl>
 class PlatformFacade;
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef IN_DOXYGEN
 
 template <typename Impl, bool ImplIsStatic>
 struct PlatformRefBase {};
@@ -515,6 +529,8 @@ private:
         return (obj.*func_ptr)(std::forward<Args>(args)...);
     }
 };
+
+/** @} */
 
 }
 

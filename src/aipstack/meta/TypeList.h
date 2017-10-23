@@ -27,6 +27,11 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup meta
+ * @{
+ */
+
 struct EmptyTypeList {};
 
 template <typename THead, typename TTail>
@@ -34,6 +39,8 @@ struct ConsTypeList {
     typedef THead Head;
     typedef TTail Tail;
 };
+
+/** @} */
 
 }
 

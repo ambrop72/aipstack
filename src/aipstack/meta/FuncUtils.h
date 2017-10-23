@@ -27,6 +27,11 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup meta
+ * @{
+ */
+
 template <typename Func, typename Arg>
 using FuncCall = typename Func::template Call<Arg>::Type;
 
@@ -45,6 +50,8 @@ struct ValueTemplateFunc {
         typedef Template<U::Value> Type;
     };
 };
+
+/** @} */
 
 }
 

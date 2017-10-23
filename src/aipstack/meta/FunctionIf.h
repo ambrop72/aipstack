@@ -29,6 +29,11 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup meta
+ * @{
+ */
+
 #define AIPSTACK_FUNCTION_IF(condition, return_type, remaining_declaration) \
 AIPSTACK_FUNCTION_IF_EXT(condition, , return_type, remaining_declaration)
 
@@ -48,6 +53,8 @@ template <typename FunctionIfReturnType=return_type> qualifiers std::template en
 #define AIPSTACK_FUNCTION_IF_ELSE_EXT(condition, qualifiers, return_type, remaining_declaration, if_code, else_code) \
 template <typename FunctionIfReturnType=return_type> qualifiers std::template enable_if_t<(condition), FunctionIfReturnType> remaining_declaration if_code \
 template <typename FunctionIfReturnType=return_type> qualifiers std::template enable_if_t<!(condition), FunctionIfReturnType> remaining_declaration else_code
+
+/** @} */
 
 }
 

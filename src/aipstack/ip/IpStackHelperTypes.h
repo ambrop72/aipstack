@@ -37,6 +37,11 @@
 namespace AIpStack {
 
 /**
+ * @addtogroup ip-stack
+ * @{
+ */
+
+/**
  * Represents the IPv4 address configuration of a network interface.
  * 
  * Structures of this type are passed to @ref IpStack::Iface::setIp4Addr
@@ -151,7 +156,10 @@ enum class IpSendFlags : uint16_t {
      */
     AllFlags = DontFragmentFlag,
 };
+
+#ifndef IN_DOXYGEN
 AIPSTACK_ENUM_BITFIELD_OPS(IpSendFlags)
+#endif
 
 /**
  * Contains information about a received ICMP Destination Unreachable message.
@@ -262,6 +270,8 @@ struct IpIfaceInitInfo {
      */
     void *hw_iface = nullptr;
 };
+
+/** @} */
 
 }
 

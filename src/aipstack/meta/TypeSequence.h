@@ -29,8 +29,15 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup meta
+ * @{
+ */
+
 template <typename... Types>
 struct TypeSequence {};
+
+#ifndef IN_DOXYGEN
 
 template <typename, typename>
 struct TypeSequenceMakeIntConcatHelper;
@@ -58,8 +65,17 @@ struct TypeSequenceMakeIntHelper<1> {
     using Result = TypeSequence<WrapInt<0>>;
 };
 
+#endif
+
 template <int N>
-using TypeSequenceMakeInt = typename TypeSequenceMakeIntHelper<N>::Result;
+using TypeSequenceMakeInt =
+#ifdef IN_DOXYGEN
+implementation_hidden;
+#else
+typename TypeSequenceMakeIntHelper<N>::Result;
+#endif
+
+/** @} */
 
 }
 
