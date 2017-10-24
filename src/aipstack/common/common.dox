@@ -23,9 +23,10 @@
  */
 
 /**
- * @defgroup meta Metaprogramming Library
- * @brief Provides facilities for template metaprogramming.
- *
- * Currendly this library is generally undocumented; most of it is only used only
- * internally in the stack.
+ * @defgroup common Common Library
+ * @brief Provides commonly used facilities specific to TCP/IP implementation
+ * 
+ * This library provides commonly used facilities specific to the domain of
+ * TCP/IP stack implementation, especially facilities which allow different
+ * parts of the implementation to interoperate more easily.
  */

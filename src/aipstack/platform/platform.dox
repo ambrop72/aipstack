@@ -23,9 +23,13 @@
  */
 
 /**
- * @defgroup meta Metaprogramming Library
- * @brief Provides facilities for template metaprogramming.
- *
- * Currendly this library is generally undocumented; most of it is only used only
- * internally in the stack.
+ * @defgroup platform Platform Abstractions
+ * @brief Defines platform abstractions needed by %AIpStack.
+ * 
+ * For applications, the most important part here is @ref PlatformImplStub which
+ * describes the platform facilities that must be provided by the application.
+ * 
+ * The class @ref PlatformFacade is a thin wrapper around the implementation
+ * of the platform facilities which performs various sanity checks including
+ * type checks.
  */

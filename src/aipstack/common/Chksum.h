@@ -46,6 +46,29 @@
 extern "C" uint16_t IpChksumInverted (char const *data, size_t len);
 #else
 
+/**
+ * @ingroup common
+ * Calculate the inverted IP checksum of a buffer.
+ * 
+ * This function calculates the inverted IP checksum of a contiguous sequence of
+ * bytes. More specifically, it calculates the ones-complement sum of 16-bit words
+ * as if those were represented in big-endian byte order (the result depends only
+ * on the sequence of bytes and not the byte order of the processor). To obtain
+ * an actual IP checksum for use in protocol headers, the result would need to be
+ * bit-flipped (see @ref AIpStack::IpChksum).
+ *
+ * If the number of bytes is odd, this is treated as if there was an extra
+ * zero byte at the end.
+ * 
+ * If the macro `AIPSTACK_EXTERNAL_CHKSUM` is defined, then only an `extern "C"`
+ * function declaration is provided by the header file Chksum.h and the implementation
+ * must be provided by the application.
+ * 
+ * @param data Pointer to data (must not be null).
+ * @param len Number of bytes (may be zero). It must not exceed 65535 (this may
+ *        allow a more optimized custom implementation).
+ * @return Inverted IP checksum (ones-complement sum of 16-bit words).
+ */
 AIPSTACK_NO_INLINE
 inline uint16_t IpChksumInverted (char const *data, size_t len)
 {
@@ -74,44 +97,119 @@ inline uint16_t IpChksumInverted (char const *data, size_t len)
 
 namespace AIpStack {
 
+/**
+ * @addtogroup common
+ * @{
+ */
+
+/**
+ * Calculate the IP checksum of a buffer.
+ * 
+ * This function calculates the IP checksum of a contiguous sequence of bytes.
+ * It is equivalent to calling @ref IpChksumInverted and bit-flipping the result
+ * (in fact it is implemented like that). As such, the result is suitable for use
+ * in protocol headers (assuming correct encoding/decoding to/from big-endian).
+ * 
+ * @param data Pointer to data (must not be null).
+ * @param len Number of bytes (may be zero). It must not exceed 65535.
+ * @return IP checksum.
+ */
 inline uint16_t IpChksum (char const *data, size_t len)
 {
     return ~IpChksumInverted(data, len);
 }
 
+/**
+ * Provides incremental IP checksum calculation of header words followed by data.
+ * 
+ * This class must be used according to the following pattern:
+ * 1. Construct a new instance using the default constructor \ref IpChksumAccumulator().
+ * 2. Call the following functions as needed to add the header to the running checksum:
+ *    @ref addWord(WrapType<uint16_t>, uint16_t),
+ *    @ref addWord(WrapType<uint32_t>, uint32_t),
+ *    @ref addWords(WordType const *), @ref addWords(WordType const (*)[NumWords]),
+ *    @ref addEvenBytes. The order of these calls with respect to each another does
+ *    not matter due to commutativity of the IP checksum.
+ * 3. Call @ref getChksum() or @ref getChksum(IpBufRef) to add any data to the
+ *    running checksum (only in the latter case) and return the calculated checksum.
+ * 
+ * After calling any of the `getChksum` functions, the @ref IpChksumAccumulator object
+ * is considered to be in an invalid state; subsequent calculations must be done with
+ * newly constructed objects.
+ * 
+ * It is possible to export the state of the calculation by calling @ref getState and
+ * later resume the calculation with a new object constructed using
+ * @ref IpChksumAccumulator(State)
+ */
 class IpChksumAccumulator {
 private:
     uint32_t m_sum;
     
 public:
+    /**
+     * Data type representing the exported state of a checksum calculation.
+     */
     enum State : uint32_t {};
     
+    /**
+     * Construct the object to start a new checksum calculation.
+     */
     inline IpChksumAccumulator ()
     : m_sum(0)
     {
     }
     
+    /**
+     * Construct the object to resume a checksum calculation.
+     * 
+     * @param state The exported calculation state as returned by @ref getState.
+     */
     inline IpChksumAccumulator (State state)
     : m_sum(state)
     {
     }
     
+    /**
+     * Export the state of the calculation for resuming later.
+     * 
+     * @return The exported calculation state.
+     */
     inline State getState () const
     {
         return State(m_sum);
     }
     
+    /**
+     * Add a 16-bit word.
+     * 
+     * @param word The word to add.
+     */
     inline void addWord (WrapType<uint16_t>, uint16_t word)
     {
         m_sum += word;
     }
     
+    /**
+     * Add a 32-bit word.
+     * 
+     * @param word The word to add.
+     */
     inline void addWord (WrapType<uint32_t>, uint32_t word)
     {
         addWord(WrapType<uint16_t>(), (uint16_t)(word >> 16));
         addWord(WrapType<uint16_t>(), (uint16_t)word);
     }
     
+    /**
+     * Add a constant number of contiguous words.
+     * 
+     * The word widths supported are those for which an `addWord` overloads exist.
+     * 
+     * @tparam WordType Unsigned integer type corresponding to the word width;
+     *         see `addWord` overloads for supported widths/types.
+     * @tparam NumWords Number of words (must be >=0).
+     * @param words Pointer to the words to add.
+     */
     template <typename WordType, int NumWords>
     inline void addWords (WordType const *words)
     {
@@ -120,12 +218,29 @@ public:
         }
     }
     
+    /**
+     * Add a constant-sized array of words.
+     * 
+     * This is equivalent to @ref addWords(WordType const *) but can deduce the number
+     * of words based on the array type.
+     * 
+     * @tparam WordType Unsigned integer type corresponding to the word width;
+     *         see `addWord` overloads for supported widths/types.
+     * @tparam NumWords Number of words (must be >=0).
+     * @param words Pointer to the array of words to add.
+     */
     template <typename WordType, int NumWords>
     inline void addWords (WordType const (*words)[NumWords])
     {
         addWords<WordType, NumWords>(*words);
     }
     
+    /**
+     * Add an even number of contiguous bytes.
+     * 
+     * @param ptr Pointer to data (must not be null).
+     * @param num_bytes Number of bytes (must be even, may be zero).
+     */
     inline void addEvenBytes (char const *ptr, size_t num_bytes)
     {
         AIPSTACK_ASSERT(num_bytes % 2 == 0)
@@ -138,6 +253,14 @@ public:
         }
     }
     
+    /**
+     * Complete and return the checksum without adding any additional data.
+     * 
+     * After this function is called, the @ref IpChksumAccumulator object is considered
+     * to be in an invalid state and its further use would have unspecified results.
+     * 
+     * @return The calculated checksum.
+     */
     inline uint16_t getChksum ()
     {
         foldOnce();
@@ -145,6 +268,17 @@ public:
         return ~m_sum;
     }
     
+    /**
+     * Add the data referenced by @ref IpBufRef then complete and return the checksum.
+     * 
+     * After this function is called, the @ref IpChksumAccumulator object is considered
+     * to be in an invalid state and its further use would have unspecified results.
+     * 
+     * @param buf Reference to the sequence of data bytes to add before completing
+     *        the checksum. Its length (`buf.tot_len`) may be any number including
+     *        zero (if zero, then `buf.node` is not examined and may be null).
+     * @return The calculated checksum.
+     */
     inline uint16_t getChksum (IpBufRef buf)
     {
         if (buf.tot_len > 0) {
@@ -197,11 +331,27 @@ private:
     }
 };
 
+/**
+ * Calculate the IP checksum of an @ref IpBufRef.
+ * 
+ * This function calculates the IP checksum of a possibly discontiguous sequence
+ * of bytes. It is functionally equivalent to
+ * @ref IpChksum(char const *, size_t) except that the sequence of bytes is specified
+ * using @ref IpBufRef.
+ * 
+ * This function is implemented by default-constructing an @ref IpChksumAccumulator
+ * then calling @ref IpChksumAccumulator::getChksum(IpBufRef).
+ * 
+ * @param buf Reference to the sequence of bytes.
+ * @return IP checksum.
+ */
 inline uint16_t IpChksum (IpBufRef buf)
 {
     IpChksumAccumulator accum;
     return accum.getChksum(buf);
 }
+
+/** @} */
 
 }
 

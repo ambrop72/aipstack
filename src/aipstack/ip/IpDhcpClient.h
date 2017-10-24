@@ -59,8 +59,8 @@
 namespace AIpStack {
 
 /**
- * @defgroup dhcp-client DHCP client
- * @brief DHCP client implementation.
+ * @defgroup dhcp-client DHCP Client
+ * @brief Performs automatic interface configuration using DHCP.
  * 
  * This module provides an implementation of a DHCP client compliant with RFC 2131
  * and (as applicable) RFC 2132.

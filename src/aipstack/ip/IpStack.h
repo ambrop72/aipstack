@@ -64,8 +64,9 @@
 namespace AIpStack {
 
 /**
- * @defgroup ip-stack IP network layer
- * @brief Implements the IP network layer and manages IP protocol handlers.
+ * @defgroup ip-stack IP Network Layer
+ * @brief Implements the network layer and integrates the operation of network
+ * interfaces and transport protocols.
  * 
  * This module contains the @ref IpStack class which implements the IP network
  * layer and manages the configured IP protocol handlers (e.g. TCP, UDP).

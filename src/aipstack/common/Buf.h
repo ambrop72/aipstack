@@ -35,6 +35,11 @@
 namespace AIpStack {
 
 /**
+ * @addtogroup common
+ * @{
+ */
+
+/**
  * Node in a chain of memory buffers.
  * 
  * It contains the pointer to and length of a buffer,
@@ -467,6 +472,8 @@ struct IpBufRef {
         return buf;
     }
 };
+
+/** @} */
 
 }
 
