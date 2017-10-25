@@ -72,14 +72,14 @@ struct IpBufNode {
  * 
  * Except where noted otherwise, all functions in IpBufRef
  * require the reference to be *valid*. This means that
- * node is not NULL, the offset points to a valid location
+ * @ref node is not NULL, the @ref offset points to a valid location
  * within this first buffer (pointing to the end is permitted),
- * and there is at least tot_len remaining data in the first
+ * and there is at least @ref tot_len remaining data in the first
  * buffer and subsequent buffers together.
  * 
  * Operations with these memory ranges never modify the
- * buffer nodes (IpBufNode). Only the IpBufRef objects are
- * changed or created to refer to different ranges of a
+ * buffer nodes (@ref IpBufNode). Only the @ref IpBufRef objects
+ * are changed or created to refer to different ranges of a
  * buffer chain.
  */
 struct IpBufRef {
@@ -99,10 +99,12 @@ struct IpBufRef {
     size_t tot_len;
     
     /**
-     * Returns tot_len.
+     * Return the length of this memory range (@ref tot_len).
      * 
-     * A valid reference is not needed, this simply returns tot_len
+     * A valid reference is not needed, this simply returns @ref tot_len
      * without any requirements.
+     * 
+     * @return @ref tot_len
      */
     inline size_t getTotalLength () const
     {
@@ -110,9 +112,9 @@ struct IpBufRef {
     }
     
     /**
-     * Returns the pointer to the first chunk of the memory range.
+     * Return the pointer to the first chunk of the memory range.
      * 
-     * This returns node->ptr + offset.
+     * @return `node->ptr + offset`
      */
     inline char * getChunkPtr () const
     {
@@ -123,9 +125,9 @@ struct IpBufRef {
     }
     
     /**
-     * Returns the length of the first chunk of the memory range.
+     * Return the length of the first chunk of the memory range.
      * 
-     * This returns min(tot_len, node->len - offset).
+     * @return `min(tot_len, node->len - offset)`
      */
     inline size_t getChunkLength () const
     {
@@ -138,10 +140,12 @@ struct IpBufRef {
     /**
      * Move to the next buffer in the memory range.
      * 
-     * This decrements tot_len by getChunkLength(), sets node to
-     * node->next and sets offset to 0. After that it returns
+     * This decrements @ref tot_len by @ref getChunkLength(), sets @ref node to
+     * `node->next` and sets @ref offset to 0. After that it returns
      * whether there is any more data in the (now modified) memory
-     * range, that is (tot_len > 0).
+     * range, that is @ref tot_len > 0.
+     * 
+     * @return Whether there is any more data after the adjustment.
      */
     bool nextChunk ()
     {
@@ -159,8 +163,7 @@ struct IpBufRef {
     }
     
     /**
-     * Attempts to extend the memory range backward in the
-     * first buffer.
+     * Try to extend the memory range backward in the first buffer.
      * 
      * If amount is greater than offset, returns false since
      * insufficient memory is available in the first buffer.
@@ -168,6 +171,12 @@ struct IpBufRef {
      * to the left by amount and returns true. The *new_ref
      * will have the same node, offset decremented by amount
      * and tot_len incremented by amount.
+     * 
+     * @param amount Number of bytes to reveal.
+     * @param new_ref Pointer to where the result will be stored (must not
+     *        be null).
+     * @return True on success (enough space was available, `*new_ref` was
+     *         set), false on failure (`*new_ref` was not changed).
      */
     inline bool revealHeader (size_t amount, IpBufRef *new_ref) const
     {
@@ -184,10 +193,12 @@ struct IpBufRef {
     }
     
     /**
-     * Extends the memory range backward in the first buffer
-     * assuming there is space.
+     * Extend the memory range backward in the first buffer assuming there
+     * is space.
      * 
-     * The amount must be less then or equal to offset.
+     * @param amount Number od bytes to reveal. Must be less then or equal
+     *        to @ref offset.
+     * @return The adjusted memory range.
      */
     inline IpBufRef revealHeaderMust (size_t amount) const
     {
@@ -201,10 +212,11 @@ struct IpBufRef {
     }
     
     /**
-     * Checks if there is at least amount bytes available
-     * in the first chunk of the memory range.
+     * Check if there is at least `amount` bytes available
+     * in the first chunk of this memory range.
      * 
-     * It returns (getChunkLength() >= amount).
+     * @param amount Number of bytes to check for.
+     * @return `getChunkLength() >= amount`.
      */
     inline bool hasHeader (size_t amount) const
     {
@@ -215,12 +227,13 @@ struct IpBufRef {
     }
     
     /**
-     * Returns a memory range with without an initial portion
-     * of this memory range.
+     * Return a memory range without an initial portion of this memory range
+     * that must be within the first chunk.
      * 
-     * The amount must be lesser than or equal to getChunkLength().
-     * It returns a reference with the same node, offset
-     * incremented by amount and tot_len decremented by amount.
+     * @param amount Number of bytes to hide. Must be less than or equal
+     *        to @ref getChunkLength().
+     * @return A reference with the same @ref node, @ref offset incremented
+     *         by `amount` and @ref tot_len decremented by `amount`.
      */
     inline IpBufRef hideHeader (size_t amount) const
     {
@@ -237,12 +250,12 @@ struct IpBufRef {
     }
     
     /**
-     * Returns an IpBufNode corresponding for the first buffer
+     * Return an @ref IpBufNode corresponding to the first buffer
      * of the memory range with the offset applied.
      * 
-     * It returns an IpBufNode with ptr equal to node->ptr
-     * + offset, len equal to node->len - offset and next
-     * equal to node->next.
+     * @return An @ref IpBufNode with `ptr` equal to `node->ptr + offset`,
+     *        `len` equal to `node->len - offset` and `next` equal to
+     *        `node->next`.
      */
     inline IpBufNode toNode () const
     {
@@ -257,31 +270,37 @@ struct IpBufRef {
     }
     
     /**
-     * Creates a memory range consisting of an initial portion
+     * Construct a memory range consisting of an initial portion
      * of the first chunk of this memory range continued by
      * data in a specified buffer chain.
      * 
-     * The header_len must be less than or equal to node->len
-     * - offset and total_len must be greater than or equal to
-     * header_len.
-     * 
-     * It sets *out_node to a new IpBufNode referencing the
+     * It sets `*out_node` to a new @ref IpBufNode referencing the
      * initial portion and continuing into the given buffer
-     * chain (ptr = node->ptr, len = offset + header_len,
-     * next = cont), and returns an IpBufRef using out_node
-     * as its first buffer (node = out_node, offset = offset,
-     * tot_len = total_len).
+     * chain (`ptr = node->ptr`, `len = offset + header_len`,
+     * `next = cont`), and returns an @ref IpBufRef using `out_node`
+     * as its first buffer (`node = out_node`, `offset = offset`,
+     * `tot_len = total_len`).
      * 
      * Note that this does not "apply" the offset to the node
-     * as toNode does. This is to allow revealHeader.
+     * as @ref toNode does. This is to allow @ref revealHeader.
      *
      * It is important to understand that this works by creating
-     * a new IpBufNode, because the buffer chain model cannot
-     * support this operation otherwise. The returned IpBufRef
-     * will be valid only so long as out_node remains valid.
+     * a new @ref IpBufNode, because the buffer chain model cannot
+     * support this operation otherwise. The returned @ref IpBufRef
+     * will be valid only so long as `out_node` remains valid.
+     * 
+     * @param header_len Length of the initial portion. Must be less than or
+     *        equal to `node->len - offset`.
+     * @param cont Pointer to the buffer node with data after the initial
+     *        portion (may be null if there is no such data).
+     * @param total_len Total length of the constructed memory range.
+     *        Must be greater than or equal to `header_len`.
+     * @param out_node Pointer to where the new @ref IpBufNode for the
+     *        initial portion will be written (must not be null).
+     * @return An @ref IpBufRef referencing the constructed memory range.
      */
     IpBufRef subHeaderToContinuedBy (size_t header_len, IpBufNode const *cont,
-                                            size_t total_len, IpBufNode *out_node) const
+                                     size_t total_len, IpBufNode *out_node) const
     {
         AIPSTACK_ASSERT(node != nullptr)
         AIPSTACK_ASSERT(offset <= node->len)
@@ -293,12 +312,12 @@ struct IpBufRef {
     }
     
     /**
-     * Consume a number of bytes from the front of the memory
-     * range.
+     * Consume a number of bytes from the front of the memory range.
      * 
-     * The amount must not exceed tot_len.
+     * This moves to subsequent buffers eagerly (see @ref processBytes).
      * 
-     * This moves to subsequent buffers eagerly (see processBytes).
+     * @param amount Number of bytes to consume. Must be less than or equal
+     *        to @ref tot_len.
      */
     void skipBytes (size_t amount)
     {
@@ -310,9 +329,11 @@ struct IpBufRef {
      * memory range while copying them to the given memory
      * location.
      * 
-     * The amount must not exceed tot_len.
+     * This moves to subsequent buffers eagerly (see @ref processBytes).
      * 
-     * This moves to subsequent buffers eagerly (see processBytes).
+     * @param amount Number of bytes to copy out and consume. Must be less than
+     *        or equal to @ref tot_len.
+     * @param dst Location to copy to. May be null only if `amount` is null.
      */
     void takeBytes (size_t amount, char *dst)
     {
@@ -327,9 +348,11 @@ struct IpBufRef {
      * range while copying bytes from the given memory location
      * into the consumed part of the range.
      * 
-     * The amount must not exceed tot_len.
+     * This moves to subsequent buffers eagerly (see @ref processBytes).
      * 
-     * This moves to subsequent buffers eagerly (see processBytes).
+     * @param amount Number of bytes to copy in and consume. Must be less than
+     *        or equal to @ref tot_len.
+     * @param src Location to copy from. May be null only if `amount` is null.
      */
     void giveBytes (size_t amount, char const *src)
     {
@@ -345,10 +368,13 @@ struct IpBufRef {
      * into the consumed part of the range.
      * 
      * The number of bytes consumed and copied is equal to
-     * the length of the other memory range (src), and must
+     * the length of the other memory range (`src`), and must
      * not exceed the length of this memory range.
      * 
-     * This moves to subsequent buffers eagerly (see processBytes).
+     * This moves to subsequent buffers eagerly (see @ref processBytes).
+     * 
+     * @param src Memory range to copy in. `src.tot_len` must be less than
+     *        or equal to @ref tot_len of this memory range.
      */
     void giveBuf (IpBufRef src)
     {
@@ -361,9 +387,11 @@ struct IpBufRef {
      * Consume and return a single byte from the front of the
      * memory range.
      * 
-     * The tot_len must be positive.
+     * @ref tot_len must be positive.
      * 
-     * This moves to subsequent buffers eagerly (see processBytes).
+     * This moves to subsequent buffers eagerly (see @ref processBytes).
+     * 
+     * @return The consumed byte.
      */
     char takeByte ()
     {
@@ -396,6 +424,13 @@ struct IpBufRef {
      * chain is a ring buffer, so that the offset into the buffer
      * will remain always less than the buffer size, never becoming
      * equal.
+     * 
+     * @tparam Func Function object type.
+     * @param amount Number of bytes to process and consume. Must be less than
+     *        or equal to @ref tot_len.
+     * @param func Function to call in order to process chunks (see above). The
+     *        function must not modify this @ref IpBufRef object, and the state of
+     *        this object at the time of invocation is unspecified.
      */
     template <typename Func>
     void processBytes (size_t amount, Func func)
@@ -413,7 +448,7 @@ struct IpBufRef {
                 }
                 
                 size_t take = MinValue(rem_in_buf, amount);
-                func(getChunkPtr(), take);
+                func(getChunkPtr(), size_t(take));
                 
                 tot_len -= take;
                 
@@ -437,14 +472,16 @@ struct IpBufRef {
     }
     
     /**
-     * Return a memory range that is an initial part of
-     * this memory range.
+     * Return a memory range that is a prefix of this memory range.
      * 
-     * It returns an IpBufRef with the same node and offset
-     * but with tot_len equal to new_tot_len. The new_tot_len
-     * must not exceed tot_len.
+     * It returns an @ref IpBufRef with the same @ref node and @ref offset
+     * but with @ref tot_len equal to `new_tot_len`.
      * 
-     * The 'node' is allowed to be null.
+     * @ref node is allowed to be null.
+     * 
+     * @param new_tot_len The length of the prefix memory range. Must be less than
+     *        or equal to @ref tot_len.
+     * @return The prefix range whose length is `new_tot_len`.
      */
     inline IpBufRef subTo (size_t new_tot_len) const
     {
@@ -461,8 +498,14 @@ struct IpBufRef {
      * Return a sub-range of the buffer reference from the given
      * offset of the given length.
      * 
-     * This is implemented by calling skipBytes(offset) on a copy
-     * of this object then returning subTo(len) of this copy.
+     * This is implemented by calling @ref skipBytes(`offset`) on a copy
+     * of this object then returning @ref subTo(`len`) of this copy.
+     * 
+     * @param offset Offset from the start of this memory range. Must be less than
+     *        or equal to @ref tot_len.
+     * @param len Length of sub-range. Must be less than or equal to @ref tot_len
+     *        - `offset`.
+     * @return The sub-range starting at `offset` whose length is `len`.
      */
     inline IpBufRef subFromTo (size_t offset, size_t len) const
     {
