@@ -30,6 +30,28 @@
 
 namespace AIpStack {
 
+/**
+ * @ingroup infra
+ * @defgroup observer Observer Notification
+ * @brief Provides mechanisms for application of the observer pattern
+ * 
+ * The @ref Observable and @ref Observer classes together implement the observer pattern,
+ * excluding the specific mechanism used for notification calls. This includes association
+ * and disassociation of observers with observables and modification-safe iteration of
+ * observers for notifications.
+ * 
+ * Observers are associated with an observable using @ref Observable::addObserver and
+ * disassociated using @ref Observer::reset or the Observer::~Observer destructor.
+ * Notification of observers associated with an observable is performed using
+ * @ref Observable::notifyKeepObservers or @ref Observable::notifyRemoveObservers (in the
+ * latter case each observer is disassociated prior to being notified).
+ * 
+ * The @ref Observable and @ref Observer are not copy/move-constructible or
+ * copy/move-assignable by design.
+ * 
+ * @{
+ */
+
 #ifndef IN_DOXYGEN
 
 class ObserverNotificationPrivate
@@ -220,6 +242,32 @@ public:
 template <typename ObserverDerived>
 class Observable;
 
+/**
+ * Represents an entity which can be associated with an observable and receive
+ * notifications from it.
+ * 
+ * An observer is either unassociated or associated with a specific @ref Observable;
+ * the initial state is unassociated. Association is established using
+ * @ref Observable::addObserver.
+ * 
+ * The @ref Observer class does not define any specific method for passing notifications
+ * from the observable to its observers. Instead, the @ref Observable::notifyKeepObservers
+ * and @ref Observable::notifyRemoveObservers functions accept a callback function which is
+ * called for each observer to notify it. This allows using an appropriate notification
+ * mechanism for each use case. A common approach for polymorphic notification is to define
+ * a class derived from @ref Observer with a pure virtual function and call that pure
+ * virtual function in the aforementioned callback.
+ * 
+ * The @ref Observer class must always be used as a base class. This is typically desired
+ * anyway, and making the @ref Observer and @ref Observable aware of the derived observer
+ * type allows the @ref Observable::notifyKeepObservers and
+ * @ref Observable::notifyRemoveObservers functions to call the provided callback with the
+ * derived observer type, so that the user does not need to perform the cast.
+ * 
+ * @tparam ObserverDerived Derived class type; each instance of
+ *         @ref Observer<ObserverDerived> must be a base subobject of an `ObserverDerived`
+ *         object.
+ */
 template <typename ObserverDerived>
 class Observer :
     private ObserverNotificationPrivate::BaseObserver
@@ -227,11 +275,29 @@ class Observer :
     friend Observable<ObserverDerived>;
     
 public:
+    /**
+     * Default constructor, creates an unassociated observer.
+     */
+    inline Observer () = default;
+    
+    /**
+     * Destructor, disassociates the observer if associated.
+     */
+    inline ~Observer () = default;
+    
+    /**
+     * Returns whether the observer is associated.
+     * 
+     * @return True if associated, false if unassociated.
+     */
     inline bool isActive () const
     {
         return BaseObserver::isActive();
     }
     
+    /**
+     * Disassociates the observer if associated.
+     */
     inline void reset ()
     {
         return BaseObserver::reset();
@@ -239,18 +305,21 @@ public:
 };
 
 /**
- * Represents an entity which can notify its observers.
+ * Represents an entity which can notify its associated observers.
  * 
  * An observable has an associated set of observers (@ref Observer instances).
- * Observers can be added and removed dynamically.
+ * Observers can be associated and disassociated dynamically.
  * 
- * Observers of an observable are notified by calling @ref notifyKeepObservers
+ * Observers associated with an observable are notified by calling @ref notifyKeepObservers
  * or @ref notifyRemoveObservers. These functions take a function object which
- * is called for each observer, passed as a reference to ObserverDerived.
+ * is called for each observer, passed as a reference to `ObserverDerived`.
  * 
- * This facility does not provide any dynamic dispatch for notifying observers,
- * but it is easy and encouraged to create classes derived from @ref Observable
- * which use a pure virtual function for notifying observers.
+ * This facility does not provide any spefific mechanism for notifying observers
+ * (see the justification in @ref Observer).
+ * 
+ * @tparam ObserverDerived Derived class type of observers. Only
+ *         `Observer<ObserverDerived>` observers can be associated with
+ *         `Observable<ObserverDerived>`.
  */
 template <typename ObserverDerived>
 class Observable :
@@ -260,9 +329,9 @@ class Observable :
     
 public:
     /**
-     * Return if the observable has any observers.
+     * Return if the observable has any associated observers.
      * 
-     * @return True if there is at least one observer, false if none.
+     * @return True if there is at least one associated observer, false if none.
      */
     inline bool hasObservers () const
     {
@@ -272,7 +341,7 @@ public:
     /**
      * Disassociate any observers from this observable.
      * 
-     * Any observers which were associated with this observable become inactive.
+     * Any observers which were associated with this observable become unassociated.
      */
     inline void reset ()
     {
@@ -280,11 +349,11 @@ public:
     }
     
     /**
-     * Add an observer to this observable.
+     * Associate an observer with this observable.
      * 
-     * The observer being added must be inactive.
+     * The observer being associated must be unassociated.
      * 
-     * @param observer The observer to add (must be inactive).
+     * @param observer The observer to associate (must be unassociated).
      */
     inline void addObserver (Observer<ObserverDerived> &observer)
     {
@@ -292,13 +361,15 @@ public:
     }
     
     /**
-     * Enumerate the observers of this observable.
+     * Enumerate the observers associated with this observable.
      * 
-     * This calls enumerate(ObserverDerived &) for each observer. The order of
+     * This calls `enumerate(ObserverDerived &)` for each observer. The order of
      * enumeration is not specified.
      * 
-     * The enumerate function must not add/remove observers to/from this observable.
+     * The `enumerate` function must not associate/disassociate any observers with/from
+     * this observable and must not destruct this observable.
      * 
+     * @tparam EnumerateFunc Function object type. Must be copy-constructible.
      * @param enumerate Function object to call for each observer.
      */
     template <typename EnumerateFunc>
@@ -308,15 +379,16 @@ public:
     }
     
     /**
-     * Notify the observers of this observable without removing them.
+     * Notify the observers associated with this observable without removing them.
      * 
-     * This calls notify(ObserverDerived &) for each observer. The order of
+     * This calls `notify(ObserverDerived &)` for each observer. The order of
      * notifications is not specified.
      * 
-     * The notify function is permitted to add/remove observers to/from this observable;
-     * the implementation is specifically designed to be safe in this respect. However,
-     * the notify function must not destruct this observable.
+     * The `notify` function is permitted to associate/disassociate observers with/from
+     * this observable; the implementation is specifically designed to be safe in this
+     * respect. However, the `notify` function must not destruct this observable.
      * 
+     * @tparam NotifyFunc Function object type. Must be copy-constructible.
      * @param notify Function object to call to notify a specific observer.
      */
     template <typename NotifyFunc>
@@ -326,16 +398,17 @@ public:
     }
     
     /**
-     * Notify the observers of this observable while removing them.
+     * Notify the observers associated with this observable while removing them.
      * 
-     * This calls notify(ObserverDerived &) for each observer, removing each observer
+     * This calls `notify(ObserverDerived &)` for each observer, removing each observer
      * from the observable just before its notify call. The order of notifications
      * is not specified.
      * 
-     * The notify function is permitted to add/remove observers to/from this observable;
-     * the implementation is specifically designed to be safe in this respect. However,
-     * the notify function must not destruct this observable.
+     * The `notify` function is permitted to associate/disassociate observers with/from
+     * this observable; the implementation is specifically designed to be safe in this
+     * respect. However, the `notify` function must not destruct this observable.
      * 
+     * @tparam NotifyFunc Function object type. Must be copy-constructible.
      * @param notify Function object to call to notify a specific observer.
      */
     template <typename NotifyFunc>
@@ -354,6 +427,8 @@ private:
         };
     }
 };
+
+/** @} */
 
 }
 
