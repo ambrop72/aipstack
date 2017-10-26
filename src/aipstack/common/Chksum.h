@@ -46,11 +46,6 @@
  * function, for which an optimized implementation can be provided.
  */
 
-// NOTE: IpChksumInverted (and IpChksum) accept size_t len
-// but the length must not exceed 65535. This is okay since
-// checksums always apply to data within IP packets which
-// cannot be larget than that.
-
 #if AIPSTACK_EXTERNAL_CHKSUM
 extern "C" uint16_t IpChksumInverted (char const *data, size_t len);
 #else
