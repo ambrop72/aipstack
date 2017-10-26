@@ -27,8 +27,8 @@
 
 #include <aipstack/misc/Preprocessor.h>
 #include <aipstack/misc/Assert.h>
-#include <aipstack/common/Err.h>
-#include <aipstack/common/ObserverNotification.h>
+#include <aipstack/infra/Err.h>
+#include <aipstack/infra/ObserverNotification.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/proto/IpAddr.h>
 

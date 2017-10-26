@@ -10,7 +10,7 @@
 #include <functional>
 #include <vector>
 
-#include <aipstack/common/Chksum.h>
+#include <aipstack/infra/Chksum.h>
 
 using namespace AIpStack;
 

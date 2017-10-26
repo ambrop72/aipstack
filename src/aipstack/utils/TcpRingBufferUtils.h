@@ -31,8 +31,8 @@
 #include <aipstack/misc/Preprocessor.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
-#include <aipstack/common/Buf.h>
-#include <aipstack/common/MemRef.h>
+#include <aipstack/infra/Buf.h>
+#include <aipstack/infra/MemRef.h>
 #include <aipstack/utils/WrapBuffer.h>
 
 namespace AIpStack {

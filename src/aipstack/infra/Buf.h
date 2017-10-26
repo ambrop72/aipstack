@@ -35,7 +35,7 @@
 namespace AIpStack {
 
 /**
- * @ingroup common
+ * @ingroup infra
  * @defgroup buffer Buffer Infrastructure
  * @brief Provides infrastructure for working with possibly discontiguous byte sequences.
  * 

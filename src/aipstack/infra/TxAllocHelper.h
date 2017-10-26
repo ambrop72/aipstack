@@ -28,7 +28,7 @@
 #include <stddef.h>
 
 #include <aipstack/misc/Assert.h>
-#include <aipstack/common/Buf.h>
+#include <aipstack/infra/Buf.h>
 
 namespace AIpStack {
 

@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include <aipstack/misc/MinMax.h>
-#include <aipstack/common/MemRef.h>
+#include <aipstack/infra/MemRef.h>
 
 namespace AIpStack {
 

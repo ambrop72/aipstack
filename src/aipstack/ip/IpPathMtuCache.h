@@ -42,7 +42,7 @@
 #include <aipstack/structure/OperatorKeyCompare.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
 #include <aipstack/structure/Accessor.h>
-#include <aipstack/common/Options.h>
+#include <aipstack/infra/Options.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/platform/PlatformFacade.h>

@@ -35,10 +35,10 @@
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/BinaryTools.h>
-#include <aipstack/common/Buf.h>
+#include <aipstack/infra/Buf.h>
 
 /**
- * @ingroup common
+ * @ingroup infra
  * @defgroup checksum Checksum Calculation
  * @brief Provides utilities for calculating IP checksums.
  * 

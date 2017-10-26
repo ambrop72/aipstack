@@ -37,8 +37,8 @@
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/Hints.h>
-#include <aipstack/common/Buf.h>
-#include <aipstack/common/Err.h>
+#include <aipstack/infra/Buf.h>
+#include <aipstack/infra/Err.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/tcp/TcpUtils.h>
 #include <aipstack/tcp/TcpListener.h>

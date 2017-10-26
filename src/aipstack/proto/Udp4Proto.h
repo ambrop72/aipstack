@@ -27,7 +27,7 @@
 
 #include <stdint.h>
 
-#include <aipstack/common/Struct.h>
+#include <aipstack/infra/Struct.h>
 
 namespace AIpStack {
 

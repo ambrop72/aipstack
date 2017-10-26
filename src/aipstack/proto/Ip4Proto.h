@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <aipstack/common/Struct.h>
+#include <aipstack/infra/Struct.h>
 #include <aipstack/proto/IpAddr.h>
 
 namespace AIpStack {

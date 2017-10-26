@@ -32,8 +32,8 @@
 #include <uv.h>
 
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/common/Err.h>
-#include <aipstack/common/Buf.h>
+#include <aipstack/infra/Err.h>
+#include <aipstack/infra/Buf.h>
 
 #include "../libuv_platform.h"
 #include "file_descriptor_wrapper.h"

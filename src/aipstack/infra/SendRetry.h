@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_SEND_RETRY_H
 #define AIPSTACK_SEND_RETRY_H
 
-#include <aipstack/common/ObserverNotification.h>
+#include <aipstack/infra/ObserverNotification.h>
 
 namespace AIpStack {
 

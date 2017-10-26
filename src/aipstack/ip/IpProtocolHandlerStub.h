@@ -30,7 +30,7 @@
 #include <aipstack/meta/Instance.h>
 #include <aipstack/meta/BasicMetaUtils.h>
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/common/Buf.h>
+#include <aipstack/infra/Buf.h>
 #include <aipstack/ip/IpStackHelperTypes.h>
 #include <aipstack/platform/PlatformFacade.h>
 

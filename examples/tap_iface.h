@@ -28,8 +28,8 @@
 #include <string>
 
 #include <aipstack/meta/Instance.h>
-#include <aipstack/common/Buf.h>
-#include <aipstack/common/Err.h>
+#include <aipstack/infra/Buf.h>
+#include <aipstack/infra/Err.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/eth/EthIpIface.h>

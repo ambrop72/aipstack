@@ -49,9 +49,9 @@
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
 #include <aipstack/structure/Accessor.h>
-#include <aipstack/common/Buf.h>
-#include <aipstack/common/SendRetry.h>
-#include <aipstack/common/Options.h>
+#include <aipstack/infra/Buf.h>
+#include <aipstack/infra/SendRetry.h>
+#include <aipstack/infra/Options.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Tcp4Proto.h>

@@ -35,9 +35,9 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/common/Struct.h>
-#include <aipstack/common/Buf.h>
-#include <aipstack/common/Options.h>
+#include <aipstack/infra/Struct.h>
+#include <aipstack/infra/Buf.h>
+#include <aipstack/infra/Options.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/platform/PlatformFacade.h>

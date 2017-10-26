@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#include <aipstack/common/Struct.h>
+#include <aipstack/infra/Struct.h>
 
 AIPSTACK_DEFINE_STRUCT(HeaderFoo,
     (FieldA, int8_t)
