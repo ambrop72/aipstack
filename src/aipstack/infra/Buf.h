@@ -36,10 +36,10 @@ namespace AIpStack {
 
 /**
  * @ingroup infra
- * @defgroup buffer Buffer Infrastructure
+ * @defgroup buffer Buffer Chain Infrastructure
  * @brief Provides infrastructure for working with possibly discontiguous byte sequences.
  * 
- * The buffer infrastructure is used throughout the TCP/IP stack implementation and
+ * The buffer chain infrastructure is used throughout the TCP/IP stack implementation and
  * enables simple and efficient passing of data between different layers of the stack.
  * 
  * The @ref IpBufNode structure represents a node within a singly-linked chain of buffers
