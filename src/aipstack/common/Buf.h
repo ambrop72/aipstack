@@ -35,15 +35,38 @@
 namespace AIpStack {
 
 /**
- * @addtogroup common
+ * @ingroup common
+ * @defgroup buffer Buffer Infrastructure
+ * @brief Provides infrastructure for working with possibly discontiguous byte sequences.
+ * 
+ * The buffer infrastructure is used throughout the TCP/IP stack implementation and
+ * enables simple and efficient passing of data between different layers of the stack.
+ * 
+ * The @ref IpBufNode structure represents a node within a singly-linked chain of buffers
+ * and the @ref IpBufRef structure references a byte sequence within such a chain. These
+ * facilities are essentially tools for working with possibly discontiguous byte sequences
+ * and nothing more. They do not perform any memory management or know anything about
+ * network protocols or protocol layers.
+ * 
+ * Applications typically need to work with these facilities at two opposite levels:
+ * - In network interface drivers. In this case, the driver uses @ref IpBufRef
+ *   to describe the contents of a packet or frame being passed into the stack for
+ *   processing, and the stack likewise uses @ref IpBufRef to describe the contents of
+ *   a packet or frame which is to be sent through the network interface.
+ * - In application code utilizing transport-layer protocols. For TCP, the application
+ *   allocates the send and receive buffers while the TCP implementation manages two
+ *   @ref IpBufRef objects: one which references outgoing data in the send buffer (unsent
+ *   and unacknowledged), and one which references the available memory space for storing
+ *   received data. See the @ref TcpConnection class for more information.
+ * 
  * @{
  */
 
 /**
- * Node in a chain of memory buffers.
+ * Node in a chain of buffers.
  * 
- * It contains the pointer to and length of a buffer,
- * and a pointer to the next node, if any.
+ * A buffer node is defined by a pointer to the start of a buffer (@ref ptr), the length
+ * of the buffer (@ref len) and a pointer to the next buffer node (@ref next), if any.
  */
 struct IpBufNode {
     /**
@@ -57,30 +80,43 @@ struct IpBufNode {
     size_t len;
     
     /**
-     * Pointer to the next buffer node (or NULL).
+     * Pointer to the next buffer node, or null if this is the end of the chain.
      */
     IpBufNode const *next;
 };
 
 /**
- * Reference to a possibly discontiguous range of memory in
- * a chain of memory buffers.
+ * Reference to a possibly discontiguous byte sequence within a chain of buffers.
  * 
- * It contains the pointer to the first buffer node,
- * the byte offset within that first buffer, and the total
- * length of the memory range.
+ * It contains a pointer to the first buffer node (@ref node), the byte offset within
+ * the first buffer (@ref offset), and the total length of the referenced byte sequence
+ * (@ref tot_len).
  * 
- * Except where noted otherwise, all functions in IpBufRef
- * require the reference to be *valid*. This means that
- * @ref node is not NULL, the @ref offset points to a valid location
- * within this first buffer (pointing to the end is permitted),
- * and there is at least @ref tot_len remaining data in the first
- * buffer and subsequent buffers together.
+ * A valid @ref IpBufRef object defines a logical byte sequence. This byte sequence
+ * is obtained if one starts at the position @ref offset within the first buffer (defined
+ * by @ref node) then traverses the bytes in the buffer chain until exactly @ref tot_len
+ * bytes have been found. That is, when one reaches the end of one buffer and and less than
+ * @ref tot_len bytes have been found, one continues at the start of the next buffer as
+ * pointed to by @ref IpBufNode::next.
  * 
- * Operations with these memory ranges never modify the
- * buffer nodes (@ref IpBufNode). Only the @ref IpBufRef objects
- * are changed or created to refer to different ranges of a
- * buffer chain.
+ * Except where noted otherwise, all functions in @ref IpBufRef require the reference to
+ * be *valid*. Specifically, the following must hold for a reference to be valid:
+ * 1. @ref node is not null and points to an existing @ref IpBufNode.
+ * 2. @ref offset is less than or equal to `node->len`.
+ * 3. There are at least @ref tot_len bytes available in the buffer chain when starting at
+ *    @ref offset in the first buffer (defined by @ref node). This implies that for each
+ *    buffer where the byte sequence does not yet end, @ref IpBufNode::next is not null and
+ *    points to an existing @ref IpBufNode where the byte sequence continues.
+ * 4. If the end of the referenced byte sequence coincides with the end of a buffer, it
+ *    must be safe to continue traversing the chain of buffers until a buffer with
+ *    non-zero length is encountered (@ref IpBufNode::len is nonzero) or the end of the
+ *    chain is reached (@ref IpBufNode::next is null). This is required so that
+ *    it is safe for @ref processBytes and other processing functions to move to subsequent
+ *    buffers eagerly.
+ * 
+ * Functions in @ref IpBufRef never never modify @ref IpBufNode objects; rather,
+ * @ref IpBufRef objects may be modified or new ones created, often to refer to a different
+ * but related byte sequence.
  */
 struct IpBufRef {
     /**

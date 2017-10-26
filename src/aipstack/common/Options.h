@@ -31,12 +31,16 @@
 
 namespace AIpStack {
 
+#ifndef IN_DOXYGEN
+
 namespace OptionsPrivate {
     template <typename Derived, typename DefaultValue, typename... Options>
     using GetValue = TypeDictGetOrDefault<
         TypeListReverse<MakeTypeList<Options...>>, Derived, DefaultValue
     >;
 }
+
+#endif
 
 /**
  * Represents a configuration option which defines a value (as opposed to a type).

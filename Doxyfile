@@ -647,7 +647,7 @@ MAX_INITIALIZER_LINES  = 30
 # list will mention the files that were used to generate the documentation.
 # The default value is: YES.
 
-SHOW_USED_FILES        = YES
+SHOW_USED_FILES        = NO
 
 # Set the SHOW_FILES tag to NO to disable the generation of the Files page. This
 # will remove the Files entry from the Quick Index and from the Folder Tree View
@@ -813,9 +813,6 @@ RECURSIVE              = YES
 
 EXCLUDE                = \
     src/aipstack/ip/IpDhcpClient_options.h \
-    src/aipstack/misc/Chksum.h \
-    src/aipstack/misc/Struct.h \
-    src/aipstack/misc/TxAllocHelper.h \
     src/aipstack/platform/MultiTimer.h \
     src/aipstack/platform/TimerWrapper.h \
     src/aipstack/proto/ArpProto.h \
@@ -831,6 +828,7 @@ EXCLUDE                = \
     src/aipstack/tcp/TcpUtils.h \
     src/aipstack/utils/TcpListenQueue.h \
     src/aipstack/utils/TcpRingBufferUtils.h \
+    src/aipstack/utils/WrapBuffer.h \
 
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
@@ -953,7 +951,7 @@ USE_MDFILE_AS_MAINPAGE =
 # also VERBATIM_HEADERS is set to NO.
 # The default value is: NO.
 
-SOURCE_BROWSER         = NO
+SOURCE_BROWSER         = YES
 
 # Setting the INLINE_SOURCES tag to YES will include the body of functions,
 # classes and enums directly into the documentation.

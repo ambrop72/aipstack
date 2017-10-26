@@ -78,7 +78,9 @@ namespace AIpStack {
  */
 
 /**
- * Type of DHCP client event as reported by @ref IpDhcpClientCallback::dhcpClientEvent.
+ * Type of DHCP client event as reported by
+ * @ref AIpStack::IpDhcpClientCallback::dhcpClientEvent
+ * "IpDhcpClientCallback::dhcpClientEvent".
  */
 enum class IpDhcpClientEvent {
     /**

@@ -30,6 +30,11 @@
 namespace AIpStack {
 
 /**
+ * @addtogroup common
+ * @{
+ */
+
+/**
  * Error code enumeration used in various places, e.g.\ for sending packets.
  */
 enum class IpErr : uint8_t {
@@ -47,6 +52,8 @@ enum class IpErr : uint8_t {
     HW_ERROR        = 11, /**< An unexpected hardware problem has occured. */
     LINK_DOWN       = 12, /**< The link is down for the network interface. */
 };
+
+/** @} */
 
 }
 

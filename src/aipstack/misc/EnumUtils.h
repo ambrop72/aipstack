@@ -38,6 +38,8 @@ constexpr inline auto ToUnderlyingType (EnumType e)
     return std::underlying_type_t<EnumType>(e);
 }
 
+#ifndef IN_DOXYGEN
+
 namespace EnumUtilsPrivate {
     template <bool IsEnum, typename Type, typename BaseType>
     struct EnumWithBaseTypeHelper {
@@ -60,6 +62,8 @@ namespace EnumUtilsPrivate {
         using ResultType = std::underlying_type_t<Type>;
     };
 };
+
+#endif
 
 template <typename Type, typename BaseType>
 using IsEnumWithBaseType = WrapBool<

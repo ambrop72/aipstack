@@ -161,8 +161,11 @@ private:
     using ProtocolsList = MapTypeList<
         ProtocolHelpersList, TemplateFunc<ProtocolForHelper>>;
     
+    // Doxygen bug: shows docs for this despite being private.
+    #ifndef IN_DOXYGEN
     // Helper to extract IpProtocolNumber from a ProtocolHelper.
     AIPSTACK_DEFINE_MEMBER_TYPE(MemberTypeIpProtocolNumber, IpProtocolNumber)
+    #endif
     
 public:
     /**

@@ -34,6 +34,8 @@
 
 namespace AIpStack {
 
+#ifndef IN_DOXYGEN
+
 namespace BinaryToolsPrivate {
     
     template <typename T>
@@ -213,6 +215,8 @@ namespace BinaryToolsPrivate {
         }
     };
 }
+
+#endif
 
 template <bool BigEndian_>
 struct BinaryEndian {

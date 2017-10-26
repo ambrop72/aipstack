@@ -39,6 +39,8 @@ struct ResourceArrayInitSame {};
 template <typename Elem, size_t Size>
 class ResourceArray;
 
+#ifndef IN_DOXYGEN
+
 namespace ResourceArrayPrivate {
     struct DefaultConstructMixinArg {};
     
@@ -221,6 +223,8 @@ namespace ResourceArrayPrivate {
         }
     };
 }
+
+#endif
 
 template <typename Elem, size_t Size>
 class ResourceArray :

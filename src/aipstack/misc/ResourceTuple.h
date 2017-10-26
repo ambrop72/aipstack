@@ -37,6 +37,8 @@ namespace AIpStack {
 
 struct ResourceTupleInitSame {};
 
+#ifndef IN_DOXYGEN
+
 namespace ResourceTuplePrivate {
     template <typename Elem, size_t Index>
     class InheritElemHelper
@@ -75,6 +77,8 @@ namespace ResourceTuplePrivate {
     using InheritAllAlias = InheritAllHelper<
         std::tuple<Elems...>, std::make_index_sequence<sizeof...(Elems)>>;
 }
+
+#endif
 
 template <typename... Elems>
 class ResourceTuple :

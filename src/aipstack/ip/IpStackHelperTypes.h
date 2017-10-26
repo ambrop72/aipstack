@@ -137,8 +137,9 @@ struct IpIfaceDriverState {
 };
 
 /**
- * Contains definitions of flags as accepted by @ref IpStack::sendIp4Dgram
- * and @ref IpStack::prepareSendIp4Dgram.
+ * Contains definitions of flags as accepted by @ref AIpStack::IpStack::sendIp4Dgram
+ * "IpStack::sendIp4Dgram" and @ref AIpStack::IpStack::prepareSendIp4Dgram
+ * "IpStack::prepareSendIp4Dgram".
  * 
  * Operators provided by @ref AIPSTACK_ENUM_BITFIELD_OPS are available.
  */

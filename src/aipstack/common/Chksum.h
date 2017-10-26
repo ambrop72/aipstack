@@ -37,6 +37,15 @@
 #include <aipstack/misc/BinaryTools.h>
 #include <aipstack/common/Buf.h>
 
+/**
+ * @ingroup common
+ * @defgroup checksum Checksum Calculation
+ * @brief Provides utilities for calculating IP checksums.
+ * 
+ * For applications, the most important thing here is the \ref IpChksumInverted
+ * function, for which an optimized implementation can be provided.
+ */
+
 // NOTE: IpChksumInverted (and IpChksum) accept size_t len
 // but the length must not exceed 65535. This is okay since
 // checksums always apply to data within IP packets which
@@ -47,7 +56,7 @@ extern "C" uint16_t IpChksumInverted (char const *data, size_t len);
 #else
 
 /**
- * @ingroup common
+ * @ingroup checksum
  * Calculate the inverted IP checksum of a buffer.
  * 
  * This function calculates the inverted IP checksum of a contiguous sequence of
@@ -55,7 +64,7 @@ extern "C" uint16_t IpChksumInverted (char const *data, size_t len);
  * as if those were represented in big-endian byte order (the result depends only
  * on the sequence of bytes and not the byte order of the processor). To obtain
  * an actual IP checksum for use in protocol headers, the result would need to be
- * bit-flipped (see @ref AIpStack::IpChksum).
+ * bit-flipped (see @ref AIpStack::IpChksum "IpChksum").
  *
  * If the number of bytes is odd, this is treated as if there was an extra
  * zero byte at the end.
@@ -98,7 +107,7 @@ inline uint16_t IpChksumInverted (char const *data, size_t len)
 namespace AIpStack {
 
 /**
- * @addtogroup common
+ * @addtogroup checksum
  * @{
  */
 
@@ -332,7 +341,7 @@ private:
 };
 
 /**
- * Calculate the IP checksum of an @ref IpBufRef.
+ * Calculate the IP checksum of a sequence of bytes described by @ref IpBufRef.
  * 
  * This function calculates the IP checksum of a possibly discontiguous sequence
  * of bytes. It is functionally equivalent to
