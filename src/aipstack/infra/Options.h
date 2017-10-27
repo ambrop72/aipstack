@@ -31,6 +31,71 @@
 
 namespace AIpStack {
 
+/**
+ * @ingroup infra
+ * @defgroup configuration Static Configuration Options
+ * @brief Static configuration system based on templates
+ * 
+ * This is a simple static configuration system which allows a module to define
+ * configuration options and be instantiated with specific values of these options. Each
+ * option is defined either as a "type" option (the option value will be a C++ type) or a
+ * "value" option with a specific value type (the option value will be a value of that
+ * type).
+ * 
+ * The @ref ConfigOptionType class represents a "type" option and the
+ * @ref ConfigOptionValue class represents a "value" option; these encode the type of option
+ * and its default value. Actual options for a module are declared in an "options" struct
+ * corresponding to the module, as classes derived from these ConfigOption* classes,
+ * effectively giving each option a name and identity. These derived classes should be
+ * declared using the macros @ref AIPSTACK_OPTION_DECL_TYPE and
+ * @ref AIPSTACK_OPTION_DECL_VALUE.
+ * 
+ * Below is an example of declaring options for a module; the last arguments to macros are
+ * the default values.
+ * 
+ * ```
+ * struct MyModuleOptions {
+ *     AIPSTACK_OPTION_DECL_TYPE(ExampleTypeOption, int)
+ *     AIPSTACK_OPTION_DECL_VALUE(ExampleValueOption, bool, false)
+ * };
+ * ```
+ * 
+ * After the options class is declared, a class template for the configurable module itself
+ * is defined, which must accept a type parameter pack named `Options` representing option
+ * value assignments. Within this class, the macros @ref AIPSTACK_OPTION_CONFIG_TYPE and
+ * @ref AIPSTACK_OPTION_CONFIG_VALUE are used to retrieve the effective option values. An
+ * example is shown below.
+ *
+ * ```
+ * template <typename... Options>
+ * class MyModule {
+ * public:
+ *     AIPSTACK_OPTION_CONFIG_TYPE(MyModuleOptions, ExampleTypeOption)
+ *     AIPSTACK_OPTION_CONFIG_VALUE(MyModuleOptions, ExampleValueOption)
+ * 
+ *     MyModule () {
+ *         using Type = ExampleTypeOption; // double, if instantiated as below
+ *         constexpr bool value = ExampleValueOption; // true, if instantiated as below
+ *     }
+ * };
+ * ```
+ * 
+ * Users of the configurable module would instantiate this class template by passing zero or
+ * more @ref ConfigOptionType::Is or @ref ConfigOptionValue::Is type expressions as template
+ * parameters. If an option is not included it will have the default value specified in its
+ * declaration, and if it is specified multiple times then the last value will be effective.
+ * An example is shown below.
+ * 
+ * ```
+ * using MyModuleInstance = MyModule<
+ *     MyModuleOptions::ExampleTypeOption::Is<double>,
+ *     MyModuleOptions::ExampleValueOption::Is<true>
+ * >;
+ * ```
+ * 
+ * @{
+ */
+
 #ifndef IN_DOXYGEN
 
 namespace OptionsPrivate {
@@ -43,7 +108,7 @@ namespace OptionsPrivate {
 #endif
 
 /**
- * Represents a configuration option which defines a value (as opposed to a type).
+ * Represents a "value" static configuration option.
  * 
  * @tparam Derived The derived class identifying this option.
  * @tparam ValueType The type of the option value.
@@ -75,7 +140,7 @@ public:
 };
 
 /**
- * Represents a configuration option which defines a type (as opposed to a value).
+ * Represents a "type" static configuration option.
  * 
  * @tparam Derived The derived class identifying this option.
  * @tparam DefaultValue The default value if none is provided.
@@ -103,17 +168,53 @@ public:
 #endif
 };
 
+/**
+ * Declare a "value" static configuration option.
+ * 
+ * See the \ref configuration module description.
+ * 
+ * @param name Name of the derived class representing the option.
+ * @param type Value type for the option. Must be a type that can be used for non-type
+ *             template parameters.
+ * @param default Default value of the option (a value of type `type`).
+ */
 #define AIPSTACK_OPTION_DECL_VALUE(name, type, default) \
 class name : public AIpStack::ConfigOptionValue<name, type, default> {};
 
+/**
+ * Declare a "type" static configuration option.
+ * 
+ * See the \ref configuration module description.
+ * 
+ * @param name Name of the derived class representing the option.
+ * @param default Default value of the option (a type).
+ */
 #define AIPSTACK_OPTION_DECL_TYPE(name, default) \
 class name : public AIpStack::ConfigOptionType<name, default> {};
 
+/**
+ * Retrieve and expose the value of a "value" configuration option.
+ * 
+ * See the \ref configuration module description.
+ * 
+ * @param decls The options class type where the options are declared.
+ * @param name The name of the option as declared in the options class.
+ */
 #define AIPSTACK_OPTION_CONFIG_VALUE(decls, name) \
 static constexpr auto name = decls::name::Config<Options...>::Value;
 
+/**
+ * Retrieve and expose the value of a "type" configuration option.
+ * 
+ * See the \ref configuration module description.
+ * 
+ * @param decls The options class type where the options are declared.
+ * @param name The name of the option as declared in the options class.
+ */
 #define AIPSTACK_OPTION_CONFIG_TYPE(decls, name) \
 using name = typename decls::name::Config<Options...>::Value;
+
+/** @} */
 
 }
 

@@ -26,6 +26,6 @@
  * @defgroup meta Metaprogramming Library
  * @brief Provides facilities for template metaprogramming.
  *
- * Currendly this library is generally undocumented; most of it is only used only
- * internally in the stack.
+ * Currendly this library is generally undocumented; most of it is only used internally in
+ * the stack.
  */
