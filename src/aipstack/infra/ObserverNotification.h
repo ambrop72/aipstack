@@ -276,17 +276,17 @@ class Observer :
     
 public:
     /**
-     * Default constructor, creates an unassociated observer.
+     * Construct an unassociated observer.
      */
     inline Observer () = default;
     
     /**
-     * Destructor, disassociates the observer if associated.
+     * Destruct the observer, disassociating it if associated.
      */
     inline ~Observer () = default;
     
     /**
-     * Returns whether the observer is associated.
+     * Return whether the observer is associated.
      * 
      * @return True if associated, false if unassociated.
      */
@@ -296,7 +296,7 @@ public:
     }
     
     /**
-     * Disassociates the observer if associated.
+     * Disassociate the observer if associated.
      */
     inline void reset ()
     {
@@ -328,6 +328,16 @@ class Observable :
     using BaseObserver = ObserverNotificationPrivate::BaseObserver;
     
 public:
+    /**
+     * Construct an observable with no associated observers.
+     */
+    Observable () = default;
+    
+    /**
+     * Destruct the observable, disassociating any observers.
+     */
+    ~Observable () = default;
+    
     /**
      * Return if the observable has any associated observers.
      * 
@@ -379,7 +389,7 @@ public:
     }
     
     /**
-     * Notify the observers associated with this observable without removing them.
+     * Notify the observers associated with this observable without disassociating them.
      * 
      * This calls `notify(ObserverDerived &)` for each observer. The order of
      * notifications is not specified.
@@ -398,10 +408,10 @@ public:
     }
     
     /**
-     * Notify the observers associated with this observable while removing them.
+     * Notify the observers associated with this observable while disassociating them.
      * 
-     * This calls `notify(ObserverDerived &)` for each observer, removing each observer
-     * from the observable just before its notify call. The order of notifications
+     * This calls `notify(ObserverDerived &)` for each observer, disassociating each
+     * observer from the observable just before its notify call. The order of notifications
      * is not specified.
      * 
      * The `notify` function is permitted to associate/disassociate observers with/from
