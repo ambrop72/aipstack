@@ -40,20 +40,20 @@ namespace AIpStack {
 
 /**
  * @ingroup infra
- * @defgroup struct Structure Definition and Access
+ * @defgroup struct Fixed-layout Structures
  * @brief Definition and access of fixed-layout structures for protocol headers.
  * 
  * Notable features of the system are:
+ * - Concise structure definition using a single macro.
  * - Automatic endianness handling (big endian encoding is used). The user always interacts
- *   with logical values while the framework manages the byte-level representation.
- * - Can reference structures in existing memory (no need for pointer
- *   casts violating strict aliasing).
+ *   with logical values.
+ * - Can reference structures in existing memory (no pointer casts violating strict
+ *   aliasing).
  * - Support for nested structures.
- * - Ability to define custom field types.
- * 
+ * - Ability to add support for additional field types.
  * 
  * Structures (typically protocol headers) are defined using the @ref AIPSTACK_DEFINE_STRUCT
- * macro which defines a class deriving from @ref StructBase. Below is an example.
+ * macro which defines a class deriving from @ref StructBase. Here is an example.
  * 
  * ```
  * AIPSTACK_DEFINE_STRUCT(MyHeader,
@@ -65,22 +65,22 @@ namespace AIpStack {
  * This expands to the following:
  * 
  * ```
- * struct MyHeader : public StructBase<MyHeader> {
- *      struct FieldA : public StructField<uint32_t> {};
- *      struct FieldB : public StructField<uint64_t> {};
- *      using StructFields = MakeTypeList<FieldA, FieldB>;
+ * struct MyHeader : public AIpStack::StructBase<MyHeader> {
+ *      struct FieldA : public AIpStack::StructField<uint32_t> {};
+ *      struct FieldB : public AIpStack::StructField<uint64_t> {};
+ *      using StructFields = AIpStack::MakeTypeList<FieldA, FieldB>;
  *      static size_t const Size = MyHeader::GetStructSize();
  * };
  * ```
  * 
  * Each structure field specified will result in a type within this structure that
  * is used as an identifier for the field (e.g. `MyHeader::FieldA`). There will also be
- * a `Size` constant (e.g. `MyHeader::Size`) which represents the size of the structure, and
- * this will necessarily be the sum of field sizes. The `StructFields` type alias is a list
- * of all fields and is used internally in the implementation.
+ * a `Size` constant (e.g. `MyHeader::Size`) which represents the size of the structure,
+ * which is the sum of field sizes. The `StructFields` type alias is a list of all fields
+ * and is used internally in the implementation.
  * 
  * There are different ways to use the structure definition, but the most common is via
- * the @ref StructBase::Ref class, which wraps a pointer to raw data. The
+ * the @ref StructBase::Ref class, which wraps a pointer to raw structure data. The
  * @ref StructBase::MakeRef helper function can be used to create a @ref StructBase::Ref.
  * For example:
  * 
@@ -104,9 +104,9 @@ namespace AIpStack {
  * 
  * As can be seen, the @ref StructBase::Ref::set and @ref StructBase::Ref::get functions
  * are used to set and get field values. These directly read/write from/to the pointed-to
- * memory. For certain field types (but not integers as above), the
- * @ref StructBase::Ref::ref function returns some kind of reference to the field; see the
- * list of supported field types below.
+ * memory. For certain field types (but not integers), the @ref StructBase::Ref::ref
+ * function returns some kind of reference to the field; see the list of supported field
+ * types below.
  * 
  * The @ref StructBase::Val class is similar to @ref StructBase::Ref, but it contains a
  * character array (@ref StructBase::Val::data) instead of referencing external data. The
@@ -114,28 +114,27 @@ namespace AIpStack {
  * from existing data.
  * 
  * The system directly supports the following field types:
- * - Fixed-width integer types `intN_t` and `uintN_t` for N=8,16,32,64, and enum types
- *   based on these type. Big-endian byte order is used. The `get` and `set` operations
- *   return/accept the same type as the field is defined as. The `ref` operation is not
- *   available.
- * - Structures defined though this same system (nested structures). The `get` and `set`
- *   operation return/accept the type @ref StructBase::Val corresponding to the field type.
+ * - Fixed-width integer types (`intN_t` and `uintN_t` for N=8,16,32,64) and enum types
+ *   based on these types. Big-endian byte order is used. The `get` and `set` operations
+ *   use the same type as the field is defined as. The `ref` operation is not available.
+ * - Structures types defined though this same system (nested structures). The `get` and
+ *   `set` operations use the type @ref StructBase::Val corresponding to the field type.
  *   The `ref` operation is available and returns a @ref StructBase::Ref referencing the
  *   nested structure.
- * - Fixed-length arrays of fixed-width integers (`intN_t` and `uintN_t` for N=8,16,32,64),
- *   using field type @ref StructIntArray\<T, Length\> (not `T[Length]`). The `get` and
- *   `set` operations return/accept this @ref StructIntArray type by value, which contains
- *   the @ref StructIntArray::data array. The `ref` operation is not available, except when
+ * - Fixed-length arrays of fixed-width integers, using field type
+ *   @ref StructIntArray\<T, Length\>. Big-endian byte order is used. The `get` and `set`
+ *   operations use this @ref StructIntArray type, which contains the
+ *   @ref StructIntArray::data array. The `ref` operation is not available, except when
  *   T is `uint8_t` (see below).
  * - Fixed-length byte arrays, using field type @ref StructByteArray\<Length\>. This is
  *   actually a type alias for @ref StructIntArray\<uint8_t, Length\>, but the `ref`
  *   operation is also available, which returns a `char *` pointing to the field contents.
  * - Any trivial type T (as defined by `std::is_trivial<T>`) using its native
  *   representation, when using field type @ref StructRawField\<T\>. The `get` and `set`
- *   operations return/accept the type T. The `ref` operation is not available.
+ *   operations use the type T. The `ref` operation is not available.
  * 
  * Support for additional types can be added by adding additional specializations of
- * @ref StructTypeHandler.
+ * @ref StructTypeHandler (see the documentation of that).
  * 
  * @{
  */
@@ -202,7 +201,7 @@ typename StructFieldHandler<FieldType>::ValType;
 /**
  * Get the reference type for the given structure field type.
  * 
- * The reference type is the one used for the `ref` operations using this field type.
+ * The reference type is the one used for the `ref` operation using this field type.
  * This is only defined when the field type supports the `ref` operation.
  * 
  * @tparam FieldType Field type, as used in the structure definition.
@@ -227,10 +226,12 @@ typename StructFieldHandler<FieldType>::RefType;
  * 
  * Note that there is no use for actual @ref StructBase instances (and instances
  * of derived types).
+ * 
+ * @tparam StructType_ Structure type (derived from this class).
  */
-template <typename TStructType>
+template <typename StructType_>
 class StructBase {
-    using StructType = TStructType;
+    using StructType = StructType_;
     
     template <typename This=StructBase>
     using Fields = typename This::StructType::StructFields;
@@ -386,9 +387,10 @@ public:
         /**
          * The structure type.
          * 
-         * This is the `TStructType` template parameter of StructBase.
+         * This is the corresponding type defined by the @ref AIPSTACK_DEFINE_STRUCT macro,
+         * and is also the `StructType_` template parameter of @ref StructBase.
          */
-        using Struct = StructType;
+        using Struct = StructType_;
         
         /**
          * The size of the structure.
@@ -566,6 +568,8 @@ public:
 /**
  * Read (decode) the value of a single struct field of specified type.
  * 
+ * This allows decoding a field without requiring any structure definition.
+ * 
  * @tparam FieldType Field type.
  * @param ptr Pointer to field data to decode.
  * @return Decoded field value.
@@ -579,6 +583,8 @@ inline StructFieldValType<FieldType> ReadSingleField (char const *ptr)
 /**
  * Write (encode) the value of a single struct field of specified type.
  * 
+ * This allows encoding a field without requiring any structure definition.
+ * 
  * @tparam FieldType Field type.
  * @param ptr Pointer to where field data will be written.
  * @param value Value to encode.
@@ -590,12 +596,12 @@ inline void WriteSingleField (char *ptr, StructFieldValType<FieldType> value)
 }
 
 /**
- * Macro for defining structures.
+ * Define a structure type.
  * 
  * See the @ref struct module description.
  * 
  * @param StructName Name of the class to define which will represent the structure.
- * @param Fields List of fields as a sequence of `(FieldName, FieldValue)`.
+ * @param Fields List of fields as a sequence of `(FieldName, FieldType)`.
  */
 #ifdef IN_DOXYGEN
 #define AIPSTACK_DEFINE_STRUCT(StructName, Fields) implementation_hidden;
