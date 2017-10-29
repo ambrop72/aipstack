@@ -38,8 +38,141 @@
 
 namespace AIpStack {
 
+/**
+ * @ingroup infra
+ * @defgroup struct Structure Definition and Access
+ * @brief Definition and access of fixed-layout structures for protocol headers.
+ * 
+ * Notable features of the system are:
+ * - Automatic endianness handling (big endian encoding is used). The user always interacts
+ *   with logical values while the framework manages the byte-level representation.
+ * - Can reference structures in existing memory (no need for pointer
+ *   casts violating strict aliasing).
+ * - Support for nested structures.
+ * - Ability to define custom field types.
+ * 
+ * 
+ * Structures (typically protocol headers) are defined using the @ref AIPSTACK_DEFINE_STRUCT
+ * macro which defines a class deriving from @ref StructBase. Below is an example.
+ * 
+ * ```
+ * AIPSTACK_DEFINE_STRUCT(MyHeader,
+ *     (FieldA, uint32_t)
+ *     (FieldB, uint64_t)
+ * )
+ * ```
+ * 
+ * This expands to the following:
+ * 
+ * ```
+ * struct MyHeader : public StructBase<MyHeader> {
+ *      struct FieldA : public StructField<uint32_t> {};
+ *      struct FieldB : public StructField<uint64_t> {};
+ *      using StructFields = MakeTypeList<FieldA, FieldB>;
+ *      static size_t const Size = MyHeader::GetStructSize();
+ * };
+ * ```
+ * 
+ * Each structure field specified will result in a type within this structure that
+ * is used as an identifier for the field (e.g. `MyHeader::FieldA`). There will also be
+ * a `Size` constant (e.g. `MyHeader::Size`) which represents the size of the structure, and
+ * this will necessarily be the sum of field sizes. The `StructFields` type alias is a list
+ * of all fields and is used internally in the implementation.
+ * 
+ * There are different ways to use the structure definition, but the most common is via
+ * the @ref StructBase::Ref class, which wraps a pointer to raw data. The
+ * @ref StructBase::MakeRef helper function can be used to create a @ref StructBase::Ref.
+ * For example:
+ * 
+ * ```
+ * char data[MyHeader::Size];
+ * 
+ * {
+ *     MyHeader::Ref ref = MyHeader::MakeRef(data);
+ *     // Each set call directly writes to 'data'.
+ *     ref.set(MyHeader::FieldA(), 5);
+ *     ref.set(MyHeader::FieldB(), 123);
+ * }
+ * 
+ * {
+ *     MyHeader::Ref ref = MyHeader::MakeRef(data);
+ *     // Each get call directly reads from 'data'.
+ *     uint32_t a = ref.get(MyHeader::FieldA());
+ *     uint64_t b = ref.get(MyHeader::FieldB());
+ * }
+ * ```
+ * 
+ * As can be seen, the @ref StructBase::Ref::set and @ref StructBase::Ref::get functions
+ * are used to set and get field values. These directly read/write from/to the pointed-to
+ * memory. For certain field types (but not integers as above), the
+ * @ref StructBase::Ref::ref function returns some kind of reference to the field; see the
+ * list of supported field types below.
+ * 
+ * The @ref StructBase::Val class is similar to @ref StructBase::Ref, but it contains a
+ * character array (@ref StructBase::Val::data) instead of referencing external data. The
+ * @ref StructBase::MakeVal helper function can be used to create a @ref StructBase::Val
+ * from existing data.
+ * 
+ * The system directly supports the following field types:
+ * - Fixed-width integer types `intN_t` and `uintN_t` for N=8,16,32,64, and enum types
+ *   based on these type. Big-endian byte order is used. The `get` and `set` operations
+ *   return/accept the same type as the field is defined as. The `ref` operation is not
+ *   available.
+ * - Structures defined though this same system (nested structures). The `get` and `set`
+ *   operation return/accept the type @ref StructBase::Val corresponding to the field type.
+ *   The `ref` operation is available and returns a @ref StructBase::Ref referencing the
+ *   nested structure.
+ * - Fixed-length arrays of fixed-width integers (`intN_t` and `uintN_t` for N=8,16,32,64),
+ *   using field type @ref StructIntArray\<T, Length\> (not `T[Length]`). The `get` and
+ *   `set` operations return/accept this @ref StructIntArray type by value, which contains
+ *   the @ref StructIntArray::data array. The `ref` operation is not available, except when
+ *   T is `uint8_t` (see below).
+ * - Fixed-length byte arrays, using field type @ref StructByteArray\<Length\>. This is
+ *   actually a type alias for @ref StructIntArray\<uint8_t, Length\>, but the `ref`
+ *   operation is also available, which returns a `char *` pointing to the field contents.
+ * - Any trivial type T (as defined by `std::is_trivial<T>`) using its native
+ *   representation, when using field type @ref StructRawField\<T\>. The `get` and `set`
+ *   operations return/accept the type T. The `ref` operation is not available.
+ * 
+ * Support for additional types can be added by adding additional specializations of
+ * @ref StructTypeHandler.
+ * 
+ * @{
+ */
+
+/**
+ * Specializations of this provide support for different field types.
+ * 
+ * Note that specializations for fields types directly supported by the system are not
+ * included in the documentation (see the @ref struct module description). When adding
+ * custom specializations it is important that there are no conflicts with the predefined
+ * ones.
+ * 
+ * Each specialization of @ref StructTypeHandler must provide a type alias `Handler` which
+ * defines the handler class for the field type(s).
+ * 
+ * The handler class must have the following definitions:
+ * - `static size_t const FieldSize`: Number of bytes in the byte representation.
+ * - `using ValType`: Type alias defining the value type for the `get` and `set` operations.
+ * - `static ValType get (char const *data)`: Function which decodes a byte representation
+ *   into a value.
+ * - `static void set (char *data, ValType value)`: Function which encodes a value into
+ *   a byte representation.
+ * 
+ * If and only if the `ref` operation is supported, the handler class must have the
+ * following definitions:
+ * - `using RefType`: Type alias defining the reference type for the `ref` operation
+ *   (not a C++ reference).
+ * - `static RefType ref (char *data)`: Function which returns a reference to the specified
+ *   field data, for the `ref` operation.
+ * 
+ * @tparam Type Field type (as declared via @ref AIPSTACK_DEFINE_STRUCT).
+ * @tparam Dummy Dummy template parameter to assist SFINAE, will be `void`.
+ */
 template <typename Type, typename Dummy=void>
 struct StructTypeHandler;
+
+#ifndef IN_DOXYGEN
 
 template <typename TType>
 struct StructField {
@@ -49,53 +182,51 @@ struct StructField {
 template <typename FieldType>
 using StructFieldHandler = typename StructTypeHandler<FieldType>::Handler;
 
-template <typename FieldType>
-using StructFieldValType = typename StructFieldHandler<FieldType>::ValType;
+#endif
 
+/**
+ * Get the value type for the given structure field type.
+ * 
+ * The value type is the one used for the `get` and `set` operations using this field type.
+ * 
+ * @tparam FieldType Field type, as used in the structure definition.
+ */
 template <typename FieldType>
-using StructFieldRefType = typename StructFieldHandler<FieldType>::RefType;
+using StructFieldValType =
+#ifdef IN_DOXYGEN
+implementation_hidden;
+#else
+typename StructFieldHandler<FieldType>::ValType;
+#endif
+
+/**
+ * Get the reference type for the given structure field type.
+ * 
+ * The reference type is the one used for the `ref` operations using this field type.
+ * This is only defined when the field type supports the `ref` operation.
+ * 
+ * @tparam FieldType Field type, as used in the structure definition.
+ */
+template <typename FieldType>
+using StructFieldRefType =
+#ifdef IN_DOXYGEN
+implementation_hidden;
+#else
+typename StructFieldHandler<FieldType>::RefType;
+#endif
 
 /**
  * Base class for protocol structure definitions.
  * 
- * Notable features of the system are:
- * - Automatic endianness handling (big endian encoding is used).
- *   That is, the user always interacts with logical values while
- *   the framework manages the byte-level representaion.
- * - Can reference structures in existing memory (no need for pointer
- *   casts violatign strict aliasing).
- * - Support for nested structures.
- * - Ability to define custom field types.
+ * See the @ref struct module description. This class should only be used via derived
+ * classes and those should only be defined using the @ref AIPSTACK_DEFINE_STRUCT macro.
  * 
- * Structures should be defined through the AIPSTACK_DEFINE_STRUCT macro which
- * results in a struct type inheriting StructBase. Example:
+ * There are two nested classes providing different ways to work with structure data:
+ * - @ref Ref references structure data using `char *` (@ref Ref::data).
+ * - @ref Val contains structure data as `char[Size]` (@ref Val::data).
  * 
- * \code
- * AIPSTACK_DEFINE_STRUCT(MyHeader,
- *     (FieldA, uint32_t)
- *     (FieldB, uint64_t)
- * )
- * \endcode
- * 
- * Each field specified will result in a type within this structure that
- * is used as an identifier for the field (e.g. MyHeader::FieldA).
- * 
- * There will be three classes within the main structure providing
- * different ways to work with structure data:
- * - Val: contains structure data as char[].
- * - Ref: references structure data using char *.
- * 
- * Note that the structure type itself (MyHeader) has no runtime use, it
- * is a zero-sized structure.
- * 
- * Note, internally AIPSTACK_DEFINE_STRUCT will expand to something like this:
- * 
- * struct MyHeader : public StructBase\<MyHeader\> {
- *      struct FieldA : public StructField\<uint32_t\>;
- *      struct FieldB : public StructField\<uint64_t\>;
- *      using StructFields = MakeTypeList\<FieldA, FieldB\>;
- *      static size_t const Size = MyHeader::GetStructSize();
- * };
+ * Note that there is no use for actual @ref StructBase instances (and instances
+ * of derived types).
  */
 template <typename TStructType>
 class StructBase {
@@ -134,27 +265,31 @@ public:
     class Val;
     
     /**
-     * Gets the value type of a specific field.
+     * Get the value type of a specific field.
      * 
-     * Example: ValType\<MyHeader::FieldA\> is uint32_t.
-     * 
-     * @tparam Field field identifier
+     * @tparam Field Field identifier.
      */
     template <typename Field>
     using ValType = StructFieldValType<typename Field::StructFieldType>;
     
     /**
-     * Gets the reference type of a specific field.
-     * Support for this depends on the type handler (e.g. nested structures).
+     * Get the reference type of a specific field.
+     * 
+     * This is only defined when the field type supports the `ref` operation.
+     * 
+     * @tparam Field Field identifier.
      */
     template <typename Field>
     using RefType = StructFieldRefType<typename Field::StructFieldType>;
     
     /**
-     * Returns the size of the structure.
-     * This is a function because of issues with eager resolution.
-     * The AIPSTACK_DEFINE_STRUCT macro defines a static Size member which
-     * should be used instead of this.
+     * Return the size of the structure.
+     * 
+     * This is a function because of issues with eager resolution. The
+     * @ref AIPSTACK_DEFINE_STRUCT macro defines a static `Size` member which should be used
+     * instead of this.
+     * 
+     * @return Structure size.
      */
     inline static constexpr size_t GetStructSize () 
     {
@@ -162,10 +297,10 @@ public:
     }
     
     /**
-     * Get the offset of a field.
+     * Get the byte offset of a field.
      * 
-     * @tparam Field field identifier
-     * @return field offset in bytes
+     * @tparam Field Field identifier.
+     * @return Field offset from the start of the structure in bytes.
      */
     template <typename Field>
     inline static size_t getOffset (Field)
@@ -175,11 +310,11 @@ public:
     }
     
     /**
-     * Reads a field.
+     * Read a field.
      * 
-     * @tparam Field field identifier
-     * @param data pointer to the start of a structure
-     * @return field value that was read
+     * @tparam Field Field identifier.
+     * @param data Pointer to the start of the structure.
+     * @return Field value that was read.
      */
     template <typename Field>
     inline static ValType<Field> get (char const *data, Field)
@@ -189,11 +324,11 @@ public:
     }
     
     /**
-     * Writes a field.
+     * Write a field.
      * 
-     * @tparam Field field identifier
-     * @param data pointer to the start of a structure
-     * @param value field value to set
+     * @tparam Field Field identifier.
+     * @param data Pointer to the start of the structure.
+     * @param value Field value to write.
      */
     template <typename Field>
     inline static void set (char *data, Field, ValType<Field> value)
@@ -203,8 +338,13 @@ public:
     }
     
     /**
-     * Returns a reference to a field.
-     * Support for this depends on the type handler (e.g. nested structures).
+     * Return a reference to a field.
+     * 
+     * Support for this depends on the type handler.
+     * 
+     * @tparam Field Field identifier.
+     * @param data Pointer to the start of the structure.
+     * @return Reference to the field.
      */
     template <typename Field>
     inline static RefType<Field> ref (char *data, Field)
@@ -214,9 +354,10 @@ public:
     }
     
     /**
-     * Returns a Ref class referencing the specified memory.
+     * Return a @ref Ref object referencing the specified memory.
      * 
-     * @param data pointer to the start of a structure
+     * @param data Pointer to the start of the structure.
+     * @return `Ref(data)`
      */
     inline static Ref MakeRef (char *data)
     {
@@ -224,11 +365,11 @@ public:
     }
     
     /**
-     * Reads a structure from the specified memory location and
-     * returns a Val class containing the structure data.
+     * Read a structure from the specified memory location and return a @ref Val object
+     * containing the structure data.
      * 
-     * @param data pointer to the start of a structure
-     * @return a Val class initialized with a copy of the data
+     * @param data Pointer to the start of the structure.
+     * @return A @ref Val object initialized with a copy of the data.
      */
     inline static Val MakeVal (char const *data)
     {
@@ -238,13 +379,14 @@ public:
     }
     
     /**
-     * Base class with definitions common to Val and Ref.
+     * Base class with definitions common to @ref Val and @ref Ref.
      */
     class ValRefBase {
     public:
         /**
          * The structure type.
-         * This is the TStructType template parameter of StructBase.
+         * 
+         * This is the `TStructType` template parameter of StructBase.
          */
         using Struct = StructType;
         
@@ -255,15 +397,26 @@ public:
     };
     
     /**
-     * Class which contains structure data.
-     * These can be created using StructBase::MakeVal or from
-     * the Val conversion operators in Ref.
+     * Represents a structure as a value.
+     * 
+     * This class contains structure data as a character array (@ref data). In addition to
+     * default construction, @ref Val objects can be created using @ref StructBase::MakeVal
+     * and from the conversion operators in @ref Ref.
      */
     class Val : public ValRefBase {
     public:
         /**
-         * Reads a field.
+         * Default constructor, leaves the @ref data array uninitialized.
+         */
+        Val () = default;
+        
+        /**
+         * Read a field.
+         * 
          * @see StructBase::get
+         * 
+         * @tparam Field Field identifier.
+         * @return Field value that was read.
          */
         template <typename Field>
         inline ValType<Field> get (Field) const
@@ -272,8 +425,12 @@ public:
         }
         
         /**
-         * Writes a field.
+         * Write a field.
+         * 
          * @see StructBase::set
+         * 
+         * @tparam Field Field identifier.
+         * @param value Field value to write.
          */
         template <typename Field>
         inline void set (Field, ValType<Field> value)
@@ -282,8 +439,12 @@ public:
         }
         
         /**
-         * Returns a reference to a field.
+         * Return a reference to a field.
+         * 
          * @see StructBase::ref
+         * 
+         * @tparam Field Field identifier.
+         * @return Reference to the field.
          */
         template <typename Field>
         inline RefType<Field> ref (Field)
@@ -292,7 +453,9 @@ public:
         }
         
         /**
-         * Returns a Ref referencing this Val.
+         * Return a @ref Ref referencing data in this @ref Val.
+         * 
+         * @return `Ref(data)`
          */
         inline operator Ref ()
         {
@@ -307,24 +470,34 @@ public:
     };
     
     /**
-     * Structure access class referencing external data via
-     * char *.
-     * Can be initialized via StructBase::MakeRef or Ref(data).
+     * Represents a reference to a structure stored elsewhere.
+     * 
+     * This class contains a pointer to the start of a structure (@ref data). In addition
+     * to the constructor, @ref Ref objects can be created using @ref StructBase::MakeRef.
      */
     class Ref : public ValRefBase {
     public:
+        /**
+         * Default constructor, leaves the @ref data pointer uninitialized.
+         */
         Ref () = default;
         
         /**
-         * Returns a Ref referencing the specified memory.
+         * Construct referencing the specified memory.
+         * 
+         * @param data Pointer to the start of the structure.
          */
         inline Ref (char *data)
         : data(data)
         {}
         
         /**
-         * Reads a field.
+         * Read a field.
+         * 
          * @see StructBase::get
+         * 
+         * @tparam Field Field identifier.
+         * @return Field value that was read.
          */
         template <typename Field>
         inline ValType<Field> get (Field) const
@@ -333,8 +506,12 @@ public:
         }
         
         /**
-         * Writes a field.
+         * Write a field.
+         * 
          * @see StructBase::set
+         * 
+         * @tparam Field Field identifier.
+         * @param value Field value to write.
          */
         template <typename Field>
         inline void set (Field, ValType<Field> value) const
@@ -343,8 +520,12 @@ public:
         }
         
         /**
-         * Returns a reference to a field.
+         * Return a reference to a field.
+         * 
          * @see StructBase::ref
+         * 
+         * @tparam Field Field identifier.
+         * @return Reference to the field.
          */
         template <typename Field>
         inline RefType<Field> ref (Field) const
@@ -353,7 +534,7 @@ public:
         }
         
         /**
-         * Reads and returns the current structure data as a Val.
+         * Read and return the current structure data as a @ref Val.
          */
         inline operator Val () const
         {
@@ -361,9 +542,13 @@ public:
         }
         
         /**
-         * Copies the structure referenced by a Ref
-         * over the structure referenced by this Ref.
-         * Note: uses memcpy, so don't use with self.
+         * Copy the structure referenced by another @ref Ref over the structure referenced
+         * by this @ref Ref.
+         * 
+         * Both @ref Ref must not point to the same or overlapping memory (`memcpy` is
+         * used).
+         * 
+         * @param src Structure reference to copy from.
          */
         inline void load (Ref src) const
         {
@@ -371,16 +556,19 @@ public:
         }
         
     public:
+        /**
+         * The data pointer.
+         */
         char *data;
     };
 };
 
 /**
- * Decodes the value of a single struct field of specified type.
+ * Read (decode) the value of a single struct field of specified type.
  * 
- * @tparam FieldType field type
- * @param ptr location of encoded field data
- * @return decoded field value (ValType associated with this field type)
+ * @tparam FieldType Field type.
+ * @param ptr Pointer to field data to decode.
+ * @return Decoded field value.
  */
 template <typename FieldType>
 inline StructFieldValType<FieldType> ReadSingleField (char const *ptr)
@@ -389,11 +577,11 @@ inline StructFieldValType<FieldType> ReadSingleField (char const *ptr)
 }
 
 /**
- * Encodes the value of a single struct field of specified type.
+ * Write (encode) the value of a single struct field of specified type.
  * 
- * @tparam FieldType field type
- * @param ptr location to write encoded field data
- * @param value value to encode (ValType associated with this field type)
+ * @tparam FieldType Field type.
+ * @param ptr Pointer to where field data will be written.
+ * @param value Value to encode.
  */
 template <typename FieldType>
 inline void WriteSingleField (char *ptr, StructFieldValType<FieldType> value)
@@ -403,8 +591,15 @@ inline void WriteSingleField (char *ptr, StructFieldValType<FieldType> value)
 
 /**
  * Macro for defining structures.
- * @see StructBase
+ * 
+ * See the @ref struct module description.
+ * 
+ * @param StructName Name of the class to define which will represent the structure.
+ * @param Fields List of fields as a sequence of `(FieldName, FieldValue)`.
  */
+#ifdef IN_DOXYGEN
+#define AIPSTACK_DEFINE_STRUCT(StructName, Fields) implementation_hidden;
+#else
 #define AIPSTACK_DEFINE_STRUCT(StructName, Fields) \
 struct StructName : public AIpStack::StructBase<StructName> { \
     AIPSTACK_DEFINE_STRUCT__ADD_END(AIPSTACK_DEFINE_STRUCT__FIELD_1 Fields) \
@@ -413,6 +608,9 @@ struct StructName : public AIpStack::StructBase<StructName> { \
     >; \
     static size_t const Size = StructName::GetStructSize(); \
 };
+#endif
+
+#ifndef IN_DOXYGEN
 
 #define AIPSTACK_DEFINE_STRUCT__ADD_END(...) AIPSTACK_DEFINE_STRUCT__ADD_END_2(__VA_ARGS__)
 #define AIPSTACK_DEFINE_STRUCT__ADD_END_2(...) __VA_ARGS__ ## _END
@@ -435,16 +633,6 @@ AIPSTACK_DEFINE_STRUCT__FIELD_1
 #define AIPSTACK_DEFINE_STRUCT__LIST_1_END
 #define AIPSTACK_DEFINE_STRUCT__LIST_2_END
 
-/**
- * Structure field type handler for integer types using
- * big-endian representaion and also for enum types.
- * 
- * These type handlers are registered by default for signed and
- * unsigned fixed-width types: intN_t and uintN_t (N=8,16,32,64)
- * and enums using these as the underlying type.
- * 
- * Relies on ReadBinaryInt and WriteBinaryInt.
- */
 template <typename Type>
 class StructBinaryTypeHandler {
     using IntType = GetSameOrEnumBaseType<Type>;
@@ -481,13 +669,6 @@ AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(int16_t)
 AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(int32_t)
 AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(int64_t)
 
-/**
- * Type handler for structure types, allowing nesting of structures.
- * 
- * It provides:
- * - get() and set() operations using StructType::Val.
- * - ref() operations using StructType::Ref.
- */
 template <typename StructType>
 class StructNestedTypeHandler {
 public:
@@ -517,19 +698,54 @@ struct StructTypeHandler<Type, std::enable_if_t<std::is_base_of<StructBase<Type>
     using Handler = StructNestedTypeHandler<Type>;
 };
 
+#endif
+
 /**
- * A type containing an array of integers.
+ * Contains a fixed-length array of integers.
  * 
- * @see StructIntArrayTypeHandler
+ * Elements are stored in the @ref data array which can be accessed directly.
+ * 
+ * @tparam ElemType_ Type of elements. Must be one of the fixed-width integer types, or
+ *         more specifically must be supported by @ref ReadBinaryInt and
+ *         @ref WriteBinaryInt.
+ * @tparam Length_ Number of elements in the array.
  */
-template <typename TElemType, size_t TLength>
+template <typename ElemType_, size_t Length_>
 class StructIntArray {
 public:
-    using ElemType = TElemType;
+    /**
+     * Element type.
+     */
+    using ElemType = ElemType_;
+    
+    /**
+     * Size of an encoded element in bytes.
+     */
     static size_t const ElemSize = sizeof(ElemType);
-    static size_t const Length = TLength;
+    
+    /**
+     * Number of elements in the array.
+     */
+    static size_t const Length = Length_;
+    
+    /**
+     * Size of an encoded array in bytes.
+     */
     static size_t const Size = Length * ElemSize;
     
+    /**
+     * Decode a sequence of bytes into a @ref AIpStack::StructIntArray "StructIntArray" or
+     * derived type.
+     * 
+     * Decoding is done using big-endian byte order. A `ResType` object is
+     * default-constructed, its @ref data elements are filled in and the object
+     * is returned.
+     * 
+     * @tparam ResType Result type. Must be @ref StructIntArray or a type derived from that.
+     * @param bytes Pointer to start of data. There must be at least @ref Size bytes
+     *        available which will be read.
+     * @return Decoded integer array.
+     */
     template <typename ResType>
     inline static ResType decodeTo (char const *bytes)
     {
@@ -542,11 +758,28 @@ public:
         return result;
     }
     
+    /**
+     * Decode a sequence of bytes into a @ref AIpStack::StructIntArray "StructIntArray".
+     * 
+     * This is equivalent to @ref decodeTo\<StructIntArray\>.
+     * 
+     * @param bytes Pointer to start of data. There must be at least @ref Size bytes
+     *        available which will be decoded.
+     * @return Decoded integer array.
+     */
     inline static StructIntArray decode (char const *bytes)
     {
         return decodeTo<StructIntArray>(bytes);
     }
     
+    /**
+     * Encode into a sequence of bytes.
+     * 
+     * Encoding is done using big-endian byte order.
+     * 
+     * @param bytes Pointer to where the encoded data will be written. There must be at
+     *        least @ref Size bytes available which will be written.
+     */
     inline void encode (char *bytes) const
     {
         for (size_t i = 0; i < Length; i++) {
@@ -554,6 +787,12 @@ public:
         }
     }
     
+    /**
+     * Equality operator.
+     * 
+     * @param other The other integer array.
+     * @return Whether the arrays are equal.
+     */
     inline constexpr bool operator== (StructIntArray const &other) const
     {
         for (size_t i = 0; i < Length; i++) {
@@ -564,11 +803,23 @@ public:
         return true;
     }
     
+    /**
+     * Inequality operator.
+     * 
+     * @param other The other integer array.
+     * @return Whether the arrays are not equal.
+     */
     inline constexpr bool operator!= (StructIntArray const &other) const
     {
         return !operator==(other);
     }
     
+    /**
+     * Less-than operator using lexicographical order.
+     * 
+     * @param other The other integer array.
+     * @return Whether this array is less than `other`.
+     */
     inline constexpr bool operator< (StructIntArray const &other) const
     {
         for (size_t i = 0; i < Length; i++) {
@@ -582,40 +833,56 @@ public:
         return false;
     }
     
+    /**
+     * Greater-than operator using lexicographical order.
+     * 
+     * @param other The other integer array.
+     * @return Whether this array is greater than `other`.
+     */
     inline constexpr bool operator> (StructIntArray const &other) const
     {
         return other.operator<(*this);
     }
     
+    /**
+     * Less-than-or-equal operator using lexicographical order.
+     * 
+     * @param other The other integer array.
+     * @return Whether this array is less than or equal to `other`.
+     */
     inline constexpr bool operator<= (StructIntArray const &other) const
     {
         return !other.operator<(*this);
     }
     
+    /**
+     * Greater-than-or-equal operator using lexicographical order.
+     * 
+     * @param other The other integer array.
+     * @return Whether this array is greater than or equal to `other`.
+     */
     inline constexpr bool operator>= (StructIntArray const &other) const
     {
         return !operator<(other);
     }
     
 public:
+    /**
+     * The array of integers stored in this object.
+     */
     ElemType data[Length];
 };
 
 /**
  * A type containing an array of bytes (uint8_t).
- * This is just an alias for StructIntArray\<uint8_t, Length\>;
  * 
- * @see StructByteArrayTypeHandler
+ * This is just an alias for @ref StructIntArray\<uint8_t, Length\>;
  */
 template <size_t Length>
 using StructByteArray = StructIntArray<uint8_t, Length>;
 
-/**
- * Type handler for StructIntArray.
- * 
- * It provides:
- * - get() and set() operations using StructIntArray.
- */
+#ifndef IN_DOXYGEN
+
 template <typename TValType>
 class StructIntArrayTypeHandler {
 public:
@@ -634,13 +901,6 @@ public:
     }
 };
 
-/**
- * Type handler for StructByteArray.
- * 
- * It provides:
- * - get() and set() operations using StructByteArrayVal.
- * - ref() operation returns char *.
- */
 template <typename TValType>
 class StructByteArrayTypeHandler {
 public:
@@ -667,11 +927,6 @@ public:
     }
 };
 
-/**
- * Registers the StructIntArrayTypeHandler handler for field
- * types based on StructIntArray but StructByteArrayTypeHandler
- * for field types based on StructByteArray.
- */
 template <typename Type>
 struct StructTypeHandler<Type, std::enable_if_t<std::is_base_of<StructIntArray<typename Type::ElemType, Type::Length>, Type>::value>> {
     using Handler = std::conditional_t<
@@ -681,16 +936,11 @@ struct StructTypeHandler<Type, std::enable_if_t<std::is_base_of<StructIntArray<t
     >;
 };
 
-/**
- * Structure field type handler for any simple C++ type.
- * It implements get() and set() using memcpy. This means for
- * example that integers will be encoded in native byte and
- * that pointers can be used.
- * To declare a raw field in a struct use StructRawField<Type>.
- */
 template <typename Type>
 class StructRawTypeHandler {
 public:
+    static_assert(std::is_trivial<Type>::value, "");
+    
     static size_t const FieldSize = sizeof(Type);
     
     using ValType = Type;
@@ -708,12 +958,28 @@ public:
     }
 };
 
-template <typename Type> struct StructRawField {};
+#endif
+
+/**
+ * Field type of a raw field using native representation.
+ * 
+ * See the @ref struct module description.
+ * 
+ * @tparam Type Value type. Must be a trivial type (`std::is_trivial<T>`).
+ */
+template <typename Type>
+struct StructRawField {};
+
+#ifndef IN_DOXYGEN
 
 template <typename Type>
 struct StructTypeHandler<StructRawField<Type>, void> {
     using Handler = StructRawTypeHandler<Type>;
 };
+
+#endif
+
+/** @} */
 
 }
 
