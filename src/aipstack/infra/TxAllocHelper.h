@@ -86,7 +86,7 @@ public:
     {
         m_node.ptr = m_data;
 #if AIPSTACK_ASSERTIONS
-        m_initialized = false;
+        m_node.len = (size_t)-1;
 #endif
     }
     
@@ -120,9 +120,6 @@ public:
         m_node.len = HeaderBefore + size;
         m_node.next = nullptr;
         m_tot_len = size;
-#if AIPSTACK_ASSERTIONS
-        m_initialized = true;
-#endif
     }
     
     /**
@@ -150,7 +147,7 @@ public:
      */
     inline void changeSize (size_t size)
     {
-        AIPSTACK_ASSERT(m_initialized)
+        AIPSTACK_ASSERT(isInitialized())
         AIPSTACK_ASSERT(m_node.next == nullptr)
         AIPSTACK_ASSERT(size <= MaxSize)
         
@@ -175,7 +172,7 @@ public:
      */
     inline void setNext (IpBufNode const *next_node, size_t next_len)
     {
-        AIPSTACK_ASSERT(m_initialized)
+        AIPSTACK_ASSERT(isInitialized())
         AIPSTACK_ASSERT(m_node.next == nullptr)
         AIPSTACK_ASSERT(m_node.len == HeaderBefore + m_tot_len)
         AIPSTACK_ASSERT(next_node != nullptr)
@@ -213,18 +210,25 @@ public:
      */
     inline IpBufRef getBufRef ()
     {
-        AIPSTACK_ASSERT(m_initialized)
+        AIPSTACK_ASSERT(isInitialized())
         
         return IpBufRef{&m_node, HeaderBefore, m_tot_len};
+    }
+    
+private:
+    inline bool isInitialized () const
+    {
+        #if AIPSTACK_ASSERTIONS
+        return m_node.len != (size_t)-1;
+        #else
+        return true;
+        #endif
     }
     
 private:
     IpBufNode m_node;
     size_t m_tot_len;
     char m_data[TotalMaxSize];
-#if AIPSTACK_ASSERTIONS
-    bool m_initialized;
-#endif
 };
 
 /** @} */
