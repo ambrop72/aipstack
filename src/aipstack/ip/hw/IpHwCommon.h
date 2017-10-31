@@ -47,7 +47,7 @@ enum class IpHwType : uint8_t {
     Undefined = 0,
     
     /**
-     * The network interface uses Ethernet and the @ref IpEthHw::HwIface
+     * The network interface uses Ethernet and the @ref EthHwIface
      * hardware-type-specific interface is available.
      */
     Ethernet = 1,

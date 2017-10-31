@@ -51,7 +51,7 @@
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/ip/hw/IpHwCommon.h>
-#include <aipstack/ip/hw/IpEthHw.h>
+#include <aipstack/ip/hw/EthHw.h>
 #include <aipstack/ip/IpDhcpClient_options.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/platform/TimerWrapper.h>
@@ -72,7 +72,7 @@ namespace AIpStack {
  * 
  * The DHCP client currently supports only Ethernet network interfaces; more
  * specifically, the @ref IpHwType::Ethernet hardware-type specific interface
- * must be implemented by the network interface (see @ref IpEthHw).
+ * must be implemented by the network interface (see @ref eth-hw).
  * 
  * @{
  */
@@ -217,11 +217,10 @@ class IpDhcpClient :
     private Arg::IpStack::IfaceStateObserver,
     private IpDhcpClientTimers<Arg>::Timers,
     private IpSendRetryRequest,
-    private IpEthHw::ArpObserver,
+    private EthArpObserver,
     private NonCopyable<IpDhcpClient<Arg>>
 {
     AIPSTACK_USE_TYPES1(Arg, (PlatformImpl, IpStack, Params))
-    AIPSTACK_USE_TYPES1(IpEthHw, (ArpObserver))
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES1(Platform, (TimeType))
     AIPSTACK_USE_TYPES1(IpStack, (Ip4RxInfo, Iface, IfaceListener, IfaceStateObserver))
@@ -360,7 +359,7 @@ public:
      * @param stack The IP stack.
      * @param iface The interface to run on. It must be an Ethernet based interface
      *              and support the @ref IpHwType::Ethernet hardware-type
-     *              specific interface (see @ref IpEthHw).
+     *              specific interface (see @ref eth-hw).
      * @param opts Initialization options. This structure itself is copied but
      *             any referenced memory is not.
      * @param callback Object which will receive callbacks about the status
@@ -438,10 +437,10 @@ private:
         return IfaceListener::getIface();
     }
     
-    // Return the IpEthHw interface for the interface.
-    inline IpEthHw::HwIface * ethHw ()
+    // Return the EthHwIface interface for the interface.
+    inline EthHwIface * ethHw ()
     {
-        return iface()->template getHwIface<IpEthHw::HwIface>();
+        return iface()->template getHwIface<EthHwIface>();
     }
     
     // Convert seconds to ticks, requires seconds <= MaxTimerSeconds.
@@ -631,7 +630,7 @@ private:
             ethHw()->sendArpQuery(m_info.ip_address);
         } else {
             // Unsubscribe from ARP updates.
-            ArpObserver::reset();
+            EthArpObserver::reset();
             
             // Bind the lease.
             return go_bound();
@@ -1013,7 +1012,7 @@ private:
                 m_state = DhcpState::LinkDown;
                 
                 // Reset resources to prevent undesired callbacks.
-                ArpObserver::reset();
+                EthArpObserver::reset();
                 IpSendRetryRequest::reset();
                 tim(DhcpTimer()).unset();
                 
@@ -1035,7 +1034,7 @@ private:
             send_decline();
             
             // Unsubscribe from ARP updates.
-            ArpObserver::reset();
+            EthArpObserver::reset();
             
             // Restart via Resetting state after a timeout.
             return go_resetting(false);
@@ -1170,7 +1169,7 @@ private:
         // Subscribe to receive ARP updates.
         // NOTE: This must not be called if already registered,
         // so we reset it when we no longer need it.
-        ArpObserver::observe(*ethHw());
+        EthArpObserver::observe(*ethHw());
         
         // Start the timeout.
         tim(DhcpTimer()).setAfter(SecToTicks(Params::ArpResponseTimeoutSeconds));

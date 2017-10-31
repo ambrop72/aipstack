@@ -30,5 +30,7 @@ let
 
 in
 rec {
-    aipstackExample = pkgs.callPackage aipstackExampleFunc { };
+    aipstackExample = pkgs.callPackage aipstackExampleFunc {
+        #stdenv = pkgs.clangStdenv;
+    };
 }

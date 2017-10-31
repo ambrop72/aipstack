@@ -1105,7 +1105,7 @@ public:
          * 
          * The can be used to check which kind of hardware-type-specific interface
          * is available via @ref getHwIface (if any). For example, if the result is
-         * @ref IpHwType::Ethernet, then an interface of type @ref IpEthHw::HwIface
+         * @ref IpHwType::Ethernet, then an interface of type @ref EthHwIface
          * is available.
          * 
          * This function will return whatever was passed as @ref IpIfaceInitInfo::hw_type

@@ -54,7 +54,7 @@
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/proto/ArpProto.h>
 #include <aipstack/ip/IpStack.h>
-#include <aipstack/ip/hw/IpEthHw.h>
+#include <aipstack/ip/hw/EthHw.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/platform/TimerWrapper.h>
 
@@ -77,7 +77,7 @@ template <typename Arg>
 class EthIpIface :
     public Arg::Iface,
     private EthIpIfaceTimers<Arg>::Timers,
-    private IpEthHw::HwIface,
+    private EthHwIface,
     private NonCopyable<EthIpIface<Arg>>
 {
     AIPSTACK_USE_VALS(Arg::Params, (NumArpEntries, ArpProtectCount, HeaderBeforeEth))
@@ -212,7 +212,7 @@ public:
         Iface(stack, {
             /*ip_mtu=*/ (size_t)(info.eth_mtu - EthHeader::Size),
             /*hw_type=*/ IpHwType::Ethernet,
-            /*hw_iface=*/ static_cast<IpEthHw::HwIface *>(this)
+            /*hw_iface=*/ static_cast<EthHwIface *>(this)
         }),
         EthIpIfaceTimers<Arg>::Timers(platform),
         m_mac_addr(info.mac_addr)
@@ -309,7 +309,7 @@ private:
         return state;
     }
     
-private: // IpEthHw::HwIface
+private: // EthHwIface
     MacAddr getMacAddr () override final
     {
         return *m_mac_addr;
@@ -325,7 +325,7 @@ private: // IpEthHw::HwIface
         return send_arp_packet(ArpOpTypeRequest, MacAddr::BroadcastAddr(), ip_addr);
     }
     
-    IpEthHw::ArpObservable & getArpObservable () override final
+    EthArpObservable & getArpObservable () override final
     {
         return m_arp_observable;
     }
@@ -480,8 +480,8 @@ private:
         // will not happen if the interface has no IP address configured, which is
         // exactly when DHCP needs to be notified.
         if (ip_addr != Ip4Addr::AllOnesAddr() && ip_addr != Ip4Addr::ZeroAddr()) {
-            m_arp_observable.notifyKeepObservers([&](IpEthHw::ArpObserver &observer) {
-                IpEthHw::HwIface::notifyArpObserver(observer, ip_addr, mac_addr);
+            m_arp_observable.notifyKeepObservers([&](EthArpObserver &observer) {
+                EthHwIface::notifyEthArpObserver(observer, ip_addr, mac_addr);
             });
         }
     }
@@ -810,7 +810,7 @@ private:
     }
     
 private:
-    IpEthHw::ArpObservable m_arp_observable;
+    EthArpObservable m_arp_observable;
     MacAddr const *m_mac_addr;
     StructureRaiiWrapper<ArpEntryList> m_used_entries_list;
     StructureRaiiWrapper<ArpEntryList> m_free_entries_list;
