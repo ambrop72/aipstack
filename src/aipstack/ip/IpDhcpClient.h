@@ -246,7 +246,7 @@ class IpDhcpClient :
     
     // Message text to include in the DECLINE response if the address
     // was not used due to an ARP response (defined outside of class).
-    static char const DeclineMessageArpResponse[];
+    static constexpr char const DeclineMessageArpResponse[] = "ArpResponse";
     static uint8_t const MaxMessageSize = sizeof(DeclineMessageArpResponse) - 1;
     
     // Instatiate the options class with needed configuration.
@@ -1403,7 +1403,7 @@ private:
 
 #ifndef IN_DOXYGEN
 template <typename Arg>
-char const IpDhcpClient<Arg>::DeclineMessageArpResponse[] = "ArpResponse";
+constexpr char const IpDhcpClient<Arg>::DeclineMessageArpResponse[];
 #endif
 
 /**
