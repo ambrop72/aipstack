@@ -33,6 +33,19 @@
 namespace AIpStack {
 
 /**
+ * @ingroup misc
+ * @defgroup modulo Modular Arithmetic Utilities
+ * @brief Utilities for more easily using modular arithemtic.
+ * 
+ * The class @ref Modulo represents a modulus value and provides functions for performing
+ * arithmetic using that modulus. The functions @ref visitModuloRange and
+ * @ref visitModuloRange2 can be used to visit contiguous subranges within a range or two
+ * ranges respectively.
+ * 
+ * @{
+ */
+
+/**
  * Provides modular arithemtic operations using a specific modulus.
  */
 class Modulo
@@ -134,7 +147,7 @@ public:
 };
 
 /**
- * Visit contiguous sub-ranges of a modular arithmetic range (e.g. a range in a
+ * Visit contiguous sub-ranges of a modular arithmetic range (e.g.\ a range in a
  * circular buffer).
  * 
  * This calls the given 'visit' function object for each contiguous sub-range of the
@@ -173,7 +186,7 @@ void visitModuloRange (Modulo mod, size_t pos, size_t count, Visit visit)
 }
 
 /**
- * Visit common contiguous sub-ranges of two modular arithmetic ranges (e.g. ranges
+ * Visit common contiguous sub-ranges of two modular arithmetic ranges (e.g.\ ranges
  * in circular buffers).
  * 
  * This is the equivalent of @ref visitModuloRange for synchronized processing
@@ -213,6 +226,8 @@ void visitModuloRange2 (Modulo mod1, size_t pos1, Modulo mod2, size_t pos2,
         count -= chunk_len;
     }
 }
+
+/** @} */
 
 }
 
