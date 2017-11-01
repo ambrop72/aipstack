@@ -819,7 +819,7 @@ private:
     PortType get_ephemeral_port (Ip4Addr local_addr,
                                  Ip4Addr remote_addr, PortType remote_port)
     {
-        for (PortType i : LoopRangeAuto(NumEphemeralPorts)) {
+        for (PortType i : LoopRange(NumEphemeralPorts)) {
             PortType port = m_next_ephemeral_port;
             m_next_ephemeral_port = (port < EphemeralPortLast) ?
                 (port + 1) : EphemeralPortFirst;
