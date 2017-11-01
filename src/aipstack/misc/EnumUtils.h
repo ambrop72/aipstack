@@ -31,8 +31,23 @@
 
 namespace AIpStack {
 
+/**
+ * @ingroup misc
+ * @defgroup enum-utils Enum Utilities
+ * @brief Utilities for enum types.
+ * 
+ * @{
+ */
+
+/**
+ * Convert an enum to its underlying type.
+ * 
+ * @tparam EnumType Enum type.
+ * @param e Enum value.
+ * @return Value converted to underlying type.
+ */
 template <typename EnumType>
-constexpr inline auto ToUnderlyingType (EnumType e)
+constexpr inline std::underlying_type_t<EnumType> ToUnderlyingType (EnumType e)
 {
     static_assert(std::is_enum<EnumType>::value, "EnumType must be an enum type");
     return std::underlying_type_t<EnumType>(e);
@@ -65,18 +80,54 @@ namespace EnumUtilsPrivate {
 
 #endif
 
+/**
+ * Check if a type is an enum type with the specified underlying type.
+ * 
+ * The result is @ref WrapBool<true> if `Type` is an enum type with underlying type
+ * `BaseType`, otherwise the result is @ref WrapBool<false>.
+ * 
+ * @tparam Type Type to check.
+ * @tparam BaseType Underlying type to check for.
+ */
 template <typename Type, typename BaseType>
 using IsEnumWithBaseType = WrapBool<
+    #ifdef IN_DOXYGEN
+    implementation_hidden
+    #else
     EnumUtilsPrivate::EnumWithBaseTypeHelper<std::is_enum<Type>::value, Type, BaseType>::IsEnumWithBaseType
+    #endif
 >;
 
+/**
+ * Check if a type is the specified type or an enum type with that underlying type.
+ * 
+ * The result is @ref WrapBool<true> if `Type` is `BaseType` or an enum type with underlying
+ * type `BaseType`, otherwise the result is @ref WrapBool<false>.
+ * 
+ * @tparam Type Type to check.
+ * @tparam BaseType Type or underlying type to check for.
+ */
 template <typename Type, typename BaseType>
 using IsSameOrEnumWithBaseType = WrapBool<
+    #ifdef IN_DOXYGEN
+    implementation_hidden
+    #else
     std::is_same<Type, BaseType>::value || IsEnumWithBaseType<Type, BaseType>::Value
+    #endif
 >;
 
+/**
+ * Get the underlying type of an enum type or if not an enum the type itself.
+ * 
+ * If `Type` is an enum type the result is the underlying type, otherwise the result is
+ * `Type`.
+ * 
+ * @tparam Type Type for which to get the same or underlying type.
+ */
 template <typename Type>
 using GetSameOrEnumBaseType = typename EnumUtilsPrivate::GetSameOrBaseTypeHelper<std::is_enum<Type>::value, Type>::ResultType;
+
+/** @} */
 
 }
 
