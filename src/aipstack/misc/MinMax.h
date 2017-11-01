@@ -30,28 +30,84 @@
 
 namespace AIpStack {
 
+/**
+ * @ingroup misc
+ * @defgroup min-max Minimum and Maximum Utilities
+ * @brief Simple binary min, max and related functions.
+ * 
+ * @{
+ */
+
+/**
+ * Return the smaller of two numbers (typically integers).
+ * 
+ * @tparam T Type of operand.
+ * @param op1 First operand.
+ * @param op2 Second operand.
+ * @return `(op1 < op2) ? op1 : op2`
+ */
 template <typename T>
 constexpr T MinValue (T op1, T op2)
 {
     return (op1 < op2) ? op1 : op2;
 }
 
+/**
+ * Return the larger of two numbers (typically integers).
+ * 
+ * @tparam T Type of operand.
+ * @param op1 First operand.
+ * @param op2 Second operand.
+ * @return `(op1 > op2) ? op1 : op2`
+ */
 template <typename T>
 constexpr T MaxValue (T op1, T op2)
 {
     return (op1 > op2) ? op1 : op2;
 }
 
+/**
+ * Return the absolute difference of two numbers (typically integers).
+ * 
+ * @tparam T Type of operand.
+ * @param op1 First operand.
+ * @param op2 Second operand.
+ * @return `(op1 > op2) ? (op1 - op2) : (op2 - op1)`
+ */
 template <typename T>
 constexpr T AbsoluteDiff (T op1, T op2)
 {
     return (op1 > op2) ? (op1 - op2) : (op2 - op1);
 }
 
+#ifndef IN_DOXYGEN
 template <typename T1, typename T2>
 using MinValueURetType = std::conditional_t<
     (std::numeric_limits<T1>::digits < std::numeric_limits<T2>::digits), T1, T2>;
+#endif
 
+/**
+ * Return the smaller of two unsigned integers as the narrower type.
+ * 
+ * This deduces the return type to be the narrower type of `T1` and `T2`, or `T2` if they
+ * are equally wide. This can be compared to @ref MinValue, where the operands and the
+ * result all have the same type.
+ * 
+ * Below is a typical use case where this is practical:
+ * 
+ * ```
+ * // We have a value which we want to limit to no more than fits into uint16_t.
+ * uint32_t a = ...;
+ * // Use MinValueU and assign the result to uint16_t (no cast needed).
+ * uint16_t b = MinValueU(a, std::numeric_limits<uint16_t>::max());
+ * ```
+ * 
+ * @tparam T1 Type of first operand. Must be an unsigned integer type.
+ * @tparam T2 Type of second operand. Must be an unsigned integer type.
+ * @param op1 First operand.
+ * @param op2 Second operand.
+ * @return The smaller operand, as the narrower type (see description).
+ */
 template <typename T1, typename T2>
 constexpr MinValueURetType<T1, T2> MinValueU (T1 op1, T2 op2)
 {
@@ -64,6 +120,8 @@ constexpr MinValueURetType<T1, T2> MinValueU (T1 op1, T2 op2)
         return op2;
     }
 }
+
+/** @} */
 
 }
 
