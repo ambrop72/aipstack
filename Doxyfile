@@ -829,6 +829,7 @@ EXCLUDE                = \
     src/aipstack/utils/TcpListenQueue.h \
     src/aipstack/utils/TcpRingBufferUtils.h \
     src/aipstack/utils/WrapBuffer.h \
+    src/aipstack/misc/ExceptionUtils.h \
 
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
