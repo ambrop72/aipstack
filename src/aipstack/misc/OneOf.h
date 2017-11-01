@@ -29,6 +29,13 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup misc
+ * @{
+ */
+
+#ifndef IN_DOXYGEN
+
 template <typename...>
 struct OneOfStruct;
 
@@ -76,15 +83,32 @@ bool operator!= (SelType const &sel, OneOfStruct<OptRefType...> opt_struct)
     return !opt_struct.one_of(sel);
 }
 
+#endif
+
 /**
- * Use to check if a value is equal to or not equal to any of the choices,
- * according to the following recipe:
- *   X == OneOf(C1, ..., CN)
- *   X != OneOf(C1, ..., CN)
+ * Use to check if a value is equal to or not equal to any of the options.
  * 
- * NOTE: This stores the arguments by value in the intermediate struct.
- * Since the intention is to be used with integers/enums, and inlining
- * is forced, it should regardless have no special overhead.
+ * This should be used according to the following recipe:
+ * 
+ * ```
+ * X == OneOf(O1, ..., On)
+ * X != OneOf(O1, ..., On)
+ * ```
+ * 
+ * When one of the these comparison expressions is used, the operand `X` is compared to
+ * the options in order using `X == Oi`. If any option matches, the result is true for `==`
+ * or false for `!=` and the remaining options are not checked; if no option matches the
+ * result is false or true respectively.
+ * 
+ * @note
+ * The option values are copied and stored in the returned structure. Since the intention is
+ * to be used with integers/enums and inlining is forced, it should regardless have no
+ * special overhead.
+ * 
+ * @tparam OptType Types of options. Each type must be copy-constructible.
+ * @param opt Option values.
+ * @return A value containing all the option values and for which `==` and `!=` operators
+ *         are defined to support the expressions described.
  */
 template <typename... OptType>
 AIPSTACK_ALWAYS_INLINE
@@ -92,6 +116,8 @@ OneOfStruct<OptType...> OneOf (OptType ... opt)
 {
     return OneOfStruct<OptType...>(opt...);
 }
+
+/** @} */
 
 }
 
