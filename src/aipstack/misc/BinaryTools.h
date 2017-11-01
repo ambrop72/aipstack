@@ -34,6 +34,21 @@
 
 namespace AIpStack {
 
+/**
+ * @ingroup misc
+ * @defgroup binary-tools Binary Encoding/Decoding
+ * @brief Binary encoding and decoding of integers
+ * 
+ * The @ref ReadBinaryInt function encodes an integer to bytes and the @ref WriteBinaryInt
+ * function decodes bytes to an integer. Either little-endian (@ref BinaryLittleEndian) or
+ * big-endian (@ref BinaryBigEndian) byte-order can be used.
+ * 
+ * The supported types are all binary integer types (signed and unsigned) which are
+ * 8, 16, 32 or 64-bits wide.
+ * 
+ * @{
+ */
+
 #ifndef IN_DOXYGEN
 
 namespace BinaryToolsPrivate {
@@ -216,16 +231,32 @@ namespace BinaryToolsPrivate {
     };
 }
 
-#endif
-
 template <bool BigEndian_>
 struct BinaryEndian {
     static bool const BigEndian = BigEndian_;
 };
 
+#endif
+
+/**
+ * Little-endian byte order (used as a type only).
+ */
 using BinaryLittleEndian = BinaryEndian<false>;
+
+/**
+ * Little-endian byte order (used as a type only).
+ */
 using BinaryBigEndian = BinaryEndian<true>;
 
+/**
+ * Decode an integer from a binary (byte) representation.
+ * 
+ * @tparam T Integer type (see the @ref binary-tools module description for supported
+ *         types).
+ * @tparam Endian Byte order (@ref BinaryLittleEndian or @ref BinaryBigEndian).
+ * @param src Pointer to encoded data; `sizeof(T)` bytes will be read from here.
+ * @return Decoded integer value.
+ */
 template <typename T, typename Endian>
 inline T ReadBinaryInt (char const *src)
 {
@@ -235,6 +266,16 @@ inline T ReadBinaryInt (char const *src)
         template read_it<T, Endian::BigEndian>(src);
 }
 
+/**
+ * Encode an integer to a binary (byte) representation.
+ * 
+ * @tparam T Integer type (see the @ref binary-tools module description for supported
+ *         types).
+ * @tparam Endian Byte order (@ref BinaryLittleEndian or @ref BinaryBigEndian).
+ * @param value Integer value to encode.
+ * @param dst Pointer where to write the encoded data; `sizeof(T)` bytes will be written
+ *        here.
+ */
 template <typename T, typename Endian>
 inline void WriteBinaryInt (T value, char *dst)
 {
@@ -243,6 +284,8 @@ inline void WriteBinaryInt (T value, char *dst)
     return BinaryToolsPrivate::SignHelper<std::is_signed<T>::value>::
         template write_it<T, Endian::BigEndian>(value, dst);
 }
+
+/** @} */
 
 }
 
