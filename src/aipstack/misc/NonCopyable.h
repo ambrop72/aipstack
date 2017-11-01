@@ -27,13 +27,41 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup misc
+ * @{
+ */
+
+/**
+ * Inheriting this class makes the derived class non-copyable.
+ * 
+ * This class has a deleted copy-constructor and copy-assignment operator. A derived class
+ * will also have those deleted and consequently also a deleted move-constructor and
+ * move-assignment operator (so long as these are not defined explicitly).
+ * 
+ * @tparam Derived Dummy template parameter to avoid problems with ambiguous base classes.
+ *         It is recommended to use the type of the derived class.
+ */
 template <typename Derived = void>
 class NonCopyable {
 public:
+    /**
+     * Default constructor, does nothing.
+     */
     NonCopyable () = default;
+    
+    /**
+     * Deleted copy-constructor.
+     */
     NonCopyable (NonCopyable const &) = delete;
+    
+    /**
+     * Deleted copy-assignment operator.
+     */
     NonCopyable & operator= (NonCopyable const &) = delete;
 };
+
+/** @} */
 
 }
 
