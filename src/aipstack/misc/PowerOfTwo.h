@@ -27,11 +27,28 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup misc
+ * @{
+ */
+
+/**
+ * Calculate a power of two, calculated using repeated multiplication by 2.
+ * 
+ * This calculates a power of two recursively using the following expression:
+ * `(e == 0) ? 1 : 2 * PowerOfTwo<T>(e - 1)`. There is no consideration for overflow.
+ * 
+ * @tparam T Result type (integer or floating-point type).
+ * @param e Exponent, must be greater than or equal to 0.
+ * @return 2 raised to the power `e`.
+ */
 template <typename T>
 constexpr T PowerOfTwo (int e)
 {
     return (e == 0) ? 1 : 2 * PowerOfTwo<T>(e - 1);
 }
+
+/** @} */
 
 }
 
