@@ -50,7 +50,7 @@ namespace AIpStack {
 template <typename Arg>
 class TcpOosBuffer
 {
-    AIPSTACK_USE_TYPES1(TcpUtils, (SeqType))
+    AIPSTACK_USE_TYPES(TcpUtils, (SeqType))
     AIPSTACK_USE_VALS(TcpUtils, (seq_diff, seq_add, seq_lte, seq_lt))
     
     static_assert(Arg::NumOosSegs > 0, "");

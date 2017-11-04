@@ -41,8 +41,8 @@ namespace AIpStack {
 template <typename TcpProto>
 class IpTcpProto_constants
 {
-    AIPSTACK_USE_TYPES1(TcpUtils, (SeqType))
-    AIPSTACK_USE_TYPES1(TcpProto, (TimeType, RttType, Platform, TheIpStack))
+    AIPSTACK_USE_TYPES(TcpUtils, (SeqType))
+    AIPSTACK_USE_TYPES(TcpProto, (TimeType, RttType, Platform, TheIpStack))
     AIPSTACK_USE_VALS(TcpProto, (RttTimeFreq, RttTypeMaxDbl))
     
     // Make sure the MinMTU permits an unfragmented TCP segment with some data.

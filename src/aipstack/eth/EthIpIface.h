@@ -81,11 +81,11 @@ class EthIpIface :
     private NonCopyable<EthIpIface<Arg>>
 {
     AIPSTACK_USE_VALS(Arg::Params, (NumArpEntries, ArpProtectCount, HeaderBeforeEth))
-    AIPSTACK_USE_TYPES1(Arg::Params, (TimersStructureService))
-    AIPSTACK_USE_TYPES1(Arg, (PlatformImpl, Iface))
+    AIPSTACK_USE_TYPES(Arg::Params, (TimersStructureService))
+    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, Iface))
     
     using Platform = PlatformFacade<PlatformImpl>;
-    AIPSTACK_USE_TYPES1(Platform, (TimeType))
+    AIPSTACK_USE_TYPES(Platform, (TimeType))
     AIPSTACK_USE_TIMERS_CLASS(EthIpIfaceTimers<Arg>, (ArpTimer))
     using EthIpIfaceTimers<Arg>::Timers::platform;
     

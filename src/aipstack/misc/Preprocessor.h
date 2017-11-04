@@ -36,22 +36,10 @@
 /**
  * Expands to a type alias bringing a type from a different scope into this scope.
  * 
- * This version uses typename.
- * 
  * @param namespace Scope which contains the type.
  * @param type_name Type in that scope to create an alias for.
  */
-#define AIPSTACK_USE_TYPE1(namespace, type_name) using type_name = typename namespace::type_name;
-
-/**
- * Expands to a type alias bringing a type from a different scope into this scope.
- * 
- * This version does not use typename.
- * 
- * @param namespace Scope which contains the type.
- * @param type_name Type in that scope to create an alias for.
- */
-#define AIPSTACK_USE_TYPE2(namespace, type_name) using type_name = namespace::type_name;
+#define AIPSTACK_USE_TYPE(namespace, type_name) using type_name = typename namespace::type_name;
 
 /**
  * Expands to a variable definition which copies a value from another scope into this scope.
@@ -70,24 +58,13 @@
 /**
  * Expands to type aliases bringing types from a different scope into this scope.
  * 
- * This expands to @ref AIPSTACK_USE_TYPE1 for each specified type name.
+ * This expands to @ref AIPSTACK_USE_TYPE for each specified type name.
  * 
  * @param namespace Scope which contains the types.
  * @param type_names Names of types in that scope to create an alias for, given as a
  *        parenthesized list separated by commas, e.g. `(T1, T2, T3)`.
  */
-#define AIPSTACK_USE_TYPES1(namespace, type_names) implementation_hidden
-
-/**
- * Expands to type aliases bringing types from a different scope into this scope.
- * 
- * This expands to @ref AIPSTACK_USE_TYPE2 for each specified type name.
- * 
- * @param namespace Scope which contains the types.
- * @param type_names Names of types in that scope to create an alias for, given as a
- *        parenthesized list separated by commas, e.g. `(T1, T2, T3)`.
- */
-#define AIPSTACK_USE_TYPES2(namespace, type_names) implementation_hidden
+#define AIPSTACK_USE_TYPES(namespace, type_names) implementation_hidden
 
 /**
  * Expands to variable definitions which copy values from another scope into this scope.
@@ -111,8 +88,7 @@
 
 #include "Preprocessor_MacroMap.h"
 
-#define AIPSTACK_USE_TYPES1(namespace, type_names) AIPSTACK_AS_MAP(AIPSTACK_USE_TYPE1, AIPSTACK_AS_MAP_DELIMITER_NONE, namespace, type_names)
-#define AIPSTACK_USE_TYPES2(namespace, type_names) AIPSTACK_AS_MAP(AIPSTACK_USE_TYPE2, AIPSTACK_AS_MAP_DELIMITER_NONE, namespace, type_names)
+#define AIPSTACK_USE_TYPES(namespace, type_names) AIPSTACK_AS_MAP(AIPSTACK_USE_TYPE, AIPSTACK_AS_MAP_DELIMITER_NONE, namespace, type_names)
 #define AIPSTACK_USE_VALS(namespace, value_names)  AIPSTACK_AS_MAP(AIPSTACK_USE_VAL,   AIPSTACK_AS_MAP_DELIMITER_NONE, namespace, value_names)
 
 #endif

@@ -44,8 +44,8 @@ template <
 >
 class TcpListenQueue {
     using Platform = PlatformFacade<PlatformImpl>;
-    AIPSTACK_USE_TYPES1(Platform, (TimeType))
-    AIPSTACK_USE_TYPES1(TcpProto, (Listener, Connection))
+    AIPSTACK_USE_TYPES(Platform, (TimeType))
+    AIPSTACK_USE_TYPES(TcpProto, (Listener, Connection))
     
     static_assert(RxBufferSize > 0, "");
     

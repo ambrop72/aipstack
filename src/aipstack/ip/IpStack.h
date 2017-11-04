@@ -108,9 +108,9 @@ template <typename Arg>
 class IpStack :
     private NonCopyable<IpStack<Arg>>
 {
-    AIPSTACK_USE_TYPES1(Arg, (Params, ProtocolServicesList))
+    AIPSTACK_USE_TYPES(Arg, (Params, ProtocolServicesList))
     AIPSTACK_USE_VALS(Params, (HeaderBeforeIp, IcmpTTL, AllowBroadcastPing))
-    AIPSTACK_USE_TYPES1(Params, (PathMtuCacheService, ReassemblyService))
+    AIPSTACK_USE_TYPES(Params, (PathMtuCacheService, ReassemblyService))
     
 public:
     /**
@@ -124,7 +124,7 @@ public:
     using Platform = PlatformFacade<PlatformImpl>;
     
 private:
-    AIPSTACK_USE_TYPE1(Platform, TimeType)
+    AIPSTACK_USE_TYPE(Platform, TimeType)
     
     AIPSTACK_MAKE_INSTANCE(Reassembly, (ReassemblyService::template Compose<PlatformImpl>))
     

@@ -38,7 +38,7 @@ template <typename PlatformImpl, typename MT, typename TimerId>
 class MultiTimerOne
 {
     using Platform = PlatformFacade<PlatformImpl>;
-    AIPSTACK_USE_TYPES1(Platform, (TimeType))
+    AIPSTACK_USE_TYPES(Platform, (TimeType))
     
 public:
     // WARNING: After calling any function which adjusts the timer state and
@@ -91,7 +91,7 @@ class MultiTimer :
     friend class MultiTimerOne;
     
     using Platform = PlatformFacade<PlatformImpl>;
-    AIPSTACK_USE_TYPES1(Platform, (TimeType, Timer))
+    AIPSTACK_USE_TYPES(Platform, (TimeType, Timer))
     
     static int const NumTimers = sizeof...(TimerIds);
     using TimerIdsList = MakeTypeList<TimerIds...>;

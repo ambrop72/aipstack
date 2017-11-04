@@ -36,9 +36,9 @@ namespace AIpStack {
 
 template <typename Arg>
 class AvlTreeIndex {
-    AIPSTACK_USE_TYPES1(Arg, (HookAccessor, LookupKeyArg, KeyFuncs, LinkModel))
+    AIPSTACK_USE_TYPES(Arg, (HookAccessor, LookupKeyArg, KeyFuncs, LinkModel))
     
-    AIPSTACK_USE_TYPES1(LinkModel, (State, Ref))
+    AIPSTACK_USE_TYPES(LinkModel, (State, Ref))
     
     using TreeNode = AvlTreeNode<LinkModel>;
     

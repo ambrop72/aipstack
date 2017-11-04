@@ -220,10 +220,10 @@ class IpDhcpClient :
     private EthArpObserver,
     private NonCopyable<IpDhcpClient<Arg>>
 {
-    AIPSTACK_USE_TYPES1(Arg, (PlatformImpl, IpStack, Params))
+    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, IpStack, Params))
     using Platform = PlatformFacade<PlatformImpl>;
-    AIPSTACK_USE_TYPES1(Platform, (TimeType))
-    AIPSTACK_USE_TYPES1(IpStack, (Ip4RxInfo, Iface, IfaceListener, IfaceStateObserver))
+    AIPSTACK_USE_TYPES(Platform, (TimeType))
+    AIPSTACK_USE_TYPES(IpStack, (Ip4RxInfo, Iface, IfaceListener, IfaceStateObserver))
     AIPSTACK_USE_VALS(IpStack, (HeaderBeforeIp4Dgram))
     AIPSTACK_USE_TIMERS_CLASS(IpDhcpClientTimers<Arg>, (DhcpTimer)) 
     using IpDhcpClientTimers<Arg>::Timers::platform;
@@ -253,7 +253,7 @@ class IpDhcpClient :
     using Options = IpDhcpClient_options<
         Params::MaxDnsServers, Params::MaxClientIdSize,
         Params::MaxVendorClassIdSize, MaxMessageSize>;
-    AIPSTACK_USE_TYPES1(Options, (DhcpRecvOptions, DhcpSendOptions))
+    AIPSTACK_USE_TYPES(Options, (DhcpRecvOptions, DhcpSendOptions))
     
     // DHCP client states
     enum class DhcpState {

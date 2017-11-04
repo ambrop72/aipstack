@@ -48,11 +48,11 @@ namespace AIpStack {
 template <typename TcpProto>
 class IpTcpProto_output
 {
-    AIPSTACK_USE_TYPES1(TcpUtils, (FlagsType, SeqType, PortType, TcpState, TcpSegMeta,
+    AIPSTACK_USE_TYPES(TcpUtils, (FlagsType, SeqType, PortType, TcpState, TcpSegMeta,
                                    OptionFlags, TcpOptions))
     AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lt2, seq_add_sat, tcplen,
                                  can_output_in_state, snd_open_in_state))
-    AIPSTACK_USE_TYPES1(TcpProto, (Ip4RxInfo, TcpPcb, PcbFlags, Input, TimeType, RttType,
+    AIPSTACK_USE_TYPES(TcpProto, (Ip4RxInfo, TcpPcb, PcbFlags, Input, TimeType, RttType,
                                    RttNextType, Constants, OutputTimer, RtxTimer,
                                    TheIpStack, MtuRef, Connection, PcbKey))
     AIPSTACK_USE_VALS(TcpProto, (RttTypeMax))

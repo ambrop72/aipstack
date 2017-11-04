@@ -79,9 +79,9 @@ namespace AIpStack {
         template <typename> friend class IpTcpProto_input;
         template <typename> friend class IpTcpProto_output;
         
-        AIPSTACK_USE_TYPES2(TcpUtils, (TcpState, PortType, SeqType))
+        AIPSTACK_USE_TYPES(TcpUtils, (TcpState, PortType, SeqType))
         AIPSTACK_USE_VALS(TcpUtils, (state_is_active, snd_open_in_state))
-        AIPSTACK_USE_TYPES1(TcpProto, (TcpPcb, Input, Output, Constants, MtuRef, OosBuffer,
+        AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Input, Output, Constants, MtuRef, OosBuffer,
                                        RttType))
         
     public:

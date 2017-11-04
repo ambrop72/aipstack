@@ -80,14 +80,14 @@ class IpPathMtuCache :
     private IpPathMtuCacheTimers<Arg>::Timers,
     private NonCopyable<IpPathMtuCache<Arg>>
 {
-    AIPSTACK_USE_TYPES1(Arg, (Params, PlatformImpl, IpStack))
+    AIPSTACK_USE_TYPES(Arg, (Params, PlatformImpl, IpStack))
     AIPSTACK_USE_VALS(Params, (NumMtuEntries, MtuTimeoutMinutes))
-    AIPSTACK_USE_TYPES1(Params, (MtuIndexService))
+    AIPSTACK_USE_TYPES(Params, (MtuIndexService))
     
     using Platform = PlatformFacade<PlatformImpl>;    
-    AIPSTACK_USE_TYPES1(Platform, (TimeType))
+    AIPSTACK_USE_TYPES(Platform, (TimeType))
     
-    AIPSTACK_USE_TYPES1(IpStack, (Iface, Ip4RouteInfo))
+    AIPSTACK_USE_TYPES(IpStack, (Iface, Ip4RouteInfo))
     AIPSTACK_USE_VALS(IpStack, (MinMTU))
     
     static_assert(NumMtuEntries > 0, "");

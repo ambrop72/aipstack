@@ -39,8 +39,8 @@ namespace AIpStack {
 
 template <typename TcpProto>
 class TcpRingBufferUtils {
-    AIPSTACK_USE_TYPES2(AIpStack, (IpBufNode, IpBufRef))
-    AIPSTACK_USE_TYPES1(TcpProto, (SeqType, Connection))
+    AIPSTACK_USE_TYPES(AIpStack, (IpBufNode, IpBufRef))
+    AIPSTACK_USE_TYPES(TcpProto, (SeqType, Connection))
     
 public:
     class SendRingBuffer {

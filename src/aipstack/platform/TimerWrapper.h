@@ -106,7 +106,7 @@ public: \
 using AipstackTimers = typename TimersDeclClass::Timers; \
 friend AipstackTimers; \
 using AipstackTimers::tim; \
-AIPSTACK_USE_TYPES1(TimersDeclClass, TheTimers)
+AIPSTACK_USE_TYPES(TimersDeclClass, TheTimers)
 
 }
 

@@ -77,10 +77,10 @@ class IpReassembly :
 {
     AIPSTACK_USE_VALS(Arg::Params, (MaxReassEntrys, MaxReassSize, MaxReassHoles,
                                     MaxReassTimeSeconds))
-    AIPSTACK_USE_TYPES1(Arg, (PlatformImpl))
+    AIPSTACK_USE_TYPES(Arg, (PlatformImpl))
     
     using Platform = PlatformFacade<PlatformImpl>;
-    AIPSTACK_USE_TYPES1(Platform, (TimeType))
+    AIPSTACK_USE_TYPES(Platform, (TimeType))
     
     AIPSTACK_USE_TIMERS_CLASS(IpReassemblyTimers<Arg>, (PurgeTimer)) 
     

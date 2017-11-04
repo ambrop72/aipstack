@@ -75,7 +75,7 @@ class TimerQueue
     static_assert(std::is_unsigned<TimeType>::value, "");
     
     // Get the State and Ref types from the link model.
-    AIPSTACK_USE_TYPES1(LinkModel, (State, Ref))
+    AIPSTACK_USE_TYPES(LinkModel, (State, Ref))
     
     // Get the TimerQueueNode type.
     using Node = TimerQueueNode<TimersStructureService, LinkModel, TimeType, NodeUserData>;

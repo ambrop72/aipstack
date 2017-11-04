@@ -79,13 +79,13 @@ class IpTcpProto :
     AIPSTACK_USE_VALS(Arg::Params, (TcpTTL, NumTcpPcbs, NumOosSegs,
                                     EphemeralPortFirst, EphemeralPortLast,
                                     LinkWithArrayIndices))
-    AIPSTACK_USE_TYPES1(Arg::Params, (PcbIndexService))
-    AIPSTACK_USE_TYPES1(Arg, (PlatformImpl, TheIpStack))
+    AIPSTACK_USE_TYPES(Arg::Params, (PcbIndexService))
+    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, TheIpStack))
     
     using Platform = PlatformFacade<PlatformImpl>;
-    AIPSTACK_USE_TYPE1(Platform, TimeType)
+    AIPSTACK_USE_TYPE(Platform, TimeType)
     
-    AIPSTACK_USE_TYPES1(TheIpStack, (Ip4RxInfo, Ip4RouteInfo, Iface, MtuRef,
+    AIPSTACK_USE_TYPES(TheIpStack, (Ip4RxInfo, Ip4RouteInfo, Iface, MtuRef,
                                      ProtocolHandlerArgs))
     
     static_assert(NumTcpPcbs > 0, "");
@@ -101,14 +101,14 @@ class IpTcpProto :
     template <typename> friend class TcpConnectionMtuRefHelper;
     
 public:
-    AIPSTACK_USE_TYPES1(TcpUtils, (SeqType, PortType))
+    AIPSTACK_USE_TYPES(TcpUtils, (SeqType, PortType))
     
 private:
     using Constants = IpTcpProto_constants<IpTcpProto>;
     using Input = IpTcpProto_input<IpTcpProto>;
     using Output = IpTcpProto_output<IpTcpProto>;
     
-    AIPSTACK_USE_TYPES1(TcpUtils, (TcpState, TcpOptions, PcbKey, PcbKeyCompare))
+    AIPSTACK_USE_TYPES(TcpUtils, (TcpState, TcpOptions, PcbKey, PcbKeyCompare))
     AIPSTACK_USE_VALS(TcpUtils, (state_is_active, accepting_data_in_state,
                                  can_output_in_state, snd_open_in_state,
                                  seq_diff))
@@ -900,7 +900,7 @@ private:
             TcpPcb, PcbIndexType, PcbIndexNull, IpTcpProto, PcbArrayAccessor>,
         PointerLinkModel<TcpPcb>
     > {};
-    AIPSTACK_USE_TYPES1(PcbLinkModel, (Ref, State))
+    AIPSTACK_USE_TYPES(PcbLinkModel, (Ref, State))
     
 private:
     using ListenersList = LinkedList<
