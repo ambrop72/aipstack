@@ -30,12 +30,13 @@
 namespace AIpStack {
 
 /**
- * @addtogroup infra
+ * @ingroup infra
+ * @defgroup error Error Codes
+ * @brief Error codes used throughout the stack.
  * @{
  */
-
 /**
- * Error code enumeration used in various places, e.g.\ for sending packets.
+ * Error code enumeration used in various places, especially for sending packets.
  */
 enum class IpErr : uint8_t {
     SUCCESS         = 0, /**< The operation was successful. */
