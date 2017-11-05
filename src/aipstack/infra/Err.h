@@ -35,6 +35,7 @@ namespace AIpStack {
  * @brief Error codes used throughout the stack.
  * @{
  */
+
 /**
  * Error code enumeration used in various places, especially for sending packets.
  */

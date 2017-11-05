@@ -91,8 +91,6 @@ AIPSTACK_ALWAYS_INLINE bool ListForBreak (Func func, Args... args)
 
 #define AIPSTACK_TL(TypeAlias, code) (auto aipstack__type_lambda_arg) { using TypeAlias = typename decltype(aipstack__type_lambda_arg)::Type; code; }
 
-#define AIPSTACK_TLA(TypeAlias, args, code) (auto aipstack__type_lambda_arg, AIPSTACK_REMOVE_PARENS args) { using TypeAlias = typename decltype(aipstack__type_lambda_arg)::Type; code; }
-
 /** @} */
 
 }
