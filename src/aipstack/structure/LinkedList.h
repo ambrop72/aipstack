@@ -25,7 +25,8 @@
 #ifndef AIPSTACK_LINKED_LIST_H
 #define AIPSTACK_LINKED_LIST_H
 
-#include <aipstack/meta/FunctionIf.h>
+#include <type_traits>
+
 #include <aipstack/misc/Assert.h>
 #include <aipstack/structure/Accessor.h>
 
@@ -88,7 +89,9 @@ public:
         return m_first.ref(st);
     }
     
-    AIPSTACK_FUNCTION_IF_EXT(WithLast, inline, Ref, lastNotEmpty (State st = State()) const)
+    template <typename Dummy = std::true_type>
+    inline Ref lastNotEmpty (State st = State(),
+                             std::enable_if_t<WithLast, Dummy> = {}) const
     {
         AIPSTACK_ASSERT(!m_first.isNull())
         
@@ -119,7 +122,8 @@ public:
         m_first = e.link(st);
     }
     
-    AIPSTACK_FUNCTION_IF(WithLast, void, append (Ref e, State st = State()))
+    template <typename Dummy = std::true_type>
+    void append (Ref e, State st = State(), std::enable_if_t<WithLast, Dummy> = {})
     {
         ac(e).next = Link::null();
         if (!m_first.isNull()) {
@@ -180,10 +184,15 @@ private:
         return Accessor::access(*ref);
     }
     
-    AIPSTACK_FUNCTION_IF_OR_EMPTY_EXT(WithLast, inline, void, set_last (Link last))
+    template <typename Dummy = std::true_type>
+    inline void set_last (Link last, std::enable_if_t<WithLast, Dummy> = {})
     {
         this->m_last = last;
     }
+    
+    template <typename Dummy = std::true_type>
+    inline void set_last (Link, std::enable_if_t<!WithLast, Dummy> = {})
+    {}
 };
 
 template <
