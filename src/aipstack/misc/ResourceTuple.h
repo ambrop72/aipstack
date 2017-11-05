@@ -35,6 +35,14 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup misc
+ * @{
+ */
+
+/**
+ * Dummy class used to select a @ref ResourceTuple constructor.
+ */
 struct ResourceTupleInitSame {};
 
 #ifndef IN_DOXYGEN
@@ -80,6 +88,15 @@ namespace ResourceTuplePrivate {
 
 #endif
 
+/**
+ * Simple tuple container.
+ * 
+ * This class contains one object corresponding to each element of the `Elems` parameter
+ * pack. It allows constructing all elements using the same arguments. This is why this
+ * class exists as opposed to using `std::tuple`.
+ * 
+ * @tparam Elems Types of tuple elements.
+ */
 template <typename... Elems>
 class ResourceTuple :
     private ResourceTuplePrivate::InheritAllAlias<Elems...>
@@ -87,6 +104,11 @@ class ResourceTuple :
     using InheritAll = ResourceTuplePrivate::InheritAllAlias<Elems...>;
     
 public:
+    /**
+     * Get the type of the element at the given index.
+     * 
+     * @tparam Index Element index. Must be less than `sizeof...(Elems)`.
+     */
     template <size_t Index>
     using ElemType = std::tuple_element_t<Index, std::tuple<Elems...>>;
     
@@ -95,26 +117,51 @@ private:
     using ElemHelperType = ResourceTuplePrivate::InheritElemHelper<ElemType<Index>, Index>;
     
 public:
+    /**
+     * Default constructor (defaulted), default-constructs the elements.
+     */
     ResourceTuple () = default;
     
+    /**
+     * Construct tuple elements using the given construction arguments for each element.
+     * 
+     * @tparam Args Types of arguments used for constructing elements.
+     * @param args Arguments used for constructing each element (all these are used for each
+     *        element). Note that they are given by and passed to element constructors by
+     *        const reference.
+     */
     template <typename... Args>
     ResourceTuple (ResourceTupleInitSame, Args const & ... args) :
         InheritAll(ResourceTupleInitSame(), args...)
     {
     }
     
+    /**
+     * Return a reference to the element at the given index (non-const).
+     * 
+     * @tparam Index Element index. Must be less than `sizeof...(Elems)`.
+     * @return Reference to the element at index `Index`.
+     */
     template <size_t Index>
     ElemType<Index> & get (WrapSize<Index> = WrapSize<Index>())
     {
         return static_cast<ElemHelperType<Index> &>(*this).m_elem;
     }
     
+    /**
+     * Return a reference to the element at the given index (const).
+     * 
+     * @tparam Index Element index. Must be less than `sizeof...(Elems)`.
+     * @return Reference to the element at index `Index`.
+     */
     template <size_t Index>
     ElemType<Index> const & get (WrapSize<Index> = WrapSize<Index>()) const
     {
         return static_cast<ElemHelperType<Index> const &>(*this).m_elem;
     }
 };
+
+/** @} */
 
 }
 
