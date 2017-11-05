@@ -30,7 +30,7 @@
 #include <limits>
 
 #include <aipstack/meta/BitsInInt.h>
-#include <aipstack/misc/Preprocessor.h>
+#include <aipstack/misc/Use.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/proto/Tcp4Proto.h>
 #include <aipstack/ip/IpStack.h>

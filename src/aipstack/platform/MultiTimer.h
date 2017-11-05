@@ -28,7 +28,7 @@
 #include <aipstack/meta/ChooseInt.h>
 #include <aipstack/meta/TypeListUtils.h>
 #include <aipstack/meta/ListForEach.h>
-#include <aipstack/misc/Preprocessor.h>
+#include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/platform/PlatformFacade.h>
 

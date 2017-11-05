@@ -34,7 +34,7 @@
 #include <aipstack/meta/ChooseInt.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/LoopUtils.h>
-#include <aipstack/misc/Preprocessor.h>
+#include <aipstack/misc/Use.h>
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/OneOf.h>

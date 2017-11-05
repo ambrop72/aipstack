@@ -30,7 +30,7 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/MinMax.h>
-#include <aipstack/misc/Preprocessor.h>
+#include <aipstack/misc/Use.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/tcp/TcpUtils.h>

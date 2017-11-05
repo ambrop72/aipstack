@@ -27,7 +27,7 @@
 
 #include <tuple>
 
-#include <aipstack/misc/Preprocessor.h>
+#include <aipstack/misc/Use.h>
 #include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {

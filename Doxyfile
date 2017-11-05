@@ -830,7 +830,8 @@ EXCLUDE                = \
     src/aipstack/utils/TcpRingBufferUtils.h \
     src/aipstack/utils/WrapBuffer.h \
     src/aipstack/misc/ExceptionUtils.h \
-    src/aipstack/misc/Preprocessor_MacroMap.h \
+    src/aipstack/misc/Preprocessor.h \
+    src/aipstack/misc/MacroMap.h \
 
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or

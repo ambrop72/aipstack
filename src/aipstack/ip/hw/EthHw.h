@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_ETH_HW_H
 #define AIPSTACK_ETH_HW_H
 
-#include <aipstack/misc/Preprocessor.h>
+#include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/ObserverNotification.h>

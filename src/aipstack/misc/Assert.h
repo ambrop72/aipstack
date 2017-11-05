@@ -25,7 +25,6 @@
 #ifndef AIPSTACK_ASSERT_H
 #define AIPSTACK_ASSERT_H
 
-#include <aipstack/misc/Preprocessor.h>
 #include <aipstack/misc/Hints.h>
 
 /**

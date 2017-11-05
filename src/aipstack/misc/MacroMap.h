@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Ambroz Bizjak
+ * Copyright (c) 2017 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// This is made to be included from Preprocessor.h, don't include directly.
+#ifndef AIPSTACK_MACRO_MAP_H
+#define AIPSTACK_MACRO_MAP_H
+
+#include <aipstack/misc/Preprocessor.h>
 
 #define AIPSTACK_AS_NUM_MACRO_ARGS(...) AIPSTACK_EXPAND(AIPSTACK_AS_NUM_MACRO_ARGS_HELPER1(__VA_ARGS__, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0))
 #define AIPSTACK_AS_NUM_MACRO_ARGS_HELPER1(...) AIPSTACK_EXPAND(AIPSTACK_AS_NUM_MACRO_ARGS_HELPER2(__VA_ARGS__))
@@ -80,3 +83,5 @@
 
 #define AIPSTACK_AS_MAP_DELIMITER_NONE(dummy)
 #define AIPSTACK_AS_MAP_DELIMITER_COMMA(dummy) ,
+
+#endif

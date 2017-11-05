@@ -28,7 +28,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <aipstack/misc/Preprocessor.h>
+#include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/infra/Buf.h>
