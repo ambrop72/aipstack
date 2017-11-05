@@ -144,55 +144,17 @@ typename TypeListReverseHelper<List, EmptyTypeList>::Type;
 #ifndef IN_DOXYGEN
 
 namespace Private {
-    template <int, typename>
-    struct TypeDictElemToIndexMapHelper;
-    
-    template <int Offset, typename Head, typename Tail>
-    struct TypeDictElemToIndexMapHelper<Offset, ConsTypeList<Head, Tail>> {
-        using Result = ConsTypeList<
-            TypeDictEntry<Head, WrapInt<Offset>>,
-            typename TypeDictElemToIndexMapHelper<
-                (Offset + 1),
-                Tail
-            >::Result
-        >;
-    };
-    
-    template <int Offset>
-    struct TypeDictElemToIndexMapHelper<Offset, EmptyTypeList> {
-        using Result = EmptyTypeList;
-    };
-    
-    template <int, typename>
-    struct TypeDictIndexToSublistMapHelper;
-    
-    template <int Offset, typename Head, typename Tail>
-    struct TypeDictIndexToSublistMapHelper<Offset, ConsTypeList<Head, Tail>> {
-        using Result = ConsTypeList<
-            TypeDictEntry<WrapInt<Offset>, ConsTypeList<Head, Tail>>,
-            typename TypeDictIndexToSublistMapHelper<
-                (Offset + 1),
-                Tail
-            >::Result
-        >;
-    };
-    
-    template <int Offset>
-    struct TypeDictIndexToSublistMapHelper<Offset, EmptyTypeList> {
-        using Result = EmptyTypeList;
-    };
-    
-    template <typename List>
-    using MakeElemToIndexMap = typename Private::TypeDictElemToIndexMapHelper<0, List>::Result;
-
-    template <typename List>
-    using MakeIndexToSublistMap = typename Private::TypeDictIndexToSublistMapHelper<0, List>::Result;
-
     template <typename List, int Index>
-    struct ListIndexGetHelper {
-        using FindRes = TypeDictFind<MakeIndexToSublistMap<List>, WrapInt<Index>>;
-        static_assert(FindRes::Found, "Element index is outside the range of the list.");
-        using Result = typename FindRes::Result::Head;
+    struct TypeListGetHelper;
+    
+    template <typename Head, typename Tail, int Index>
+    struct TypeListGetHelper<ConsTypeList<Head, Tail>, Index> {
+        using Result = typename TypeListGetHelper<Tail, Index - 1>::Result;
+    };
+    
+    template <typename Head, typename Tail>
+    struct TypeListGetHelper<ConsTypeList<Head, Tail>, 0> {
+        using Result = Head;
     };
 }
 
@@ -203,7 +165,31 @@ using TypeListGet =
 #ifdef IN_DOXYGEN
 implementation_hidden;
 #else
-typename Private::ListIndexGetHelper<List, Index>::Result;
+typename Private::TypeListGetHelper<List, Index>::Result;
+#endif
+
+#ifndef IN_DOXYGEN
+
+namespace Private {
+    template <typename List, typename Value, int Offset>
+    struct TypeListFindHelper;
+    
+    template <typename Tail, typename Value, int Offset>
+    struct TypeListFindHelper<ConsTypeList<Value, Tail>, Value, Offset> {
+        using Result = TypeDictFound<WrapInt<Offset>>;
+    };
+    
+    template <typename Head, typename Tail, typename Value, int Offset>
+    struct TypeListFindHelper<ConsTypeList<Head, Tail>, Value, Offset> {
+       using Result = typename TypeListFindHelper<Tail, Value, Offset + 1>::Result; 
+    };
+    
+    template <typename Value, int Offset>
+    struct TypeListFindHelper<EmptyTypeList, Value, Offset> {
+        using Result = TypeDictNotFound;
+    };
+}
+
 #endif
 
 template <typename List, typename Value>
@@ -211,7 +197,7 @@ using TypeListFind =
 #ifdef IN_DOXYGEN
 implementation_hidden;
 #else
-TypeDictFind<Private::MakeElemToIndexMap<List>, Value>;
+typename Private::TypeListFindHelper<List, Value, 0>::Result;
 #endif
 
 template <typename List, typename Value>
