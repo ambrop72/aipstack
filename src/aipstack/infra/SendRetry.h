@@ -71,8 +71,10 @@ class IpSendRetryList;
  * A request object is either unassociated or associated with a specific
  * @ref IpSendRetryList. Association is established using @ref IpSendRetryList::addRequest.
  */
-class IpSendRetryRequest :
-    private Observer<IpSendRetryRequest>
+class IpSendRetryRequest
+#ifndef IN_DOXYGEN
+    :private Observer<IpSendRetryRequest>
+#endif
 {
     using BaseObserver = Observer<IpSendRetryRequest>;
     friend class IpSendRetryList;
@@ -133,8 +135,10 @@ protected:
  * A retry list has an associated set of requests (@ref IpSendRetryRequest instances).
  * Requests can be associated and disassociated dynamically.
  */
-class IpSendRetryList :
-    private Observable<IpSendRetryRequest>
+class IpSendRetryList
+#ifndef IN_DOXYGEN
+    :private Observable<IpSendRetryRequest>
+#endif
 {
     using BaseObservable = Observable<IpSendRetryRequest>;
     

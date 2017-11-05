@@ -269,8 +269,10 @@ class Observable;
  *         object.
  */
 template <typename ObserverDerived>
-class Observer :
-    private ObserverNotificationPrivate::BaseObserver
+class Observer
+#ifndef IN_DOXYGEN
+    :private ObserverNotificationPrivate::BaseObserver
+#endif
 {
     friend Observable<ObserverDerived>;
     
@@ -322,8 +324,10 @@ public:
  *         `Observable<ObserverDerived>`.
  */
 template <typename ObserverDerived>
-class Observable :
-    private ObserverNotificationPrivate::BaseObservable
+class Observable
+#ifndef IN_DOXYGEN
+    :private ObserverNotificationPrivate::BaseObservable
+#endif
 {
     using BaseObserver = ObserverNotificationPrivate::BaseObserver;
     

@@ -213,12 +213,14 @@ AIPSTACK_DECL_TIMERS_CLASS(IpDhcpClientTimers, typename Arg::PlatformImpl,
  */
 template <typename Arg>
 class IpDhcpClient :
-    private Arg::IpStack::IfaceListener,
+    private NonCopyable<IpDhcpClient<Arg>>
+#ifndef IN_DOXYGEN
+    ,private Arg::IpStack::IfaceListener,
     private Arg::IpStack::IfaceStateObserver,
     private IpDhcpClientTimers<Arg>::Timers,
     private IpSendRetryRequest,
-    private EthArpObserver,
-    private NonCopyable<IpDhcpClient<Arg>>
+    private EthArpObserver
+#endif
 {
     AIPSTACK_USE_TYPES(Arg, (PlatformImpl, IpStack, Params))
     using Platform = PlatformFacade<PlatformImpl>;

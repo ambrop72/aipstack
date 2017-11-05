@@ -77,8 +77,10 @@ AIPSTACK_DECL_TIMERS_CLASS(IpPathMtuCacheTimers, typename Arg::PlatformImpl,
  */
 template <typename Arg>
 class IpPathMtuCache :
-    private IpPathMtuCacheTimers<Arg>::Timers,
     private NonCopyable<IpPathMtuCache<Arg>>
+#ifndef IN_DOXYGEN
+    ,private IpPathMtuCacheTimers<Arg>::Timers
+#endif
 {
     AIPSTACK_USE_TYPES(Arg, (Params, PlatformImpl, IpStack))
     AIPSTACK_USE_VALS(Params, (NumMtuEntries, MtuTimeoutMinutes))
@@ -253,9 +255,11 @@ public:
     }
     
     class MtuRef :
-        private PrevLink,
-        private NextLink,
         private NonCopyable<MtuRef>
+    #ifndef IN_DOXYGEN
+        ,private PrevLink,
+        private NextLink
+    #endif
     {
         friend IpPathMtuCache;
         

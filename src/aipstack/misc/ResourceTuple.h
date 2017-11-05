@@ -98,8 +98,10 @@ namespace ResourceTuplePrivate {
  * @tparam Elems Types of tuple elements.
  */
 template <typename... Elems>
-class ResourceTuple :
-    private ResourceTuplePrivate::InheritAllAlias<Elems...>
+class ResourceTuple
+#ifndef IN_DOXYGEN
+    :private ResourceTuplePrivate::InheritAllAlias<Elems...>
+#endif
 {
     using InheritAll = ResourceTuplePrivate::InheritAllAlias<Elems...>;
     

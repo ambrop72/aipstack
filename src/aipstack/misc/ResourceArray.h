@@ -264,13 +264,15 @@ namespace ResourceArrayPrivate {
  * @tparam Size Number of array elements. Must be positive.
  */
 template <typename Elem, size_t Size>
-class ResourceArray :
-    private ResourceArrayPrivate::ArrayBase<Elem, Size>,
+class ResourceArray
+#ifndef IN_DOXYGEN
+    :private ResourceArrayPrivate::ArrayBase<Elem, Size>,
     private ResourceArrayPrivate::DefaultConstructMixin<std::is_default_constructible<Elem>::value>,
     private ResourceArrayPrivate::CopyConstructMixin<std::is_copy_constructible<Elem>::value>,
     private ResourceArrayPrivate::MoveConstructMixin<std::is_move_constructible<Elem>::value>,
     private ResourceArrayPrivate::CopyAssignMixin<std::is_copy_assignable<Elem>::value>,
     private ResourceArrayPrivate::MoveAssignMixin<std::is_move_assignable<Elem>::value>
+#endif
 {
 public:
     /**

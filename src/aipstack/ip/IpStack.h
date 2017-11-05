@@ -1319,8 +1319,10 @@ public:
     /**
      * Allows keeping track of the Path MTU estimate for a remote address.
      */
-    class MtuRef :
-        private BaseMtuRef
+    class MtuRef
+    #ifndef IN_DOXYGEN
+        :private BaseMtuRef
+    #endif
     {
     public:
         /**

@@ -72,8 +72,10 @@ AIPSTACK_DECL_TIMERS_CLASS(IpReassemblyTimers, typename Arg::PlatformImpl, IpRea
  */
 template <typename Arg>
 class IpReassembly :
-    private IpReassemblyTimers<Arg>::Timers,
     private NonCopyable<IpReassembly<Arg>>
+#ifndef IN_DOXYGEN
+    ,private IpReassemblyTimers<Arg>::Timers
+#endif
 {
     AIPSTACK_USE_VALS(Arg::Params, (MaxReassEntrys, MaxReassSize, MaxReassHoles,
                                     MaxReassTimeSeconds))
