@@ -34,7 +34,6 @@
 #include <aipstack/meta/ListForEach.h>
 #include <aipstack/meta/TypeListUtils.h>
 #include <aipstack/meta/FuncUtils.h>
-#include <aipstack/meta/MemberType.h>
 #include <aipstack/meta/InstantiateVariadic.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Use.h>
@@ -161,11 +160,9 @@ private:
     using ProtocolsList = MapTypeList<
         ProtocolHelpersList, TemplateFunc<ProtocolForHelper>>;
     
-    // Doxygen bug: shows docs for this despite being private.
-    #ifndef IN_DOXYGEN
     // Helper to extract IpProtocolNumber from a ProtocolHelper.
-    AIPSTACK_DEFINE_MEMBER_TYPE(MemberTypeIpProtocolNumber, IpProtocolNumber)
-    #endif
+    template <typename Helper>
+    using ProtocolNumberForHelper = typename Helper::IpProtocolNumber;
     
 public:
     /**
@@ -268,7 +265,7 @@ public:
     #else
         typename TypeListGetMapped<
             ProtocolHelpersList,
-            typename MemberTypeIpProtocolNumber::Get,
+            TemplateFunc<ProtocolNumberForHelper>,
             WrapValue<uint8_t, ProtocolNumber>
         >::Protocol;
     #endif
