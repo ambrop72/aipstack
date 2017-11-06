@@ -27,10 +27,10 @@
 
 #include <stdint.h>
 
-#include <aipstack/meta/Instance.h>
 #include <aipstack/meta/BasicMetaUtils.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/Instance.h>
 #include <aipstack/ip/IpStackHelperTypes.h>
 #include <aipstack/platform/PlatformFacade.h>
 

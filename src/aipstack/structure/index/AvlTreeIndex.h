@@ -25,12 +25,12 @@
 #ifndef AIPSTACK_AVL_TREE_INDEX_H
 #define AIPSTACK_AVL_TREE_INDEX_H
 
-#include <aipstack/meta/Instance.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/structure/AvlTree.h>
 #include <aipstack/structure/TreeCompare.h>
 #include <aipstack/structure/Accessor.h>
+#include <aipstack/infra/Instance.h>
 
 namespace AIpStack {
 

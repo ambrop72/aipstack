@@ -30,7 +30,6 @@
 
 #include <limits>
 
-#include <aipstack/meta/Instance.h>
 #include <aipstack/meta/ListForEach.h>
 #include <aipstack/meta/TypeListUtils.h>
 #include <aipstack/meta/FuncUtils.h>
@@ -53,6 +52,7 @@
 #include <aipstack/infra/TxAllocHelper.h>
 #include <aipstack/infra/Options.h>
 #include <aipstack/infra/ObserverNotification.h>
+#include <aipstack/infra/Instance.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Icmp4Proto.h>

@@ -30,7 +30,6 @@
 
 #include <limits>
 
-#include <aipstack/meta/Instance.h>
 #include <aipstack/meta/ChooseInt.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/LoopUtils.h>
@@ -50,6 +49,7 @@
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Options.h>
 #include <aipstack/infra/ObserverNotification.h>
+#include <aipstack/infra/Instance.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/proto/ArpProto.h>

@@ -27,7 +27,7 @@
 
 #include <string>
 
-#include <aipstack/meta/Instance.h>
+#include <aipstack/infra/Instance.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/platform/PlatformFacade.h>

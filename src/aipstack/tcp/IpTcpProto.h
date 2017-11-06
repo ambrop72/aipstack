@@ -32,7 +32,7 @@
 #include <limits>
 #include <type_traits>
 
-#include <aipstack/meta/Instance.h>
+#include <aipstack/infra/Instance.h>
 #include <aipstack/meta/BitsInFloat.h>
 #include <aipstack/meta/ChooseInt.h>
 #include <aipstack/meta/BasicMetaUtils.h>

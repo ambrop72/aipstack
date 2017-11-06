@@ -35,13 +35,13 @@
 #include <stdexcept>
 #include <utility>
 
-#include <aipstack/meta/Instance.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Modulo.h>
 #include <aipstack/infra/Options.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Err.h>
+#include <aipstack/infra/Instance.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/platform/PlatformFacade.h>

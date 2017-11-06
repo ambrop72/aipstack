@@ -30,7 +30,6 @@
 
 #include <limits>
 
-#include <aipstack/meta/Instance.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
@@ -38,6 +37,7 @@
 #include <aipstack/infra/Struct.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Options.h>
+#include <aipstack/infra/Instance.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/platform/PlatformFacade.h>

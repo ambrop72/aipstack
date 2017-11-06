@@ -28,7 +28,7 @@
 #include <aipstack/misc/Preprocessor.h>
 
 /**
- * @addtogroup meta
+ * @addtogroup infra
  * @{
  */
 

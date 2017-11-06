@@ -31,7 +31,6 @@
 
 #include <limits>
 
-#include <aipstack/meta/Instance.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Hints.h>
@@ -44,6 +43,7 @@
 #include <aipstack/infra/SendRetry.h>
 #include <aipstack/infra/Options.h>
 #include <aipstack/infra/MemRef.h>
+#include <aipstack/infra/Instance.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Udp4Proto.h>

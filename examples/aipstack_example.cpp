@@ -27,7 +27,7 @@
 #include <string>
 #include <stdexcept>
 
-#include <aipstack/meta/Instance.h>
+#include <aipstack/infra/Instance.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/structure/index/AvlTreeIndex.h>
