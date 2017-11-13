@@ -1409,7 +1409,7 @@ constexpr char const IpDhcpClient<Arg>::DeclineMessageArpResponse[];
 #endif
 
 /**
- * Options for @ref IpDhcpClientService.
+ * Static configuration options for @ref IpDhcpClientService.
  */
 struct IpDhcpClientOptions {
     /**
@@ -1490,21 +1490,20 @@ struct IpDhcpClientOptions {
 /**
  * Service definition for @ref IpDhcpClient.
  * 
- * The template parameters of this class are static configuration. After these
- * are defined, use @ref AIPSTACK_MAKE_INSTANCE with @ref Compose to obtain the
- * @ref IpDhcpClient class type, like this:
+ * The template parameters of this class are assignments of options defined in
+ * @ref IpDhcpClientOptions, for example:
+ * AIpStack::IpDhcpClientOptions::DhcpTTL::Is\<16\>. The defaults (achieved with
+ * an emtpy parameter list) should be suitable for most uses.
  * 
- * @code
+ * To obtain an @ref IpDhcpClient class type, use @ref AIPSTACK_MAKE_INSTANCE with
+ * @ref Compose, like this:
+ * 
+ * ```
  * using MyDhcpClientService = AIpStack::IpDhcpClientService<...>;
  * AIPSTACK_MAKE_INSTANCE(MyDhcpClient, (MyDhcpClientService::template Compose<
  *     PlatformImpl, MyIpStack>))
  * MyDhcpClient dhcp_client(...);
- * @endcode
- * 
- * The template parameters are assignments of options defined in
- * @ref IpDhcpClientOptions, for example:
- * AIpStack::IpDhcpClientOptions::DhcpTTL::Is\<16\>. The defaults (achieved with
- * an emtpy parameter list) should be suitable for most uses.
+ * ```
  * 
  * @tparam Options Assignments of options defined in @ref IpDhcpClientOptions.
  */

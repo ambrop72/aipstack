@@ -604,7 +604,7 @@ private:
 #endif
 
 /**
- * Options for @ref IpPathMtuCacheService.
+ * Static configuration options for @ref IpPathMtuCacheService.
  */
 struct IpPathMtuCacheOptions {
     /**
@@ -620,8 +620,9 @@ struct IpPathMtuCacheOptions {
     /**
      * Data structure service for indexing PMTU cache entries by IP address.
      * 
-     * This should be one of the implementations in aipstack/structure/index.
-     * Specifically supported are AvlTreeIndexService and MruListIndexService.
+     * This should be one of the implementations in the folder
+     * aipstack/structure/index. Specifically supported are @ref AvlTreeIndexService and
+     * @ref MruListIndexService.
      */
     AIPSTACK_OPTION_DECL_TYPE(MtuIndexService, void)
 };
@@ -631,7 +632,7 @@ struct IpPathMtuCacheOptions {
  * 
  * An instantiation of this template must be passed to @ref IpStackService.
  * 
- * The template parameters are assignments of options defined in
+ * The template parameters of this class are assignments of options defined in
  * @ref IpPathMtuCacheOptions, for example:
  * AIpStack::IpPathMtuCacheOptions::NumMtuEntries::Is\<100\>.
  * 

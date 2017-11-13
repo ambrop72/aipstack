@@ -483,7 +483,7 @@ private:
 #endif
 
 /**
- * Options for @ref IpReassemblyService.
+ * Static configuration options for @ref IpReassemblyService.
  */
 struct IpReassemblyOptions {
     /**
@@ -513,7 +513,7 @@ struct IpReassemblyOptions {
  * 
  * An instantiation of this template must be passed to @ref IpStackService.
  * 
- * The template parameters are assignments of options defined in
+ * The template parameters of this class are assignments of options defined in
  * @ref IpReassemblyOptions, for example:
  * AIpStack::IpReassemblyOptions::MaxReassEntrys::Is\<5\>.
  * 

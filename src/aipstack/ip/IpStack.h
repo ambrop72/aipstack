@@ -1204,7 +1204,7 @@ public:
         
     protected:
         /**
-         * Driver function used to send IPv4 packets through the interface.
+         * Driver function used to send an IPv4 packet through the interface.
          * 
          * This is called whenever an IPv4 packet needs to be sent. The driver should
          * copy the packet as needed because it must not access the referenced buffers
@@ -1277,7 +1277,7 @@ public:
          * Notify that the driver-provided state may have changed.
          * 
          * This should be called by the driver after the values that would be
-         * returned by  driverGetState have changed. It does not strictly have
+         * returned by @ref driverGetState have changed. It does not strictly have
          * to be called immediately after every change but it should be called
          * soon after a change.
          * 
@@ -1748,7 +1748,7 @@ private:
 
 
 /**
- * Options for @ref IpStackService.
+ * Static configuration options for @ref IpStackService.
  */
 struct IpStackOptions {
     /**
@@ -1788,21 +1788,20 @@ struct IpStackOptions {
 };
 
 /**
- * Service configuration class for @ref IpStack.
+ * Service definition for @ref IpStack.
  * 
- * The template parameters of this class are static configuration. After these
- * are defined, use @ref AIPSTACK_MAKE_INSTANCE with @ref Compose to obtain the
- * @ref IpStack class type, like this:
+ * The template parameters of this class are assignments of options defined in
+ * @ref IpStackOptions, for example: AIpStack::IpStackOptions::IcmpTTL::Is\<16\>.
  * 
- * @code
+ * To to obtain an @ref IpStack class type, use @ref AIPSTACK_MAKE_INSTANCE with
+ * @ref Compose, like this:
+ * 
+ * ```
  * using MyIpStackService = AIpStack::IpStackService<...>;
  * AIPSTACK_MAKE_INSTANCE(MyIpStack, (MyIpStackService::template Compose<
  *     PlatformImpl, ProtocolServicesList>))
  * MyIpStack ip_stack(...);
- * @endcode
- * 
- * The template parameters are assignments of options defined in @ref IpStackOptions,
- * for example: AIpStack::IpStackOptions::IcmpTTL::Is\<16\>.
+ * ```
  * 
  * @tparam Options Assignments of options defined in @ref IpStackOptions.
  */

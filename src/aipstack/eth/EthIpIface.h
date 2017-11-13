@@ -60,7 +60,26 @@
 
 namespace AIpStack {
 
+/**
+ * @defgroup eth-ip-iface Ethernet Network Interface
+ * @brief Ethernet network interface support including ARP.
+ * 
+ * The @ref EthIpIface class provides support for Ethernet-based network interfaces, and
+ * should be used by applications integrate such network interfaces into the @ref IpStack.
+ * Its primary responsibilities are adding/removing Ethernet headers and operation of ARP.
+ * 
+ * @{
+ */
+
+/**
+ * Encapsulates state information provided by Ethernet network interface drivers.
+ * 
+ * Structures of this type are returned by @ref EthIpIface::driverGetEthState.
+ */
 struct EthIfaceState {
+    /**
+     * Whether the link is up.
+     */
     bool link_up;
 };
 
@@ -73,6 +92,43 @@ AIPSTACK_DECL_TIMERS_CLASS(EthIpIfaceTimers, typename Arg::PlatformImpl,
                            EthIpIface<Arg>, (ArpTimer))
 #endif
 
+/**
+ * Ethernet-based network interface.
+ * 
+ * This class is an abstract IP-layer network interface driver for Ethernet-based
+ * interfaces. It inherits @ref IpStack::Iface and interacts with the IP layer
+ * (@ref IpStack) using the protected @ref IpStack::Iface API, while defining a protected
+ * API of its for interaction with the Ethernet-layer driver. It also implements the
+ * @ref EthHwIface hardware-type-specific interface (see the @ref eth-hw module).
+ * 
+ * This class maintains the principle that %AIpStack does not itself manage network
+ * interfaces, and as such @ref EthIpIface does not distinguish between the
+ * "Ethernet-layer driver" (which implements sending and receiving frames) and the part of
+ * the application that defines the IP configuration.
+ * 
+ * This class is used as follows:
+ * - The application defines a class derived from @ref EthIpIface and constructs an instance
+ *   when initializing an interface (multiple instances can be constructed of course).
+ * - The derived class implements the virtual functions @ref driverSendFrame (which sends a
+ *   frame) and @ref driverGetEthState (which returns the interface state).
+ * - The application calls the functions @ref recvFrameFromDriver (when a frame is received)
+ *   and @ref ethStateChangedFromDriver (when the state may have changed).
+ * - The application uses the inherited public API of @ref IpStack::Iface to configure and
+ *   control the interface on the IP layer.
+ * 
+ * The protected API of @ref IpStack::Iface that is inherited by @ref EthIpIface should not
+ * be used by the application, as it is used internally by @ref EthIpIface to the extent
+ * required.
+ * 
+ * This class internally maintains an ARP cache, which is interface-specific. Note that if
+ * there is no useful ARP cache entry for an outgoing IP packet, this class will (typically)
+ * return the @ref IpErr::ARP_QUERY error code from @ref IpStack::Iface::driverSendIp4Packet
+ * and start an ARP resolution process. It makes an effort to inform the caller when the
+ * resolution is successful through the @ref send-retry "send-retry" mechanism so that it
+ * can retry sending, but such notification is not guaranteed.
+ * 
+ * @tparam Arg Instantiation parameters (instantiate via @ref EthIpIfaceService).
+ */
 template <typename Arg>
 class EthIpIface :
     public Arg::Iface,
@@ -203,11 +259,38 @@ class EthIpIface :
         ArpEntryTimerQueueNodeUserData>;
     
 public:
+    /**
+     * Encapsulates interface information passed to the @ref EthIpIface() "EthIpIface()"
+     * constructor.
+     */
     struct InitInfo {
+        /**
+         * Maximum frame size including the 14-byte Ethernet header.
+         * 
+         * The resulting IP MTU (14 bytes less) must be at least @ref IpStack::MinMTU.
+         */
         size_t eth_mtu = 0;
+        
+        /**
+         * Pointer to the MAC address of the network interface.
+         * 
+         * This must point to a MAC address whose lifetime exceeds that of the
+         * @ref EthIpIface and which does not change in that time.
+         */
         MacAddr const *mac_addr = nullptr;
     };
     
+    /**
+     * Construct the interface.
+     * 
+     * The owner must be careful to not perform any action that might result in calls
+     * of virtual functions (such as sending frames to this interface) until the
+     * derived class is constructed and ready to accept these calls.
+     * 
+     * @param platform The platform facade (the same one that `stack` uses).
+     * @param stack Pointer to the IP stack (must outlive this interface).
+     * @param info Interface information, see @ref InitInfo.
+     */
     EthIpIface (Platform platform, IpStack *stack, InitInfo const &info) :
         Iface(stack, {
             /*ip_mtu=*/ (size_t)(info.eth_mtu - EthHeader::Size),
@@ -236,10 +319,47 @@ public:
 protected:
     // These functions are implemented or called by the Ethernet driver.
     
+    /**
+     * Driver function to send an Ethernet frame through the interface.
+     * 
+     * This is called whenever an Ethernet frame needs to be sent. The driver should
+     * copy the frame as needed because it must not access the referenced buffers
+     * outside this function.
+     * 
+     * @param frame Frame to send, this includes the Ethernet header. It is guaranteed
+     *        that its size does not exceed the @ref InitInfo::eth_mtu specified at
+     *        construction. Frames originating from @ref EthIpIface itself will always
+     *        have at least @ref EthIpIfaceOptions::HeaderBeforeEth bytes available before
+     *        the Ethernet header for any lower-layer headers, but for frames with IP
+     *        payload it is up to the application to include that in
+     *        @ref IpStackOptions::HeaderBeforeIp.
+     * @return Success or error code. The @ref EthIpIface does not itself check for any
+     *         specific error code but the error code may be propagated to the IP layer
+     *         (@ref IpStack) which may do so.
+     */
     virtual IpErr driverSendFrame (IpBufRef frame) = 0;
     
+    /**
+     * Driver function to get the drived-provided interface state.
+     * 
+     * The driver should call @ref ethStateChangedFromDriver whenever the state that would
+     * be returned here has changed.
+     * 
+     * @return Driver-provided-state (currently just the link-up flag).
+     */
     virtual EthIfaceState driverGetEthState () = 0;
     
+    /**
+     * Process a received Ethernet frame.
+     * 
+     * This function should be called by the driver when an Ethernet frame is received.
+     * 
+     * The driver must support various driver functions being called from within this,\
+     * especially @ref driverSendFrame.
+     * 
+     * @param frame Received frame, presumably starting with the Ethernet header. The
+     *              referenced buffers will only be read from within this function call.
+     */
     void recvFrameFromDriver (IpBufRef frame)
     {
         // Check that we have an Ethernet header.
@@ -265,6 +385,16 @@ protected:
         }
     }
     
+    /**
+     * Notify that the driver-provided state may have changed.
+     * 
+     * This should be called by the driver after the values that would be
+     * returned by @ref driverGetEthState have changed. It does not strictly have to be
+     * called immediately after every change but it should be called soon after a change.
+     * 
+     * The driver must support various driver functions being called from within this,\
+     * especially @ref driverSendFrame.
+     */
     inline void ethStateChangedFromDriver ()
     {
         // Forward notification to IP stack.
@@ -824,13 +954,68 @@ private:
                               &EthIpIface::m_arp_entries> {};
 };
 
+/**
+ * Static configuration options for @ref EthIpIface.
+ */
 struct EthIpIfaceOptions {
+    /**
+     * Size of the ARP cache (must be greater than zero).
+     */
     AIPSTACK_OPTION_DECL_VALUE(NumArpEntries, int, 16)
+    
+    /**
+     * Number of most-recently-used ARP cache entries to protect from reassignment.
+     * 
+     * This option is part of a mechanism to limit the reuse of existing ARP cache entries
+     * for storing MAC addresses associated with IP addresses that are not actively being
+     * resolved. This mechanism is especially relevent when the total number of hosts on
+     * the subnet is greater than the ARP cache size. The exact algorithm is not described
+     * and is subject to change.
+     * 
+     * Must be in the range [0, @ref NumArpEntries]; a good choice is
+     * @ref NumArpEntries / 2.
+     */
     AIPSTACK_OPTION_DECL_VALUE(ArpProtectCount, int, 8)
+    
+    /**
+     * Header space to reserve in outgoing frames, for frames originating from
+     * @ref EthIpIface itself.
+     * 
+     * If no additional headers will be added below the Ethernet header (the most likely
+     * case), this should be 0.
+     * 
+     * See @ref EthIpIface::driverSendFrame for details.
+     */
     AIPSTACK_OPTION_DECL_VALUE(HeaderBeforeEth, size_t, 0)
+    
+    /**
+     * Data structure to use for ARP entry timers.
+     * 
+     * This should be one of the implementations in the folder aipstack/structure/minimum.
+     * Specifically supported are @ref LinkedHeapService and @ref SortedListService.
+     */
     AIPSTACK_OPTION_DECL_TYPE(TimersStructureService, void)
 };
 
+/**
+ * Service definition for @ref EthIpIface.
+ * 
+ * The template parameters of this class are assignments of options defined in
+ * @ref EthIpIfaceOptions, for example:
+ * AIpStack::EthIpIfaceOptions::NumArpEntries::Is\<64\>.
+ * 
+ * To to obtain an @ref EthIpIface class type, use @ref AIPSTACK_MAKE_INSTANCE with
+ * @ref Compose, like this:
+ * 
+ * ```
+ * using MyEthIpIfaceService = AIpStack::EthIpIfaceService<...>;
+ * AIPSTACK_MAKE_INSTANCE(MyEthIpIface, (MyEthIpIfaceService::template Compose<
+ *     PlatformImpl, MyIpStack::Iface>))
+ * // MyEthIpIface is an EthIpIface class; at some point define a derived class.
+ * ```
+ * 
+ * @tparam Options Assignments of options defined in @ref EthIpIfaceOptions.
+ */
 template <typename... Options>
 class EthIpIfaceService {
     template <typename>
@@ -842,14 +1027,28 @@ class EthIpIfaceService {
     AIPSTACK_OPTION_CONFIG_TYPE(EthIpIfaceOptions, TimersStructureService)
     
 public:
+    /**
+     * Template for use with @ref AIPSTACK_MAKE_INSTANCE to get an @ref EthIpIface type.
+     * 
+     * See @ref EthIpIfaceService for an example of instantiating the @ref EthIpIface.
+     * 
+     * @tparam PlatformImpl_ Platform layer implementation, the same one as used by the
+     *         @ref IpStack (see @ref IpStackService::Compose).
+     * @tparam Iface_ The @ref IpStack::Iface class type of the @ref IpStack type which
+     *         will be used.
+     */
     template <typename PlatformImpl_, typename Iface_>
     struct Compose {
+#ifndef IN_DOXYGEN
         using PlatformImpl = PlatformImpl_;
         using Iface = Iface_;
         using Params = EthIpIfaceService;
         AIPSTACK_DEF_INSTANCE(Compose, EthIpIface)
+#endif
     };
 };
+
+/** @} */
 
 }
 
