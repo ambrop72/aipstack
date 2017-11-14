@@ -369,7 +369,7 @@ struct IpBufRef {
      * 
      * @param amount Number of bytes to copy out and consume. Must be less than
      *        or equal to @ref tot_len.
-     * @param dst Location to copy to. May be null only if `amount` is null.
+     * @param dst Location to copy to. May be null only if `amount` is zero.
      */
     void takeBytes (size_t amount, char *dst)
     {
@@ -388,7 +388,7 @@ struct IpBufRef {
      * 
      * @param amount Number of bytes to copy in and consume. Must be less than
      *        or equal to @ref tot_len.
-     * @param src Location to copy from. May be null only if `amount` is null.
+     * @param src Location to copy from. May be null only if `amount` is zero.
      */
     void giveBytes (size_t amount, char const *src)
     {
