@@ -61,7 +61,7 @@
 namespace AIpStack {
 
 /**
- * @defgroup eth-ip-iface Ethernet Network Interface
+ * @defgroup eth-ip-iface Ethernet Interface Support
  * @brief Ethernet network interface support including ARP.
  * 
  * The @ref EthIpIface class provides support for Ethernet-based network interfaces, and
