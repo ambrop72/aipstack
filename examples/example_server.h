@@ -161,8 +161,10 @@ private:
         // This is used to destroy the client object. It does this by removing
         // it from m_clients. Note that after this, the client object no longer
         // exists and therefore must not be accessed in any way.
-        void destroy ()
+        void destroy (bool have_unprocessed_data)
         {
+            TcpConnection::reset(have_unprocessed_data);
+            
             std::size_t removed = m_parent->m_clients.erase(this);
             AIPSTACK_ASSERT(removed == 1)
             (void)removed;
@@ -176,7 +178,7 @@ private:
         {
             std::fprintf(stderr, "Connection aborted.\n");
             
-            return destroy();
+            return destroy(false);
         }
         
     protected:
@@ -317,7 +319,7 @@ private:
                     // Check if the line is too long, if so then disconnect the client.
                     if (m_rx_line_len >= Params::LineParsingMaxRxLineLen) {
                         std::fprintf(stderr, "Line too long, disconnecting client.\n");
-                        return BaseClient::destroy();
+                        return BaseClient::destroy(true);
                     }
                 }
                 

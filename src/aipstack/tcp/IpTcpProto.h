@@ -626,7 +626,7 @@ private:
     
     // This is called from Connection::reset when the Connection
     // is abandoning the PCB.
-    static void pcb_abandoned (TcpPcb *pcb, bool snd_buf_nonempty, SeqType rcv_ann_thres)
+    static void pcb_abandoned (TcpPcb *pcb, bool rst_needed, SeqType rcv_ann_thres)
     {
         AIPSTACK_ASSERT(pcb->state == TcpState::SYN_SENT || state_is_active(pcb->state))
         AIPSTACK_ASSERT(pcb->con == nullptr) // Connection just cleared it
@@ -643,10 +643,10 @@ private:
         // Clear RCV_WND_UPD flag since this flag must imply con != nullptr.
         pcb->clearFlag(PcbFlags::RCV_WND_UPD);
         
-        // Abort if in SYN_SENT state or some data is queued.
-        // The pcb_abort() will decide whether to send an RST
-        // (no RST in SYN_SENT, RST otherwise).
-        if (pcb->state == TcpState::SYN_SENT || snd_buf_nonempty) {
+        // Abort if in SYN_SENT state or some data is queued or some data was received but
+        // not processed by the application. The pcb_abort() will decide whether to send an
+        // RST (no RST in SYN_SENT, RST otherwise).
+        if (pcb->state == TcpState::SYN_SENT || rst_needed) {
             return pcb_abort(pcb);
         }
         

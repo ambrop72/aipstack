@@ -97,6 +97,9 @@ namespace AIpStack {
         
         /**
          * Deinitializes the connection object.
+         * Note that destruction performs a reset with have_unprocessed_data=false. It may
+         * be a good idea to first call reset with the correct have_unprocessed_data value
+         * (see reset documentation).
          */
         ~TcpConnection ()
         {
@@ -106,8 +109,12 @@ namespace AIpStack {
         /**
          * Resets the connection object.
          * This brings the object to INIT state.
+         * In CONNECTED state, the `have_unprocessed_data` argument should indicate whether
+         * the application has any buffered unprocessed received data, so that the TCP can
+         * send RST (see RFC 2525 section 2.17). In other states (including after
+         * connectionAborted) this argument is irrelevant.
          */
-        void reset ()
+        void reset (bool have_unprocessed_data = false)
         {
             if (m_v.pcb != nullptr) {
                 assert_started();
@@ -122,7 +129,8 @@ namespace AIpStack {
                 m_v.pcb = nullptr;
                 
                 // Handle abandonment of connection.
-                TcpProto::pcb_abandoned(pcb, m_v.snd_buf.tot_len > 0, m_v.rcv_ann_thres);
+                bool rst_needed = m_v.snd_buf.tot_len > 0 || have_unprocessed_data;
+                TcpProto::pcb_abandoned(pcb, rst_needed, m_v.rcv_ann_thres);
             }
             
             reset_flags();
