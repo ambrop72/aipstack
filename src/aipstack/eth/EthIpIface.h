@@ -96,8 +96,8 @@ AIPSTACK_DECL_TIMERS_CLASS(EthIpIfaceTimers, typename Arg::PlatformImpl,
  * Ethernet-based network interface.
  * 
  * This class is an abstract IP-layer network interface driver for Ethernet-based
- * interfaces. It inherits @ref IpStack::Iface and interacts with the IP layer
- * (@ref IpStack) using the protected @ref IpStack::Iface API, while defining a protected
+ * interfaces. It inherits @ref IpIface and interacts with the IP layer
+ * (@ref IpStack) using the protected @ref IpIface API, while defining a protected
  * API of its for interaction with the Ethernet-layer driver. It also implements the
  * @ref EthHwIface hardware-type-specific interface (see the @ref eth-hw module).
  * 
@@ -113,16 +113,16 @@ AIPSTACK_DECL_TIMERS_CLASS(EthIpIfaceTimers, typename Arg::PlatformImpl,
  *   frame) and @ref driverGetEthState (which returns the interface state).
  * - The application calls the functions @ref recvFrameFromDriver (when a frame is received)
  *   and @ref ethStateChangedFromDriver (when the state may have changed).
- * - The application uses the inherited public API of @ref IpStack::Iface to configure and
+ * - The application uses the inherited public API of @ref IpIface to configure and
  *   control the interface on the IP layer.
  * 
- * The protected API of @ref IpStack::Iface that is inherited by @ref EthIpIface should not
+ * The protected API of @ref IpIface that is inherited by @ref EthIpIface should not
  * be used by the application, as it is used internally by @ref EthIpIface to the extent
  * required.
  * 
  * This class internally maintains an ARP cache, which is interface-specific. Note that if
  * there is no useful ARP cache entry for an outgoing IP packet, this class will (typically)
- * return the @ref IpErr::ARP_QUERY error code from @ref IpStack::Iface::driverSendIp4Packet
+ * return the @ref IpErr::ARP_QUERY error code from @ref IpIface::driverSendIp4Packet
  * and start an ARP resolution process. It makes an effort to inform the caller when the
  * resolution is successful through the @ref send-retry "send-retry" mechanism so that it
  * can retry sending, but such notification is not guaranteed.
@@ -1034,7 +1034,7 @@ public:
      * 
      * @tparam PlatformImpl_ Platform layer implementation, the same one as used by the
      *         @ref IpStack (see @ref IpStackService::Compose).
-     * @tparam Iface_ The @ref IpStack::Iface class type of the @ref IpStack type which
+     * @tparam Iface_ The @ref IpIface class type of the @ref IpStack type which
      *         will be used.
      */
     template <typename PlatformImpl_, typename Iface_>

@@ -44,8 +44,8 @@ namespace AIpStack {
 /**
  * Represents the IPv4 address configuration of a network interface.
  * 
- * Structures of this type are passed to @ref IpStack::Iface::setIp4Addr
- * and returned by @ref IpStack::Iface::getIp4Addr.
+ * Structures of this type are passed to @ref IpIface::setIp4Addr
+ * and returned by @ref IpIface::getIp4Addr.
  */
 struct IpIfaceIp4AddrSetting {
     /**
@@ -69,8 +69,8 @@ struct IpIfaceIp4AddrSetting {
 /**
  * Represents the IPv4 gateway configuration of a network interface.
  * 
- * Structures of this type are passed to @ref IpStack::Iface::setIp4Gateway
- * and returned by @ref IpStack::Iface::getIp4Gateway.
+ * Structures of this type are passed to @ref IpIface::setIp4Gateway
+ * and returned by @ref IpIface::getIp4Gateway.
  */
 struct IpIfaceIp4GatewaySetting {
     /**
@@ -91,7 +91,7 @@ struct IpIfaceIp4GatewaySetting {
  * network interface.
  * 
  * A pointer to a structure of this type can be obtained using
- * @ref IpStack::Iface::getIp4AddrsFromDriver. In addition to the IP address
+ * @ref IpIface::getIp4AddrsFromDriver. In addition to the IP address
  * and subnet prefix length, this structure contains the network mask,
  * network address and local broadcast address.
  */
@@ -125,8 +125,8 @@ struct IpIfaceIp4Addrs {
 /**
  * Contains state reported by IP interface drivers to the IP stack.
  * 
- * Structures of this type are returned by @ref IpStack::Iface::getDriverState,
- * as well as by @ref IpStack::Iface::driverGetState as part of the driver
+ * Structures of this type are returned by @ref IpIface::getDriverState,
+ * as well as by @ref IpIface::driverGetState as part of the driver
  * interface.
  */
 struct IpIfaceDriverState {
@@ -243,7 +243,7 @@ public:
 };
 
 /**
- * Encapsulates interface information passed to the @ref IpStack::Iface constructor.
+ * Encapsulates interface information passed to the @ref IpIface constructor.
  */
 struct IpIfaceInitInfo {
     /**
@@ -256,7 +256,7 @@ struct IpIfaceInitInfo {
     /**
      * The type of the hardware-type-specific interface.
      * 
-     * See @ref IpStack::Iface::getHwType for an explanation of the
+     * See @ref IpIface::getHwType for an explanation of the
      * hardware-type-specific interface mechanism. If no hardware-type-specific
      * interface is available, use @ref IpHwType::Undefined.
      */

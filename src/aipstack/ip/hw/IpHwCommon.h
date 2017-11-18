@@ -38,7 +38,7 @@ namespace AIpStack {
  * Enumeration of types of hardware-type-specific interfaces provided
  * by network interfaces.
  * 
- * See @ref IpStack::Iface::getHwType and @ref IpStack::Iface::getHwIface.
+ * See @ref IpIface::getHwType and @ref IpIface::getHwIface.
  */
 enum class IpHwType : uint8_t {
     /**

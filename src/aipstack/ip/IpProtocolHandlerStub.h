@@ -79,7 +79,7 @@ namespace AIpStack {
  * @ref IpStack::handleIcmpPacketTooBig and
  * @ref IpStack::handleLocalPacketTooBig.
  * 
- * The protocol handler will have access to the interface (@ref IpStack::Iface)
+ * The protocol handler will have access to the interface (@ref IpIface)
  * from which a datagram has been received, in @ref recvIp4Dgram and also
  * @ref handleIp4DestUnreach. The protocol handler must not remember the
  * interface since it could generally disappear at any time. Currently there
