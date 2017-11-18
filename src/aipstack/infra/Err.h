@@ -53,6 +53,7 @@ enum class IpErr : uint8_t {
     FRAG_NEEDED     = 10, /**< IP fragmentation is needed but not permitted. */
     HW_ERROR        = 11, /**< An unexpected hardware problem has occured. */
     LINK_DOWN       = 12, /**< The link is down for the network interface. */
+    BCAST_REJECTED  = 13, /**< Sending to a broadcast address was not allowed. */
 };
 
 /** @} */

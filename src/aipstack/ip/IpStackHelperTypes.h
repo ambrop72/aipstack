@@ -145,17 +145,25 @@ struct IpIfaceDriverState {
  */
 enum class IpSendFlags : uint16_t {
     /**
+     * Allow broadcast.
+     * 
+     * This flag is required in order to send to a local broadcast or all-ones address.
+     * If it is set then sending to non-broadcast addresses is still allowed.
+     */
+    AllowBroadcastFlag = (uint16_t)1 << 0,
+
+    /**
      * Do-not-fragment flag.
      * 
      * Using this flag will both prevent fragmentation of the outgoing
      * datagram as well as set the Dont-Fragment flag in the IP header.
      */
     DontFragmentFlag = Ip4FlagDF,
-    
+
     /**
      * Mask of all flags which may be passed to send functions.
      */
-    AllFlags = DontFragmentFlag,
+    AllFlags = AllowBroadcastFlag|DontFragmentFlag,
 };
 
 #ifndef IN_DOXYGEN

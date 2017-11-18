@@ -112,7 +112,7 @@ class IpStack :
     AIPSTACK_USE_TYPES(Arg, (Params, ProtocolServicesList))
     AIPSTACK_USE_VALS(Params, (HeaderBeforeIp, IcmpTTL, AllowBroadcastPing))
     AIPSTACK_USE_TYPES(Params, (PathMtuCacheService, ReassemblyService))
-    
+
 public:
     /**
      * The platform implementation type, as given to @ref IpStackService::Compose.
@@ -357,6 +357,10 @@ public:
      * number, except when the function fails with @ref IpErr::NO_IP_ROUTE or
      * @ref IpErr::FRAG_NEEDED as noted above. Identification numbers are generated
      * sequentially and there is no attempt to track which numbers are in use.
+     *
+     * Sending to a local broadcast or all-ones address is only allowed if send_flags
+     * includes @ref IpSendFlags::AllowBroadcastFlag. Otherwise sending will fail with
+     * the error @ref IpErr::BCAST_REJECTED.
      * 
      * @param addrs Source and destination address.
      * @param ttl_proto The TTL and protocol fields combined.
@@ -367,8 +371,9 @@ public:
      * @param iface If not null, force sending through this interface.
      * @param retryReq If not null, this may provide notification when to retry sending
      *                 after an unsuccessful attempt (notification is not guaranteed).
-     * @param send_flags IP flags to send. The only allowed flag is
-     *                   @ref IpSendFlags::DontFragmentFlag, other bits must not be set.
+     * @param send_flags IP flags to send. All flags declared in
+     *        @ref IpSendFlags::DontFragmentFlag are allowed (other bits must not be
+     *        present).
      * @return Success or error code.
      */
     AIPSTACK_NO_INLINE
@@ -395,6 +400,13 @@ public:
             return IpErr::NO_IP_ROUTE;
         }
         
+        // Check if sending is allowed (e.g. broadcast).
+        IpErr check_err = checkSendIp4Allowed(addrs.remote_addr, send_flags,
+                                              route_info.iface);
+        if (AIPSTACK_UNLIKELY(check_err != IpErr::SUCCESS)) {
+            return check_err;
+        }
+
         // Check if fragmentation is needed...
         uint16_t pkt_send_len;
         
@@ -429,8 +441,9 @@ public:
         chksum.addWord(WrapType<uint16_t>(), ident);
         ip4_header.set(Ip4Header::Ident(), ident);
         
-        chksum.addWord(WrapType<uint16_t>(), (uint16_t)send_flags);
-        ip4_header.set(Ip4Header::FlagsOffset(), (uint16_t)send_flags);
+        uint16_t flags_offset = (uint16_t)send_flags & IpOnlySendFlagsMask;
+        chksum.addWord(WrapType<uint16_t>(), flags_offset);
+        ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         
         chksum.addWord(WrapType<uint16_t>(), ttl_proto.value);
         ip4_header.set(Ip4Header::TtlProto(), ttl_proto.value);
@@ -494,9 +507,10 @@ private:
             auto ip4_header = Ip4Header::MakeRef(pkt.getChunkPtr());
             
             // Write the fragment-specific IP header fields.
-            ip4_header.set(Ip4Header::TotalLen(),     pkt_send_len);
-            uint16_t flags_offset = (uint16_t)send_flags | (fragment_offset / 8);
-            ip4_header.set(Ip4Header::FlagsOffset(),  flags_offset);
+            ip4_header.set(Ip4Header::TotalLen(), pkt_send_len);
+            uint16_t flags_offset = ((uint16_t)send_flags & IpOnlySendFlagsMask) |
+                                    (fragment_offset / 8);
+            ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
             ip4_header.set(Ip4Header::HeaderChksum(), 0);
             
             // Calculate the IP header checksum.
@@ -561,12 +575,17 @@ public:
      * This mechanism is intended for bulk transmission where performance is desired.
      * Fragmentation or forcing an interface are not supported.
      * 
+     * Sending to a local broadcast or all-ones address is only allowed if send_flags
+     * includes @ref IpSendFlags::AllowBroadcastFlag. Otherwise sending will fail with
+     * the error @ref IpErr::BCAST_REJECTED.
+     * 
      * @param addrs Source and destination address.
      * @param ttl_proto The TTL and protocol fields combined.
      * @param header_end_ptr Pointer to the end of the IPv4 header (and start of data).
      *                       This must be the same location as for subsequent datagrams.
-     * @param send_flags IP flags to send. The only allowed flag is
-     *                   @ref IpSendFlags::DontFragmentFlag, other bits must not be set.
+     * @param send_flags IP flags to send. All flags declared in
+     *        @ref IpSendFlags::DontFragmentFlag are allowed (other bits must not be
+     *        present).
      * @param prep Internal information is stored into this structure.
      * @return Success or error code.
      */
@@ -582,6 +601,13 @@ public:
             return IpErr::NO_IP_ROUTE;
         }
         
+        // Check if sending is allowed (e.g. broadcast).
+        IpErr check_err = checkSendIp4Allowed(addrs.remote_addr, send_flags,
+                                              prep.route_info.iface);
+        if (AIPSTACK_UNLIKELY(check_err != IpErr::SUCCESS)) {
+            return check_err;
+        }
+
         // Write IP header fields and calculate partial header checksum inline...
         auto ip4_header = Ip4Header::MakeRef(header_end_ptr - Ip4Header::Size);
         IpChksumAccumulator chksum;
@@ -590,8 +616,9 @@ public:
         chksum.addWord(WrapType<uint16_t>(), version_ihl_dscp_ecn);
         ip4_header.set(Ip4Header::VersionIhlDscpEcn(), version_ihl_dscp_ecn);
         
-        chksum.addWord(WrapType<uint16_t>(), (uint16_t)send_flags);
-        ip4_header.set(Ip4Header::FlagsOffset(), (uint16_t)send_flags);
+        uint16_t flags_offset = (uint16_t)send_flags & IpOnlySendFlagsMask;
+        chksum.addWord(WrapType<uint16_t>(), flags_offset);
+        ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         
         chksum.addWord(WrapType<uint16_t>(), ttl_proto.value);
         ip4_header.set(Ip4Header::TtlProto(), ttl_proto.value);
@@ -663,7 +690,29 @@ public:
         return prep.route_info.iface->driverSendIp4Packet(
             pkt, prep.route_info.addr, retryReq);
     }
+
+private:
+    uint16_t IpOnlySendFlagsMask = 0xFF00;
     
+    inline static IpErr checkSendIp4Allowed (Ip4Addr dst_addr, IpSendFlags send_flags, 
+                                             Iface *iface)
+    {
+        if (AIPSTACK_LIKELY((send_flags & IpSendFlags::AllowBroadcastFlag) == EnumZero)) {
+            if (AIPSTACK_UNLIKELY(dst_addr == Ip4Addr::AllOnesAddr())) {
+                return IpErr::BCAST_REJECTED;
+            }
+
+            if (AIPSTACK_LIKELY(iface->m_have_addr)) {
+                if (AIPSTACK_UNLIKELY(dst_addr == iface->m_addr.bcastaddr)) {
+                    return IpErr::BCAST_REJECTED;
+                }
+            }
+        }
+        
+        return IpErr::SUCCESS;
+    }
+
+public:
     /**
      * Determine routing for the given destination address.
      * 
