@@ -692,7 +692,7 @@ public:
     }
 
 private:
-    uint16_t IpOnlySendFlagsMask = 0xFF00;
+    static uint16_t const IpOnlySendFlagsMask = 0xFF00;
     
     inline static IpErr checkSendIp4Allowed (Ip4Addr dst_addr, IpSendFlags send_flags, 
                                              Iface *iface)
