@@ -38,6 +38,7 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Modulo.h>
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/infra/Options.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Err.h>
@@ -45,7 +46,7 @@
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/utils/RingBufferUtils.h>
+#include <aipstack/utils/TcpRingBufferUtils.h>
 
 namespace AIpStackExamples {
 
@@ -231,30 +232,24 @@ private:
         static constexpr char const ResponsePrefix[] = "Line: ";
         static std::size_t const ResponsePrefixLen = sizeof(ResponsePrefix) - 1;
         
-        static_assert(Params::LineParsingMaxRxLineLen <= Params::LineParsingRxBufferSize,
-            "");
+        static std::size_t const RxBufSize = Params::LineParsingRxBufferSize;
+        static std::size_t const TxBufSize = Params::LineParsingTxBufferSize;
+        static std::size_t const MaxRxLineLen = Params::LineParsingMaxRxLineLen;
         
-        static_assert(Params::LineParsingTxBufferSize >= 
-            ResponsePrefixLen + Params::LineParsingMaxRxLineLen, "");
+        static_assert(MaxRxLineLen <= RxBufSize, "");
+        static_assert(TxBufSize >= ResponsePrefixLen + MaxRxLineLen, "");
         
         enum class State {RecvLine, WaitRespBuf, WaitFinSent};
-        
-        static constexpr auto RxBufMod = AIpStack::Modulo(Params::LineParsingRxBufferSize);
-        static constexpr auto TxBufMod = AIpStack::Modulo(Params::LineParsingTxBufferSize);
         
     public:
         LineParsingClient (ExampleServer *parent, MyListener &listener) :
             BaseClient(parent, listener),
-            m_rx_buf_node({m_rx_buffer, RxBufMod.modulus(), &m_rx_buf_node}),
-            m_tx_buf_node({m_tx_buffer, TxBufMod.modulus(), &m_tx_buf_node}),
             m_rx_line_len(0),
             m_state(State::RecvLine)
         {
-            TcpConnection::setProportionalWindowUpdateThreshold(
-                RxBufMod.modulus(), Params::WindowUpdateThresDiv);
-            
-            TcpConnection::setRecvBuf({&m_rx_buf_node, 0, RxBufMod.modulus()});
-            TcpConnection::setSendBuf({&m_tx_buf_node, 0, 0});
+            m_rx_ring_buf.setup(*this, m_rx_buffer, RxBufSize,
+                                Params::WindowUpdateThresDiv);
+            m_tx_ring_buf.setup(*this, m_tx_buffer, TxBufSize);
         }
         
     private:
@@ -287,44 +282,32 @@ private:
             AIPSTACK_ASSERT(m_state == State::RecvLine)
             
             while (true) {
-                // Calculate the range of available received data.
-                // We use calcRingBufComplement because TcpConnection::getRecvBuf() gives
-                // the buffer range available for newly received data but we want the range
-                // where unprocessed received data is, which is the complement.
-                AIpStack::RingBufRange rx_data = AIpStack::calcRingBufComplement(
-                    TcpConnection::getRecvBuf(), RxBufMod);
+                // Get the range of received data.
+                AIpStack::IpBufRef rx_data = m_rx_ring_buf.getReadRange(*this);
                 
-                // Get the position of the first character we have not looked at yet.
-                std::size_t pos = RxBufMod.add(rx_data.pos, m_rx_line_len);
+                // Skip over any already parsed data (known not to contain a newline).
+                AIpStack::IpBufRef unparsed_data = rx_data;
+                unparsed_data.skipBytes(m_rx_line_len);
+
+                // Determine how far to search for a newline.
+                std::size_t search_len = AIpStack::MinValue(unparsed_data.tot_len,
+                    std::size_t(MaxRxLineLen - m_rx_line_len));
                 
-                // Process characters looking for a newline.
-                
-                bool found_newline = false;
-                
-                while (m_rx_line_len < rx_data.len) {
-                    // Get the character.
-                    char ch = m_rx_buffer[pos];
-                    
-                    // Increment pos and m_rx_line_len.
-                    // The latter is so that we do not examine this character again.
-                    pos = RxBufMod.inc(pos);
-                    m_rx_line_len++;
-                    
-                    // If it's a newline, stop here to process the line.
-                    if (ch == '\n') {
-                        found_newline = true;
-                        break;
-                    }
-                    
-                    // Check if the line is too long, if so then disconnect the client.
-                    if (m_rx_line_len >= Params::LineParsingMaxRxLineLen) {
-                        std::fprintf(stderr, "Line too long, disconnecting client.\n");
-                        return BaseClient::destroy(true);
-                    }
-                }
+                // Seatch for a newline.
+                bool found_newline = unparsed_data.findByte(search_len, '\n');
+
+                // Update m_rx_line_len to reflect any data searched possibly including
+                // a newline that was just found.
+                m_rx_line_len = rx_data.tot_len - unparsed_data.tot_len;
                 
                 // No newline yet?
                 if (!found_newline) {
+                    // Check if the line is too long, if so then disconnect the client.
+                    if (m_rx_line_len >= MaxRxLineLen) {
+                        std::fprintf(stderr, "Line too long, disconnecting client.\n");
+                        return BaseClient::destroy(true);
+                    }
+
                     if (TcpConnection::wasEndReceived()) {
                         // FIN has been encountered. Call closeSending to send our own
                         // FIN and go to state WaitFinSent where we wait until our FIN
@@ -360,35 +343,22 @@ private:
             std::size_t response_len = ResponsePrefixLen + recv_len;
             
             // Get the range of free space in the send buffer.
-            // We use calcRingBufComplement because TcpConnection::getSendBuf() gives
-            // the buffer range with submitted unacknowledged data, but we want the
-            // range where new data should be written, which is the complement.
-            AIpStack::RingBufRange tx_free = AIpStack::calcRingBufComplement(
-                TcpConnection::getSendBuf(), TxBufMod);
-            
+            AIpStack::IpBufRef tx_free = m_tx_ring_buf.getWriteRange(*this);
+
             // Check if there is sufficient space for the response in the send buffer.
-            if (tx_free.len < response_len) {
+            if (tx_free.tot_len < response_len) {
                 return false;
             }
             
-            // Get the start position of the line (same as in processReceived).
-            std::size_t rx_data_pos = AIpStack::calcRingBufComplement(
-                TcpConnection::getRecvBuf(), RxBufMod).pos;
+            // Get the range of bytes where the received line is.
+            AIpStack::IpBufRef rx_line =
+                m_rx_ring_buf.getReadRange(*this).subTo(recv_len);
             
             // Write the response prefix to the send buffer.
-            AIpStack::visitModuloRange(TxBufMod, tx_free.pos, ResponsePrefixLen,
-                [&](std::size_t rel_pos, std::size_t tx_pos, std::size_t len) {
-                    std::memcpy(m_tx_buffer + tx_pos, ResponsePrefix + rel_pos, len);
-                });
+            tx_free.giveBytes(ResponsePrefixLen, ResponsePrefix);
             
             // Copy the line from the receive buffer to the send buffer.
-            AIpStack::visitModuloRange2(
-                /*mod1=*/ RxBufMod, /*pos1=*/ rx_data_pos,
-                /*mod2=*/ TxBufMod, /*pos2=*/ TxBufMod.add(tx_free.pos, ResponsePrefixLen),
-                /*count=*/ recv_len,
-                [&](std::size_t rx_pos, std::size_t tx_pos, std::size_t len) {
-                    std::memcpy(m_tx_buffer + tx_pos, m_rx_buffer + rx_pos, len);
-                });
+            tx_free.giveBuf(rx_line);
             
             // Extend the receive buffer (mark the space used by the received line as free).
             TcpConnection::extendRecvBuf(recv_len);
@@ -406,12 +376,12 @@ private:
         }
         
     private:
-        AIpStack::IpBufNode m_rx_buf_node;
-        AIpStack::IpBufNode m_tx_buf_node;
+        AIpStack::RecvRingBuffer<TcpProto> m_rx_ring_buf;
+        AIpStack::SendRingBuffer<TcpProto> m_tx_ring_buf;
         std::size_t m_rx_line_len;
         State m_state;
-        char m_rx_buffer[Params::LineParsingRxBufferSize];
-        char m_tx_buffer[Params::LineParsingTxBufferSize];
+        char m_rx_buffer[RxBufSize];
+        char m_tx_buffer[TxBufSize];
     };
     
 private:
@@ -420,12 +390,6 @@ private:
     MyListener m_listener_command;
     std::unordered_map<BaseClient *, std::unique_ptr<BaseClient>> m_clients;
 };
-
-template <typename Arg>
-constexpr AIpStack::Modulo const ExampleServer<Arg>::LineParsingClient::RxBufMod;
-
-template <typename Arg>
-constexpr AIpStack::Modulo const ExampleServer<Arg>::LineParsingClient::TxBufMod;
 
 template <typename Arg>
 constexpr char const ExampleServer<Arg>::LineParsingClient::ResponsePrefix[];
