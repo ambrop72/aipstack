@@ -439,10 +439,37 @@ struct IpBufRef {
         });
         return ch;
     }
+
+    /**
+     * Search for the first occurrence of the specified byte while consuming bytes from
+     * the front of the memory range.
+     *
+     * If `byte` is found within the first `amount` bytes, this function returns true and
+     * all bytes up to and including the first occurrence have been consumed. Otherwise,
+     * this function returns false and `amount` bytes have been consumed.
+     * 
+     * This moves to subsequent buffers eagerly (see @ref processBytesInterruptible).
+     * 
+     * @param amount Maximum number of bytes to process and consume. Must be less than
+     *        or equal to @ref tot_len.
+     * @param byte Byte to search for.
+     */
+    bool findByte (size_t amount, char byte)
+    {
+        return processBytesInterruptible(amount, [&](char *data, size_t &len) {
+            void *ch = ::memchr(data, byte, len);
+            if (ch == nullptr) {
+                return false;
+            } else {
+                len = ((char *)ch - data) + 1;
+                return true;
+            }
+        });
+    }
     
     /**
-     * Consume a number of bytes from the front of the memory
-     * range while processing them with a user-specified function.
+     * Process and consume a number of bytes from the front of the memory range by
+     * invoking a callback function on contiguous chunks.
      * 
      * The function will be called on the subsequent contiguous
      * chunks of the consumed part of this memory range. It will
@@ -484,6 +511,7 @@ struct IpBufRef {
                 }
                 
                 size_t take = MinValue(rem_in_buf, amount);
+
                 func(getChunkPtr(), size_t(take));
                 
                 tot_len -= take;
@@ -507,6 +535,86 @@ struct IpBufRef {
         }
     }
     
+    /**
+     * Process and consume up to a number of bytes from the front of the memory range
+     * by invoking a callback function with the option to stop prematurely.
+     * 
+     * This is a more flexible variation of @ref processBytes which allows the callback
+     * function to interrupt processing and to process fewer bytes than it was called
+     * for.
+     * 
+     * The function will be called on the subsequent contiguous chunks of the consumed
+     * part of this memory range. It will be passed two arguments: a char pointer to the
+     * start of the chunk, and a size_t reference to the length of the chunk. It must
+     * return boolean indicating whether to continue (false) or stop processing (true)
+     * and it may modify (never increase) the passed chunk length in order to report the
+     * actual number of bytes processed (irrespective of the return value). The function
+     * will not be called on zero-sized chunks.
+     * 
+     * This function moves forward to subsequent buffers eagerly. This means that when
+     * there are no more bytes to be processed (either because `amount` bytes have been
+     * processed or because `func` returned true), it will move to the next buffer as
+     * long as it is currently at the end of the current buffer and there is a next
+     * buffer. See @ref processBytes for why this might be useful.
+     * 
+     * @tparam Func Function object type.
+     * @param amount Maximum number of bytes to process and consume. Must be less than
+     *        or equal to @ref tot_len.
+     * @param func Function to call in order to process chunks (see above). The
+     *        function must not modify this @ref IpBufRef object, and the state of
+     *        this object at the time of invocation is unspecified.
+     * @return False if `func` never returned true (all `amount` bytes have been
+     *         processed), true if (the last call of) `func` returned true (less than
+     *         `amount` bytes might have been processed).
+     */
+    template <typename Func>
+    bool processBytesInterruptible (size_t amount, Func func)
+    {
+        AIPSTACK_ASSERT(node != nullptr)
+        AIPSTACK_ASSERT(amount <= tot_len)
+        
+        bool interrupted = false;
+
+        while (true) {
+            AIPSTACK_ASSERT(offset <= node->len)
+            size_t rem_in_buf = node->len - offset;
+            
+            if (rem_in_buf > 0) {
+                if (amount == 0) {
+                    break;
+                }
+                
+                size_t max_take = MinValue(rem_in_buf, amount);
+
+                size_t take = max_take;
+                interrupted = func(getChunkPtr(), static_cast<size_t &>(take));
+                AIPSTACK_ASSERT(take <= max_take)
+
+                tot_len -= take;
+                amount -= take;
+                
+                if (interrupted) {
+                    amount = 0;
+                }
+                
+                if (take < rem_in_buf || node->next == nullptr) {
+                    offset += take;
+                    continue;
+                }
+            } else {
+                if (node->next == nullptr) {
+                    AIPSTACK_ASSERT(amount == 0)
+                    break;
+                }
+            }
+            
+            node = node->next;
+            offset = 0;
+        }
+
+        return interrupted;
+    }
+
     /**
      * Return a memory range that is a prefix of this memory range.
      * 
