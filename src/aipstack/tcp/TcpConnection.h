@@ -254,7 +254,7 @@ namespace AIpStack {
         /**
          * Returns whether the object is in INIT state.
          */
-        inline bool isInit ()
+        inline bool isInit () const
         {
             return !m_v.started;
         }
@@ -262,7 +262,7 @@ namespace AIpStack {
         /**
          * Returns whether the object is in CONNECTED state.
          */
-        inline bool isConnected ()
+        inline bool isConnected () const
         {
             return m_v.pcb != nullptr;
         }
@@ -272,7 +272,7 @@ namespace AIpStack {
          * 
          * May only be called in CONNECTED state.
          */
-        TcpProto & getTcp ()
+        TcpProto & getTcp () const
         {
             AIPSTACK_ASSERT(isConnected())
             
@@ -284,7 +284,7 @@ namespace AIpStack {
          * 
          * May only be called in CONNECTED state.
          */
-        uint16_t getLocalPort ()
+        uint16_t getLocalPort () const
         {
             AIPSTACK_ASSERT(isConnected())
             
@@ -296,7 +296,7 @@ namespace AIpStack {
          * 
          * May only be called in CONNECTED state.
          */
-        uint16_t getRemotePort ()
+        uint16_t getRemotePort () const
         {
             AIPSTACK_ASSERT(isConnected())
             
@@ -308,7 +308,7 @@ namespace AIpStack {
          * 
          * May only be called in CONNECTED state.
          */
-        Ip4Addr getLocalIp4Addr ()
+        Ip4Addr getLocalIp4Addr () const
         {
             AIPSTACK_ASSERT(isConnected())
             
@@ -320,7 +320,7 @@ namespace AIpStack {
          * 
          * May only be called in CONNECTED state.
          */
-        Ip4Addr getRemoteIp4Addr ()
+        Ip4Addr getRemoteIp4Addr () const
         {
             AIPSTACK_ASSERT(isConnected())
             
@@ -366,7 +366,7 @@ namespace AIpStack {
          * This is intended to be used when a connection is accepted to determine
          * the minimum amount of receive buffer which must be available.
          */
-        size_t getAnnouncedRcvWnd ()
+        size_t getAnnouncedRcvWnd () const
         {
             assert_connected();
             
@@ -434,7 +434,7 @@ namespace AIpStack {
          * This is convenient when using a ring buffer as it guarantees
          * that the offset will remain less than the buffer size.
          */
-        inline IpBufRef getRecvBuf ()
+        inline IpBufRef getRecvBuf () const
         {
             assert_started();
             
@@ -445,7 +445,7 @@ namespace AIpStack {
          * Returns whether a FIN was received.
          * May only be called in CONNECTED or CLOSED state.
          */
-        inline bool wasEndReceived ()
+        inline bool wasEndReceived () const
         {
             assert_started();
             
@@ -460,7 +460,7 @@ namespace AIpStack {
          * initiated connections, it only possibly decreases when the
          * connection is established.
          */
-        inline size_t getSndBufOverhead ()
+        inline size_t getSndBufOverhead () const
         {
             assert_connected();
             
@@ -475,22 +475,29 @@ namespace AIpStack {
          * is established.
          * May only be called in CONNECTED or CLOSED state.
          * May only be called before endSending is called.
-         * May only be called when the current send buffer has zero length.
+         * If a send buffer has already been set than the new buffer must be
+         * at least as large as the old one and the leading portion corresponding
+         * to the old size must have been copied (because some of the data may have
+         * been sent).
          */
         void setSendBuf (IpBufRef snd_buf)
         {
             assert_sending();
-            AIPSTACK_ASSERT(m_v.snd_buf.tot_len == 0)
-            AIPSTACK_ASSERT(m_v.snd_buf_cur.tot_len == 0)
+            AIPSTACK_ASSERT(snd_buf.tot_len >= m_v.snd_buf.tot_len)
+            AIPSTACK_ASSERT(m_v.snd_buf_cur.tot_len <= m_v.snd_buf.tot_len)
             
+            // Calculate the send offset and check if the send buffer is being extended.
+            size_t snd_offset = m_v.snd_buf.tot_len - m_v.snd_buf_cur.tot_len;
+            bool extended = snd_buf.tot_len > m_v.snd_buf.tot_len;
+
             // Set the send buffer.
             m_v.snd_buf = snd_buf;
             
-            // Also update snd_buf_cur. It just needs to be set to the
-            // same as we don't allow calling this with nonempty snd_buf.
+            // Set snd_buf_cur and advance it to preserve the send offset.
             m_v.snd_buf_cur = snd_buf;
+            m_v.snd_buf_cur.skipBytes(snd_offset);
             
-            if (AIPSTACK_LIKELY(m_v.pcb != nullptr && m_v.snd_buf.tot_len > 0)) {
+            if (AIPSTACK_LIKELY(m_v.pcb != nullptr && extended)) {
                 // Inform the output code, so it may send the data.
                 Output::pcb_snd_buf_extended(m_v.pcb);
             }
@@ -513,7 +520,7 @@ namespace AIpStack {
             // Also adjust snd_buf_cur.
             m_v.snd_buf_cur.tot_len += amount;
         
-            if (AIPSTACK_LIKELY(m_v.pcb != nullptr && m_v.snd_buf.tot_len > 0)) {
+            if (AIPSTACK_LIKELY(m_v.pcb != nullptr && amount > 0)) {
                 // Inform the output code, so it may send the data.
                 Output::pcb_snd_buf_extended(m_v.pcb);
             }
@@ -528,7 +535,7 @@ namespace AIpStack {
          * This is convenient when using a ring buffer as it guarantees
          * that the offset will remain less than the buffer size.
          */
-        inline IpBufRef getSendBuf ()
+        inline IpBufRef getSendBuf () const
         {
             assert_started();
             
@@ -562,7 +569,7 @@ namespace AIpStack {
          * Returns whethercloseSending has been called.
          * May only be called in CONNECTED or CLOSED state.
          */
-        inline bool wasSendingClosed ()
+        inline bool wasSendingClosed () const
         {
             assert_started();
             
@@ -573,7 +580,7 @@ namespace AIpStack {
          * Returns whether a FIN was sent and acknowledged.
          * May only be called in CONNECTED or CLOSED state.
          */
-        inline bool wasEndSent ()
+        inline bool wasEndSent () const
         {
             assert_started();
             
@@ -636,14 +643,14 @@ namespace AIpStack {
         virtual void dataSent (size_t amount) = 0;
         
     private:
-        void assert_init ()
+        void assert_init () const
         {
             AIPSTACK_ASSERT(!m_v.started && !m_v.snd_closed &&
                             !m_v.end_sent && !m_v.end_received)
             AIPSTACK_ASSERT(m_v.pcb == nullptr)
         }
         
-        void assert_started ()
+        void assert_started () const
         {
             AIPSTACK_ASSERT(m_v.started)
             AIPSTACK_ASSERT(m_v.pcb == nullptr || m_v.pcb->state == TcpState::SYN_SENT ||
@@ -653,13 +660,13 @@ namespace AIpStack {
                             snd_open_in_state(m_v.pcb->state) == !m_v.snd_closed)
         }
         
-        void assert_connected ()
+        void assert_connected () const
         {
             assert_started();
             AIPSTACK_ASSERT(m_v.pcb != nullptr)
         }
         
-        void assert_sending ()
+        void assert_sending () const
         {
             assert_started();
             AIPSTACK_ASSERT(!m_v.snd_closed)
