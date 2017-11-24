@@ -828,7 +828,6 @@ EXCLUDE                = \
     src/aipstack/tcp/TcpUtils.h \
     src/aipstack/utils/TcpListenQueue.h \
     src/aipstack/utils/TcpRingBufferUtils.h \
-    src/aipstack/utils/WrapBuffer.h \
     src/aipstack/misc/ExceptionUtils.h \
     src/aipstack/misc/Preprocessor.h \
     src/aipstack/misc/MacroMap.h \
