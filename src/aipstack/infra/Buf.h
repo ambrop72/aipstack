@@ -446,15 +446,16 @@ struct IpBufRef {
      *
      * If `byte` is found within the first `amount` bytes, this function returns true and
      * all bytes up to and including the first occurrence have been consumed. Otherwise,
-     * this function returns false and `amount` bytes have been consumed.
+     * this function returns false and min(`amount`, original @ref tot_len) bytes have been
+     * consumed.
      * 
      * This moves to subsequent buffers eagerly (see @ref processBytesInterruptible).
      * 
-     * @param amount Maximum number of bytes to process and consume. Must be less than
-     *        or equal to @ref tot_len.
      * @param byte Byte to search for.
+     * @param amount Maximum number of bytes to process and consume. In any case no more
+     *        than @ref tot_len bytes will be processed.
      */
-    bool findByte (size_t amount, char byte)
+    bool findByte (char byte, size_t amount = size_t(-1))
     {
         return processBytesInterruptible(amount, [&](char *data, size_t &len) {
             void *ch = ::memchr(data, byte, len);
@@ -477,11 +478,9 @@ struct IpBufRef {
      * the chunk, and a size_t length of the chunk. The function
      * will not be called on zero-sized chunks.
      * 
-     * This function moves forward to subsequent buffers eagerly.
-     * This means that when there are no more bytes to be
-     * processed, it will move to the next buffer as long as
-     * it is currently at the end of the current buffer and there
-     * is a next buffer.
+     * This function moves forward to subsequent buffers eagerly. This means that when
+     * there are no more bytes to be processed, it will move to the next buffer as long as
+     * it is at the end of the current buffer and there is a next buffer.
      * 
      * This eager moving across buffer is useful when the buffer
      * chain is a ring buffer, so that the offset into the buffer
@@ -537,41 +536,50 @@ struct IpBufRef {
     
     /**
      * Process and consume up to a number of bytes from the front of the memory range
-     * by invoking a callback function with the option to stop prematurely.
+     * by invoking a callback function on contiguous chunks.
      * 
      * This is a more flexible variation of @ref processBytes which allows the callback
      * function to interrupt processing and to process fewer bytes than it was called
-     * for.
+     * for. Additionally, it is permitted to pass `max_amount` greater than @ref tot_len in
+     * order to simplify common use cases.
      * 
-     * The function will be called on the subsequent contiguous chunks of the consumed
-     * part of this memory range. It will be passed two arguments: a char pointer to the
-     * start of the chunk, and a size_t reference to the length of the chunk. It must
-     * return boolean indicating whether to continue (false) or stop processing (true)
-     * and it may modify (never increase) the passed chunk length in order to report the
-     * actual number of bytes processed (irrespective of the return value). The function
-     * will not be called on zero-sized chunks.
+     * The `func` function will be called on the subsequent contiguous chunks of the
+     * consumed part of this memory range. It will be passed two arguments: a char pointer
+     * to the start of the chunk, and a size_t reference to the length of the chunk. It
+     * must return boolean indicating whether to continue (false) or interrupt processing
+     * (true). The function will not be called on zero-sized chunks. The function may
+     * modify the chunk length via the passed reference to possibly report that it has
+     * processed less bytes than it was provided with.
      * 
-     * This function moves forward to subsequent buffers eagerly. This means that when
-     * there are no more bytes to be processed (either because `amount` bytes have been
-     * processed or because `func` returned true), it will move to the next buffer as
-     * long as it is currently at the end of the current buffer and there is a next
-     * buffer. See @ref processBytes for why this might be useful.
+     * The effective number of bytes available for processing is min(`max_amount`,
+     * @ref tot_len at the time of the call). If `func` never returns true, all of the
+     * available bytes will have been processed. If `func` ever returns true, processing
+     * stops that time, possibly (but not necessarily) with less than the available number
+     * of bytes having been processed.
+     * 
+     * This function moves forward to subsequent buffers eagerly. This means that when no
+     * more bytes will be processed (either because all available bytes have been processed
+     * or because `func` returned true), it will move to the next buffer as long as it is
+     * at the end of the current buffer and there is a next buffer. See @ref processBytes
+     * for why this might be useful.
      * 
      * @tparam Func Function object type.
-     * @param amount Maximum number of bytes to process and consume. Must be less than
-     *        or equal to @ref tot_len.
+     * @param max_amount Maximum number of bytes to process and consume. In any case no more
+     *        than @ref tot_len bytes will be processed.
      * @param func Function to call in order to process chunks (see above). The
      *        function must not modify this @ref IpBufRef object, and the state of
      *        this object at the time of invocation is unspecified.
-     * @return False if `func` never returned true (all `amount` bytes have been
-     *         processed), true if (the last call of) `func` returned true (less than
-     *         `amount` bytes might have been processed).
+     * @return False if processing was not interrupted (`func` never returned true and all
+     *         available bytes have been processed), true if processing was interrupted
+     *         (`func` returned true last time it was called, less than all available bytes
+     *         may have been processed).
      */
     template <typename Func>
-    bool processBytesInterruptible (size_t amount, Func func)
+    bool processBytesInterruptible (size_t max_amount, Func func)
     {
         AIPSTACK_ASSERT(node != nullptr)
-        AIPSTACK_ASSERT(amount <= tot_len)
+        
+        size_t amount = MinValue(max_amount, tot_len);
         
         bool interrupted = false;
 

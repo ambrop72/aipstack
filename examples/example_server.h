@@ -282,6 +282,8 @@ private:
             AIPSTACK_ASSERT(m_state == State::RecvLine)
             
             while (true) {
+                AIPSTACK_ASSERT(m_rx_line_len <= MaxRxLineLen)
+                
                 // Get the range of received data.
                 AIpStack::IpBufRef rx_data = m_rx_ring_buf.getReadRange(*this);
                 
@@ -289,12 +291,9 @@ private:
                 AIpStack::IpBufRef unparsed_data = rx_data;
                 unparsed_data.skipBytes(m_rx_line_len);
 
-                // Determine how far to search for a newline.
-                std::size_t search_len = AIpStack::MinValue(unparsed_data.tot_len,
-                    std::size_t(MaxRxLineLen - m_rx_line_len));
-                
-                // Seatch for a newline.
-                bool found_newline = unparsed_data.findByte(search_len, '\n');
+                // Search for a newline.
+                bool found_newline = unparsed_data.findByte(
+                    '\n', MaxRxLineLen - m_rx_line_len);
 
                 // Update m_rx_line_len to reflect any data searched possibly including
                 // a newline that was just found.
