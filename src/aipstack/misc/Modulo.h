@@ -33,18 +33,12 @@
 namespace AIpStack {
 
 /**
- * @ingroup misc
- * @defgroup modulo Modular Arithmetic Utilities
- * @brief Utilities for more easily using modular arithemtic.
- * 
- * The class @ref Modulo represents a modulus value and provides functions for performing
- * arithmetic using that modulus.
- * 
+ * @addtogroup misc
  * @{
  */
 
 /**
- * Provides modular arithemtic operations using a specific modulus.
+ * Represents a modulus value and provides modular arithemtic operations.
  */
 class Modulo
 {
