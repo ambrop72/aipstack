@@ -38,9 +38,7 @@ namespace AIpStack {
  * @brief Utilities for more easily using modular arithemtic.
  * 
  * The class @ref Modulo represents a modulus value and provides functions for performing
- * arithmetic using that modulus. The functions @ref visitModuloRange and
- * @ref visitModuloRange2 can be used to visit contiguous subranges within a range or two
- * ranges respectively.
+ * arithmetic using that modulus.
  * 
  * @{
  */
@@ -145,87 +143,6 @@ public:
         return m_modulus - a;
     }
 };
-
-/**
- * Visit contiguous sub-ranges of a modular arithmetic range (e.g.\ a range in a
- * circular buffer).
- * 
- * This calls the given 'visit' function object for each contiguous sub-range of the
- * given range. The 'visit' object is called as `visit(rel_pos, subrange_pos, subrange_len)`
- * where the arguments are size_t values specifying the relative offset in the complete
- * range, the modular start position of the sub-range and the length of the sub-range
- * respecitvely.
- * 
- * The 'visit' object is called for sub-ranges in the natural order and never for an
- * empty sub-range.
- * 
- * If you need to synchronously process different ranges (for example to copy from
- * one circular buffer to another), use @ref visitModuloRange2 instead of this.
- * 
- * @param mod The modulus (e.g. the size of a circular buffer).
- * @param pos Starting position of the range to process. Must be less than the modulus.
- * @param count Length of the range to process.
- * @param visit Function object to call for each contiguous sub-range.
- */
-template <typename Visit>
-void visitModuloRange (Modulo mod, size_t pos, size_t count, Visit visit)
-{
-    AIPSTACK_ASSERT(pos < mod.modulus())
-    
-    size_t rel_pos = 0;
-    
-    while (count > 0) {
-        size_t chunk_len = MinValue(count, mod.modulusComplement(pos));
-        
-        visit(size_t(rel_pos), size_t(pos), size_t(chunk_len));
-        
-        pos = mod.add(pos, chunk_len);
-        count -= chunk_len;
-        rel_pos += chunk_len;
-    }
-}
-
-/**
- * Visit common contiguous sub-ranges of two modular arithmetic ranges (e.g.\ ranges
- * in circular buffers).
- * 
- * This is the equivalent of @ref visitModuloRange for synchronized processing
- * of two ranges using generally different moduli. For example, this can be used
- * to copy data from one circular buffer to another.
- * 
- * The 'visit' function object is called as
- * `visit(subrange_pos1, subrange_pos2, subrange_len)` where the arguments are
- * size_t values specifying the start position for the first modulus, the start
- * position for the second modulus, and the common subrange length respectively.
- * 
- * The 'visit' object is called for sub-ranges in the natural order and never
- * for an empty sub-range.
- * 
- * @param mod1 The first modulus.
- * @param pos1 Starting position for the first modulus. Must be less than 'mod1'.
- * @param mod2 The second modulus.
- * @param pos2 Starting position for the second modulus. Must be less than 'mod2'.
- * @param count Common length of the two ranges to process.
- * @param visit Function object to call for each common contiguous sub-range.
- */
-template <typename Visit>
-void visitModuloRange2 (Modulo mod1, size_t pos1, Modulo mod2, size_t pos2,
-                        size_t count, Visit visit)
-{
-    AIPSTACK_ASSERT(pos1 < mod1.modulus())
-    AIPSTACK_ASSERT(pos2 < mod2.modulus())
-    
-    while (count > 0) {
-        size_t chunk_len = MinValue(count, MinValue(mod1.modulusComplement(pos1),
-                                                    mod2.modulusComplement(pos2)));
-        
-        visit(size_t(pos1), size_t(pos2), size_t(chunk_len));
-        
-        pos1 = mod1.add(pos1, chunk_len);
-        pos2 = mod2.add(pos2, chunk_len);
-        count -= chunk_len;
-    }
-}
 
 /** @} */
 
