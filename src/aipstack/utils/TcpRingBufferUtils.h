@@ -62,53 +62,34 @@ public:
         con.setSendBuf(send_buf);
     }
     
-    inline size_t getFreeLen (Connection &con) const
+    inline IpBufRef getWriteRange (Connection &con) const
     {
-        IpBufRef send_buf = getSendBuf(con);
-        return getModulo().modulusComplement(send_buf.tot_len);
-    }
-    
-    IpBufRef getWriteRange (Connection &con) const
-    {
-        IpBufRef send_buf = getSendBuf(con);
+        IpBufRef send_buf = con.getSendBuf();
+        
+        // Assert that the range is valid for the circular buffer. The less in the second
+        // assertion is due to guaranteed eager advancement to subsequent buffer nodes.
+        AIPSTACK_ASSERT(send_buf.tot_len <= getModulo().modulus())
+        AIPSTACK_ASSERT(send_buf.offset < getModulo().modulus())
+
+        // The range of free space for writing data is the complement of the range of
+        // buffered outgoing data.
         size_t write_offset = getModulo().add(send_buf.offset, send_buf.tot_len);
         size_t free_len = getModulo().modulusComplement(send_buf.tot_len);
+        
         return IpBufRef{&m_buf_node, write_offset, free_len};
     }
     
     inline void provideData (Connection &con, size_t amount)
     {
-        AIPSTACK_ASSERT(amount <= getFreeLen(con))
+        AIPSTACK_ASSERT(amount <= getWriteRange(con).tot_len)
         
         con.extendSendBuf(amount);
-    }
-    
-    void writeData (Connection &con, MemRef data)
-    {
-        AIPSTACK_ASSERT(data.len <= getFreeLen(con))
-        
-        IpBufRef write_range = getWriteRange(con);
-        write_range.giveBytes(data.len, data.ptr);
-
-        con.extendSendBuf(data.len);
     }
     
 private:
     inline Modulo getModulo () const
     {
         return Modulo(m_buf_node.len);
-    }
-
-    inline IpBufRef getSendBuf (Connection &con) const
-    {
-        IpBufRef send_buf = con.getSendBuf();
-
-        // Assert expectations. The second is due to eager advancement to subsequent
-        // buffer nodes guaranteed by TcpConnection.
-        AIPSTACK_ASSERT(send_buf.tot_len <= getModulo().modulus())
-        AIPSTACK_ASSERT(send_buf.offset < getModulo().modulus())
-
-        return send_buf;
     }
     
 private:
@@ -152,35 +133,28 @@ public:
         con.setRecvBuf(recv_buf);
     }
     
-    inline size_t getUsedLen (Connection &con) const
+    inline IpBufRef getReadRange (Connection &con)
     {
-        IpBufRef recv_buf = getRecvBuf(con);
-        return getModulo().modulusComplement(recv_buf.tot_len);
-    }
-    
-    IpBufRef getReadRange (Connection &con)
-    {
-        IpBufRef recv_buf = getRecvBuf(con);
+        IpBufRef recv_buf = con.getRecvBuf();
+        
+        // Assert that the range is valid for the circular buffer. The less in the second
+        // assertion is due to guaranteed eager advancement to subsequent buffer nodes.
+        AIPSTACK_ASSERT(recv_buf.tot_len <= getModulo().modulus())
+        AIPSTACK_ASSERT(recv_buf.offset < getModulo().modulus())
+        
+        // The range of used space with received data is the complement of the range of
+        // available space for received data.
         size_t read_offset = getModulo().add(recv_buf.offset, recv_buf.tot_len);
         size_t used_len = getModulo().modulusComplement(recv_buf.tot_len);
+        
         return IpBufRef{&m_buf_node, read_offset, used_len};
     }
     
     inline void consumeData (Connection &con, size_t amount)
     {
-        AIPSTACK_ASSERT(amount <= getUsedLen(con))
+        AIPSTACK_ASSERT(amount <= getReadRange(con).tot_len)
         
         con.extendRecvBuf(amount);
-    }
-    
-    void readData (Connection &con, MemRef data)
-    {
-        AIPSTACK_ASSERT(data.len <= getUsedLen(con))
-        
-        IpBufRef read_range = getReadRange(con);
-        read_range.takeBytes(data.len, (char *)data.ptr);
-
-        con.extendRecvBuf(data.len);
     }
     
     void updateMirrorAfterReceived (Connection &con, size_t mirror_size, size_t amount)
@@ -224,18 +198,6 @@ private:
     inline Modulo getModulo () const
     {
         return Modulo(m_buf_node.len);
-    }
-    
-    inline IpBufRef getRecvBuf (Connection &con) const
-    {
-        IpBufRef recv_buf = con.getRecvBuf();
-
-        // Assert expectations. The second is due to eager advancement to subsequent
-        // buffer nodes guaranteed by TcpConnection.
-        AIPSTACK_ASSERT(recv_buf.tot_len <= getModulo().modulus())
-        AIPSTACK_ASSERT(recv_buf.offset < getModulo().modulus())
-
-        return recv_buf;
     }
     
 private:
