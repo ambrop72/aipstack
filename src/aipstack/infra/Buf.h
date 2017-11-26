@@ -439,6 +439,23 @@ struct IpBufRef {
         });
         return ch;
     }
+    
+    /**
+     * Set a number of bytes at the front of the memory range to a specific value and
+     * consume them.
+     * 
+     * This moves to subsequent buffers eagerly (see @ref processBytes).
+     * 
+     * @param byte Value to set bytes to.
+     * @param amount Number of bytes to set and consume. Must be less than or equal to
+     *        @ref tot_len.
+     */
+    void giveSameBytes (char byte, size_t amount)
+    {
+        processBytes(amount, [&](char *data, size_t len) {
+            ::memset(data, byte, len);
+        });
+    }
 
     /**
      * Search for the first occurrence of the specified byte while consuming bytes from
