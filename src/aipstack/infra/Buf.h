@@ -511,7 +511,7 @@ struct IpBufRef {
                 
                 size_t take = MinValue(rem_in_buf, amount);
 
-                func(getChunkPtr(), size_t(take));
+                func(node->ptr + offset, size_t(take));
                 
                 tot_len -= take;
                 
@@ -595,7 +595,7 @@ struct IpBufRef {
                 size_t max_take = MinValue(rem_in_buf, amount);
 
                 size_t take = max_take;
-                interrupted = func(getChunkPtr(), static_cast<size_t &>(take));
+                interrupted = func(node->ptr + offset, static_cast<size_t &>(take));
                 AIPSTACK_ASSERT(take <= max_take)
 
                 tot_len -= take;
