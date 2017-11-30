@@ -157,7 +157,7 @@ public:
     }
     
     template <typename KeyType, typename LookupCompare = Compare>
-    Ref lookup (KeyType key, State st = State())
+    Ref lookup (KeyType key, State st = State()) const
     {
         if (m_root.isNull()) {
             return Ref::null();
@@ -185,7 +185,38 @@ public:
         }
     }
     
-    Ref first (State st = State())
+    template <typename KeyType, typename LookupCompare = Compare>
+    Ref lookupInexact (KeyType key, int &outCompareKeyEntry, State st = State()) const
+    {
+        if (m_root.isNull()) {
+            return Ref::null();
+        }
+        
+        Ref c = m_root.ref(st);
+        
+        while (true) {
+            // compare
+            int comp = LookupCompare::compareKeyEntry(st, key, c);
+            
+            // have we found a node that compares equal?
+            if (comp == 0) {
+                outCompareKeyEntry = 0;
+                return c;
+            }
+            
+            bool side = (comp == 1);
+            
+            // have we reached a leaf?
+            if (ac(c).child[side].isNull()) {
+                outCompareKeyEntry = comp;
+                return c;
+            }
+            
+            c = ac(c).child[side].ref(st);
+        }
+    }
+    
+    Ref first (State st = State()) const
     {
         if (m_root.isNull()) {
             return Ref::null();
@@ -194,7 +225,7 @@ public:
         return subtree_min(st, m_root.ref(st));
     }
     
-    Ref last (State st = State())
+    Ref last (State st = State()) const
     {
         if (m_root.isNull()) {
             return Ref::null();
@@ -203,7 +234,7 @@ public:
         return subtree_max(st, m_root.ref(st));
     }
     
-    Ref next (Ref node, State st = State())
+    Ref next (Ref node, State st = State()) const
     {
         AIPSTACK_ASSERT(!node.isNull())
         AIPSTACK_ASSERT(!m_root.isNull())
@@ -222,7 +253,7 @@ public:
         return node;
     }
     
-    Ref prev (Ref node, State st = State())
+    Ref prev (Ref node, State st = State()) const
     {
         AIPSTACK_ASSERT(!node.isNull())
         AIPSTACK_ASSERT(!m_root.isNull())
@@ -469,7 +500,7 @@ private:
                (p.isNull() || c.link(st) == ac(p).child[0] || c.link(st) == ac(p).child[1]);
     }
     
-    void assert_tree (State st)
+    void assert_tree (State st) const
     {
 #if AIPSTACK_AVL_TREE_VERIFY
         verify_tree(st);
@@ -477,7 +508,7 @@ private:
     }
     
 #if AIPSTACK_AVL_TREE_VERIFY
-    void verify_tree (State st)
+    void verify_tree (State st) const
     {
         if (!m_root.isNull()) {
             Ref root = m_root.ref(st);
@@ -486,7 +517,7 @@ private:
         }
     }
     
-    int verify_recurser (State st, Ref n)
+    int verify_recurser (State st, Ref n) const
     {
         AIPSTACK_ASSERT_FORCE(ac(n).balance >= -1)
         AIPSTACK_ASSERT_FORCE(ac(n).balance <= 1)
