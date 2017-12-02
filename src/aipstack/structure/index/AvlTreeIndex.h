@@ -134,9 +134,8 @@ public:
             m_tree.remove(e, st);
         }
         
-        template <typename Dummy = std::true_type>
-        inline Ref findEntry (LookupKeyArg key, State st = State(),
-                              std::enable_if_t<!Duplicates, Dummy> = std::true_type())
+        template <bool Enable = !Duplicates, typename = std::enable_if_t<Enable>>
+        inline Ref findEntry (LookupKeyArg key, State st = State())
         {
             Ref entry = m_tree.template lookup<LookupKeyArg>(key, st);
             AIPSTACK_ASSERT(entry.isNull() ||
@@ -144,9 +143,8 @@ public:
             return entry;
         }
         
-        template <typename Dummy = std::true_type>
-        inline Ref findFirst (LookupKeyArg key, State st = State(),
-                              std::enable_if_t<Duplicates, Dummy> = std::true_type())
+        template <bool Enable = Duplicates, typename = std::enable_if_t<Enable>>
+        inline Ref findFirst (LookupKeyArg key, State st = State())
         {
             int cmpKeyEntry;
             Ref entry = m_tree.template lookupInexact<LookupKeyArg>(key, cmpKeyEntry, st);
@@ -178,9 +176,8 @@ public:
             return entry;
         }
         
-        template <typename Dummy = std::true_type>
-        inline Ref findNext (LookupKeyArg key, Ref prev_e, State st = State(),
-                             std::enable_if_t<Duplicates, Dummy> = std::true_type())
+        template <bool Enable = Duplicates, typename = std::enable_if_t<Enable>>
+        inline Ref findNext (LookupKeyArg key, Ref prev_e, State st = State())
         {
             // Move to the next entry and check if it matches the `key`. If not then this
             // was the last entry with that key so return null.

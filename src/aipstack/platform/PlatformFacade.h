@@ -146,17 +146,14 @@ public:
     /**
      * Return the stored pointer to the platform implementation.
      * 
-     * This function can only be called when Impl is a non-static platform
-     * implementation (see @ref PlatformImplStub::ImplIsStatic).
-     * 
-     * No arguments must be passed, the argument in the declaration just performs
-     * enable_if magic to disable this function for static platform implementations.
+     * This function can only be called when Impl is a non-static platform implementation
+     * (see @ref PlatformImplStub::ImplIsStatic). The template parameters are just for
+     * `enable_if` and must not be specified explicitly.
      * 
      * @return The pointer to the platform implementation.
      */
-    template <typename Dummy = std::true_type>
-    inline Impl * platformImpl (
-        std::enable_if_t<!Impl::ImplIsStatic, Dummy> = std::true_type()) const
+    template <bool Enable = !Impl::ImplIsStatic, typename = std::enable_if_t<Enable>>
+    inline Impl * platformImpl () const
     {
         return this->m_platform_impl;
     }

@@ -89,9 +89,8 @@ public:
         return m_first.ref(st);
     }
     
-    template <typename Dummy = std::true_type>
-    inline Ref lastNotEmpty (State st = State(),
-                             std::enable_if_t<WithLast, Dummy> = {}) const
+    template <bool Enable = WithLast, typename = std::enable_if_t<Enable>>
+    inline Ref lastNotEmpty (State st = State()) const
     {
         AIPSTACK_ASSERT(!m_first.isNull())
         
@@ -122,8 +121,8 @@ public:
         m_first = e.link(st);
     }
     
-    template <typename Dummy = std::true_type>
-    void append (Ref e, State st = State(), std::enable_if_t<WithLast, Dummy> = {})
+    template <bool Enable = WithLast, typename = std::enable_if_t<Enable>>
+    void append (Ref e, State st = State())
     {
         ac(e).next = Link::null();
         if (!m_first.isNull()) {
