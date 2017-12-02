@@ -190,7 +190,8 @@ private:
     using PcbIndexLookupKeyArg = PcbKey const &;
     struct PcbIndexKeyFuncs;
     AIPSTACK_MAKE_INSTANCE(PcbIndex, (PcbIndexService::template Index<
-        PcbIndexAccessor, PcbIndexLookupKeyArg, PcbIndexKeyFuncs, PcbLinkModel>))
+        PcbIndexAccessor, PcbIndexLookupKeyArg, PcbIndexKeyFuncs, PcbLinkModel,
+        /*Duplicates=*/false>))
     
     using ListenerLinkModel = PointerLinkModel<TcpListener<IpTcpProto>>;
     

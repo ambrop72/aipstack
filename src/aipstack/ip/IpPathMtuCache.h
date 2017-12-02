@@ -114,7 +114,8 @@ class IpPathMtuCache :
     using MtuIndexLookupKeyArg = Ip4Addr;
     struct MtuIndexKeyFuncs;
     AIPSTACK_MAKE_INSTANCE(MtuIndex, (MtuIndexService::template Index<
-        MtuIndexAccessor, MtuIndexLookupKeyArg, MtuIndexKeyFuncs, MtuLinkModel>))
+        MtuIndexAccessor, MtuIndexLookupKeyArg, MtuIndexKeyFuncs, MtuLinkModel,
+        /*Duplicates=*/false>))
     
     // Linked list data structure for keeping MTU entries in Invalid or Unused,
     // states. The former kind are maintained to be before the latter kind.

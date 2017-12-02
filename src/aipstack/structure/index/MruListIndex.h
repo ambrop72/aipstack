@@ -25,6 +25,8 @@
 #ifndef AIPSTACK_MRU_LIST_INDEX_H
 #define AIPSTACK_MRU_LIST_INDEX_H
 
+#include <type_traits>
+
 #include <aipstack/misc/Use.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/Accessor.h>
@@ -35,6 +37,7 @@ namespace AIpStack {
 template <typename Arg>
 class MruListIndex {
     AIPSTACK_USE_TYPES(Arg, (HookAccessor, LookupKeyArg, KeyFuncs, LinkModel))
+    AIPSTACK_USE_VALS(Arg, (Duplicates))
     
     AIPSTACK_USE_TYPES(LinkModel, (State, Ref))
     
@@ -70,7 +73,9 @@ public:
             m_list.remove(e, st);
         }
         
-        Ref findEntry (LookupKeyArg key, State st = State())
+        template <typename Dummy = std::true_type>
+        Ref findEntry (LookupKeyArg key, State st = State(),
+                       std::enable_if_t<!Duplicates, Dummy> = std::true_type())
         {
             for (Ref e = m_list.first(st); !e.isNull(); e = m_list.next(e, st)) {
                 if (KeyFuncs::KeysAreEqual(KeyFuncs::GetKeyOfEntry(*e), key)) {
@@ -84,6 +89,20 @@ public:
             return Ref::null();
         }
         
+        template <typename Dummy = std::true_type>
+        inline Ref findFirst (LookupKeyArg key, State st = State(),
+                              std::enable_if_t<Duplicates, Dummy> = std::true_type())
+        {
+            return findFirstNextCommon(key, m_list.first(st), st);
+        }
+        
+        template <typename Dummy = std::true_type>
+        inline Ref findNext (LookupKeyArg key, Ref prev_e, State st = State(),
+                             std::enable_if_t<Duplicates, Dummy> = std::true_type())
+        {
+            return findFirstNextCommon(key, m_list.next(prev_e, st), st);
+        }
+        
         inline Ref first (State st = State())
         {
             return m_list.first(st);
@@ -95,18 +114,30 @@ public:
         }
         
     private:
+        Ref findFirstNextCommon (LookupKeyArg key, Ref start, State st)
+        {
+            for (Ref e = start; !e.isNull(); e = m_list.next(e, st)) {
+                if (KeyFuncs::KeysAreEqual(KeyFuncs::GetKeyOfEntry(*e), key)) {
+                    return e;
+                }
+            }
+            return Ref::null();
+        }
+        
+    private:
         EntryList m_list;
     };
 };
 
 struct MruListIndexService {
     template <typename HookAccessor_, typename LookupKeyArg_,
-              typename KeyFuncs_, typename LinkModel_>
+              typename KeyFuncs_, typename LinkModel_, bool Duplicates_>
     struct Index {
         using HookAccessor = HookAccessor_;
         using LookupKeyArg = LookupKeyArg_;
         using KeyFuncs = KeyFuncs_;
         using LinkModel = LinkModel_;
+        static bool const Duplicates = Duplicates_;
         AIPSTACK_DEF_INSTANCE(Index, MruListIndex)
     };
 };
