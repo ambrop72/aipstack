@@ -698,7 +698,7 @@ private:
                                              Iface *iface)
     {
         if (AIPSTACK_LIKELY((send_flags & IpSendFlags::AllowBroadcastFlag) == EnumZero)) {
-            if (AIPSTACK_UNLIKELY(dst_addr == Ip4Addr::AllOnesAddr())) {
+            if (AIPSTACK_UNLIKELY(dst_addr.isAllOnes())) {
                 return IpErr::BCAST_REJECTED;
             }
 
@@ -788,7 +788,7 @@ public:
     {
         AIPSTACK_ASSERT(iface != nullptr)
         
-        if (dst_addr == Ip4Addr::AllOnesAddr() || iface->ip4AddrIsLocal(dst_addr)) {
+        if (dst_addr.isAllOnes() || iface->ip4AddrIsLocal(dst_addr)) {
             route_info.addr = dst_addr;
         }
         else if (iface->m_have_gateway) {
@@ -851,7 +851,7 @@ public:
      * a unicast address.
      * 
      * Specifically, it checks that the source address is not all-ones or a
-     * multicast address (@ref Ip4Addr::isBroadcastOrMulticast) and that it
+     * multicast address (@ref Ip4Addr::isAllOnesOrMulticast) and that it
      * is not the local broadcast address of the interface from which the
      * datagram was received.
      * 
@@ -861,7 +861,7 @@ public:
      */
     static bool checkUnicastSrcAddr (Ip4RxInfo const &ip_info)
     {
-        return !ip_info.src_addr.isBroadcastOrMulticast() &&
+        return !ip_info.src_addr.isAllOnesOrMulticast() &&
                !ip_info.iface->ip4AddrIsLocalBcast(ip_info.src_addr);
     }
     

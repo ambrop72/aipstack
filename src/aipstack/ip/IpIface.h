@@ -74,7 +74,7 @@ namespace AIpStack {
         
     public:
         /**
-         * The @ref IpStack type that this class is associated with.
+         * The @ref AIpStack::IpStack "IpStack" type that this class is associated with.
          */
         using IfaceIpStack = TheIpStack;
         

@@ -190,7 +190,7 @@ public:
         return *this == Ip4Addr::ZeroAddr();
     }
     
-    bool isBroadcast () const
+    bool isAllOnes () const
     {
         return *this == Ip4Addr::AllOnesAddr();
     }
@@ -200,9 +200,9 @@ public:
         return (*this & Ip4Addr::FromBytes(0xF0, 0, 0, 0)) == Ip4Addr::FromBytes(0xE0, 0, 0, 0);
     }
     
-    bool isBroadcastOrMulticast () const
+    bool isAllOnesOrMulticast () const
     {
-        return isBroadcast() || isMulticast();
+        return isAllOnes() || isMulticast();
     }
 };
 

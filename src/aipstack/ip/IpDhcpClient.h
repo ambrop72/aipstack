@@ -1047,7 +1047,7 @@ private:
     static bool checkOffer (Ip4Addr addr)
     {
         // Check that it's not all zeros or all ones.
-        if (addr.isZero() || addr == Ip4Addr::AllOnesAddr()) {
+        if (addr.isZero() || addr.isAllOnes()) {
             return false;
         }
         

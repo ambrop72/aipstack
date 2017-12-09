@@ -662,7 +662,7 @@ private:
             // First do some checks of the IP address...
             
             // If this is the all-ones address, return the broadcast MAC address.
-            if (ip_addr == Ip4Addr::AllOnesAddr()) {
+            if (ip_addr.isAllOnes()) {
                 return GetArpEntryRes::BroadcastAddr;
             }
             
