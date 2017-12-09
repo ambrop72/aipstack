@@ -29,10 +29,10 @@
 #include <stdint.h>
 
 #include <type_traits>
-#include <limits>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Hints.h>
+#include <aipstack/misc/MinMax.h>
 
 namespace AIpStack {
 
@@ -94,7 +94,7 @@ public:
     void insert (Ref node, State st = State())
     {
         AIPSTACK_ASSERT(m_root.isNull() || m_count > 0)
-        AIPSTACK_ASSERT(m_root.isNull() || m_count < std::numeric_limits<SizeType>::max())
+        AIPSTACK_ASSERT(m_root.isNull() || m_count < TypeMax<SizeType>())
         
         int8_t child_dir;
         Ref child;

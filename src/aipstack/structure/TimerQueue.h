@@ -26,11 +26,11 @@
 #define AIPSTACK_TIMER_QUEUE_H
 
 #include <type_traits>
-#include <limits>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Hints.h>
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/structure/TreeCompare.h>
 #include <aipstack/structure/Accessor.h>
 
@@ -95,7 +95,7 @@ class TimerQueue
     
     // Get the TimeType value for the most singificant bit.
     // This is also exactly half of the TimeType type range.
-    static TimeType const TimeMsb = (std::numeric_limits<TimeType>::max() / 2) + 1;
+    static TimeType const TimeMsb = (TypeMax<TimeType>() / 2) + 1;
     
     // Maximum time in the future (relative to the reference time) that
     // getFirstTime returns. This limit avoids problems if we have timers

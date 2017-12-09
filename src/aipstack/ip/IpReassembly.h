@@ -28,12 +28,11 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <limits>
-
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/infra/Struct.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Options.h>
@@ -93,7 +92,7 @@ class IpReassembly :
     static_assert(MaxReassTimeSeconds >= 5, "");
     
     // Null link value in HoleDescriptor lists.
-    static uint16_t const ReassNullLink = std::numeric_limits<uint16_t>::max();
+    static uint16_t const ReassNullLink = TypeMax<uint16_t>();
     
     // Hole descriptor structure, placed at the beginning of a hole.
     AIPSTACK_DEFINE_STRUCT(HoleDescriptor,
@@ -102,8 +101,7 @@ class IpReassembly :
     )
     
     // We need to be able to put a hole descriptor after the reassembled data.
-    static_assert(MaxReassSize <=
-        std::numeric_limits<uint16_t>::max() - HoleDescriptor::Size, "");
+    static_assert(MaxReassSize <= TypeMax<uint16_t>() - HoleDescriptor::Size, "");
     
     // The size of the reassembly buffers, with additional space for a hole descriptor
     // at the end.
@@ -187,7 +185,7 @@ public:
                         uint8_t ttl, bool more_fragments, uint16_t fragment_offset,
                         char const *header, IpBufRef &dgram)
     {
-        AIPSTACK_ASSERT(dgram.tot_len <= std::numeric_limits<uint16_t>::max())
+        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<uint16_t>())
         AIPSTACK_ASSERT(more_fragments || fragment_offset > 0)
         
         // Sanity check data length.

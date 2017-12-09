@@ -30,7 +30,6 @@
 #include <string.h>
 
 #include <type_traits>
-#include <limits>
 
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
@@ -379,7 +378,7 @@ namespace AIpStack {
                 ann_wnd--;
             }
             
-            AIPSTACK_ASSERT(ann_wnd <= std::numeric_limits<size_t>::max())
+            AIPSTACK_ASSERT(ann_wnd <= TypeMax<size_t>())
             return ann_wnd;
         }
         
@@ -414,7 +413,7 @@ namespace AIpStack {
         void extendRecvBuf (size_t amount)
         {
             assert_started();
-            AIPSTACK_ASSERT(amount <= std::numeric_limits<size_t>::max() - m_v.rcv_buf.tot_len)
+            AIPSTACK_ASSERT(amount <= TypeMax<size_t>() - m_v.rcv_buf.tot_len)
             
             // Extend the receive buffer.
             m_v.rcv_buf.tot_len += amount;
@@ -511,7 +510,7 @@ namespace AIpStack {
         void extendSendBuf (size_t amount)
         {
             assert_sending();
-            AIPSTACK_ASSERT(amount <= std::numeric_limits<size_t>::max() - m_v.snd_buf.tot_len)
+            AIPSTACK_ASSERT(amount <= TypeMax<size_t>() - m_v.snd_buf.tot_len)
             AIPSTACK_ASSERT(m_v.snd_buf_cur.tot_len <= m_v.snd_buf.tot_len)
             
             // Increment the amount of data in the send buffer.

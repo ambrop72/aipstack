@@ -25,11 +25,10 @@
 #ifndef AIPSTACK_PLATFORM_IMPL_STUB_H
 #define AIPSTACK_PLATFORM_IMPL_STUB_H
 
-#include <limits>
-
 #include <stdint.h>
 
 #include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {
@@ -136,7 +135,7 @@ public:
      * original type representing time is signed and its values are being converted
      * to unsigned as required for @ref TimeType.
      */
-    static constexpr TimeType RelativeTimeLimit = std::numeric_limits<TimeType>::max();
+    static constexpr TimeType RelativeTimeLimit = TypeMax<TimeType>();
     
     /**
      * Get the current time in ticks.

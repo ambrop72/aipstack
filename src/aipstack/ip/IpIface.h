@@ -27,8 +27,6 @@
 
 #include <stdint.h>
 
-#include <limits>
-
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/NonCopyable.h>
@@ -95,7 +93,7 @@ namespace AIpStack {
         IpIface (TheIpStack *stack, IpIfaceInitInfo const &info) :
             m_stack(stack),
             m_hw_iface(info.hw_iface),
-            m_ip_mtu(MinValueU(std::numeric_limits<uint16_t>::max(), info.ip_mtu)),
+            m_ip_mtu(MinValueU(TypeMax<uint16_t>(), info.ip_mtu)),
             m_hw_type(info.hw_type),
             m_have_addr(false),
             m_have_gateway(false)

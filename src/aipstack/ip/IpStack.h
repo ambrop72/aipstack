@@ -28,8 +28,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <limits>
-
 #include <aipstack/meta/ListForEach.h>
 #include <aipstack/meta/TypeListUtils.h>
 #include <aipstack/meta/FuncUtils.h>
@@ -381,7 +379,7 @@ public:
                         Iface *iface, IpSendRetryRequest *retryReq,
                         IpSendFlags send_flags)
     {
-        AIPSTACK_ASSERT(dgram.tot_len <= std::numeric_limits<uint16_t>::max())
+        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<uint16_t>())
         AIPSTACK_ASSERT(dgram.offset >= Ip4Header::Size)
         AIPSTACK_ASSERT((send_flags & ~IpSendFlags::AllFlags) == EnumZero)
         
@@ -661,7 +659,7 @@ public:
     IpErr sendIp4DgramFast (Ip4SendPrepared const &prep, IpBufRef dgram,
                             IpSendRetryRequest *retryReq)
     {
-        AIPSTACK_ASSERT(dgram.tot_len <= std::numeric_limits<uint16_t>::max())
+        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<uint16_t>())
         AIPSTACK_ASSERT(dgram.offset >= Ip4Header::Size)
         
         // Reveal IP header.
@@ -842,8 +840,7 @@ public:
      */
     inline bool handleLocalPacketTooBig (Ip4Addr remote_addr)
     {
-        return m_path_mtu_cache.handlePacketTooBig(
-            remote_addr, std::numeric_limits<uint16_t>::max());
+        return m_path_mtu_cache.handlePacketTooBig(remote_addr, TypeMax<uint16_t>());
     }
     
     /**

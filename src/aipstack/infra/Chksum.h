@@ -28,8 +28,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <limits>
-
 #include <aipstack/meta/BasicMetaUtils.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Hints.h>
@@ -294,7 +292,7 @@ public:
 private:
     inline void foldOnce ()
     {
-        m_sum = (m_sum & std::numeric_limits<uint16_t>::max()) + (m_sum >> 16);
+        m_sum = (m_sum & TypeMax<uint16_t>()) + (m_sum >> 16);
     }
     
     inline static uint32_t swapBytes (uint32_t x)

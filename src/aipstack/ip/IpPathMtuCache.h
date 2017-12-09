@@ -28,8 +28,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <limits>
-
 #include <aipstack/meta/ChooseInt.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
@@ -101,7 +99,7 @@ class IpPathMtuCache :
     
     // Array index type for MTU entries and null value.
     using MtuIndexType = ChooseIntForMax<NumMtuEntries, false>;
-    static MtuIndexType const MtuIndexNull = std::numeric_limits<MtuIndexType>::max();
+    static MtuIndexType const MtuIndexNull = TypeMax<MtuIndexType>();
     
     // Link model for MTU entries: array indices.
     struct MtuEntriesAccessor;

@@ -39,6 +39,30 @@ namespace AIpStack {
  */
 
 /**
+ * Return the minimum value representable in an arithmetic type.
+ *
+ * @tparam T Arithmetic type.
+ * @return Minimum representable value.
+ */
+template <typename T>
+constexpr T TypeMin ()
+{
+    return std::numeric_limits<T>::min();
+}
+
+/**
+ * Return the maximum value representable in an arithmetic type.
+ *
+ * @tparam T Arithmetic type.
+ * @return Maximum representable value.
+ */
+template <typename T>
+constexpr T TypeMax ()
+{
+    return std::numeric_limits<T>::max();
+}
+
+/**
  * Return the smaller of two numbers (typically integers).
  * 
  * @tparam T Type of operand.
@@ -99,7 +123,7 @@ using MinValueURetType = std::conditional_t<
  * // We have a value which we want to limit to no more than fits into uint16_t.
  * uint32_t a = ...;
  * // Use MinValueU and assign the result to uint16_t (no cast needed).
- * uint16_t b = MinValueU(a, std::numeric_limits<uint16_t>::max());
+ * uint16_t b = MinValueU(a, TypeMax<uint16_t>());
  * ```
  * 
  * @tparam T1 Type of first operand. Must be an unsigned integer type.

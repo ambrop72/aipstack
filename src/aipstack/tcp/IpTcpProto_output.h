@@ -28,8 +28,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <limits>
-
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Hints.h>
@@ -86,7 +84,7 @@ public:
         
         // The SYN and SYN-ACK must always have non-scaled window size.
         // For justification of assert see see create_connection, listen_input.
-        AIPSTACK_ASSERT(pcb->rcv_ann_wnd <= std::numeric_limits<uint16_t>::max())
+        AIPSTACK_ASSERT(pcb->rcv_ann_wnd <= TypeMax<uint16_t>())
         uint16_t window_size = pcb->rcv_ann_wnd;
         
         // Send SYN or SYN-ACK flags depending on the state.

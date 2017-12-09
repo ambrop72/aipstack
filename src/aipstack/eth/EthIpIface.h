@@ -28,8 +28,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <limits>
-
 #include <aipstack/meta/ChooseInt.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/LoopUtils.h>
@@ -37,6 +35,7 @@
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/OneOf.h>
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
@@ -158,8 +157,7 @@ class EthIpIface :
     
     // Get an unsigned integer type sufficient for ARP entry indexes and null value.
     using ArpEntryIndexType = ChooseIntForMax<NumArpEntries, false>;
-    static ArpEntryIndexType const ArpEntryNull =
-        std::numeric_limits<ArpEntryIndexType>::max();
+    static ArpEntryIndexType const ArpEntryNull = TypeMax<ArpEntryIndexType>();
     
     // Number of ARP resolution attempts in the Query and Refreshing states.
     static uint8_t const ArpQueryAttempts = 3;

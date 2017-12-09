@@ -29,8 +29,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <limits>
-
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Hints.h>
@@ -284,7 +282,7 @@ class IpDhcpClient :
     // (start of renewal, lease timeout), multiple timer expirations
     // are used with keeping track of leftover seconds.
     static uint32_t const MaxTimerSeconds = MinValueU(
-        std::numeric_limits<uint32_t>::max(),
+        TypeMax<uint32_t>(),
         Platform::WorkingTimeSpanTicks / (TimeType)Platform::TimeFreq);
     
     static_assert(MaxTimerSeconds >= 255, "");
@@ -1387,7 +1385,7 @@ private:
         chksum_accum.addWord(WrapType<uint16_t>(), udp_length);
         uint16_t checksum = chksum_accum.getChksum(dgram);
         if (checksum == 0) {
-            checksum = std::numeric_limits<uint16_t>::max();
+            checksum = TypeMax<uint16_t>();
         }
         udp_header.set(Udp4Header::Checksum(), checksum);
         
