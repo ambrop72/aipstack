@@ -184,6 +184,11 @@ public:
         uint8_t bytes[] = {n1, n2, n3, n4};
         return IpGenericAddr::FromBytes(bytes);
     }
+
+    bool isZero () const
+    {
+        return *this == Ip4Addr::ZeroAddr();
+    }
     
     bool isBroadcast () const
     {

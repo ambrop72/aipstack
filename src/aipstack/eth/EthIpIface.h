@@ -667,7 +667,7 @@ private:
             }
             
             // Check for zero IP address.
-            if (ip_addr == Ip4Addr::ZeroAddr()) {
+            if (ip_addr.isZero()) {
                 return GetArpEntryRes::InvalidAddr;
             }
             

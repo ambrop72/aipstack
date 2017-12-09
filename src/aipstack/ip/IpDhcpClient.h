@@ -498,7 +498,7 @@ private:
         // Initialize the counter of discover/request messages.
         m_request_count = 1;
         
-        if (m_info.ip_address == Ip4Addr::ZeroAddr()) {
+        if (m_info.ip_address.isZero()) {
             // Going to Selecting state.
             m_state = DhcpState::Selecting;
             
@@ -1047,7 +1047,7 @@ private:
     static bool checkOffer (Ip4Addr addr)
     {
         // Check that it's not all zeros or all ones.
-        if (addr == Ip4Addr::ZeroAddr() || addr == Ip4Addr::AllOnesAddr()) {
+        if (addr.isZero() || addr == Ip4Addr::AllOnesAddr()) {
             return false;
         }
         

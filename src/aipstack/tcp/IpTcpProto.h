@@ -875,7 +875,7 @@ private:
         {
             AIPSTACK_ASSERT(lis->m_listening)
             if (lis->m_port == local_port &&
-                (lis->m_addr == local_addr || lis->m_addr == Ip4Addr::ZeroAddr()))
+                (lis->m_addr == local_addr || lis->m_addr.isZero()))
             {
                 return lis;
             }
