@@ -308,7 +308,7 @@ public:
      * on whether iface is given) to determine the required routing information. If this
      * fails, the error @ref IpErr::NO_IP_ROUTE will be returned.
      * 
-     * This function will perform IP fragmentation unless send_flags includes
+     * This function will perform IP fragmentation unless `send_flags` includes
      * @ref IpSendFlags::DontFragmentFlag. If fragmentation would be needed but this
      * flag is set, the error @ref IpErr::FRAG_NEEDED will be returned. If sending one
      * fragment fails, further fragments are not sent.
@@ -318,9 +318,13 @@ public:
      * @ref IpErr::FRAG_NEEDED as noted above. Identification numbers are generated
      * sequentially and there is no attempt to track which numbers are in use.
      *
-     * Sending to a local broadcast or all-ones address is only allowed if send_flags
+     * Sending to a local broadcast or all-ones address is only allowed if `send_flags`
      * includes @ref IpSendFlags::AllowBroadcastFlag. Otherwise sending will fail with
      * the error @ref IpErr::BCAST_REJECTED.
+     * 
+     * Sending using a source address which is not the address of the outgoing network
+     * interface is only allowed if `send_flags `includes @ref IpSendFlags::AllowNonLocalSrc.
+     * Note that that the presence of this fiag does not influence routing.
      * 
      * @param addrs Source and destination address.
      * @param ttl_proto The TTL and protocol fields combined.
@@ -331,9 +335,8 @@ public:
      * @param iface If not null, force sending through this interface.
      * @param retryReq If not null, this may provide notification when to retry sending
      *                 after an unsuccessful attempt (notification is not guaranteed).
-     * @param send_flags IP flags to send. All flags declared in
-     *        @ref IpSendFlags::DontFragmentFlag are allowed (other bits must not be
-     *        present).
+     * @param send_flags IP flags to send. All flags declared in @ref IpSendFlags are
+     *        allowed (other bits must not be present).
      * @return Success or error code.
      */
     AIPSTACK_NO_INLINE
@@ -360,9 +363,8 @@ public:
             return IpErr::NO_IP_ROUTE;
         }
         
-        // Check if sending is allowed (e.g. broadcast).
-        IpErr check_err = checkSendIp4Allowed(addrs.remote_addr, send_flags,
-                                              route_info.iface);
+        // Check if sending is allowed.
+        IpErr check_err = checkSendIp4Allowed(addrs, send_flags, route_info.iface);
         if (AIPSTACK_UNLIKELY(check_err != IpErr::SUCCESS)) {
             return check_err;
         }
@@ -520,17 +522,15 @@ public:
      * This mechanism is intended for bulk transmission where performance is desired.
      * Fragmentation or forcing an interface are not supported.
      * 
-     * Sending to a local broadcast or all-ones address is only allowed if send_flags
-     * includes @ref IpSendFlags::AllowBroadcastFlag. Otherwise sending will fail with
-     * the error @ref IpErr::BCAST_REJECTED.
+     * Sending to a broadcast address or from a non-local address is only permitted with
+     * specific flags in `send_flags`; see @ref sendIp4Dgram for details.
      * 
      * @param addrs Source and destination address.
      * @param ttl_proto The TTL and protocol fields combined.
      * @param header_end_ptr Pointer to the end of the IPv4 header (and start of data).
      *                       This must be the same location as for subsequent datagrams.
-     * @param send_flags IP flags to send. All flags declared in
-     *        @ref IpSendFlags::DontFragmentFlag are allowed (other bits must not be
-     *        present).
+     * @param send_flags IP flags to send. All flags declared in @ref IpSendFlags are
+     *        allowed (other bits must not be present).
      * @param prep Internal information is stored into this structure.
      * @return Success or error code.
      */
@@ -546,9 +546,8 @@ public:
             return IpErr::NO_IP_ROUTE;
         }
         
-        // Check if sending is allowed (e.g. broadcast).
-        IpErr check_err = checkSendIp4Allowed(addrs.remote_addr, send_flags,
-                                              prep.route_info.iface);
+        // Check if sending is allowed.
+        IpErr check_err = checkSendIp4Allowed(addrs, send_flags, prep.route_info.iface);
         if (AIPSTACK_UNLIKELY(check_err != IpErr::SUCCESS)) {
             return check_err;
         }
@@ -639,21 +638,29 @@ public:
 private:
     static uint16_t const IpOnlySendFlagsMask = 0xFF00;
     
-    inline static IpErr checkSendIp4Allowed (Ip4Addr dst_addr, IpSendFlags send_flags, 
-                                             Iface *iface)
+    inline static IpErr checkSendIp4Allowed (
+        Ip4Addrs const &addrs, IpSendFlags send_flags, Iface *iface)
     {
         if (AIPSTACK_LIKELY((send_flags & IpSendFlags::AllowBroadcastFlag) == EnumZero)) {
-            if (AIPSTACK_UNLIKELY(dst_addr.isAllOnes())) {
+            if (AIPSTACK_UNLIKELY(addrs.remote_addr.isAllOnes())) {
                 return IpErr::BCAST_REJECTED;
             }
 
             if (AIPSTACK_LIKELY(iface->m_have_addr)) {
-                if (AIPSTACK_UNLIKELY(dst_addr == iface->m_addr.bcastaddr)) {
+                if (AIPSTACK_UNLIKELY(addrs.remote_addr == iface->m_addr.bcastaddr)) {
                     return IpErr::BCAST_REJECTED;
                 }
             }
         }
-        
+
+        if (AIPSTACK_LIKELY((send_flags & IpSendFlags::AllowNonLocalSrc) == EnumZero)) {
+            if (AIPSTACK_UNLIKELY(!iface->m_have_addr ||
+                                  addrs.local_addr != iface->m_addr.addr))
+            {
+                return IpErr::NONLOCAL_SRC;
+            }
+        }
+
         return IpErr::SUCCESS;
     }
 

@@ -159,6 +159,14 @@ enum class IpSendFlags : uint16_t {
     AllowBroadcastFlag = (uint16_t)1 << 0,
 
     /**
+     * Allow sending from from a non-local address.
+     * 
+     * This flag is required in order to send using a source address that is not the
+     * address of the outgoing network interface.
+     */
+    AllowNonLocalSrc = (uint16_t)1 << 1,
+
+    /**
      * Do-not-fragment flag.
      * 
      * Using this flag will both prevent fragmentation of the outgoing
@@ -169,7 +177,7 @@ enum class IpSendFlags : uint16_t {
     /**
      * Mask of all flags which may be passed to send functions.
      */
-    AllFlags = AllowBroadcastFlag|DontFragmentFlag,
+    AllFlags = AllowBroadcastFlag|AllowNonLocalSrc|DontFragmentFlag,
 };
 
 #ifndef IN_DOXYGEN

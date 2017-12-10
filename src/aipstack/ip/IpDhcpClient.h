@@ -1389,10 +1389,15 @@ private:
         }
         udp_header.set(Udp4Header::Checksum(), checksum);
         
-        // Send the datagram.
-        Ip4Addrs addrs{ciaddr, dst_addr};
+        // Determine addresses and send flags. When sending from zero address, we need
+        // IpSendFlags::AllowNonLocalSrc for that to be allowed.
+        Ip4Addrs addrs = {ciaddr, dst_addr};
+        IpSendFlags send_flags = IpSendFlags::AllowBroadcastFlag |
+            (ciaddr.isZero() ? IpSendFlags::AllowNonLocalSrc : IpSendFlags());
+
+        // Send the datagram. We meed 
         m_ipstack->sendIp4Dgram(addrs, {Params::DhcpTTL, Ip4ProtocolUdp}, dgram, iface(),
-                                this, IpSendFlags::AllowBroadcastFlag);
+                                this, send_flags);
     }
     
     void new_xid ()
