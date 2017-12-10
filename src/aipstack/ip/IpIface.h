@@ -44,6 +44,7 @@ namespace AIpStack {
     
 #ifndef IN_DOXYGEN
     template <typename> class IpStack;
+    template <typename> class IpIfaceListener;
 #endif
     
     /**
@@ -69,7 +70,8 @@ namespace AIpStack {
         private NonCopyable<IpIface<TheIpStack>>
     {
         template <typename> friend class IpStack;
-        
+        template <typename> friend class IpIfaceListener;
+
     public:
         /**
          * The @ref AIpStack::IpStack "IpStack" type that this class is associated with.

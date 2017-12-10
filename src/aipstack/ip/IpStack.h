@@ -56,6 +56,7 @@
 #include <aipstack/proto/Icmp4Proto.h>
 #include <aipstack/ip/IpStackHelperTypes.h>
 #include <aipstack/ip/IpIface.h>
+#include <aipstack/ip/IpIfaceListener.h>
 #include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {
@@ -106,6 +107,7 @@ class IpStack :
     private NonCopyable<IpStack<Arg>>
 {
     template <typename> friend class IpIface;
+    template <typename> friend class IpIfaceListener;
     
     AIPSTACK_USE_TYPES(Arg, (Params, ProtocolServicesList))
     AIPSTACK_USE_VALS(Params, (HeaderBeforeIp, IcmpTTL, AllowBroadcastPing))
@@ -199,7 +201,11 @@ public:
      */
     using Iface = IpIface<IpStack>;
     
-    class IfaceListener;
+    /**
+     * The @ref IpIfaceListener class for this @ref IpStack, for receiving IP datagrams
+     * from a specific network interface.
+     */
+    using IfaceListener = IpIfaceListener<IpStack>;
     
 private:
     using IfaceLinkModel = PointerLinkModel<Iface>;
@@ -313,7 +319,7 @@ public:
      * Encapsulates information about a received IPv4 datagram.
      * 
      * This is filled in by the stack and passed to the recvIp4Dgram function of
-     * protocol handlers and also to @ref IfaceListener::recvIp4Dgram.
+     * protocol handlers and also to @ref IpIfaceListener::recvIp4Dgram.
      */
     struct Ip4RxInfo {
         /**
@@ -862,80 +868,6 @@ public:
                !ip_info.iface->ip4AddrIsLocalBcast(ip_info.src_addr);
     }
     
-    /**
-     * Allows receiving and intercepting IP datagrams received through a specific
-     * interface with a specific IP protocol.
-     * 
-     * This is a low-level interface designed to be used by the DHCP client
-     * implementation. It may be removed at some point if a proper UDP protocol
-     * handle is implemented that is usable for DHCP.
-     */
-    class IfaceListener :
-        private NonCopyable<IfaceListener>
-    {
-        friend IpStack;
-        
-    public:
-        /**
-         * Construct the listener object and start listening.
-         * 
-         * Received datagrams with matching protocol number will be passed to
-         * the @ref recvIp4Dgram callback.
-         * 
-         * @param iface The interface to listen for packets on. It is the
-         *        responsibility of the user to ensure that the interface is
-         *        not removed while this object is still initialized.
-         * @param proto IP protocol number that the user is interested on.
-         */
-        IfaceListener (Iface *iface, uint8_t proto) :
-            m_iface(iface),
-            m_proto(proto)
-        {
-            m_iface->m_listeners_list.prepend(*this);
-        }
-        
-        /**
-         * Destruct the listener object.
-         */
-        ~IfaceListener ()
-        {
-            m_iface->m_listeners_list.remove(*this);
-        }
-        
-        /**
-         * Return the interface on which this object is listening.
-         * 
-         * @return Interface on which this object is listening.
-         */
-        inline Iface * getIface ()
-        {
-            return m_iface;
-        }
-        
-    protected:
-        /**
-         * Called when a matching datagram is received.
-         * 
-         * This is called before passing the datagram to any protocol handler
-         * The return value allows inhibiting further processing of the datagram
-         * (by other IfaceListener's, protocol handlers and built-in protocols
-         * such as ICMP).
-         * 
-         * WARNING: It is not allowed to deinitialize this listener object from
-         * this callback or to remove the interface through which the packet has
-         * been received.
-         * 
-         * @param ip_info Information about the received datagram.
-         * @param dgram Data of the received datagram.
-         * @return True to inhibit further processing, false to continue.
-         */
-        virtual bool recvIp4Dgram (Ip4RxInfo const &ip_info, IpBufRef dgram) = 0;
-        
-    private:
-        LinkedListNode<IfaceListenerLinkModel> m_list_node;
-        Iface *m_iface;
-        uint8_t m_proto;
-    };
     
     /**
      * Allows observing changes in the driver-reported state of an interface.
