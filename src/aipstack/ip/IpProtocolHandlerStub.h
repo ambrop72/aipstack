@@ -122,11 +122,11 @@ public:
     using TheIpStack = typename Arg::TheIpStack;
     
     /**
-     * Type alias for @ref IpStack::Ip4RxInfo.
+     * Type alias for @ref IpStack::RxInfoIp4.
      * 
      * This alias is not required but is used in definitions here.
      */
-    using Ip4RxInfo = typename TheIpStack::Ip4RxInfo;
+    using RxInfoIp4 = typename TheIpStack::RxInfoIp4;
     
     /**
      * Type alias for @ref IpProtocolHandlerArgs.
@@ -188,7 +188,7 @@ public:
      * @param dgram IP payload of the datagram. The referenced buffers
      *        must not be used outside of this function.
      */
-    void recvIp4Dgram (Ip4RxInfo const &ip_info, IpBufRef dgram)
+    void recvIp4Dgram (RxInfoIp4 const &ip_info, IpBufRef dgram)
     {
     }
     
@@ -235,7 +235,7 @@ public:
      */
     void handleIp4DestUnreach (
         Ip4DestUnreachMeta const &du_meta,
-        Ip4RxInfo const &ip_info, IpBufRef dgram_initial)
+        RxInfoIp4 const &ip_info, IpBufRef dgram_initial)
     {
     }
     

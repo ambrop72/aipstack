@@ -87,7 +87,7 @@ class IpPathMtuCache :
     using Platform = PlatformFacade<PlatformImpl>;    
     AIPSTACK_USE_TYPES(Platform, (TimeType))
     
-    AIPSTACK_USE_TYPES(IpStack, (Iface, Ip4RouteInfo))
+    AIPSTACK_USE_TYPES(IpStack, (Iface, RouteInfoIp4))
     AIPSTACK_USE_VALS(IpStack, (MinMTU))
     
     static_assert(NumMtuEntries > 0, "");
@@ -230,7 +230,7 @@ public:
         uint16_t bump_mtu = MaxValue(MinMTU, mtu_info);
         
         // Make sure the PMTU will not exceed the interface MTU.
-        Ip4RouteInfo route_info;
+        RouteInfoIp4 route_info;
         if (m_ip_stack->routeIp4(remote_addr, route_info)) {
             bump_mtu = MinValue(bump_mtu, route_info.iface->getMtu());
         }
@@ -372,7 +372,7 @@ public:
                 
                 // If no interface is provided, find the interface for the initial PMTU.
                 if (iface == nullptr) {
-                    Ip4RouteInfo route_info;
+                    RouteInfoIp4 route_info;
                     if (!cache->m_ip_stack->routeIp4(remote_addr, route_info)) {
                         return false;
                     }
@@ -537,7 +537,7 @@ private:
         mtu_entry.minutes_old = 1;
         
         // Find the route to the destination.
-        Ip4RouteInfo route_info;
+        RouteInfoIp4 route_info;
         if (!m_ip_stack->routeIp4(mtu_entry.remote_addr, route_info)) {
             // Couldn't find an interface, will try again next timeout.
         } else {

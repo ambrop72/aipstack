@@ -37,6 +37,10 @@
 
 namespace AIpStack {
 
+#ifndef IN_DOXYGEN
+template <typename> class IpIface;
+#endif
+
 /**
  * @addtogroup ip-stack
  * @{
@@ -300,6 +304,59 @@ struct IpProtocolHandlerArgs {
      * A pointer to the IP stack.
      */
     TheIpStack *stack;
+};
+
+/**
+ * Encapsulates route information returned route functions.
+ * 
+ * Functions such as @ref routeIp4 and @ref routeIp4ForceIface will fill in
+ * this structure. The result is only valid temporarily because it contains
+ * a pointer to an interface, which could be removed.
+ * 
+ * @tparam TheIpStack The @ref IpStack class type.
+ */
+template <typename TheIpStack>
+struct IpRouteInfoIp4 {
+    /**
+     * The interface to send through.
+     */
+    IpIface<TheIpStack> *iface;
+    
+    /**
+     * The address of the next hop.
+     */
+    Ip4Addr addr;
+};
+
+/**
+ * Encapsulates information about a received IPv4 datagram.
+ * 
+ * This is filled in by the stack and passed to the recvIp4Dgram function of
+ * protocol handlers and also to @ref IpIfaceListener::recvIp4Dgram.
+ * 
+ * @tparam TheIpStack The @ref IpStack class type.
+ */
+template <typename TheIpStack>
+struct IpRxInfoIp4 {
+    /**
+     * The source address.
+     */
+    Ip4Addr src_addr;
+    
+    /**
+     * The destination address.
+     */
+    Ip4Addr dst_addr;
+    
+    /**
+     * The TTL and protocol fields combined.
+     */
+    Ip4TtlProto ttl_proto;
+    
+    /**
+     * The interface through which the packet was received.
+     */
+    IpIface<TheIpStack> *iface;
 };
 
 /** @} */

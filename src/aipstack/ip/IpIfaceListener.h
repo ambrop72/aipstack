@@ -114,7 +114,7 @@ protected:
      * @return True to inhibit further processing, false to continue.
      */
     virtual bool recvIp4Dgram (
-        typename TheIpStack::Ip4RxInfo const &ip_info, IpBufRef dgram) = 0;
+        typename TheIpStack::RxInfoIp4 const &ip_info, IpBufRef dgram) = 0;
     
 private:
     LinkedListNode<typename TheIpStack::IfaceListenerLinkModel> m_list_node;

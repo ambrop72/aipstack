@@ -84,7 +84,7 @@ class IpTcpProto :
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPE(Platform, TimeType)
     
-    AIPSTACK_USE_TYPES(TheIpStack, (Ip4RxInfo, Ip4RouteInfo, Iface, MtuRef,
+    AIPSTACK_USE_TYPES(TheIpStack, (RxInfoIp4, RouteInfoIp4, Iface, MtuRef,
                                      ProtocolHandlerArgs))
     
     static_assert(NumTcpPcbs > 0, "");
@@ -407,13 +407,13 @@ public:
         AIPSTACK_ASSERT(m_current_pcb == nullptr)
     }
     
-    inline void recvIp4Dgram (Ip4RxInfo const &ip_info, IpBufRef dgram)
+    inline void recvIp4Dgram (RxInfoIp4 const &ip_info, IpBufRef dgram)
     {
         Input::recvIp4Dgram(this, ip_info, dgram);
     }
     
     inline void handleIp4DestUnreach (Ip4DestUnreachMeta const &du_meta,
-                Ip4RxInfo const &ip_info, IpBufRef dgram_initial)
+                RxInfoIp4 const &ip_info, IpBufRef dgram_initial)
     {
         Input::handleIp4DestUnreach(this, du_meta, ip_info, dgram_initial);
     }
@@ -734,7 +734,7 @@ private:
         AIPSTACK_ASSERT(out_pcb != nullptr)
         
         // Determine the local interface.
-        Ip4RouteInfo route_info;
+        RouteInfoIp4 route_info;
         Iface *iface;
         if (!m_stack->routeIp4(remote_addr, route_info)) {
             return IpErr::NO_IP_ROUTE;

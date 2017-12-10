@@ -50,7 +50,7 @@ class IpTcpProto_output
                                    OptionFlags, TcpOptions))
     AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lt2, seq_add_sat, tcplen,
                                  can_output_in_state, snd_open_in_state))
-    AIPSTACK_USE_TYPES(TcpProto, (Ip4RxInfo, TcpPcb, PcbFlags, Input, TimeType, RttType,
+    AIPSTACK_USE_TYPES(TcpProto, (RxInfoIp4, TcpPcb, PcbFlags, Input, TimeType, RttType,
                                    RttNextType, Constants, OutputTimer, RtxTimer,
                                    TheIpStack, MtuRef, Connection, PcbKey))
     AIPSTACK_USE_VALS(TcpProto, (RttTypeMax))
@@ -991,7 +991,7 @@ public:
     // Send an RST as a reply to a received segment.
     // This conforms to RFC 793 handling of segments not belonging to a known
     // connection.
-    static void send_rst_reply (TcpProto *tcp, Ip4RxInfo const &ip_info,
+    static void send_rst_reply (TcpProto *tcp, RxInfoIp4 const &ip_info,
                                 TcpSegMeta const &tcp_meta, size_t tcp_data_len)
     {
         SeqType rst_seq_num;

@@ -285,52 +285,17 @@ public:
     
 public:
     /**
-     * Encapsulates route information returned route functions.
-     * 
-     * Functions such as @ref routeIp4 and @ref routeIp4ForceIface will fill in
-     * this structure. The result is only valid temporarily because it contains
-     * a pointer to an interface, which could be removed.
+     * The @ref IpRouteInfoIp4 structure type for this @ref IpStack, encapsulating route
+     * information.
      */
-    struct Ip4RouteInfo {
-        /**
-         * The interface to send through.
-         */
-        Iface *iface;
-        
-        /**
-         * The address of the next hop.
-         */
-        Ip4Addr addr;
-    };
-    
+    using RouteInfoIp4 = IpRouteInfoIp4<IpStack>;
+
     /**
-     * Encapsulates information about a received IPv4 datagram.
-     * 
-     * This is filled in by the stack and passed to the recvIp4Dgram function of
-     * protocol handlers and also to @ref IpIfaceListener::recvIp4Dgram.
+     * The @ref IpRxInfoIp4 structure type for this @ref IpStack, encapsulating information
+     * about a received IPv4 datagram.
      */
-    struct Ip4RxInfo {
-        /**
-         * The source address.
-         */
-        Ip4Addr src_addr;
-        
-        /**
-         * The destination address.
-         */
-        Ip4Addr dst_addr;
-        
-        /**
-         * The TTL and protocol fields combined.
-         */
-        Ip4TtlProto ttl_proto;
-        
-        /**
-         * The interface through which the packet was received.
-         */
-        Iface *iface;
-    };
-    
+    using RxInfoIp4 = IpRxInfoIp4<IpStack>;
+
     /**
      * Send an IPv4 datagram.
      * 
@@ -381,7 +346,7 @@ public:
         IpBufRef pkt = dgram.revealHeaderMust(Ip4Header::Size);
         
         // Find an interface and address for output.
-        Ip4RouteInfo route_info;
+        RouteInfoIp4 route_info;
         bool route_ok;
         if (AIPSTACK_UNLIKELY(iface != nullptr)) {
             route_ok = routeIp4ForceIface(addrs.remote_addr, iface, route_info);
@@ -460,7 +425,7 @@ public:
     }
     
 private:
-    IpErr send_fragmented (IpBufRef pkt, Ip4RouteInfo route_info,
+    IpErr send_fragmented (IpBufRef pkt, RouteInfoIp4 route_info,
                            IpSendFlags send_flags, IpSendRetryRequest *retryReq)
     {
         // Recalculate pkt_send_len (not passed for optimization).
@@ -548,7 +513,7 @@ public:
         /**
          * Routing information (may be read externally if found useful).
          */
-        Ip4RouteInfo route_info;
+        RouteInfoIp4 route_info;
         
         /**
          * Partially calculated IP header checksum (should not be used externally).
@@ -725,7 +690,7 @@ public:
      * @return True on success (route_info was filled in),
      *         false on error (route_info was not changed).
      */
-    bool routeIp4 (Ip4Addr dst_addr, Ip4RouteInfo &route_info)
+    bool routeIp4 (Ip4Addr dst_addr, RouteInfoIp4 &route_info)
     {
         int best_prefix = -1;
         Iface *best_iface = nullptr;
@@ -776,7 +741,7 @@ public:
      * @return True on success (route_info was filled in),
      *         false on error (route_info was not changed).
      */
-    bool routeIp4ForceIface (Ip4Addr dst_addr, Iface *iface, Ip4RouteInfo &route_info)
+    bool routeIp4ForceIface (Ip4Addr dst_addr, Iface *iface, RouteInfoIp4 &route_info)
     {
         AIPSTACK_ASSERT(iface != nullptr)
         
@@ -850,7 +815,7 @@ public:
      * @return True if the source address appears to be a unicast address,
      *         false if not.
      */
-    static bool checkUnicastSrcAddr (Ip4RxInfo const &ip_info)
+    static bool checkUnicastSrcAddr (RxInfoIp4 const &ip_info)
     {
         return !ip_info.src_addr.isAllOnesOrMulticast() &&
                !ip_info.iface->ip4AddrIsLocalBcast(ip_info.src_addr);
@@ -1152,7 +1117,7 @@ private:
         recvIp4Dgram({src_addr, dst_addr, ttl_proto, iface}, dgram);
     }
     
-    static void recvIp4Dgram (Ip4RxInfo ip_info, IpBufRef dgram)
+    static void recvIp4Dgram (RxInfoIp4 ip_info, IpBufRef dgram)
     {
         uint8_t proto = ip_info.ttl_proto.proto();
         
@@ -1174,7 +1139,7 @@ private:
         {
             if (proto == Helper::IpProtocolNumber::Value) {
                 Helper::get(ip_info.iface->m_stack)->recvIp4Dgram(
-                    static_cast<Ip4RxInfo const &>(ip_info),
+                    static_cast<RxInfoIp4 const &>(ip_info),
                     static_cast<IpBufRef>(dgram));
                 return false;
             }
@@ -1192,7 +1157,7 @@ private:
         }
     }
     
-    static void recvIcmp4Dgram (Ip4RxInfo const &ip_info, IpBufRef const &dgram)
+    static void recvIcmp4Dgram (RxInfoIp4 const &ip_info, IpBufRef const &dgram)
     {
         // Sanity check source address - reject broadcast addresses.
         if (AIPSTACK_UNLIKELY(!checkUnicastSrcAddr(ip_info))) {
@@ -1321,8 +1286,8 @@ private:
         // Create the Ip4DestUnreachMeta struct.
         Ip4DestUnreachMeta du_meta = {code, rest};
         
-        // Create the Ip4RxInfo struct.
-        Ip4RxInfo ip_info = {src_addr, dst_addr, ttl_proto, iface};
+        // Create the RxInfoIp4 struct.
+        RxInfoIp4 ip_info = {src_addr, dst_addr, ttl_proto, iface};
         
         // Get the included IP data.
         size_t data_len = MinValueU(icmp_data.tot_len, total_len) - header_len;
@@ -1333,7 +1298,7 @@ private:
             if (ip_info.ttl_proto.proto() == Helper::IpProtocolNumber::Value) {
                 Helper::get(this)->handleIp4DestUnreach(
                     static_cast<Ip4DestUnreachMeta const &>(du_meta),
-                    static_cast<Ip4RxInfo const &>(ip_info),
+                    static_cast<RxInfoIp4 const &>(ip_info),
                     static_cast<IpBufRef>(dgram_initial));
                 return false;
             }
