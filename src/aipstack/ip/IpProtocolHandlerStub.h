@@ -129,11 +129,11 @@ public:
     using Ip4RxInfo = typename TheIpStack::Ip4RxInfo;
     
     /**
-     * Type alias for @ref IpStack::ProtocolHandlerArgs.
+     * Type alias for @ref IpProtocolHandlerArgs.
      * 
      * This alias is not required but is used in definitions here.
      */
-    using ProtocolHandlerArgs = typename TheIpStack::ProtocolHandlerArgs;
+    using ProtocolHandlerArgs = IpProtocolHandlerArgs<TheIpStack>;
     
     /**
      * Construct the protocol handler.

@@ -33,6 +33,7 @@
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Icmp4Proto.h>
 #include <aipstack/ip/hw/IpHwCommon.h>
+#include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {
 
@@ -278,6 +279,27 @@ struct IpIfaceInitInfo {
      * corresponding to @ref hw_type.
      */
     void *hw_iface = nullptr;
+};
+
+/**
+ * Encapsulates parameters passed to protocol handler constructors.
+ * 
+ * See @ref IpProtocolHandlerStub::IpProtocolHandlerStub for the documentation
+ * of protocol handler construction.
+ * 
+ * @tparam TheIpStack The @ref IpStack class type.
+ */
+template <typename TheIpStack>
+struct IpProtocolHandlerArgs {
+    /**
+     * The platform facade, as passed to the @ref IpStack::IpStack constructor.
+     */
+    PlatformFacade<typename TheIpStack::PlatformImpl> platform;
+    
+    /**
+     * A pointer to the IP stack.
+     */
+    TheIpStack *stack;
 };
 
 /** @} */

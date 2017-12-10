@@ -64,6 +64,8 @@ namespace AIpStack {
      * 
      * The IP stack does not provide or impose any model for management of interfaces
      * and interface drivers. Such a system could be build on top if it is needed.
+     * 
+     * @tparam TheIpStack The @ref IpStack class type.
      */
     template <typename TheIpStack>
     class IpIface :

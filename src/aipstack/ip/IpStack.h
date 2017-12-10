@@ -179,22 +179,10 @@ public:
     static size_t const HeaderBeforeIp4Dgram = HeaderBeforeIp + Ip4Header::Size;
     
     /**
-     * Encapsulates parameters passed to protocol handler constructors.
-     * 
-     * See @ref IpProtocolHandlerStub::IpProtocolHandlerStub for the documentation
-     * of protocol handler construction.
+     * The @ref IpProtocolHandlerArgs structure type for this @ref IpStack, encapsulating
+     * parameters passed to protocol handler constructors.
      */
-    struct ProtocolHandlerArgs {
-        /**
-         * The platform facade, as passed to the @ref IpStack::IpStack constructor.
-         */
-        Platform platform;
-        
-        /**
-         * A pointer to the IP stack.
-         */
-        IpStack *stack;
-    };
+    using ProtocolHandlerArgs = IpProtocolHandlerArgs<IpStack>;
     
     /**
      * The @ref IpIface class for this @ref IpStack, representing a network interface.

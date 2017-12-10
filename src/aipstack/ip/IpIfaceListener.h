@@ -50,6 +50,8 @@ template <typename> class IpIface;
  * This is a low-level interface designed to be used by the DHCP client
  * implementation. It may be removed at some point if a proper UDP protocol
  * handle is implemented that is usable for DHCP.
+ * 
+ * @tparam TheIpStack The @ref IpStack class type.
  */
 template <typename TheIpStack>
 class IpIfaceListener :
