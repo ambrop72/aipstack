@@ -45,6 +45,7 @@ namespace AIpStack {
 #ifndef IN_DOXYGEN
     template <typename> class IpStack;
     template <typename> class IpIfaceListener;
+    template <typename> class IpIfaceStateObserver;
 #endif
     
     /**
@@ -73,6 +74,7 @@ namespace AIpStack {
     {
         template <typename> friend class IpStack;
         template <typename> friend class IpIfaceListener;
+        template <typename> friend class IpIfaceStateObserver;
 
     public:
         /**
@@ -123,7 +125,7 @@ namespace AIpStack {
          * ready to accept these calls.
          * 
          * When this is called, there must be no remaining @ref IpStack::IfaceListener
-         * objects listening on this interface or @ref IpStack::IfaceStateObserver objects
+         * objects listening on this interface or @ref IpIfaceStateObserver objects
          * observing this interface. Additionally, this must not be called in
          * potentially hazardous context with respect to IP processing, such as
          * from withing receive processing of this interface
@@ -307,7 +309,7 @@ namespace AIpStack {
          * Return the driver-provided interface state.
          * 
          * This directly queries the driver for the current state by calling the
-         * virtual function @ref driverGetState. Use @ref IpStack::IfaceStateObserver if
+         * virtual function @ref driverGetState. Use @ref IpIfaceStateObserver if
          * you need to be notified of changes of this state.
          * 
          * Currently, the driver-provided state indicates whether the link is up.

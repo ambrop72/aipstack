@@ -309,9 +309,9 @@ struct IpProtocolHandlerArgs {
 /**
  * Encapsulates route information returned route functions.
  * 
- * Functions such as @ref routeIp4 and @ref routeIp4ForceIface will fill in
- * this structure. The result is only valid temporarily because it contains
- * a pointer to an interface, which could be removed.
+ * Functions such as @ref IpStack::routeIp4 and @ref IpStack::routeIp4ForceIface will fill
+ * in this structure. The result is only valid temporarily because it contains a pointer to
+ * an interface, which could be removed.
  * 
  * @tparam TheIpStack The @ref IpStack class type.
  */

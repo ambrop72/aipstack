@@ -57,6 +57,7 @@
 #include <aipstack/ip/IpStackHelperTypes.h>
 #include <aipstack/ip/IpIface.h>
 #include <aipstack/ip/IpIfaceListener.h>
+#include <aipstack/ip/IpIfaceStateObserver.h>
 #include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {
@@ -821,52 +822,11 @@ public:
                !ip_info.iface->ip4AddrIsLocalBcast(ip_info.src_addr);
     }
     
-    
     /**
-     * Allows observing changes in the driver-reported state of an interface.
-     * 
-     * The driver-reported state can be queried using by @ref Iface::getDriverState.
-     * This class can be used to receive a callback whenever the driver-reported
-     * state may have changed.
-     * 
-     * This class is based on @ref Observer and the functionality of
-     * of that class is exposed. The specific @ref observe function is provided to
-     * start observing an interface.
+     * The @ref IpIfaceStateObserver class for this @ref IpStack, for observing changes in
+     * the driver-reported state of a network interface.
      */
-    class IfaceStateObserver :
-        public Observer<IfaceStateObserver>
-    {
-        friend IpStack;
-        friend Observable<IfaceStateObserver>;
-        
-    public:
-        /**
-         * Start observing an interface, making the observer active.
-         * 
-         * The observer must be inactive when this is called.
-         * 
-         * @param iface Interface to observe.
-         */
-        inline void observe (Iface &iface)
-        {
-            iface.m_state_observable.addObserver(*this);
-        }
-        
-    protected:
-        /**
-         * Called when the driver-reported state of the interface may have changed.
-         * 
-         * It is not guaranteed that the state has actually changed, nor is it
-         * guaranteed that the callback will be called immediately for every state
-         * change (there may be just one callback for successive state changes).
-         * 
-         * WARNING: The callback must not do any potentially harmful actions such
-         * as removing the interface. Removing this or other listeners and adding
-         * other listeners is safe. Sending packets should be safe assuming this
-         * is safe in the driver.
-         */
-        virtual void ifaceStateChanged () = 0;
-    };
+    using IfaceStateObserver = IpIfaceStateObserver<IpStack>;
     
 private:
     using IfaceListenerList = LinkedList<
