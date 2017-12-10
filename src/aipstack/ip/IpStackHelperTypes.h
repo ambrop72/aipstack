@@ -29,6 +29,7 @@
 #include <stddef.h>
 
 #include <aipstack/misc/EnumBitfieldUtils.h>
+#include <aipstack/infra/Chksum.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Icmp4Proto.h>
@@ -357,6 +358,30 @@ struct IpRxInfoIp4 {
      * The interface through which the packet was received.
      */
     IpIface<TheIpStack> *iface;
+};
+
+/**
+ * Stores reusable data for sending multiple packets efficiently.
+ * 
+ * This structure is filled in by @ref IpStack::prepareSendIp4Dgram and can then be
+ * used with @ref IpStack::sendIp4DgramFast multiple times to send datagrams.
+ * 
+ * Values filled in this structure are only valid temporarily because the
+ * @ref route_info contains a pointer to an interface, which could be removed.
+ * 
+ * @tparam TheIpStack The @ref IpStack class type.
+ */
+template <typename TheIpStack>
+struct IpSendPreparedIp4 {
+    /**
+     * Routing information (may be read externally if found useful).
+     */
+    IpRouteInfoIp4<TheIpStack> route_info;
+    
+    /**
+     * Partially calculated IP header checksum (should not be used externally).
+     */
+    IpChksumAccumulator::State partial_chksum_state;
 };
 
 /** @} */

@@ -504,31 +504,16 @@ private:
     
 public:
     /**
-     * Stores reusable data for sending multiple packets efficiently.
-     * 
-     * This structure is filled in by @ref prepareSendIp4Dgram and can then be
-     * used with @ref sendIp4DgramFast multiple times to send datagrams.
-     * 
-     * Values filled in this structure are only valid temporarily because the
-     * route_info contains a pointer to an interface, which could be removed.
+     * The @ref IpSendPreparedIp4 structure type for this @ref IpStack, which stores
+     * reusable data for sending multiple packets efficiently.
      */
-    struct Ip4SendPrepared {
-        /**
-         * Routing information (may be read externally if found useful).
-         */
-        RouteInfoIp4 route_info;
-        
-        /**
-         * Partially calculated IP header checksum (should not be used externally).
-         */
-        IpChksumAccumulator::State partial_chksum_state;
-    };
-    
+    using Ip4SendPrepared = IpSendPreparedIp4<IpStack>;
+
     /**
      * Prepare for sending multiple datagrams with similar header fields.
      * 
      * This determines routing information, fills in common header fields and
-     * stores internal information into the given @ref Ip4SendPrepared structure.
+     * stores internal information into the given @ref IpSendPreparedIp4 structure.
      * After this is successful, @ref sendIp4DgramFast can be used to send multiple
      * datagrams in succession, with IP header fields as specified here.
      * 
@@ -606,7 +591,7 @@ public:
      * 
      * @param prep Structure with internal information that was filled in
      *             using @ref prepareSendIp4Dgram. Note that such information is
-     *             only valid temporarily (see the note in @ref Ip4SendPrepared).
+     *             only valid temporarily (see the note in @ref IpSendPreparedIp4).
      * @param dgram The data to be sent. There must be space available before the
      *              data for the IPv4 header and lower-layer headers (reserving
      *              @ref HeaderBeforeIp4Dgram will suffice), and this must be the
