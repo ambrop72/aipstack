@@ -56,7 +56,7 @@ class EthArpObserver;
 using EthArpObservable = Observable<EthArpObserver>;
 
 /**
- * Interface provided through IpStack::Iface::getHwIface.
+ * Interface provided through @ref IpIface::getHwIface.
  *
  * The associated IpHwType is IpHwType::Ethernet.
  */

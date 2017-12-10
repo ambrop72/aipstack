@@ -100,10 +100,9 @@ protected:
     /**
      * Called when a matching datagram is received.
      * 
-     * This is called before passing the datagram to any protocol handler
-     * The return value allows inhibiting further processing of the datagram
-     * (by other IpIfaceListener's, protocol handlers and built-in protocols
-     * such as ICMP).
+     * This is called before passing the datagram to any protocol handler. The return value
+     * allows inhibiting further processing of the datagram (by other @ref IpIfaceListener
+     * "IpIfaceListener"s, protocol handlers and built-in protocols such as ICMP).
      * 
      * WARNING: It is not allowed to deinitialize this listener object from
      * this callback or to remove the interface through which the packet has

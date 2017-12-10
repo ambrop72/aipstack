@@ -98,7 +98,7 @@ namespace AIpStack {
  * drivers on one end and with protocol handlers on the other.
  * 
  * Applications should configure and initialize this class and manage network
- * interface using the @ref Iface class. Actual network access should be done
+ * interfaces using the @ref IpIface class. Actual network access should be done
  * using the APIs provided by specific protocol handlers, which are exposed
  * via @ref getProtocol.
  * 

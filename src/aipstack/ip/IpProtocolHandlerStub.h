@@ -121,7 +121,7 @@ public:
     using TheIpStack = typename Arg::TheIpStack;
     
     /**
-     * Type alias for @ref IpStack::RxInfoIp4.
+     * Type alias for @ref IpRxInfoIp4.
      * 
      * This alias is not required but is used in definitions here.
      */
@@ -175,7 +175,7 @@ public:
      * - Verification of the IP header checksum.
      * - Reassembly of fragmented packets.
      * - Invocation of any interface listener callbacks
-     *   (see @ref IpStack::IfaceListener). Note that interfaced listeners
+     *   (see @ref IpIfaceListener). Note that interfaced listeners
      *   have the ability to inhibit processing by protocol handlers.
      * 
      * Generally, the source and destination addresses have not been

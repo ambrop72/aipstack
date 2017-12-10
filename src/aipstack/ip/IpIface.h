@@ -124,7 +124,7 @@ namespace AIpStack {
          * destruction of the derived class has begun or generally after it is no longer
          * ready to accept these calls.
          * 
-         * When this is called, there must be no remaining @ref IpStack::IfaceListener
+         * When this is called, there must be no remaining @ref IpIfaceListener
          * objects listening on this interface or @ref IpIfaceStateObserver objects
          * observing this interface. Additionally, this must not be called in
          * potentially hazardous context with respect to IP processing, such as
