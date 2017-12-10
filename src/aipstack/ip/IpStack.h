@@ -58,6 +58,7 @@
 #include <aipstack/ip/IpIface.h>
 #include <aipstack/ip/IpIfaceListener.h>
 #include <aipstack/ip/IpIfaceStateObserver.h>
+#include <aipstack/ip/IpMtuRef.h>
 #include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {
@@ -109,6 +110,7 @@ class IpStack :
 {
     template <typename> friend class IpIface;
     template <typename> friend class IpIfaceListener;
+    template <typename> friend class IpMtuRef;
     
     AIPSTACK_USE_TYPES(Arg, (Params, ProtocolServicesList))
     AIPSTACK_USE_VALS(Params, (HeaderBeforeIp, IcmpTTL, AllowBroadcastPing))
@@ -768,8 +770,8 @@ public:
      * the address. Also if there is no route for the address then the min is
      * not done.
      * 
-     * If the Path MTU estimate was lowered, then all existing MtuRef setup
-     * for this address are notified (@ref MtuRef::pmtuChanged are called),
+     * If the Path MTU estimate was lowered, then all existing @ref IpMtuRef setup
+     * for this address are notified (@ref IpMtuRef::pmtuChanged are called),
      * directly from this function.
      * 
      * @param remote_addr Address to which the ICMP message applies.
@@ -791,8 +793,8 @@ public:
      * the address is routed has changed, because this is a local issue and would
      * not be detected via an ICMP message.
      * 
-     * If the Path MTU estimate was lowered, then all existing MtuRef setup
-     * for this address are notified (@ref MtuRef::pmtuChanged are called),
+     * If the Path MTU estimate was lowered, then all existing @ref IpMtuRef setup
+     * for this address are notified (@ref IpMtuRef::pmtuChanged are called),
      * directly from this function.
      * 
      * @param remote_addr Address for which to check the Path MTU estimate.
@@ -838,129 +840,19 @@ private:
         MemberAccessor<Iface, LinkedListNode<IfaceLinkModel>, &Iface::m_iface_list_node>,
         IfaceLinkModel, false>;
     
+    // Public works around access control issue from IpMtuRef with some compilers.
+public:
+#ifndef IN_DOXYGEN
     using BaseMtuRef = typename PathMtuCache::MtuRef;
+#endif
     
 public:
     /**
-     * Allows keeping track of the Path MTU estimate for a remote address.
+     * The @ref IpMtuRef class type for this @ref IpStack, for keeping track of the Path
+     * MTU estimate for a remote address.
      */
-    class MtuRef
-    #ifndef IN_DOXYGEN
-        :private BaseMtuRef
-    #endif
-    {
-    public:
-        /**
-         * Construct the MTU reference.
-         * 
-         * The object is constructed in not-setup state, that is without an
-         * associated remote address. To set the remote address, call @ref setup.
-         * This function must be called before any other function in this
-         * class is called.
-         */
-        MtuRef () = default;
-        
-        /**
-         * Destruct the MTU reference, asserting not-setup state.
-         * 
-         * It is required to ensure the object is in not-setup state before
-         * destructing it (by calling @ref reset if needed). The destructor
-         * cannot do the reset itself because it does not have the @ref IpStack
-         * pointer available (to avoid using additional memory).
-         */
-        ~MtuRef () = default;
-        
-        /**
-         * Reset the MTU reference.
-         * 
-         * This resets the object to the not-setup state.
-         *
-         * NOTE: It is required to reset the object to not-setup state
-         * before destructing it, if not already in not-setup state.
-         * 
-         * @param stack The IP stack.
-         */
-        inline void reset (IpStack *stack)
-        {
-            return BaseMtuRef::reset(mtu_cache(stack));
-        }
-        
-        /**
-         * Check if the MTU reference is in setup state.
-         * 
-         * @return True if in setup state, false if in not-setup state.
-         */
-        inline bool isSetup () const
-        {
-            return BaseMtuRef::isSetup();
-        }
-        
-        /**
-         * Setup the MTU reference for a specific remote address.
-         * 
-         * The object must be in not-setup state when this is called.
-         * On success, the current PMTU estimate is provided and future PMTU
-         * estimate changes will be reported via the @ref pmtuChanged callback.
-         * 
-         * WARNING: Do not destruct the object while it is in setup state.
-         * First use @ref reset (or @ref moveFrom) to change the object to
-         * not-setup state before destruction.
-         * 
-         * @param stack The IP stack.
-         * @param remote_addr The remote address to observe the PMTU for.
-         * @param iface NULL or the interface though which remote_addr would be
-         *        routed, as an optimization.
-         * @param out_pmtu On success, will be set to the current PMTU estimate
-         *        (guaranteed to be at least MinMTU). On failure it will not be
-         *        changed.
-         * @return True on success (object enters setup state), false on failure
-         *         (object remains in not-setup state).
-         */
-        inline bool setup (IpStack *stack, Ip4Addr remote_addr, Iface *iface,
-                           uint16_t &out_pmtu)
-        {
-            return BaseMtuRef::setup(mtu_cache(stack), remote_addr, iface, out_pmtu);
-        }
+    using MtuRef = IpMtuRef<IpStack>;
 
-        /**
-         * Move an MTU reference from another object to this one.
-         * 
-         * This object must be in not-setup state. Upon return, the 'src' object
-         * will be in not-setup state and this object will be in whatever state
-         * the 'src' object was. If the 'src' object was in setup state, this object
-         * will be setup with the same remote address.
-         * 
-         * @param src The object to move from.
-         */
-        inline void moveFrom (MtuRef &src)
-        {
-            return BaseMtuRef::moveFrom(src);
-        }
-        
-    protected:
-        /**
-         * Callback which reports changes of the PMTU estimate.
-         * 
-         * This is called whenever the PMTU estimate changes,
-         * and only in setup state.
-         * 
-         * WARNING: Do not change this object in any way from this callback,
-         * specifically do not call @ref reset or @ref moveFrom. Note that the
-         * implementation calls all these callbacks for the same remote address
-         * in a loop, and that the callbacks may be called from within
-         * @ref handleIcmpPacketTooBig and @ref handleLocalPacketTooBig.
-         * 
-         * @param pmtu The new PMTU estimate (guaranteed to be at least MinMTU).
-         */
-        virtual void pmtuChanged (uint16_t pmtu) = 0;
-        
-    private:
-        inline static PathMtuCache * mtu_cache (IpStack *stack)
-        {
-            return &stack->m_path_mtu_cache;
-        }
-    };
-    
 private:
     static void processRecvedIp4Packet (Iface *iface, IpBufRef pkt)
     {

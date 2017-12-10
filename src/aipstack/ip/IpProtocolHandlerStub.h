@@ -75,9 +75,8 @@ namespace AIpStack {
  * one is @ref IpStack::sendIp4Dgram which is used for sending datagrams.
  * 
  * The stack offers the facilities needed to support Path MTU Discovery.
- * This can be achieved using the @ref IpStack::MtuRef class and the functions
- * @ref IpStack::handleIcmpPacketTooBig and
- * @ref IpStack::handleLocalPacketTooBig.
+ * This can be achieved using the @ref IpMtuRef class and the functions @ref
+ * IpStack::handleIcmpPacketTooBig and @ref IpStack::handleLocalPacketTooBig.
  * 
  * The protocol handler will have access to the interface (@ref IpIface)
  * from which a datagram has been received, in @ref recvIp4Dgram and also
@@ -201,7 +200,7 @@ public:
      * @ref Icmp4CodeDestUnreachFragNeeded, the protocol handler should perform
      * protocol-specific sanity checks (e.g. TCP could check that the message is
      * for an active connection) then call @ref IpStack::handleIcmpPacketTooBig
-     * if the checks pass. The latter may result in @ref IpStack::MtuRef::pmtuChanged
+     * if the checks pass. The latter may result in @ref IpMtuRef::pmtuChanged
      * callbacks being called.
      * 
      * Note that to fully support Path MTU Discovery, the protocol handler
