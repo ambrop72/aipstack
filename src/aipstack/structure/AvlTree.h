@@ -215,6 +215,11 @@ public:
             c = ac(c).child[side].ref(st);
         }
     }
+
+    inline bool isEmpty () const
+    {
+        return m_root.isNull();
+    }
     
     Ref first (State st = State()) const
     {

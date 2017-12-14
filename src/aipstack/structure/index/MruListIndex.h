@@ -74,7 +74,7 @@ public:
         }
         
         template <bool Enable = !Duplicates, typename = std::enable_if_t<Enable>>
-        Ref findEntry (LookupKeyArg key, State st = State())
+        Ref findEntry (LookupKeyArg key, State st = State()) const
         {
             for (Ref e = m_list.first(st); !e.isNull(); e = m_list.next(e, st)) {
                 if (KeyFuncs::KeysAreEqual(KeyFuncs::GetKeyOfEntry(*e), key)) {
@@ -89,23 +89,28 @@ public:
         }
         
         template <bool Enable = Duplicates, typename = std::enable_if_t<Enable>>
-        inline Ref findFirst (LookupKeyArg key, State st = State())
+        inline Ref findFirst (LookupKeyArg key, State st = State()) const
         {
             return findFirstNextCommon(key, m_list.first(st), st);
         }
         
         template <bool Enable = Duplicates, typename = std::enable_if_t<Enable>>
-        inline Ref findNext (LookupKeyArg key, Ref prev_e, State st = State())
+        inline Ref findNext (LookupKeyArg key, Ref prev_e, State st = State()) const
         {
             return findFirstNextCommon(key, m_list.next(prev_e, st), st);
         }
         
-        inline Ref first (State st = State())
+        inline bool isEmpty () const
+        {
+            return m_list.isEmpty();
+        }
+
+        inline Ref first (State st = State()) const
         {
             return m_list.first(st);
         }
         
-        inline Ref next (Ref node, State st = State())
+        inline Ref next (Ref node, State st = State()) const
         {
             return m_list.next(node, st);
         }
