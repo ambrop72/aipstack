@@ -54,7 +54,8 @@ enum class IpErr : uint8_t {
     HW_ERROR        = 11, /**< An unexpected hardware problem has occured. */
     LINK_DOWN       = 12, /**< The link is down for the network interface. */
     BCAST_REJECTED  = 13, /**< Sending to a broadcast address was not allowed. */
-    NONLOCAL_SRC    = 14  /**< Sending from a non-local address was not allowed. */
+    NONLOCAL_SRC    = 14, /**< Sending from a non-local address was not allowed. */
+    ADDR_IN_USE     = 15  /**< Address is already in use. */
 };
 
 /** @} */
