@@ -829,7 +829,7 @@ public:
      * IpProtocolHandlerStub::recvIp4Dgram "recvIp4Dgram" function of a protocol handler,
      * to send an ICMP message triggered by the received IPv4 datagram being processed. The
      * `rx_ip_info` and `rx_dgram` arguments must be the exact values provided by @ref
-     * IpStack.
+     * IpStack, except that `rx_dgram` may be a truncation of the original.
      * 
      * The IP header and up to 8 data bytes of the received datagram that triggered this
      * ICMP message will be included, as required by RFC 792.
