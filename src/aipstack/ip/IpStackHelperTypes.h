@@ -366,6 +366,11 @@ struct IpRxInfoIp4 {
      * The interface through which the packet was received.
      */
     IpIface<TheIpStack> *iface;
+
+    /**
+     * The length of the IPv4 header in bytes.
+     */
+    uint8_t header_len;
 };
 
 /**

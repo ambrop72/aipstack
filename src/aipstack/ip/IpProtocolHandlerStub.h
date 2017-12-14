@@ -221,7 +221,7 @@ public:
      * - The IP protocol number in the encapsulated IP header is the protocol
      *   number of this protocol handler.
      * 
-     * @param du_meta Information about the Destination Unreachable datagram.
+     * @param du_meta Information about the Destination Unreachable message.
      * @param ip_info Information from the ensapsulated IP header. Except that
      *        the 'iface' member is the interface from which the ICMP message
      *        was received.

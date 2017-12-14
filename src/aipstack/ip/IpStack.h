@@ -821,6 +821,50 @@ public:
      * the driver-reported state of a network interface.
      */
     using IfaceStateObserver = IpIfaceStateObserver<IpStack>;
+
+    /**
+     * Send an IPv4 ICMP Destination Unreachable message.
+     * 
+     * This function must only be used in the context of a @ref
+     * IpProtocolHandlerStub::recvIp4Dgram "recvIp4Dgram" function of a protocol handler,
+     * to send an ICMP message triggered by the received IPv4 datagram being processed. The
+     * `rx_ip_info` and `rx_dgram` arguments must be the exact values provided by @ref
+     * IpStack.
+     * 
+     * The IP header and up to 8 data bytes of the received datagram that triggered this
+     * ICMP message will be included, as required by RFC 792.
+     * 
+     * This function simply constructs the ICMP message and sends it using @ref
+     * sendIp4Dgram. Restrictions and other considerations for that function apply here as
+     * well.
+     * 
+     * @param rx_ip_info Information about the received datagram which triggered this ICMP
+     *        message.
+     * @param rx_dgram IP payload of the datagram which triggered this ICMP message. Note
+     *        that this function expects to find the IPv4 header before this data (it knows
+     *        how far back the header starts via @ref RxInfoIp4::header_len).
+     * @param du_meta Information about the Destination Unreachable message.
+     * @return Success or error code.
+     */
+    IpErr sendIp4DestUnreach (RxInfoIp4 const &rx_ip_info, IpBufRef rx_dgram,
+                              Ip4DestUnreachMeta const &du_meta)
+    {
+        AIPSTACK_ASSERT(rx_dgram.offset >= rx_ip_info.header_len)
+
+        // Build the Ip4Addrs wwith IP addresses for sending.
+        Ip4Addrs addrs = {rx_ip_info.dst_addr, rx_ip_info.src_addr};
+
+        // Calculate how much of the original datagram we will send.
+        size_t data_len =
+            size_t(rx_ip_info.header_len) + MinValue(size_t(8), rx_dgram.tot_len);
+        
+        // Get this data by revealing the IP header in rx_dgram and taking only the
+        // calculated length.
+        IpBufRef data = rx_dgram.revealHeaderMust(rx_ip_info.header_len).subTo(data_len);
+
+        return sendIcmp4Message(addrs, rx_ip_info.iface, Icmp4TypeDestUnreach,
+                                du_meta.icmp_code, du_meta.icmp_rest, data);
+    }
     
 private:
     using IfaceListenerList = LinkedList<
@@ -883,7 +927,7 @@ private:
             // We require the entire header to fit into the first buffer.
             header_len = (version_ihl & Ip4IhlMask) * 4;
             if (AIPSTACK_UNLIKELY(header_len < Ip4Header::Size ||
-                               !pkt.hasHeader(header_len)))
+                                 !pkt.hasHeader(header_len)))
             {
                 return;
             }
@@ -956,9 +1000,12 @@ private:
             // Note, dgram was modified pointing to the reassembled data.
         }
         
+        // Create the RxInfoIp4 struct.
+        RxInfoIp4 ip_info = {src_addr, dst_addr, ttl_proto, iface, header_len};
+
         // Do the real processing now that the datagram is complete and
         // sanity checked.
-        recvIp4Dgram({src_addr, dst_addr, ttl_proto, iface}, dgram);
+        recvIp4Dgram(ip_info, dgram);
     }
     
     static void recvIp4Dgram (RxInfoIp4 ip_info, IpBufRef dgram)
@@ -1061,19 +1108,28 @@ private:
     void sendIcmp4EchoReply (
         Icmp4RestType rest, IpBufRef data, Ip4Addr dst_addr, Iface *iface)
     {
+        AIPSTACK_ASSERT(iface != nullptr)
+
         // Can only reply when we have an address assigned.
         if (AIPSTACK_UNLIKELY(!iface->m_have_addr)) {
             return;
         }
         
+        Ip4Addrs addrs = {iface->m_addr.addr, dst_addr};
+        sendIcmp4Message(addrs, iface, Icmp4TypeEchoReply, /*code=*/0, rest, data);
+    }
+
+    IpErr sendIcmp4Message (Ip4Addrs const &addrs, Iface *iface,
+                            uint8_t type, uint8_t code, Icmp4RestType rest, IpBufRef data)
+    {
         // Allocate memory for headers.
         TxAllocHelper<Icmp4Header::Size, HeaderBeforeIp4Dgram>
             dgram_alloc(Icmp4Header::Size);
         
         // Write the ICMP header.
         auto icmp4_header = Icmp4Header::MakeRef(dgram_alloc.getPtr());
-        icmp4_header.set(Icmp4Header::Type(),   Icmp4TypeEchoReply);
-        icmp4_header.set(Icmp4Header::Code(),   0);
+        icmp4_header.set(Icmp4Header::Type(),   type);
+        icmp4_header.set(Icmp4Header::Code(),   code);
         icmp4_header.set(Icmp4Header::Chksum(), 0);
         icmp4_header.set(Icmp4Header::Rest(),   rest);
         
@@ -1087,9 +1143,8 @@ private:
         icmp4_header.set(Icmp4Header::Chksum(), calc_chksum);
         
         // Send the datagram.
-        Ip4Addrs addrs = {iface->m_addr.addr, dst_addr};
-        sendIp4Dgram(addrs, {IcmpTTL, Ip4ProtocolIcmp}, dgram, iface, nullptr,
-                     IpSendFlags());
+        return sendIp4Dgram(addrs, {IcmpTTL, Ip4ProtocolIcmp}, dgram, iface, nullptr,
+                            IpSendFlags());        
     }
     
     void handleIcmp4DestUnreach (
@@ -1117,7 +1172,7 @@ private:
         // We require the entire header to fit into the first buffer.
         uint8_t header_len = (version_ihl & Ip4IhlMask) * 4;
         if (AIPSTACK_UNLIKELY(header_len < Ip4Header::Size ||
-                           !icmp_data.hasHeader(header_len)))
+                              !icmp_data.hasHeader(header_len)))
         {
             return;
         }
@@ -1131,7 +1186,7 @@ private:
         Ip4DestUnreachMeta du_meta = {code, rest};
         
         // Create the RxInfoIp4 struct.
-        RxInfoIp4 ip_info = {src_addr, dst_addr, ttl_proto, iface};
+        RxInfoIp4 ip_info = {src_addr, dst_addr, ttl_proto, iface, header_len};
         
         // Get the included IP data.
         size_t data_len = MinValueU(icmp_data.tot_len, total_len) - header_len;

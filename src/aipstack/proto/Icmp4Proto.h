@@ -50,6 +50,11 @@ static uint8_t const Icmp4TypeEchoRequest = 8;
 static uint8_t const Icmp4TypeDestUnreach = 3;
 
 /**
+ * ICMP code "port unreachable" for "destination unreachable" type.
+ */
+static uint8_t const Icmp4CodeDestUnreachPortUnreach = 3;
+
+/**
  * ICMP code "fragmentation needed" for "destination unreachable" type.
  */
 static uint8_t const Icmp4CodeDestUnreachFragNeeded = 4;
