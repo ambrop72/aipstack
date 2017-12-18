@@ -36,7 +36,6 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/infra/Buf.h>
-#include <aipstack/infra/Chksum.h>
 #include <aipstack/infra/TxAllocHelper.h>
 #include <aipstack/infra/SendRetry.h>
 #include <aipstack/infra/Options.h>
@@ -44,13 +43,13 @@
 #include <aipstack/infra/Instance.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
-#include <aipstack/proto/Udp4Proto.h>
 #include <aipstack/proto/DhcpProto.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/ip/hw/IpHwCommon.h>
 #include <aipstack/ip/hw/EthHw.h>
 #include <aipstack/ip/IpDhcpClient_options.h>
+#include <aipstack/udp/IpUdpProto.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/platform/TimerWrapper.h>
 
@@ -213,7 +212,8 @@ template <typename Arg>
 class IpDhcpClient :
     private NonCopyable<IpDhcpClient<Arg>>
 #ifndef IN_DOXYGEN
-    ,private Arg::IpStack::IfaceListener,
+    ,
+    private Arg::IpStack::template GetProtocolType<Ip4ProtocolUdp>::Listener,
     private Arg::IpStack::IfaceStateObserver,
     private IpDhcpClientTimers<Arg>::Timers,
     private IpSendRetryRequest,
@@ -221,12 +221,18 @@ class IpDhcpClient :
 #endif
 {
     AIPSTACK_USE_TYPES(Arg, (PlatformImpl, IpStack, Params))
+
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
-    AIPSTACK_USE_TYPES(IpStack, (RxInfoIp4, Iface, IfaceListener, IfaceStateObserver))
-    AIPSTACK_USE_VALS(IpStack, (HeaderBeforeIp4Dgram))
+
+    AIPSTACK_USE_TYPES(IpStack, (Iface, IfaceStateObserver))
+
     AIPSTACK_USE_TIMERS_CLASS(IpDhcpClientTimers<Arg>, (DhcpTimer)) 
     using IpDhcpClientTimers<Arg>::Timers::platform;
+    
+    using TheUdpProto = typename IpStack::template GetProtocolType<Ip4ProtocolUdp>;
+    using TheUdpListener = typename TheUdpProto::Listener;
+    AIPSTACK_USE_VALS(TheUdpProto, (HeaderBeforeUdpData))
     
     static_assert(Params::MaxDnsServers > 0 && Params::MaxDnsServers < 32, "");
     static_assert(Params::XidReuseMax >= 1 && Params::XidReuseMax <= 5, "");
@@ -243,7 +249,7 @@ class IpDhcpClient :
     static_assert(Params::ArpResponseTimeoutSeconds >= 1 &&
                   Params::ArpResponseTimeoutSeconds <= 5, "");
     static_assert(Params::NumArpQueries >= 1 && Params::NumArpQueries <= 10, "");
-    
+
     // Message text to include in the DECLINE response if the address
     // was not used due to an ARP response (defined outside of class).
     static constexpr char const DeclineMessageArpResponse[] = "ArpResponse";
@@ -299,12 +305,10 @@ class IpDhcpClient :
         return (uint64_t)lease_time_s * 7 / 8;
     }
     
-    // Combined size of UDP and TCP headers.
-    static size_t const UdpDhcpHeaderSize = Udp4Header::Size + DhcpHeaderSize;
-    
-    // Maximum packet size that we could possibly transmit.
-    static size_t const MaxDhcpSendMsgSize =
-        UdpDhcpHeaderSize + Options::MaxOptionsSendSize;
+    // Maximum UDP data size that we could possibly transmit.
+    static size_t const MaxDhcpSendMsgSize = DhcpHeaderSize + Options::MaxOptionsSendSize;
+
+    static_assert(MaxDhcpSendMsgSize <= TheUdpProto::MaxUdpDataLenIp4, "");
     
 public:
     /**
@@ -333,6 +337,7 @@ public:
     
 private:
     IpStack *m_ipstack;
+    Iface *m_iface;
     IpDhcpClientCallback *m_callback;
     MemRef m_client_id;
     MemRef m_vendor_class_id;
@@ -367,9 +372,9 @@ public:
      */
     IpDhcpClient (Platform platform, IpStack *stack, Iface *iface,
                   IpDhcpClientInitOptions const &opts, IpDhcpClientCallback *callback) :
-        IfaceListener(iface, Ip4ProtocolUdp),
         IpDhcpClientTimers<Arg>::Timers(platform),
         m_ipstack(stack),
+        m_iface(iface),
         m_callback(callback),
         m_client_id(opts.client_id),
         m_vendor_class_id(opts.vendor_class_id)
@@ -377,6 +382,14 @@ public:
         // We only support Ethernet interfaces.
         AIPSTACK_ASSERT(iface->getHwType() == IpHwType::Ethernet)
         
+        // Start listening for incoming DHCP UDP packets.
+        UdpListenParams<TheUdpProto> listen_params;
+        listen_params.addr = Ip4Addr::ZeroAddr();
+        listen_params.port = DhcpClientPort;
+        listen_params.iface = iface;
+        listen_params.accept_nonlocal_dst = true;
+        TheUdpListener::startListening(udp(), listen_params);
+
         // Start observing interface state.
         IfaceStateObserver::observe(*iface);
         
@@ -431,16 +444,21 @@ public:
     }
     
 private:
-    // Return the interface (stored by IfaceListener).
-    inline Iface * iface ()
+    inline Iface * iface () const
     {
-        return IfaceListener::getIface();
+        return m_iface;
     }
     
     // Return the EthHwIface interface for the interface.
-    inline EthHwIface * ethHw ()
+    inline EthHwIface * ethHw () const
     {
         return iface()->template getHwIface<EthHwIface>();
+    }
+
+    // Get the UDP protocol implementation pointer (IpUdpProto).
+    inline TheUdpProto & udp () const
+    {
+        return *m_ipstack->template getProtocol<TheUdpProto>();
     }
     
     // Convert seconds to ticks, requires seconds <= MaxTimerSeconds.
@@ -746,67 +764,28 @@ private:
         }
     }
     
-    bool recvIp4Dgram (RxInfoIp4 const &ip_info, IpBufRef dgram) override final
+    UdpRecvResult recvUdpIp4Packet (
+        IpRxInfoIp4<IpStack> const &ip_info, UdpRxInfo<TheUdpProto> const &udp_info,
+        IpBufRef udp_data) override final
     {
-        {
-            // Check that there is a UDP header.
-            if (AIPSTACK_UNLIKELY(!dgram.hasHeader(Udp4Header::Size))) {
-                goto reject;
-            }
-            
-            auto udp_header = Udp4Header::MakeRef(dgram.getChunkPtr());
-            
-            // Check for expected source and destination port.
-            if (AIPSTACK_LIKELY(udp_header.get(Udp4Header::SrcPort()) != DhcpServerPort)) {
-                goto reject;
-            }
-            if (AIPSTACK_LIKELY(udp_header.get(Udp4Header::DstPort()) != DhcpClientPort)) {
-                goto reject;
-            }
-            
-            // Sanity check source address - reject broadcast addresses.
-            if (AIPSTACK_UNLIKELY(!IpStack::checkUnicastSrcAddr(ip_info))) {
-                goto accept;
-            }
-            
-            // Check UDP length.
-            uint16_t udp_length = udp_header.get(Udp4Header::Length());
-            if (AIPSTACK_UNLIKELY(udp_length < Udp4Header::Size ||
-                               udp_length > dgram.tot_len))
-            {
-                goto accept;
-            }
-            
-            // Truncate data to UDP length.
-            IpBufRef udp_data = dgram.subTo(udp_length);
-            
-            // Check UDP checksum if provided.
-            uint16_t checksum = udp_header.get(Udp4Header::Checksum());
-            if (checksum != 0) {
-                IpChksumAccumulator chksum_accum;
-                chksum_accum.addWords(&ip_info.src_addr.data);
-                chksum_accum.addWords(&ip_info.dst_addr.data);
-                chksum_accum.addWord(WrapType<uint16_t>(), Ip4ProtocolUdp);
-                chksum_accum.addWord(WrapType<uint16_t>(), udp_length);
-                if (chksum_accum.getChksum(udp_data) != 0) {
-                    goto accept;
-                }
-            }
-            
-            // Process the DHCP payload.
-            IpBufRef dhcp_msg = udp_data.hideHeader(Udp4Header::Size);
-            processReceivedDhcpMessage(ip_info.src_addr, dhcp_msg);
+        // Check for expected source port.
+        if (AIPSTACK_UNLIKELY(udp_info.src_port != DhcpServerPort)) {
+            goto out;
         }
         
-    accept:
-        // Inhibit further processing of packet.
-        return true;
+        // Sanity check source address - reject broadcast addresses.
+        if (AIPSTACK_UNLIKELY(!IpStack::checkUnicastSrcAddr(ip_info))) {
+            goto out;
+        }
+
+        // Process the DHCP message.
+        processReceivedDhcpMessage(ip_info.src_addr, udp_data);
         
-    reject:
-        // Continue processing of packet.
-        return false;
+    out:
+        // Accept the packet, inhibit further processing.
+        return UdpRecvResult::AcceptStop;
     }
-    
+
     void processReceivedDhcpMessage (Ip4Addr src_addr, IpBufRef msg)
     {
         // In these states we're not interested in any messages.
@@ -1341,11 +1320,11 @@ private:
         }
         
         // Get a buffer for the message.
-        using AllocHelperType = TxAllocHelper<MaxDhcpSendMsgSize, HeaderBeforeIp4Dgram>;
+        using AllocHelperType = TxAllocHelper<MaxDhcpSendMsgSize, HeaderBeforeUdpData>;
         AllocHelperType dgram_alloc(MaxDhcpSendMsgSize);
         
         // Write the DHCP header.
-        auto dhcp_header1 = DhcpHeader1::MakeRef(dgram_alloc.getPtr() + Udp4Header::Size);
+        auto dhcp_header1 = DhcpHeader1::MakeRef(dgram_alloc.getPtr());
         ::memset(dhcp_header1.data, 0, DhcpHeaderSize); // zero entire DHCP header
         dhcp_header1.set(DhcpHeader1::DhcpOp(),     DhcpOp::BootRequest);
         dhcp_header1.set(DhcpHeader1::DhcpHtype(),  DhcpHwAddrType::Ethernet);
@@ -1358,46 +1337,29 @@ private:
         dhcp_header3.set(DhcpHeader3::DhcpMagic(),  DhcpMagicNumber);
         
         // Write the DHCP options.
-        char *opt_startptr = dgram_alloc.getPtr() + UdpDhcpHeaderSize;
+        char *opt_startptr = dgram_alloc.getPtr() + DhcpHeaderSize;
         char *opt_endptr =
             Options::writeOptions(opt_startptr, msg_type, iface()->getMtu(), opts);
         
-        // Calculate the UDP length.
-        uint16_t udp_length = opt_endptr - dgram_alloc.getPtr();
-        AIPSTACK_ASSERT(udp_length <= MaxDhcpSendMsgSize)
+        // Calculate the UDP data length.
+        uint16_t data_len = opt_endptr - dgram_alloc.getPtr();
+        AIPSTACK_ASSERT(data_len <= MaxDhcpSendMsgSize)
         
-        // Write the UDP header.
-        auto udp_header = Udp4Header::MakeRef(dgram_alloc.getPtr());
-        udp_header.set(Udp4Header::SrcPort(),  DhcpClientPort);
-        udp_header.set(Udp4Header::DstPort(),  DhcpServerPort);
-        udp_header.set(Udp4Header::Length(),   udp_length);
-        udp_header.set(Udp4Header::Checksum(), 0);
-        
-        // Construct the datagram reference.
-        dgram_alloc.changeSize(udp_length);
-        IpBufRef dgram = dgram_alloc.getBufRef();
-        
-        // Calculate UDP checksum.
-        IpChksumAccumulator chksum_accum;
-        chksum_accum.addWords(&ciaddr.data);
-        chksum_accum.addWords(&dst_addr.data);
-        chksum_accum.addWord(WrapType<uint16_t>(), Ip4ProtocolUdp);
-        chksum_accum.addWord(WrapType<uint16_t>(), udp_length);
-        uint16_t checksum = chksum_accum.getChksum(dgram);
-        if (checksum == 0) {
-            checksum = TypeMax<uint16_t>();
-        }
-        udp_header.set(Udp4Header::Checksum(), checksum);
-        
+        // Construct the UDP data reference.
+        dgram_alloc.changeSize(data_len);
+        IpBufRef udp_data = dgram_alloc.getBufRef();
+
         // Determine addresses and send flags. When sending from zero address, we need
         // IpSendFlags::AllowNonLocalSrc for that to be allowed.
         Ip4Addrs addrs = {ciaddr, dst_addr};
         IpSendFlags send_flags = IpSendFlags::AllowBroadcastFlag |
             (ciaddr.isZero() ? IpSendFlags::AllowNonLocalSrc : IpSendFlags());
+        
+        // Determine the UDP ports.
+        UdpTxInfo<TheUdpProto> udp_info = {DhcpClientPort, DhcpServerPort};
 
-        // Send the datagram. We meed 
-        m_ipstack->sendIp4Dgram(addrs, {Params::DhcpTTL, Ip4ProtocolUdp}, dgram, iface(),
-                                this, send_flags);
+        // Send the UDP packet.
+        udp().sendUdpIp4Packet(addrs, udp_info, udp_data, iface(), this, send_flags);
     }
     
     void new_xid ()

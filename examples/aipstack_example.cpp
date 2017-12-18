@@ -39,6 +39,7 @@
 #include <aipstack/ip/IpReassembly.h>
 #include <aipstack/ip/IpDhcpClient.h>
 #include <aipstack/tcp/IpTcpProto.h>
+#include <aipstack/udp/IpUdpProto.h>
 #include <aipstack/eth/EthIpIface.h>
 
 #include "libuv_platform.h"
@@ -87,9 +88,11 @@ using ProtocolServicesList = AIpStack::MakeTypeList<
     // TCP configuration
     AIpStack::IpTcpProtoService<
         AIpStack::IpTcpProtoOptions::NumTcpPcbs::Is<2048>,
-        AIpStack::IpTcpProtoOptions::PcbIndexService::Is<
-            IndexService
-        >
+        AIpStack::IpTcpProtoOptions::PcbIndexService::Is<IndexService>
+    >,
+    // UDP configuration
+    AIpStack::IpUdpProtoService<
+        AIpStack::IpUdpProtoOptions::UdpIndexService::Is<IndexService>
     >
 >;
 
