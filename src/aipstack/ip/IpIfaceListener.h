@@ -104,9 +104,11 @@ protected:
      * allows inhibiting further processing of the datagram (by other @ref IpIfaceListener
      * "IpIfaceListener"s, protocol handlers and built-in protocols such as ICMP).
      * 
-     * WARNING: It is not allowed to deinitialize this listener object from
-     * this callback or to remove the interface through which the packet has
-     * been received.
+     * @warning It is not allowed to deinitialize this listener object from this callback
+     * unless true is returned.
+     * 
+     * @warning It is not allowed to remove the interface through which the packet has been
+     * received from this callback.
      * 
      * @param ip_info Information about the received datagram.
      * @param dgram Data of the received datagram.

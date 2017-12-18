@@ -384,10 +384,10 @@ public:
         
         // Start listening for incoming DHCP UDP packets.
         UdpListenParams<TheUdpProto> listen_params;
-        listen_params.addr = Ip4Addr::ZeroAddr();
         listen_params.port = DhcpClientPort;
-        listen_params.iface = iface;
+        listen_params.accept_broadcast = true;
         listen_params.accept_nonlocal_dst = true;
+        listen_params.iface = iface;
         TheUdpListener::startListening(udp(), listen_params);
 
         // Start observing interface state.

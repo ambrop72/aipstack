@@ -60,10 +60,11 @@ class IpUdpProto;
 
 template <typename UdpProto>
 struct UdpListenParams {
-    Ip4Addr addr = Ip4Addr::ZeroAddr();
+    Ip4Addr iface_addr = Ip4Addr::ZeroAddr();
     uint16_t port = 0;
-    IpIface<typename UdpProto::TheIpStack> *iface = nullptr;
+    bool accept_broadcast = false;
     bool accept_nonlocal_dst = false;
+    IpIface<typename UdpProto::TheIpStack> *iface = nullptr;
 };
 
 template <typename UdpProto>
@@ -164,6 +165,43 @@ protected:
     virtual UdpRecvResult recvUdpIp4Packet (
         IpRxInfoIp4<TheIpStack> const &ip_info, UdpRxInfo<UdpProto> const &udp_info,
         IpBufRef udp_data) = 0;
+
+private:
+    bool incomingPacketMatches (
+        IpRxInfoIp4<TheIpStack> const &ip_info, UdpRxInfo<UdpProto> const &udp_info,
+        bool dst_is_iface_addr) const
+    {
+        AIPSTACK_ASSERT(dst_is_iface_addr ==
+                        ip_info.iface->ip4AddrIsLocalAddr(ip_info.dst_addr))
+
+        if (m_params.port != 0 && udp_info.dst_port != m_params.port) {
+            return false;
+        }
+
+        if (m_params.iface != nullptr && ip_info.iface != m_params.iface) {
+            return false;
+        }
+
+        bool is_bcast =
+            ip_info.dst_addr.isAllOnes() ||
+            ip_info.iface->ip4AddrIsLocalBcast(ip_info.dst_addr);
+        
+        if (!m_params.accept_broadcast && is_bcast) {
+            return false;
+        }
+
+        if (!m_params.accept_nonlocal_dst && !is_bcast && !dst_is_iface_addr) {
+            return false;
+        }
+
+        if (!m_params.iface_addr.isZero() &&
+            !ip_info.iface->ip4AddrIsLocalAddr(m_params.iface_addr))
+        {
+            return false;
+        }
+
+        return true;
+    }
 
 private:
     LinkedListNode<ListenersLinkModel> m_list_node;
@@ -383,16 +421,22 @@ public:
         // Truncate datagram to UDP length.
         dgram = dgram.subTo(udp_length);
 
-        // Determine whether the destination address is the address of the incoming
+        // We will remember whether the destination address is the address of the incoming
         // network interface. By default this is a precondition for dispatching the packet
         // to associations or listeners, but those can disable this requirement.
-        bool dst_is_iface_addr = ip_info.iface->ip4AddrIsLocalAddr(ip_info.dst_addr);
+        bool dst_is_iface_addr;
         
+        // This lambda calculates dst_is_iface_addr. It is called once here and possibly
+        // again after application callbacks. The latter is due to the possibility that a
+        // callback changs he interface address, and is critical for the assert in
+        // UdpListener::incomingPacketMatches.
+        auto updateCachedInfo = [&]() {
+            dst_is_iface_addr = ip_info.iface->ip4AddrIsLocalAddr(ip_info.dst_addr);
+        };
+        updateCachedInfo();
+
         // We will verify the checksum when we find the first matching listener.
         bool checksum_verified = false;
-
-        // We will remember if any association or listener accepted the packet.
-        bool accepted = false;
 
         // This lambda function is used to verify the checksum on demand.
         auto verifyChecksumOnDemand = [&]() -> bool {
@@ -406,6 +450,9 @@ public:
             return true;
         };
 
+        // We will remember if any association or listener accepted the packet.
+        bool accepted = false;
+
         // Check if the packet should be dispatched to a listener.
         UdpAssociationKey assoc_key =
             {ip_info.dst_addr, ip_info.src_addr, udp_info.dst_port, udp_info.src_port};
@@ -415,7 +462,7 @@ public:
             AIPSTACK_ASSERT(assoc->m_udp == this)
 
             // Check any accept_nonlocal_dst requirement.
-            if (!(assoc->m_params.accept_nonlocal_dst || dst_is_iface_addr)) {
+            if (!assoc->m_params.accept_nonlocal_dst && !dst_is_iface_addr) {
                 continue;
             }
 
@@ -439,6 +486,9 @@ public:
             if (recv_result != UdpRecvResult::Reject) {
                 accepted = true;
             }
+
+            // Consider possible interface configuration changes.
+            updateCachedInfo();
         } while (false);
         
         // Look for listeners which match the incoming packet.
@@ -446,19 +496,8 @@ public:
         for (Listener *lis = m_listeners_list.first(); lis != nullptr;) {
             AIPSTACK_ASSERT(lis->m_udp == this)
             
-            // Check if the listener matches.
-            bool matches;
-            {
-                UdpListenParams<IpUdpProto> const &lis_params = lis->m_params;
-                matches = 
-                    (lis_params.port == 0 || lis_params.port == udp_info.dst_port) &&
-                    (lis_params.addr.isZero() || lis_params.addr == ip_info.dst_addr) &&
-                    (lis_params.iface == nullptr || lis_params.iface == ip_info.iface) &&
-                    (lis_params.accept_nonlocal_dst || dst_is_iface_addr);
-            }
-            
-            // Skip non-matching listeners.
-            if (!matches) {
+            // Check if the listener matches, if not skip it.
+            if (!lis->incomingPacketMatches(ip_info, udp_info, dst_is_iface_addr)) {
                 lis = m_listeners_list.next(*lis);
                 continue;
             }
@@ -494,6 +533,9 @@ public:
             if (recv_result != UdpRecvResult::Reject) {
                 accepted = true;                
             }
+
+            // Consider possible interface configuration changes.
+            updateCachedInfo();
         }
 
         // If no association or listener has accepted the datagram and it is for our IP
