@@ -74,7 +74,7 @@ public:
             AIPSTACK_ASSERT(Connection::isInit())
             AIPSTACK_ASSERT(m_listener->m_queue_size > 0)
             
-            if (Connection::acceptConnection(m_listener) != IpErr::SUCCESS) {
+            if (Connection::acceptConnection(*m_listener) != IpErr::SUCCESS) {
                 return;
             }
             
@@ -250,7 +250,7 @@ public:
                 AIPSTACK_ASSERT(Listener::hasAcceptPending())
                 
                 initial_rx_data = IpBufRef{};
-                return dst_con.acceptConnection(this);
+                return dst_con.acceptConnection(*this);
             } else {
                 AIPSTACK_ASSERT(m_queued_to_accept != nullptr)
                 AIPSTACK_ASSERT(!m_queued_to_accept->Connection::isInit())

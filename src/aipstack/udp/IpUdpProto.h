@@ -55,8 +55,19 @@
 
 namespace AIpStack {
 
+#ifndef IN_DOXYGEN
+template <typename Arg>
+class UdpApi;
+
+template <typename Arg>
+class UdpListener;
+
+template <typename Arg>
+class UdpAssociation;
+
 template <typename Arg>
 class IpUdpProto;
+#endif
 
 template <typename Arg>
 struct UdpListenParams {
@@ -64,7 +75,7 @@ struct UdpListenParams {
     uint16_t port = 0;
     bool accept_broadcast = false;
     bool accept_nonlocal_dst = false;
-    IpIface<typename IpUdpProto<Arg>::TheIpStack> *iface = nullptr;
+    IpIface<typename UdpApi<Arg>::TheIpStack> *iface = nullptr;
 };
 
 template <typename Arg>
@@ -97,6 +108,68 @@ template <typename Arg>
 struct UdpAssociationParams {
     UdpAssociationKey key;
     bool accept_nonlocal_dst = false;
+};
+
+template <typename Arg>
+class UdpApi
+{
+    template <typename> friend class UdpListener;
+    template <typename> friend class UdpAssociation;
+    template <typename> friend class IpUdpProto;
+
+    inline IpUdpProto<Arg> & proto () {
+        return static_cast<IpUdpProto<Arg> &>(*this);
+    }
+
+    inline IpUdpProto<Arg> const & proto () const {
+        return static_cast<IpUdpProto<Arg> const &>(*this);
+    }
+    
+    AIPSTACK_USE_VALS(Arg::Params, (UdpTTL))
+
+    UdpApi() = default;
+
+public:
+    using TheIpStack = typename Arg::TheIpStack;
+
+    static size_t const HeaderBeforeUdpData =
+        TheIpStack::HeaderBeforeIp4Dgram + Udp4Header::Size;
+
+    static size_t const MaxUdpDataLenIp4 = TypeMax<uint16_t>() - Udp4Header::Size;
+
+    IpErr sendUdpIp4Packet (Ip4Addrs const &addrs, UdpTxInfo<Arg> const &udp_info,
+                            IpBufRef udp_data, IpIface<TheIpStack> *iface,
+                            IpSendRetryRequest *retryReq, IpSendFlags send_flags)
+    {
+        AIPSTACK_ASSERT(udp_data.tot_len <= MaxUdpDataLenIp4)
+        AIPSTACK_ASSERT(udp_data.offset >= Ip4Header::Size + Udp4Header::Size)
+
+        // Reveal the UDP header.
+        IpBufRef dgram = udp_data.revealHeaderMust(Udp4Header::Size);
+
+        // Write the UDP header.
+        auto udp_header = Udp4Header::MakeRef(dgram.getChunkPtr());
+        udp_header.set(Udp4Header::SrcPort(),  udp_info.src_port);
+        udp_header.set(Udp4Header::DstPort(),  udp_info.dst_port);
+        udp_header.set(Udp4Header::Length(),   dgram.tot_len);
+        udp_header.set(Udp4Header::Checksum(), 0);
+        
+        // Calculate UDP checksum.
+        IpChksumAccumulator chksum_accum;
+        chksum_accum.addWords(&addrs.local_addr.data);
+        chksum_accum.addWords(&addrs.remote_addr.data);
+        chksum_accum.addWord(WrapType<uint16_t>(), Ip4ProtocolUdp);
+        chksum_accum.addWord(WrapType<uint16_t>(), dgram.tot_len);
+        uint16_t checksum = chksum_accum.getChksum(dgram);
+        if (checksum == 0) {
+            checksum = TypeMax<uint16_t>();
+        }
+        udp_header.set(Udp4Header::Checksum(), checksum);
+        
+        // Send the datagram.
+        return proto().m_stack->sendIp4Dgram(
+            addrs, {UdpTTL, Ip4ProtocolUdp}, dgram, iface, retryReq, send_flags);
+    }
 };
 
 template <typename Arg>
@@ -135,7 +208,7 @@ public:
         return m_udp != nullptr;
     }
 
-    IpUdpProto<Arg> & getUdp () const
+    UdpApi<Arg> & getUdp () const
     {
         AIPSTACK_ASSERT(isListening())
 
@@ -149,11 +222,11 @@ public:
         return m_params;
     }
 
-    IpErr startListening (IpUdpProto<Arg> &udp, UdpListenParams<Arg> const &params)
+    IpErr startListening (UdpApi<Arg> &udp, UdpListenParams<Arg> const &params)
     {
         AIPSTACK_ASSERT(!isListening())
 
-        m_udp = &udp;
+        m_udp = &udp.proto();
         m_params = params;
         
         m_udp->m_listeners_list.prepend(*this);
@@ -240,7 +313,7 @@ public:
         return m_udp != nullptr;
     }
 
-    IpUdpProto<Arg> & getUdp () const
+    UdpApi<Arg> & getUdp () const
     {
         AIPSTACK_ASSERT(isAssociated())
 
@@ -254,15 +327,15 @@ public:
         return m_params;
     }
 
-    IpErr associate (IpUdpProto<Arg> &udp, UdpAssociationParams<Arg> const &params)
+    IpErr associate (UdpApi<Arg> &udp, UdpAssociationParams<Arg> const &params)
     {
         AIPSTACK_ASSERT(!isAssociated())
 
-        if (!udp.m_associations_index.findEntry(params.key).isNull()) {
+        if (!udp.proto().m_associations_index.findEntry(params.key).isNull()) {
             return IpErr::ADDR_IN_USE;
         }
 
-        m_udp = &udp;
+        m_udp = &udp.proto();
         m_params = params;
 
         m_udp->m_associations_index.addEntry(*this);
@@ -281,33 +354,30 @@ private:
     UdpAssociationParams<Arg> m_params;
 };
 
+#ifndef IN_DOXYGEN
+
 template <typename Arg_>
 class IpUdpProto :
-    private NonCopyable<IpUdpProto<Arg_>>
+    private NonCopyable<IpUdpProto<Arg_>>,
+    private UdpApi<Arg_>
 {
 public:
     using Arg = Arg_;
 
 private:
+    template <typename> friend class UdpApi;
     template <typename> friend class UdpListener;
     template <typename> friend class UdpAssociation;
 
     AIPSTACK_USE_VALS(Arg::Params, (UdpTTL, EphemeralPortFirst, EphemeralPortLast))
     AIPSTACK_USE_TYPES(Arg::Params, (UdpIndexService))
-    AIPSTACK_USE_TYPES(Arg, (PlatformImpl))
+    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, TheIpStack))
 
     static_assert(EphemeralPortFirst > 0, "");
     static_assert(EphemeralPortFirst <= EphemeralPortLast, "");
 
-    // TODO: Automatic port allocation using ephermeral port range
-
-public:
-    using TheIpStack = typename Arg::TheIpStack;
-
-private:
     using Platform = PlatformFacade<PlatformImpl>;
 
-private:
     struct ListenerListNodeAccessor;
     using ListenersLinkModel = PointerLinkModel<UdpListener<Arg>>;
 
@@ -347,11 +417,6 @@ private:
     };
 
 public:
-    static size_t const HeaderBeforeUdpData =
-        TheIpStack::HeaderBeforeIp4Dgram + Udp4Header::Size;
-
-    static size_t const MaxUdpDataLenIp4 = TypeMax<uint16_t>() - Udp4Header::Size;
-
     IpUdpProto (IpProtocolHandlerArgs<TheIpStack> args) :
         m_stack(args.stack),
         m_next_listener(nullptr)
@@ -364,41 +429,11 @@ public:
         AIPSTACK_ASSERT(m_next_listener == nullptr)
     }
 
-    IpErr sendUdpIp4Packet (Ip4Addrs const &addrs, UdpTxInfo<Arg> const &udp_info,
-                            IpBufRef udp_data, IpIface<TheIpStack> *iface,
-                            IpSendRetryRequest *retryReq, IpSendFlags send_flags)
+    inline UdpApi<Arg> & getApi ()
     {
-        AIPSTACK_ASSERT(udp_data.tot_len <= MaxUdpDataLenIp4)
-        AIPSTACK_ASSERT(udp_data.offset >= Ip4Header::Size + Udp4Header::Size)
-
-        // Reveal the UDP header.
-        IpBufRef dgram = udp_data.revealHeaderMust(Udp4Header::Size);
-
-        // Write the UDP header.
-        auto udp_header = Udp4Header::MakeRef(dgram.getChunkPtr());
-        udp_header.set(Udp4Header::SrcPort(),  udp_info.src_port);
-        udp_header.set(Udp4Header::DstPort(),  udp_info.dst_port);
-        udp_header.set(Udp4Header::Length(),   dgram.tot_len);
-        udp_header.set(Udp4Header::Checksum(), 0);
-        
-        // Calculate UDP checksum.
-        IpChksumAccumulator chksum_accum;
-        chksum_accum.addWords(&addrs.local_addr.data);
-        chksum_accum.addWords(&addrs.remote_addr.data);
-        chksum_accum.addWord(WrapType<uint16_t>(), Ip4ProtocolUdp);
-        chksum_accum.addWord(WrapType<uint16_t>(), dgram.tot_len);
-        uint16_t checksum = chksum_accum.getChksum(dgram);
-        if (checksum == 0) {
-            checksum = TypeMax<uint16_t>();
-        }
-        udp_header.set(Udp4Header::Checksum(), checksum);
-        
-        // Send the datagram.
-        return m_stack->sendIp4Dgram(addrs, {UdpTTL, Ip4ProtocolUdp}, dgram,
-                                     iface, retryReq, send_flags);
+        return *this;
     }
 
-#ifndef IN_DOXYGEN
     void recvIp4Dgram (IpRxInfoIp4<TheIpStack> const &ip_info, IpBufRef dgram)
     {
         // Check that there is a UDP header.
@@ -558,7 +593,6 @@ public:
         Ip4DestUnreachMeta const &du_meta, IpRxInfoIp4<TheIpStack> const &ip_info,
         IpBufRef dgram_initial)
     {}
-#endif
 
 private:
     static bool verifyChecksum (
@@ -591,6 +625,8 @@ private:
     UdpListener<Arg> *m_next_listener;
 };
 
+#endif
+
 struct IpUdpProtoOptions {
     AIPSTACK_OPTION_DECL_VALUE(UdpTTL, uint8_t, 64)
     AIPSTACK_OPTION_DECL_VALUE(EphemeralPortFirst, uint16_t, 49152)
@@ -600,8 +636,8 @@ struct IpUdpProtoOptions {
 
 template <typename... Options>
 class IpUdpProtoService {
-    template <typename>
-    friend class IpUdpProto;
+    template <typename> friend class IpUdpProto;
+    template <typename> friend class UdpApi;
     
     AIPSTACK_OPTION_CONFIG_VALUE(IpUdpProtoOptions, UdpTTL)
     AIPSTACK_OPTION_CONFIG_VALUE(IpUdpProtoOptions, EphemeralPortFirst)

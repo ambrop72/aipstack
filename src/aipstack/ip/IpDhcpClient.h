@@ -213,8 +213,7 @@ class IpDhcpClient :
     private NonCopyable<IpDhcpClient<Arg>>
 #ifndef IN_DOXYGEN
     ,
-    private UdpListener<
-        typename Arg::IpStack::template GetProtocolType<Ip4ProtocolUdp>::Arg>,
+    private UdpListener<typename Arg::IpStack::template GetProtoApiArg<UdpApi>>,
     private Arg::IpStack::IfaceStateObserver,
     private IpDhcpClientTimers<Arg>::Timers,
     private IpSendRetryRequest,
@@ -231,8 +230,8 @@ class IpDhcpClient :
     AIPSTACK_USE_TIMERS_CLASS(IpDhcpClientTimers<Arg>, (DhcpTimer)) 
     using IpDhcpClientTimers<Arg>::Timers::platform;
     
-    using UdpArg = typename IpStack::template GetProtocolType<Ip4ProtocolUdp>::Arg;
-    AIPSTACK_USE_VALS(IpUdpProto<UdpArg>, (HeaderBeforeUdpData, MaxUdpDataLenIp4))
+    using UdpArg = typename IpStack::template GetProtoApiArg<UdpApi>;
+    AIPSTACK_USE_VALS(UdpApi<UdpArg>, (HeaderBeforeUdpData, MaxUdpDataLenIp4))
     
     static_assert(Params::MaxDnsServers > 0 && Params::MaxDnsServers < 32, "");
     static_assert(Params::XidReuseMax >= 1 && Params::XidReuseMax <= 5, "");
@@ -455,10 +454,10 @@ private:
         return iface()->template getHwIface<EthHwIface>();
     }
 
-    // Get the UDP protocol implementation pointer (IpUdpProto).
-    inline IpUdpProto<UdpArg> & udp () const
+    // Get the UDP protocol API pointer.
+    inline UdpApi<UdpArg> & udp () const
     {
-        return *m_ipstack->template getProtocol<IpUdpProto<UdpArg>>();
+        return m_ipstack->template getProtoApi<UdpApi>();
     }
     
     // Convert seconds to ticks, requires seconds <= MaxTimerSeconds.

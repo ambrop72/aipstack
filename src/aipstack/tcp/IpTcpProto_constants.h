@@ -36,12 +36,16 @@
 
 namespace AIpStack {
 
-template <typename TcpProto>
+#ifndef IN_DOXYGEN
+template <typename> class IpTcpProto;
+#endif
+
+template <typename Arg>
 class IpTcpProto_constants
 {
     AIPSTACK_USE_TYPES(TcpUtils, (SeqType))
-    AIPSTACK_USE_TYPES(TcpProto, (TimeType, RttType, Platform, TheIpStack))
-    AIPSTACK_USE_VALS(TcpProto, (RttTimeFreq, RttTypeMaxDbl))
+    AIPSTACK_USE_TYPES(IpTcpProto<Arg>, (TimeType, RttType, Platform, TheIpStack))
+    AIPSTACK_USE_VALS(IpTcpProto<Arg>, (RttTimeFreq, RttTypeMaxDbl))
     
     // Make sure the MinMTU permits an unfragmented TCP segment with some data.
     static_assert(TheIpStack::MinMTU >= Ip4TcpHeaderSize + 32, "");

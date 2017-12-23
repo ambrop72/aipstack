@@ -43,9 +43,15 @@
 
 namespace AIpStack {
 
-template <typename TcpProto>
+#ifndef IN_DOXYGEN
+template <typename> class IpTcpProto;
+#endif
+
+template <typename Arg>
 class IpTcpProto_output
 {
+    using TcpProto = IpTcpProto<Arg>;
+    
     AIPSTACK_USE_TYPES(TcpUtils, (FlagsType, SeqType, PortType, TcpState, TcpSegMeta,
                                    OptionFlags, TcpOptions))
     AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lt2, seq_add_sat, tcplen,

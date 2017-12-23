@@ -39,6 +39,7 @@
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/proto/IpAddr.h>
+#include <aipstack/ip/IpMtuRef.h>
 #include <aipstack/tcp/TcpUtils.h>
 #include <aipstack/tcp/TcpListener.h>
 
@@ -50,13 +51,6 @@ namespace AIpStack {
     template <typename> class IpTcpProto_input;
     template <typename> class IpTcpProto_output;
     
-    // Access control hack to allow TcpConnection to inherit MtuRef.
-    template <typename TcpProto>
-    class TcpConnectionMtuRefHelper {
-    public:
-        using Type = typename TcpProto::MtuRef;
-    };
-    
     #endif
     
     /**
@@ -67,13 +61,16 @@ namespace AIpStack {
      *              is in progress.
      * - CLOSED: There was a connection but is no more.
      */
-    template <typename TcpProto>
+    template <typename Arg>
     class TcpConnection :
-        private NonCopyable<TcpConnection<TcpProto>>,
+        private NonCopyable<TcpConnection<Arg>>,
         // MTU reference.
-        // It is setup if and only if SYN_SENT or (PCB referenced and can_output_in_state).
-        private TcpConnectionMtuRefHelper<TcpProto>::Type
+        private IpMtuRef<typename Arg::TheIpStack>
     {
+    public:
+        using TcpProto = IpTcpProto<Arg>;
+
+    private:
         template <typename> friend class IpTcpProto;
         template <typename> friend class IpTcpProto_input;
         template <typename> friend class IpTcpProto_output;
@@ -81,7 +78,7 @@ namespace AIpStack {
         AIPSTACK_USE_TYPES(TcpUtils, (TcpState, PortType, SeqType))
         AIPSTACK_USE_VALS(TcpUtils, (state_is_active, snd_open_in_state))
         AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Input, Output, Constants, MtuRef, OosBuffer,
-                                       RttType))
+                                      RttType))
         
     public:
         /**
@@ -141,14 +138,14 @@ namespace AIpStack {
          * On failure, the object remains in INIT state.
          * May only be called in INIT state.
          */
-        IpErr acceptConnection (TcpListener<TcpProto> *lis)
+        IpErr acceptConnection (TcpListener<Arg> &lis)
         {
             assert_init();
-            AIPSTACK_ASSERT(lis->m_accept_pcb != nullptr)
-            AIPSTACK_ASSERT(lis->m_accept_pcb->state == TcpState::SYN_RCVD)
-            AIPSTACK_ASSERT(lis->m_accept_pcb->lis == lis)
+            AIPSTACK_ASSERT(lis.m_accept_pcb != nullptr)
+            AIPSTACK_ASSERT(lis.m_accept_pcb->state == TcpState::SYN_RCVD)
+            AIPSTACK_ASSERT(lis.m_accept_pcb->lis == &lis)
             
-            TcpPcb *pcb = lis->m_accept_pcb;
+            TcpPcb *pcb = lis.m_accept_pcb;
             TcpProto *tcp = pcb->tcp;
             
             // Setup the MTU reference.
@@ -158,11 +155,11 @@ namespace AIpStack {
             }
             
             // Clear the m_accept_pcb link from the listener.
-            lis->m_accept_pcb = nullptr;
+            lis.m_accept_pcb = nullptr;
             
             // Decrement the listener's PCB count.
-            AIPSTACK_ASSERT(lis->m_num_pcbs > 0)
-            lis->m_num_pcbs--;
+            AIPSTACK_ASSERT(lis.m_num_pcbs > 0)
+            lis.m_num_pcbs--;
             
             // Note that the PCB has already been removed from the list of
             // unreferenced PCBs, so we must not try to remove it here.
@@ -194,21 +191,21 @@ namespace AIpStack {
          * On failure, the object remains in INIT state.
          * May only be called in INIT state.
          */
-        IpErr startConnection (TcpProto *tcp, Ip4Addr addr, PortType port, size_t rcv_wnd)
+        IpErr startConnection (TcpProto &tcp, Ip4Addr addr, PortType port, size_t rcv_wnd)
         {
             assert_init();
             
             // Setup the MTU reference.
             uint16_t pmtu;
-            if (!MtuRef::setup(tcp->m_stack, addr, nullptr, pmtu)) {
+            if (!MtuRef::setup(tcp.m_stack, addr, nullptr, pmtu)) {
                 return IpErr::NO_IPMTU_AVAIL;
             }
             
             // Create the PCB for the connection.
             TcpPcb *pcb = nullptr;
-            IpErr err = tcp->create_connection(this, addr, port, rcv_wnd, pmtu, &pcb);
+            IpErr err = tcp.create_connection(this, addr, port, rcv_wnd, pmtu, &pcb);
             if (err != IpErr::SUCCESS) {
-                MtuRef::reset(tcp->m_stack);
+                MtuRef::reset(tcp.m_stack);
                 return err;
             }
             

@@ -32,6 +32,7 @@
 #include <aipstack/meta/TypeListUtils.h>
 #include <aipstack/meta/FuncUtils.h>
 #include <aipstack/meta/InstantiateVariadic.h>
+#include <aipstack/meta/BasicMetaUtils.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Hints.h>
@@ -86,7 +87,7 @@ namespace AIpStack {
  * 
  * Application code which uses different transport-layer protocols (such as TCP) is
  * expected to go through @ref IpStack to gain access to the appropriate protocol
- * handlers, using @ref IpStack::GetProtocolType and @ref IpStack::getProtocol.
+ * handlers, using @ref IpStack::GetProtoApiArg and @ref IpStack::getProtoApi.
  * 
  * @{
  */
@@ -100,7 +101,7 @@ namespace AIpStack {
  * Applications should configure and initialize this class and manage network
  * interfaces using the @ref IpIface class. Actual network access should be done
  * using the APIs provided by specific protocol handlers, which are exposed
- * via @ref getProtocol.
+ * via @ref GetProtoApiArg and @ref getProtoApi.
  * 
  * @tparam Arg Instantiation parameters (instantiate via @ref IpStackService).
  */
@@ -141,7 +142,7 @@ private:
         // Get the protocol service.
         using ProtocolService = TypeListGet<ProtocolServicesList, ProtocolIndex>;
         
-        // Expose the protocol number for TypeListGetMapped (GetProtocolType).
+        // Expose the protocol number.
         using IpProtocolNumber = typename ProtocolService::IpProtocolNumber;
         
         // Instantiate the protocol.
@@ -165,10 +166,43 @@ private:
     using ProtocolsList = MapTypeList<
         ProtocolHelpersList, TemplateFunc<ProtocolForHelper>>;
     
-    // Helper to extract IpProtocolNumber from a ProtocolHelper.
-    template <typename Helper>
-    using ProtocolNumberForHelper = typename Helper::IpProtocolNumber;
-    
+    // This metaprogramming is for GetProtoApiArg and getProtoApi. It finds the protocol
+    // handler whose getApi() function returns a reference to ProtoApi<Arg> for some type
+    // Arg.
+    template <template <typename> class ProtoApi>
+    class GetProtoApiHelper {
+        template <typename, typename = void>
+        struct MatchApi {
+            static bool const Matches = false;
+        };
+
+        template <typename ProtoApiArg, typename Protocol, typename Dummy>
+        struct MatchApi<ProtoApi<ProtoApiArg> & (Protocol::*) (), Dummy> {
+            static bool const Matches = true;
+            using MatchArg = ProtoApiArg;
+            using MatchProtocol = Protocol;
+        };
+
+        template <typename Helper>
+        using MatchHelperApi = MatchApi<decltype(&Helper::Protocol::getApi)>;
+
+        using MatchApiList = MapTypeList<ProtocolHelpersList, TemplateFunc<MatchHelperApi>>;
+
+        template <typename Match>
+        using CheckMatch = WrapBool<Match::Matches>;
+
+        using MatchFindRes = TypeListFindMapped<
+            MatchApiList, TemplateFunc<CheckMatch>, WrapBool<true>>;
+        
+        static_assert(MatchFindRes::Found, "Requested IP protocol not configured.");
+
+        using TheMatch = TypeListGet<MatchApiList, MatchFindRes::Result::Value>;
+        
+    public:
+        using ProtoArg = typename TheMatch::MatchArg;
+        using Protocol = typename TheMatch::MatchProtocol;
+    };
+
 public:
     /**
      * Number of bytes which must be available in outgoing datagrams for headers.
@@ -252,40 +286,43 @@ public:
     {
         return m_reassembly.platform();
     }
-    
+
     /**
-     * Get the protocol instance type for a protocol number.
+     * Get the template parameter for a protocol API class template.
      * 
-     * @tparam ProtocolNumber The IP procol number to get the type for.
-     *         It must be the number of one of the configured procotols.
+     * This alias template searches for an IP protocol handler which provides the protocol
+     * API specified by the `ProtoApi` template parameter (a class template) and returns
+     * the template parameter for the specified protocol API template. It is an error if no
+     * protocol handler configured for this @ref IpStack provides the requested API.
+     * 
+     * The @ref getProtoApi function returns an actual reference to the protocol API.
+     * 
+     * @tparam ProtoApi Class template which represents the protocol API, for example @ref
+     *         UdpApi or @ref IpTcpProto.
      */
-    template <uint8_t ProtocolNumber>
-    using GetProtocolType =
-    #ifdef IN_DOXYGEN
-        implementation_hidden;
-    #else
-        typename TypeListGetMapped<
-            ProtocolHelpersList,
-            TemplateFunc<ProtocolNumberForHelper>,
-            WrapValue<uint8_t, ProtocolNumber>
-        >::Protocol;
-    #endif
-    
+    template <template <typename> class ProtoApi>
+    using GetProtoApiArg = typename GetProtoApiHelper<ProtoApi>::ProtoArg;
+
     /**
-     * Get the pointer to a protocol instance given the protocol instance type.
+     * Get the reference to a protocol API given a protocol API class template.
      * 
-     * @tparam Protocol The protocol instance type. It must be the
-     *         instance type of one of the configured protocols.
-     * @return Pointer to protocol instance.
+     * It is an error if no protocol handler configured for this @ref IpStack provides the
+     * requested API.
+     * 
+     * See also @ref GetProtoApiArg.
+     * 
+     * @tparam ProtoApi Class template which represents the protocol API, for example @ref
+     *         UdpApi or @ref IpTcpProto.
+     * @return Reference to protocol API.
      */
-    template <typename Protocol>
-    inline Protocol * getProtocol ()
+    template <template <typename> class ProtoApi>
+    inline ProtoApi<GetProtoApiArg<ProtoApi>> & getProtoApi ()
     {
-        static int const ProtocolIndex =
-            TypeListIndex<ProtocolsList, Protocol>::Value;
-        return &m_protocols.template get<ProtocolIndex>();
+        using Protocol = typename GetProtoApiHelper<ProtoApi>::Protocol;
+        static int const ProtocolIndex = TypeListIndex<ProtocolsList, Protocol>::Value;
+        return m_protocols.template get<ProtocolIndex>().getApi();
     }
-    
+
 public:
     /**
      * The @ref IpRouteInfoIp4 structure type for this @ref IpStack, encapsulating route

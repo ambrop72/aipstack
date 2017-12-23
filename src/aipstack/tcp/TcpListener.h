@@ -57,10 +57,14 @@ namespace AIpStack {
     /**
      * Represents listening for connections on a specific address and port.
      */
-    template <typename TcpProto>
+    template <typename Arg>
     class TcpListener :
-        private NonCopyable<TcpListener<TcpProto>>
+        private NonCopyable<TcpListener<Arg>>
     {
+    public:
+        using TcpProto = IpTcpProto<Arg>;
+
+    private:
         template <typename> friend class IpTcpProto;
         template <typename> friend class IpTcpProto_input;
         template <typename> friend class TcpConnection;
@@ -149,19 +153,18 @@ namespace AIpStack {
          * Return success/failure to start listening. It can fail only if there
          * is another listener listening on the same pair of address and port.
          */
-        bool startListening (TcpProto *tcp, TcpListenParams const &params)
+        bool startListening (TcpProto &tcp, TcpListenParams const &params)
         {
             AIPSTACK_ASSERT(!m_listening)
-            AIPSTACK_ASSERT(tcp != nullptr)
             AIPSTACK_ASSERT(params.max_pcbs > 0)
             
             // Check if there is an existing listener listning on this address+port.
-            if (tcp->find_listener(params.addr, params.port) != nullptr) {
+            if (tcp.find_listener(params.addr, params.port) != nullptr) {
                 return false;
             }
             
             // Start listening.
-            m_tcp = tcp;
+            m_tcp = &tcp;
             m_addr = params.addr;
             m_port = params.port;
             m_max_pcbs = params.max_pcbs;

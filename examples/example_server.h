@@ -46,6 +46,7 @@
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/platform/PlatformFacade.h>
+#include <aipstack/tcp/IpTcpProto.h>
 #include <aipstack/utils/TcpRingBufferUtils.h>
 
 namespace AIpStackExamples {
@@ -57,12 +58,10 @@ class ExampleServer :
     using TheIpStack = typename Arg::TheIpStack;
     using Params = typename Arg::Params;
     
-    using TcpProto = typename TheIpStack::template GetProtocolType<
-        AIpStack::Ip4ProtocolTcp>;
-    
-    using TcpListener = typename TcpProto::Listener;
-    using TcpConnection = typename TcpProto::Connection;
-    
+    using TcpArg = typename TheIpStack::template GetProtoApiArg<AIpStack::IpTcpProto>;
+    using TcpListener = AIpStack::TcpListener<TcpArg>;
+    using TcpConnection = AIpStack::TcpConnection<TcpArg>;
+
     class MyListener : public TcpListener {
     public:
         MyListener (ExampleServer *parent) :
@@ -90,9 +89,9 @@ public:
     }
     
 private:
-    inline TcpProto * tcp () const
+    inline AIpStack::IpTcpProto<TcpArg> & tcp () const
     {
-        return m_stack->template getProtocol<TcpProto>();
+        return m_stack->template getProtoApi<AIpStack::IpTcpProto>();
     }
     
     void startListening (MyListener &listener, std::uint16_t port, std::size_t buffer_size)
@@ -148,7 +147,7 @@ private:
             m_parent(parent)
         {
             // Setup the TcpConnection by accepting a connection on the listener.
-            AIpStack::IpErr err = TcpConnection::acceptConnection(&listener);
+            AIpStack::IpErr err = TcpConnection::acceptConnection(listener);
             if (err != AIpStack::IpErr::SUCCESS) {
                 throw std::runtime_error("TcpConnection::acceptConnection failed");
             }
@@ -375,8 +374,8 @@ private:
         }
         
     private:
-        AIpStack::RecvRingBuffer<TcpProto> m_rx_ring_buf;
-        AIpStack::SendRingBuffer<TcpProto> m_tx_ring_buf;
+        AIpStack::RecvRingBuffer<TcpArg> m_rx_ring_buf;
+        AIpStack::SendRingBuffer<TcpArg> m_tx_ring_buf;
         std::size_t m_rx_line_len;
         State m_state;
         char m_rx_buffer[RxBufSize];

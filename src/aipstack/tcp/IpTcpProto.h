@@ -97,15 +97,14 @@ class IpTcpProto :
     template <typename> friend class IpTcpProto_output;
     template <typename> friend class TcpListener;
     template <typename> friend class TcpConnection;
-    template <typename> friend class TcpConnectionMtuRefHelper;
     
 public:
     AIPSTACK_USE_TYPES(TcpUtils, (SeqType, PortType))
     
 private:
-    using Constants = IpTcpProto_constants<IpTcpProto>;
-    using Input = IpTcpProto_input<IpTcpProto>;
-    using Output = IpTcpProto_output<IpTcpProto>;
+    using Constants = IpTcpProto_constants<Arg>;
+    using Input = IpTcpProto_input<Arg>;
+    using Output = IpTcpProto_output<Arg>;
     
     AIPSTACK_USE_TYPES(TcpUtils, (TcpState, TcpOptions, PcbKey, PcbKeyCompare))
     AIPSTACK_USE_VALS(TcpUtils, (state_is_active, accepting_data_in_state,
@@ -192,11 +191,11 @@ private:
         PcbIndexAccessor, PcbIndexLookupKeyArg, PcbIndexKeyFuncs, PcbLinkModel,
         /*Duplicates=*/false>))
     
-    using ListenerLinkModel = PointerLinkModel<TcpListener<IpTcpProto>>;
+    using ListenerLinkModel = PointerLinkModel<TcpListener<Arg>>;
     
 public:
-    using Listener = TcpListener<IpTcpProto>;
-    using Connection = TcpConnection<IpTcpProto>;
+    using Listener = TcpListener<Arg>;
+    using Connection = TcpConnection<Arg>;
     
     static SeqType const MaxRcvWnd = Constants::MaxWindow;
     
@@ -407,6 +406,11 @@ public:
         AIPSTACK_ASSERT(m_current_pcb == nullptr)
     }
     
+    inline IpTcpProto<Arg> & getApi ()
+    {
+        return *this;
+    }
+
     inline void recvIp4Dgram (RxInfoIp4 const &ip_info, IpBufRef dgram)
     {
         Input::recvIp4Dgram(this, ip_info, dgram);
@@ -939,8 +943,8 @@ struct IpTcpProtoOptions {
 
 template <typename... Options>
 class IpTcpProtoService {
-    template <typename>
-    friend class IpTcpProto;
+    template <typename> friend class IpTcpProto;
+    template <typename> friend class TcpConnection;
     
     AIPSTACK_OPTION_CONFIG_VALUE(IpTcpProtoOptions, TcpTTL)
     AIPSTACK_OPTION_CONFIG_VALUE(IpTcpProtoOptions, NumTcpPcbs)

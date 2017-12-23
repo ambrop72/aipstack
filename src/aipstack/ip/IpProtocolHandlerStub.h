@@ -65,9 +65,13 @@ namespace AIpStack {
  * static_cast's the function arguments to the types specified in this
  * documentation.
  * 
- * This class is also what is exposed via @ref IpStack::getProtocol,
- * so generally it will provide the application-level API for using the
- * implemented IP protocol in addition to the functions called by the stack.
+ * Protocol handlers are generally supposed to provide their public API (for application
+ * code to use the protocol) via a separate class template. Each protocol handler must
+ * define the @ref getApi function which returns a reference to its public API. The public
+ * API must be a template class based on a class template with a single "type" template
+ * parameter. @ref IpStack::GetProtoApiArg and @ref IpStack::getProtoApi will deduce this
+ * template parameter when application code requests a specific protocol API by specifying
+ * only the API class template.
  * 
  * This class only defines the functions called by the stack on the
  * protocol handler. Functions which the protocol handler can call on
@@ -191,6 +195,28 @@ public:
     {
     }
     
+    /**
+     * Return a reference to the public API for this protocol.
+     * 
+     * The public API is meant to be the interface for using the protocol from application
+     * code. The @ref IpStack does not use the public API, only exposes it via @ref
+     * IpStack::GetProtoApiArg and @ref IpStack::getProtoApi. For more information see the
+     * main description in @ref IpProtocolHandlerStub.
+     * 
+     * This example declaration of the `getApi` function is against the recommendation that
+     * the protocol API is a separate class template since it returns a reference to this
+     * same class, but this is the simplest approach. Real protocol implementations are
+     * advised to define a separate class template for the protocol API, privately inherit
+     * it, and return a reference to it from this function. For an example of this
+     * approach, see the UDP implementation (@ref IpUdpProto.h).
+     * 
+     * @return Reference to the public API.
+     */
+    inline IpProtocolHandlerStub<Arg> & getApi ()
+    {
+        return *this;
+    }
+
     /**
      * Process a received IPv4 ICMP Destination Unreachable message for
      * this protocol.

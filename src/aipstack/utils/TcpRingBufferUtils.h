@@ -34,15 +34,14 @@
 #include <aipstack/misc/Hints.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/MemRef.h>
+#include <aipstack/tcp/IpTcpProto.h>
 
 namespace AIpStack {
 
-template <typename TcpProto>
+template <typename TcpArg>
 class SendRingBuffer {
 public:
-    using Connection = typename TcpProto::Connection;
-
-    void setup (Connection &con, char *buf, size_t buf_size)
+    void setup (TcpConnection<TcpArg> &con, char *buf, size_t buf_size)
     {
         AIPSTACK_ASSERT(buf != nullptr)
         AIPSTACK_ASSERT(buf_size > 0)
@@ -62,7 +61,7 @@ public:
         con.setSendBuf(send_buf);
     }
     
-    inline IpBufRef getWriteRange (Connection &con) const
+    inline IpBufRef getWriteRange (TcpConnection<TcpArg> &con) const
     {
         IpBufRef send_buf = con.getSendBuf();
         
@@ -79,7 +78,7 @@ public:
         return IpBufRef{&m_buf_node, write_offset, free_len};
     }
     
-    inline void provideData (Connection &con, size_t amount)
+    inline void provideData (TcpConnection<TcpArg> &con, size_t amount)
     {
         AIPSTACK_ASSERT(amount <= getWriteRange(con).tot_len)
         
@@ -96,15 +95,13 @@ private:
     IpBufNode m_buf_node;
 };
 
-template <typename TcpProto>
+template <typename TcpArg>
 class RecvRingBuffer {
 public:
-    using Connection = typename TcpProto::Connection;
-
     // NOTE: If using mirror region and initial_rx_data is not empty, it is
     // you may need to call updateMirrorAfterDataReceived to make sure initial
     // data is mirrored as applicable.
-    void setup (Connection &con, char *buf, size_t buf_size, int wnd_upd_div,
+    void setup (TcpConnection<TcpArg> &con, char *buf, size_t buf_size, int wnd_upd_div,
                 IpBufRef initial_rx_data = IpBufRef{})
     {
         AIPSTACK_ASSERT(buf != nullptr)
@@ -133,7 +130,7 @@ public:
         con.setRecvBuf(recv_buf);
     }
     
-    inline IpBufRef getReadRange (Connection &con)
+    inline IpBufRef getReadRange (TcpConnection<TcpArg> &con)
     {
         IpBufRef recv_buf = con.getRecvBuf();
         
@@ -150,14 +147,15 @@ public:
         return IpBufRef{&m_buf_node, read_offset, used_len};
     }
     
-    inline void consumeData (Connection &con, size_t amount)
+    inline void consumeData (TcpConnection<TcpArg> &con, size_t amount)
     {
         AIPSTACK_ASSERT(amount <= getReadRange(con).tot_len)
         
         con.extendRecvBuf(amount);
     }
     
-    void updateMirrorAfterReceived (Connection &con, size_t mirror_size, size_t amount)
+    void updateMirrorAfterReceived (
+        TcpConnection<TcpArg> &con, size_t mirror_size, size_t amount)
     {
         AIPSTACK_ASSERT(mirror_size >= 0)
         AIPSTACK_ASSERT(mirror_size <= getModulo().modulus())
