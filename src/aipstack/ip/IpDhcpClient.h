@@ -213,7 +213,8 @@ class IpDhcpClient :
     private NonCopyable<IpDhcpClient<Arg>>
 #ifndef IN_DOXYGEN
     ,
-    private Arg::IpStack::template GetProtocolType<Ip4ProtocolUdp>::Listener,
+    private UdpListener<
+        typename Arg::IpStack::template GetProtocolType<Ip4ProtocolUdp>::Arg>,
     private Arg::IpStack::IfaceStateObserver,
     private IpDhcpClientTimers<Arg>::Timers,
     private IpSendRetryRequest,
@@ -230,9 +231,8 @@ class IpDhcpClient :
     AIPSTACK_USE_TIMERS_CLASS(IpDhcpClientTimers<Arg>, (DhcpTimer)) 
     using IpDhcpClientTimers<Arg>::Timers::platform;
     
-    using TheUdpProto = typename IpStack::template GetProtocolType<Ip4ProtocolUdp>;
-    using TheUdpListener = typename TheUdpProto::Listener;
-    AIPSTACK_USE_VALS(TheUdpProto, (HeaderBeforeUdpData))
+    using UdpArg = typename IpStack::template GetProtocolType<Ip4ProtocolUdp>::Arg;
+    AIPSTACK_USE_VALS(IpUdpProto<UdpArg>, (HeaderBeforeUdpData, MaxUdpDataLenIp4))
     
     static_assert(Params::MaxDnsServers > 0 && Params::MaxDnsServers < 32, "");
     static_assert(Params::XidReuseMax >= 1 && Params::XidReuseMax <= 5, "");
@@ -308,7 +308,7 @@ class IpDhcpClient :
     // Maximum UDP data size that we could possibly transmit.
     static size_t const MaxDhcpSendMsgSize = DhcpHeaderSize + Options::MaxOptionsSendSize;
 
-    static_assert(MaxDhcpSendMsgSize <= TheUdpProto::MaxUdpDataLenIp4, "");
+    static_assert(MaxDhcpSendMsgSize <= MaxUdpDataLenIp4, "");
     
 public:
     /**
@@ -383,12 +383,12 @@ public:
         AIPSTACK_ASSERT(iface->getHwType() == IpHwType::Ethernet)
         
         // Start listening for incoming DHCP UDP packets.
-        UdpListenParams<TheUdpProto> listen_params;
+        UdpListenParams<UdpArg> listen_params;
         listen_params.port = DhcpClientPort;
         listen_params.accept_broadcast = true;
         listen_params.accept_nonlocal_dst = true;
         listen_params.iface = iface;
-        TheUdpListener::startListening(udp(), listen_params);
+        UdpListener<UdpArg>::startListening(udp(), listen_params);
 
         // Start observing interface state.
         IfaceStateObserver::observe(*iface);
@@ -456,9 +456,9 @@ private:
     }
 
     // Get the UDP protocol implementation pointer (IpUdpProto).
-    inline TheUdpProto & udp () const
+    inline IpUdpProto<UdpArg> & udp () const
     {
-        return *m_ipstack->template getProtocol<TheUdpProto>();
+        return *m_ipstack->template getProtocol<IpUdpProto<UdpArg>>();
     }
     
     // Convert seconds to ticks, requires seconds <= MaxTimerSeconds.
@@ -765,7 +765,7 @@ private:
     }
     
     UdpRecvResult recvUdpIp4Packet (
-        IpRxInfoIp4<IpStack> const &ip_info, UdpRxInfo<TheUdpProto> const &udp_info,
+        IpRxInfoIp4<IpStack> const &ip_info, UdpRxInfo<UdpArg> const &udp_info,
         IpBufRef udp_data) override final
     {
         // Check for expected source port.
@@ -1356,7 +1356,7 @@ private:
             (ciaddr.isZero() ? IpSendFlags::AllowNonLocalSrc : IpSendFlags());
         
         // Determine the UDP ports.
-        UdpTxInfo<TheUdpProto> udp_info = {DhcpClientPort, DhcpServerPort};
+        UdpTxInfo<UdpArg> udp_info = {DhcpClientPort, DhcpServerPort};
 
         // Send the UDP packet.
         udp().sendUdpIp4Packet(addrs, udp_info, udp_data, iface(), this, send_flags);

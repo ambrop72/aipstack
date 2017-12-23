@@ -58,16 +58,16 @@ namespace AIpStack {
 template <typename Arg>
 class IpUdpProto;
 
-template <typename UdpProto>
+template <typename Arg>
 struct UdpListenParams {
     Ip4Addr iface_addr = Ip4Addr::ZeroAddr();
     uint16_t port = 0;
     bool accept_broadcast = false;
     bool accept_nonlocal_dst = false;
-    IpIface<typename UdpProto::TheIpStack> *iface = nullptr;
+    IpIface<typename IpUdpProto<Arg>::TheIpStack> *iface = nullptr;
 };
 
-template <typename UdpProto>
+template <typename Arg>
 struct UdpRxInfo {
     uint16_t src_port;
     uint16_t dst_port;
@@ -80,7 +80,7 @@ enum class UdpRecvResult {
     AcceptStop
 };
 
-template <typename UdpProto>
+template <typename Arg>
 struct UdpTxInfo {
     uint16_t src_port;
     uint16_t dst_port;
@@ -93,22 +93,22 @@ struct UdpAssociationKey {
     uint16_t remote_port;
 };
 
-template <typename UdpProto>
+template <typename Arg>
 struct UdpAssociationParams {
     UdpAssociationKey key;
     bool accept_nonlocal_dst = false;
 };
 
-template <typename UdpProto>
+template <typename Arg>
 class UdpListener :
-    private NonCopyable<UdpListener<UdpProto>>
+    private NonCopyable<UdpListener<Arg>>
 {
     template <typename> friend class IpUdpProto;
     
-    AIPSTACK_USE_TYPES(UdpProto, (ListenersLinkModel))
+    AIPSTACK_USE_TYPES(IpUdpProto<Arg>, (ListenersLinkModel))
 
 public:
-    using TheIpStack = typename UdpProto::TheIpStack;
+    using TheIpStack = typename IpUdpProto<Arg>::TheIpStack;
 
     UdpListener () :
         m_udp(nullptr)
@@ -135,21 +135,21 @@ public:
         return m_udp != nullptr;
     }
 
-    UdpProto & getUdp () const
+    IpUdpProto<Arg> & getUdp () const
     {
         AIPSTACK_ASSERT(isListening())
 
         return *m_udp;
     }
 
-    UdpListenParams<UdpProto> const & getListenParams () const
+    UdpListenParams<Arg> const & getListenParams () const
     {
         AIPSTACK_ASSERT(isListening())
 
         return m_params;
     }
 
-    IpErr startListening (UdpProto &udp, UdpListenParams<UdpProto> const &params)
+    IpErr startListening (IpUdpProto<Arg> &udp, UdpListenParams<Arg> const &params)
     {
         AIPSTACK_ASSERT(!isListening())
 
@@ -163,12 +163,12 @@ public:
 
 protected:
     virtual UdpRecvResult recvUdpIp4Packet (
-        IpRxInfoIp4<TheIpStack> const &ip_info, UdpRxInfo<UdpProto> const &udp_info,
+        IpRxInfoIp4<TheIpStack> const &ip_info, UdpRxInfo<Arg> const &udp_info,
         IpBufRef udp_data) = 0;
 
 private:
     bool incomingPacketMatches (
-        IpRxInfoIp4<TheIpStack> const &ip_info, UdpRxInfo<UdpProto> const &udp_info,
+        IpRxInfoIp4<TheIpStack> const &ip_info, UdpRxInfo<Arg> const &udp_info,
         bool dst_is_iface_addr) const
     {
         AIPSTACK_ASSERT(dst_is_iface_addr ==
@@ -205,18 +205,18 @@ private:
 
 private:
     LinkedListNode<ListenersLinkModel> m_list_node;
-    UdpProto *m_udp;
-    UdpListenParams<UdpProto> m_params;
+    IpUdpProto<Arg> *m_udp;
+    UdpListenParams<Arg> m_params;
 };
 
-template <typename UdpProto>
+template <typename Arg>
 class UdpAssociation :
-    private NonCopyable<UdpAssociation<UdpProto>>
+    private NonCopyable<UdpAssociation<Arg>>
 {
     template <typename> friend class IpUdpProto;
     
 public:
-    using TheIpStack = typename UdpProto::TheIpStack;
+    using TheIpStack = typename IpUdpProto<Arg>::TheIpStack;
 
     UdpAssociation () :
         m_udp(nullptr)
@@ -240,21 +240,21 @@ public:
         return m_udp != nullptr;
     }
 
-    UdpProto & getUdp () const
+    IpUdpProto<Arg> & getUdp () const
     {
         AIPSTACK_ASSERT(isAssociated())
 
         return *m_udp;
     }
 
-    UdpAssociationParams<UdpProto> const & getAssociationParams () const
+    UdpAssociationParams<Arg> const & getAssociationParams () const
     {
         AIPSTACK_ASSERT(isAssociated())
 
         return m_params;
     }
 
-    IpErr associate (UdpProto &udp, UdpAssociationParams<UdpProto> const &params)
+    IpErr associate (IpUdpProto<Arg> &udp, UdpAssociationParams<Arg> const &params)
     {
         AIPSTACK_ASSERT(!isAssociated())
 
@@ -272,19 +272,23 @@ public:
 
 protected:
     virtual UdpRecvResult recvUdpIp4Packet (
-        IpRxInfoIp4<TheIpStack> const &ip_info, UdpRxInfo<UdpProto> const &udp_info,
+        IpRxInfoIp4<TheIpStack> const &ip_info, UdpRxInfo<Arg> const &udp_info,
         IpBufRef udp_data) = 0;
     
 private:
-    typename UdpProto::AssociationIndex::Node m_index_node;
-    UdpProto *m_udp;
-    UdpAssociationParams<UdpProto> m_params;
+    typename IpUdpProto<Arg>::AssociationIndex::Node m_index_node;
+    IpUdpProto<Arg> *m_udp;
+    UdpAssociationParams<Arg> m_params;
 };
 
-template <typename Arg>
+template <typename Arg_>
 class IpUdpProto :
-    private NonCopyable<IpUdpProto<Arg>>
+    private NonCopyable<IpUdpProto<Arg_>>
 {
+public:
+    using Arg = Arg_;
+
+private:
     template <typename> friend class UdpListener;
     template <typename> friend class UdpAssociation;
 
@@ -303,24 +307,20 @@ public:
 private:
     using Platform = PlatformFacade<PlatformImpl>;
 
-public:
-    using Listener = UdpListener<IpUdpProto>;
-    
-    using Association = UdpAssociation<IpUdpProto>;
-    
 private:
     struct ListenerListNodeAccessor;
-    using ListenersLinkModel = PointerLinkModel<Listener>;
+    using ListenersLinkModel = PointerLinkModel<UdpListener<Arg>>;
 
     using ListenersList = LinkedList<
         ListenerListNodeAccessor, ListenersLinkModel, /*WithLast=*/false>;
 
     struct ListenerListNodeAccessor : public MemberAccessor<
-        Listener, LinkedListNode<ListenersLinkModel>, &Listener::m_list_node> {};
+        UdpListener<Arg>, LinkedListNode<ListenersLinkModel>,
+        &UdpListener<Arg>::m_list_node> {};
     
     struct AssociationIndexNodeAccessor;
     struct AssociationIndexKeyFuncs;
-    using AssociationLinkModel = PointerLinkModel<Association>;
+    using AssociationLinkModel = PointerLinkModel<UdpAssociation<Arg>>;
     using AssociationIndexLookupKeyArg = UdpAssociationKey const &;
 
     AIPSTACK_MAKE_INSTANCE(AssociationIndex, (UdpIndexService::template Index<
@@ -328,7 +328,8 @@ private:
         AssociationIndexKeyFuncs, AssociationLinkModel, /*Duplicates=*/false>))
 
     struct AssociationIndexNodeAccessor : public MemberAccessor<
-        Association, typename AssociationIndex::Node, &Association::m_index_node> {};
+        UdpAssociation<Arg>, typename AssociationIndex::Node,
+        &UdpAssociation<Arg>::m_index_node> {};
     
     using AssociationKeyCompare = LexiKeyCompare<UdpAssociationKey, MakeTypeList<
         WrapValue<uint16_t UdpAssociationKey::*, &UdpAssociationKey::remote_port>,
@@ -338,7 +339,8 @@ private:
     >>;
     
     struct AssociationIndexKeyFuncs : public AssociationKeyCompare {
-        inline static UdpAssociationKey const & GetKeyOfEntry (Association const &assoc)
+        inline static UdpAssociationKey const & GetKeyOfEntry (
+            UdpAssociation<Arg> const &assoc)
         {
             return assoc.m_params.key;
         }
@@ -362,7 +364,7 @@ public:
         AIPSTACK_ASSERT(m_next_listener == nullptr)
     }
 
-    IpErr sendUdpIp4Packet (Ip4Addrs const &addrs, UdpTxInfo<IpUdpProto> const &udp_info,
+    IpErr sendUdpIp4Packet (Ip4Addrs const &addrs, UdpTxInfo<Arg> const &udp_info,
                             IpBufRef udp_data, IpIface<TheIpStack> *iface,
                             IpSendRetryRequest *retryReq, IpSendFlags send_flags)
     {
@@ -406,7 +408,7 @@ public:
         auto udp_header = Udp4Header::MakeRef(dgram.getChunkPtr());
 
         // Fill in UdpRxInfo (has_checksum would be set later).
-        UdpRxInfo<IpUdpProto> udp_info;
+        UdpRxInfo<Arg> udp_info;
         udp_info.src_port = udp_header.get(Udp4Header::SrcPort());
         udp_info.dst_port = udp_header.get(Udp4Header::DstPort());
 
@@ -456,7 +458,7 @@ public:
         // Check if the packet should be dispatched to a listener.
         UdpAssociationKey assoc_key =
             {ip_info.dst_addr, ip_info.src_addr, udp_info.dst_port, udp_info.src_port};
-        Association *assoc = m_associations_index.findEntry(assoc_key);
+        UdpAssociation<Arg> *assoc = m_associations_index.findEntry(assoc_key);
 
         if (assoc != nullptr) do {
             AIPSTACK_ASSERT(assoc->m_udp == this)
@@ -493,7 +495,7 @@ public:
         
         // Look for listeners which match the incoming packet.
         // NOTE: `lis` must be properly adjusted at the end of each iteration!
-        for (Listener *lis = m_listeners_list.first(); lis != nullptr;) {
+        for (UdpListener<Arg> *lis = m_listeners_list.first(); lis != nullptr;) {
             AIPSTACK_ASSERT(lis->m_udp == this)
             
             // Check if the listener matches, if not skip it.
@@ -586,7 +588,7 @@ private:
     TheIpStack *m_stack;
     StructureRaiiWrapper<ListenersList> m_listeners_list;
     StructureRaiiWrapper<typename AssociationIndex::Index> m_associations_index;
-    Listener *m_next_listener;
+    UdpListener<Arg> *m_next_listener;
 };
 
 struct IpUdpProtoOptions {
