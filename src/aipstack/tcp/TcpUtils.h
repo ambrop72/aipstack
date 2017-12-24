@@ -393,7 +393,7 @@ public:
      */
     template <typename IntType>
     inline static bool InOpenClosedIntervalStartLen (
-                            IntType start, IntType length, IntType x)
+        IntType start, IntType length, IntType x)
     {
         static_assert(std::numeric_limits<IntType>::is_integer, "");
         static_assert(!std::numeric_limits<IntType>::is_signed, "");
