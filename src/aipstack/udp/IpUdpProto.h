@@ -341,6 +341,16 @@ public:
 
         m_params = params;
 
+        if (m_params.key.local_addr.isZero()) {
+            // Select the local IP address.
+            IpIface<TheIpStack> *iface;
+            IpErr select_err = udp.m_stack->selectLocalIp4Address(
+                m_params.key.remote_addr, iface, m_params.key.local_addr);
+            if (select_err != IpErr::SUCCESS) {
+                return select_err;
+            }
+        }
+
         if (m_params.key.local_port == 0) {
             if (!udp.get_ephemeral_port(m_params.key)) {
                 return IpErr::NO_PORT_AVAIL;
