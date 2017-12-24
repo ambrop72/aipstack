@@ -902,6 +902,41 @@ public:
         return sendIcmp4Message(addrs, rx_ip_info.iface, Icmp4TypeDestUnreach,
                                 du_meta.icmp_code, du_meta.icmp_rest, data);
     }
+
+    /**
+     * Select an interface and local IP address to be used for communication with a
+     * specific remote IP address.
+     * 
+     * This checks for a route to the given remote IP address and verifies that the
+     * selected network interface has an IP address configured. If that is OK, it succeeds
+     * and provides the interface and its local address.
+     * 
+     * @param remote_addr Remote IP address.
+     * @param out_iface On success, is set to a pointer to the selected network interface
+     *        (not changed on failure).
+     * @param out_local_addr On success, is set to the selected local IP address (not
+     *        changed on failure).
+     * @return Success or error code.
+     */
+    IpErr selectLocalIp4Address (
+        Ip4Addr remote_addr, Iface *&out_iface, Ip4Addr &out_local_addr) const
+    {
+        // Determine the local interface.
+        RouteInfoIp4 route_info;
+        if (!routeIp4(remote_addr, route_info)) {
+            return IpErr::NO_IP_ROUTE;
+        }
+        
+        // Determine the local IP address.
+        IpIfaceIp4AddrSetting addr_setting = route_info.iface->getIp4Addr();
+        if (!addr_setting.present) {
+            return IpErr::NO_IP_ROUTE;
+        }
+
+        out_iface = route_info.iface;
+        out_local_addr = addr_setting.addr;
+        return IpErr::SUCCESS;
+    }
     
 private:
     using IfaceListenerList = LinkedList<

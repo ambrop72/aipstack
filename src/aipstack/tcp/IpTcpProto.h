@@ -714,19 +714,13 @@ private:
         AIPSTACK_ASSERT(con->MtuRef::isSetup())
         AIPSTACK_ASSERT(out_pcb != nullptr)
         
-        // Determine the local interface.
-        RouteInfoIp4 route_info;
+        // Determine the interface and local IP address.
         Iface *iface;
-        if (!m_stack->routeIp4(remote_addr, route_info)) {
-            return IpErr::NO_IP_ROUTE;
+        Ip4Addr local_addr;
+        IpErr select_err = m_stack->selectLocalIp4Address(remote_addr, iface, local_addr);
+        if (select_err != IpErr::SUCCESS) {
+            return select_err;
         }
-        
-        // Determine the local IP address.
-        IpIfaceIp4AddrSetting addr_setting = route_info.iface->getIp4Addr();
-        if (!addr_setting.present) {
-            return IpErr::NO_IP_ROUTE;
-        }
-        Ip4Addr local_addr = addr_setting.addr;
         
         // Determine the local port.
         PortType local_port = get_ephemeral_port(local_addr, remote_addr, remote_port);
@@ -735,7 +729,7 @@ private:
         }
         
         // Calculate the MSS based on the interface MTU.
-        uint16_t iface_mss = route_info.iface->getMtu() - Ip4TcpHeaderSize;
+        uint16_t iface_mss = iface->getMtu() - Ip4TcpHeaderSize;
         
         // Allocate the PCB.
         TcpPcb *pcb = allocate_pcb();
