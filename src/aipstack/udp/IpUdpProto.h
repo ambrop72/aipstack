@@ -34,6 +34,7 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/LoopUtils.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
@@ -318,7 +319,7 @@ public:
         return m_udp != nullptr;
     }
 
-    UdpApi<Arg> & getUdp () const
+    UdpApi<Arg> & getApi () const
     {
         AIPSTACK_ASSERT(isAssociated())
 
@@ -332,16 +333,25 @@ public:
         return m_params;
     }
 
-    IpErr associate (UdpApi<Arg> &udp, UdpAssociationParams<Arg> const &params)
+    IpErr associate (UdpApi<Arg> &api, UdpAssociationParams<Arg> const &params)
     {
         AIPSTACK_ASSERT(!isAssociated())
 
-        if (!udp.proto().m_associations_index.findEntry(params.key).isNull()) {
-            return IpErr::ADDR_IN_USE;
+        IpUdpProto<Arg> &udp = api.proto();
+
+        m_params = params;
+
+        if (m_params.key.local_port == 0) {
+            if (!udp.get_ephemeral_port(m_params.key)) {
+                return IpErr::NO_PORT_AVAIL;
+            }
+        } else {
+            if (!udp.m_associations_index.findEntry(m_params.key).isNull()) {
+                return IpErr::ADDR_IN_USE;
+            }
         }
 
-        m_udp = &udp.proto();
-        m_params = params;
+        m_udp = &udp;
 
         m_udp->m_associations_index.addEntry(*this);
 
@@ -378,6 +388,10 @@ class IpUdpProto :
     static_assert(EphemeralPortFirst <= EphemeralPortLast, "");
 
     using Platform = PlatformFacade<PlatformImpl>;
+
+    using PortType = uint16_t;
+
+    static PortType const NumEphemeralPorts = EphemeralPortLast - EphemeralPortFirst + 1;
 
     struct ListenerListNodeAccessor;
     using ListenersLinkModel = PointerLinkModel<UdpListener<Arg>>;
@@ -420,7 +434,8 @@ class IpUdpProto :
 public:
     IpUdpProto (IpProtocolHandlerArgs<TheIpStack> args) :
         m_stack(args.stack),
-        m_next_listener(nullptr)
+        m_next_listener(nullptr),
+        m_next_ephemeral_port(EphemeralPortFirst)
     {}
 
     ~IpUdpProto ()
@@ -619,11 +634,29 @@ private:
         return true;
     }
 
+    bool get_ephemeral_port (UdpAssociationKey &key)
+    {
+        for (PortType i : LoopRange(NumEphemeralPorts)) {
+            PortType port = m_next_ephemeral_port;
+            m_next_ephemeral_port = (port < EphemeralPortLast) ?
+                (port + 1) : EphemeralPortFirst;
+            
+            key.local_port = port;
+
+            if (m_associations_index.findEntry(key).isNull()) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
 private:
     TheIpStack *m_stack;
     StructureRaiiWrapper<ListenersList> m_listeners_list;
     StructureRaiiWrapper<typename AssociationIndex::Index> m_associations_index;
     UdpListener<Arg> *m_next_listener;
+    PortType m_next_ephemeral_port;
 };
 
 #endif
