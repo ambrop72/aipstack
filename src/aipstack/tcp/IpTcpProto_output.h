@@ -56,11 +56,13 @@ class IpTcpProto_output
                                    OptionFlags, TcpOptions))
     AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lt2, seq_add_sat, tcplen,
                                  can_output_in_state, snd_open_in_state))
-    AIPSTACK_USE_TYPES(TcpProto, (RxInfoIp4, TcpPcb, PcbFlags, Input, TimeType, RttType,
-                                   RttNextType, Constants, OutputTimer, RtxTimer,
-                                   TheIpStack, MtuRef, Connection, PcbKey))
-    AIPSTACK_USE_VALS(TcpProto, (RttTypeMax))
+    AIPSTACK_USE_TYPES(TcpProto, (RxInfoIp4, TcpPcb, PcbFlags, Input, TimeType, Constants,
+                                  OutputTimer, RtxTimer, TheIpStack, MtuRef, Connection,
+                                  PcbKey))
+    AIPSTACK_USE_TYPES(Constants, (RttType, RttNextType))
     AIPSTACK_USE_VALS(TheIpStack, (HeaderBeforeIp4Dgram))
+
+    static RttType const RttTypeMax = TypeMax<RttType>();
     
 public:
     // Check if our FIN has been ACKed.
@@ -803,7 +805,7 @@ public:
     
     static TimeType pcb_rto_time (TcpPcb *pcb)
     {
-        return (TimeType)pcb->rto << TcpProto::RttShift;
+        return (TimeType)pcb->rto << Constants::RttShift;
     }
     
     static void pcb_end_rtt_measurement (TcpPcb *pcb)
@@ -816,7 +818,7 @@ public:
         
         // Calculate how much time has passed, also in RTT units.
         TimeType time_diff = pcb->platform().getTime() - pcb->rtt_test_time;
-        RttType this_rtt = MinValueU(RttTypeMax, time_diff >> TcpProto::RttShift);
+        RttType this_rtt = MinValueU(RttTypeMax, time_diff >> Constants::RttShift);
         
         Connection *con = pcb->con;
         

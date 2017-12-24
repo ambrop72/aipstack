@@ -80,7 +80,7 @@ public:
             
             Connection::setRecvBuf(IpBufRef{&m_rx_buf_node, 0, RxBufferSize});
             
-            m_time = Connection::getTcp().platform().getTime();
+            m_time = Connection::getApi().platform().getTime();
             m_ready = false;
             
             // Added a not-ready connection -> update timeout.

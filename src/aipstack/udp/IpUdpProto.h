@@ -111,12 +111,16 @@ struct UdpAssociationParams {
 };
 
 template <typename Arg>
-class UdpApi
+class UdpApi :
+    private NonCopyable<UdpApi<Arg>>
 {
     template <typename> friend class UdpListener;
     template <typename> friend class UdpAssociation;
     template <typename> friend class IpUdpProto;
 
+    AIPSTACK_USE_VALS(Arg::Params, (UdpTTL))
+
+private:
     inline IpUdpProto<Arg> & proto () {
         return static_cast<IpUdpProto<Arg> &>(*this);
     }
@@ -125,9 +129,10 @@ class UdpApi
         return static_cast<IpUdpProto<Arg> const &>(*this);
     }
     
-    AIPSTACK_USE_VALS(Arg::Params, (UdpTTL))
-
-    UdpApi() = default;
+    // Prevent construction except from IpUdpProto (which is a friend). The second
+    // declaration disables aggregate construction.
+    UdpApi () = default;
+    UdpApi (int);
 
 public:
     using TheIpStack = typename Arg::TheIpStack;
@@ -356,15 +361,11 @@ private:
 
 #ifndef IN_DOXYGEN
 
-template <typename Arg_>
+template <typename Arg>
 class IpUdpProto :
-    private NonCopyable<IpUdpProto<Arg_>>,
-    private UdpApi<Arg_>
+    private NonCopyable<IpUdpProto<Arg>>,
+    private UdpApi<Arg>
 {
-public:
-    using Arg = Arg_;
-
-private:
     template <typename> friend class UdpApi;
     template <typename> friend class UdpListener;
     template <typename> friend class UdpAssociation;

@@ -32,7 +32,6 @@
 #include <type_traits>
 
 #include <aipstack/infra/Instance.h>
-#include <aipstack/meta/BitsInFloat.h>
 #include <aipstack/meta/ChooseInt.h>
 #include <aipstack/meta/BasicMetaUtils.h>
 #include <aipstack/misc/Hints.h>
@@ -42,7 +41,6 @@
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/ResourceArray.h>
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/misc/PowerOfTwo.h>
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/LinkModel.h>
@@ -55,16 +53,16 @@
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Tcp4Proto.h>
 #include <aipstack/ip/IpStack.h>
-#include <aipstack/tcp/TcpUtils.h>
-#include <aipstack/tcp/TcpOosBuffer.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/platform/MultiTimer.h>
-
-#include "IpTcpProto_constants.h"
-#include "IpTcpProto_input.h"
-#include "IpTcpProto_output.h"
-#include "TcpListener.h"
-#include "TcpConnection.h"
+#include <aipstack/tcp/TcpUtils.h>
+#include <aipstack/tcp/TcpOosBuffer.h>
+#include <aipstack/tcp/TcpApi.h>
+#include <aipstack/tcp/TcpListener.h>
+#include <aipstack/tcp/TcpConnection.h>
+#include <aipstack/tcp/IpTcpProto_constants.h>
+#include <aipstack/tcp/IpTcpProto_input.h>
+#include <aipstack/tcp/IpTcpProto_output.h>
 
 namespace AIpStack {
 
@@ -73,7 +71,8 @@ namespace AIpStack {
  */
 template <typename Arg>
 class IpTcpProto :
-    private NonCopyable<IpTcpProto<Arg>>
+    private NonCopyable<IpTcpProto<Arg>>,
+    private TcpApi<Arg>
 {
     AIPSTACK_USE_VALS(Arg::Params, (TcpTTL, NumTcpPcbs, NumOosSegs,
                                     EphemeralPortFirst, EphemeralPortLast,
@@ -95,21 +94,19 @@ class IpTcpProto :
     template <typename> friend class IpTcpProto_constants;
     template <typename> friend class IpTcpProto_input;
     template <typename> friend class IpTcpProto_output;
+    template <typename> friend class TcpApi;
     template <typename> friend class TcpListener;
     template <typename> friend class TcpConnection;
     
-public:
-    AIPSTACK_USE_TYPES(TcpUtils, (SeqType, PortType))
-    
-private:
     using Constants = IpTcpProto_constants<Arg>;
     using Input = IpTcpProto_input<Arg>;
     using Output = IpTcpProto_output<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (TcpState, TcpOptions, PcbKey, PcbKeyCompare))
+    AIPSTACK_USE_TYPES(TcpUtils, (TcpState, TcpOptions, PcbKey, PcbKeyCompare, SeqType,
+                                  PortType))
     AIPSTACK_USE_VALS(TcpUtils, (state_is_active, accepting_data_in_state,
-                                 can_output_in_state, snd_open_in_state,
-                                 seq_diff))
+                                 snd_open_in_state))
+    AIPSTACK_USE_TYPES(Constants, (RttType))
     
     struct TcpPcb;
     
@@ -150,22 +147,6 @@ private:
         // NOTE: Currently no more bits are available, see TcpPcb::flags.
     }; };
     
-    // For retransmission time calculations we right-shift the TimeType
-    // to obtain granularity between 1ms and 2ms.
-    static int const RttShift = BitsInFloat(1e-3 * Platform::TimeFreq);
-    static_assert(RttShift >= 0, "");
-    static constexpr double RttTimeFreq =
-        Platform::TimeFreq / PowerOfTwo<double>(RttShift);
-    
-    // We store such scaled times in 16-bit variables.
-    // This gives us a range of at least 65 seconds.
-    using RttType = uint16_t;
-    static RttType const RttTypeMax = (RttType)-1;
-    static constexpr double RttTypeMaxDbl = RttTypeMax;
-    
-    // For intermediate RTT results we need a larger type.
-    using RttNextType = uint32_t;
-    
     // Number of ephemeral ports.
     static PortType const NumEphemeralPorts = EphemeralPortLast - EphemeralPortFirst + 1;
     
@@ -193,13 +174,9 @@ private:
     
     using ListenerLinkModel = PointerLinkModel<TcpListener<Arg>>;
     
-public:
     using Listener = TcpListener<Arg>;
     using Connection = TcpConnection<Arg>;
     
-    static SeqType const MaxRcvWnd = Constants::MaxWindow;
-    
-private:
     // These TcpPcb fields are injected into MultiTimer to fill up what
     // would otherwise be holes in the layout, for better memory use.
     struct MultiTimerUserData {
@@ -406,7 +383,7 @@ public:
         AIPSTACK_ASSERT(m_current_pcb == nullptr)
     }
     
-    inline IpTcpProto<Arg> & getApi ()
+    inline TcpApi<Arg> & getApi ()
     {
         return *this;
     }
@@ -422,12 +399,12 @@ public:
         Input::handleIp4DestUnreach(this, du_meta, ip_info, dgram_initial);
     }
     
-    inline Platform platform ()
+private:
+    inline Platform platform () const
     {
         return m_pcbs[0].platform();
     }
     
-private:
     TcpPcb * allocate_pcb ()
     {
         // No PCB available?

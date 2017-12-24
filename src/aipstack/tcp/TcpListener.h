@@ -42,6 +42,7 @@ namespace AIpStack {
 #ifndef IN_DOXYGEN
 template <typename> class IpTcpProto;
 template <typename> class IpTcpProto_input;
+template <typename> class TcpApi;
 template <typename> class TcpConnection;
 #endif
 
@@ -61,14 +62,12 @@ template <typename Arg>
 class TcpListener :
     private NonCopyable<TcpListener<Arg>>
 {
-public:
-    using TcpProto = IpTcpProto<Arg>;
-
-private:
     template <typename> friend class IpTcpProto;
     template <typename> friend class IpTcpProto_input;
     template <typename> friend class TcpConnection;
     
+    using TcpProto = IpTcpProto<Arg>;
+
     AIPSTACK_USE_TYPES(TcpUtils, (PortType, SeqType))
     AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Constants))
     
@@ -120,7 +119,7 @@ public:
     /**
      * Return whether we are listening.
      */
-    bool isListening ()
+    bool isListening () const
     {
         return m_listening;
     }
@@ -128,17 +127,17 @@ public:
     /**
      * Return whether a connection is ready to be accepted.
      */
-    bool hasAcceptPending ()
+    bool hasAcceptPending () const
     {
         return m_accept_pcb != nullptr;
     }
     
     /**
-     * Return a reference to the TCP protocol.
+     * Return a reference to the TCP protocol API.
      * 
      * May only be called when listening.
      */
-    TcpProto & getTcp ()
+    TcpApi<Arg> & getApi () const
     {
         AIPSTACK_ASSERT(isListening())
         
@@ -153,10 +152,12 @@ public:
      * Return success/failure to start listening. It can fail only if there
      * is another listener listening on the same pair of address and port.
      */
-    bool startListening (TcpProto &tcp, TcpListenParams const &params)
+    bool startListening (TcpApi<Arg> &api, TcpListenParams const &params)
     {
         AIPSTACK_ASSERT(!m_listening)
         AIPSTACK_ASSERT(params.max_pcbs > 0)
+        
+        TcpProto &tcp = api.proto();
         
         // Check if there is an existing listener listning on this address+port.
         if (tcp.find_listener(params.addr, params.port) != nullptr) {

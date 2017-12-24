@@ -34,7 +34,7 @@
 #include <aipstack/misc/Hints.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/MemRef.h>
-#include <aipstack/tcp/IpTcpProto.h>
+#include <aipstack/tcp/TcpConnection.h>
 
 namespace AIpStack {
 

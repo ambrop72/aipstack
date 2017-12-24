@@ -46,7 +46,9 @@
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/tcp/IpTcpProto.h>
+#include <aipstack/tcp/TcpApi.h>
+#include <aipstack/tcp/TcpListener.h>
+#include <aipstack/tcp/TcpConnection.h>
 #include <aipstack/utils/TcpRingBufferUtils.h>
 
 namespace AIpStackExamples {
@@ -58,7 +60,7 @@ class ExampleServer :
     using TheIpStack = typename Arg::TheIpStack;
     using Params = typename Arg::Params;
     
-    using TcpArg = typename TheIpStack::template GetProtoApiArg<AIpStack::IpTcpProto>;
+    using TcpArg = typename TheIpStack::template GetProtoApiArg<AIpStack::TcpApi>;
     using TcpListener = AIpStack::TcpListener<TcpArg>;
     using TcpConnection = AIpStack::TcpConnection<TcpArg>;
 
@@ -89,9 +91,9 @@ public:
     }
     
 private:
-    inline AIpStack::IpTcpProto<TcpArg> & tcp () const
+    inline AIpStack::TcpApi<TcpArg> & tcp () const
     {
-        return m_stack->template getProtoApi<AIpStack::IpTcpProto>();
+        return m_stack->template getProtoApi<AIpStack::TcpApi>();
     }
     
     void startListening (MyListener &listener, std::uint16_t port, std::size_t buffer_size)

@@ -28,29 +28,45 @@
 #include <stdint.h>
 
 #include <aipstack/meta/BitsInInt.h>
+#include <aipstack/meta/BitsInFloat.h>
+#include <aipstack/misc/PowerOfTwo.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/proto/Tcp4Proto.h>
-#include <aipstack/ip/IpStack.h>
+#include <aipstack/ip/IpStackHelperTypes.h>
+#include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/tcp/TcpUtils.h>
 
 namespace AIpStack {
 
-#ifndef IN_DOXYGEN
-template <typename> class IpTcpProto;
-#endif
-
 template <typename Arg>
 class IpTcpProto_constants
 {
+    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, TheIpStack))
     AIPSTACK_USE_TYPES(TcpUtils, (SeqType))
-    AIPSTACK_USE_TYPES(IpTcpProto<Arg>, (TimeType, RttType, Platform, TheIpStack))
-    AIPSTACK_USE_VALS(IpTcpProto<Arg>, (RttTimeFreq, RttTypeMaxDbl))
-    
+
+    using Platform = PlatformFacade<PlatformImpl>;
+    AIPSTACK_USE_TYPES(Platform, (TimeType))
+
     // Make sure the MinMTU permits an unfragmented TCP segment with some data.
     static_assert(TheIpStack::MinMTU >= Ip4TcpHeaderSize + 32, "");
     
-public:    
+public:
+    // For retransmission time calculations we right-shift the TimeType
+    // to obtain granularity between 1ms and 2ms.
+    static int const RttShift = BitsInFloat(1e-3 * Platform::TimeFreq);
+    static_assert(RttShift >= 0, "");
+
+    // The resulting frequency of such right-shifted time.
+    static constexpr double RttTimeFreq = Platform::TimeFreq / PowerOfTwo<double>(RttShift);
+    
+    // We store such scaled times in 16-bit variables. This gives us a range of at least 65
+    // seconds.
+    using RttType = uint16_t;
+    
+    // For intermediate RTT results we need a larger type.
+    using RttNextType = uint32_t;
+
     // Don't allow the remote host to lower the MSS beyond this.
     // NOTE: pcb_calc_snd_mss_from_pmtu relies on this definition.
     static uint16_t const MinAllowedMss = TheIpStack::MinMTU - Ip4TcpHeaderSize;
@@ -59,7 +75,6 @@ public:
     // We disable fragmentation of TCP segments sent by us, due to PMTUD.
     static IpSendFlags const TcpIpSendFlags = IpSendFlags::DontFragmentFlag;
     
-public:
     // Maximum theoreticaly possible send and receive window.
     static SeqType const MaxWindow = UINT32_C(0x3fffffff);
     
@@ -97,13 +112,17 @@ public:
     static RttType const MinRtxTime               = 0.25 * RttTimeFreq;
     
     // Maximum retransmission time (need care not to overflow RttType).
-    static RttType const MaxRtxTime = MinValue(RttTypeMaxDbl, 60. * RttTimeFreq);
+    static RttType const MaxRtxTime =
+        MinValue(double(TypeMax<RttType>()), 60. * RttTimeFreq);
     
     // Number of duplicate ACKs to trigger fast retransmit/recovery.
     static uint8_t const FastRtxDupAcks = 3;
     
     // Maximum number of additional duplicate ACKs that will result in CWND increase.
     static uint8_t const MaxAdditionaDupAcks = 32;
+    
+    // Number of bits needed to represent the maximum supported duplicate ACK count.
+    static int const DupAckBits = BitsInInt<FastRtxDupAcks + MaxAdditionaDupAcks>::Value;
     
     // Window scale shift count to send and use in outgoing ACKs.
     static uint8_t const RcvWndShift = 6;
@@ -112,10 +131,6 @@ public:
     // Minimum amount to extend the receive window when a PCB is
     // abandoned before the FIN has been received.
     static SeqType const MinAbandonRcvWndIncr = TypeMax<uint16_t>();
-    
-public:
-    static int const DupAckBits =
-        BitsInInt<FastRtxDupAcks + MaxAdditionaDupAcks>::Value;
 };
 
 }

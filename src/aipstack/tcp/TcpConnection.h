@@ -46,11 +46,10 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
-
 template <typename> class IpTcpProto;
 template <typename> class IpTcpProto_input;
 template <typename> class IpTcpProto_output;
-
+template <typename> class TcpApi;
 #endif
 
 /**
@@ -67,18 +66,17 @@ class TcpConnection :
     // MTU reference.
     private IpMtuRef<typename Arg::TheIpStack>
 {
-public:
-    using TcpProto = IpTcpProto<Arg>;
-
-private:
     template <typename> friend class IpTcpProto;
     template <typename> friend class IpTcpProto_input;
     template <typename> friend class IpTcpProto_output;
     
+    using MtuRef = IpMtuRef<typename Arg::TheIpStack>;
+    using TcpProto = IpTcpProto<Arg>;
+
     AIPSTACK_USE_TYPES(TcpUtils, (TcpState, PortType, SeqType))
     AIPSTACK_USE_VALS(TcpUtils, (state_is_active, snd_open_in_state))
-    AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Input, Output, Constants, MtuRef, OosBuffer,
-                                  RttType))
+    AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Input, Output, Constants, OosBuffer))
+    AIPSTACK_USE_TYPES(Constants, (RttType))
     
 public:
     /**
@@ -191,9 +189,11 @@ public:
      * On failure, the object remains in INIT state.
      * May only be called in INIT state.
      */
-    IpErr startConnection (TcpProto &tcp, Ip4Addr addr, PortType port, size_t rcv_wnd)
+    IpErr startConnection (TcpApi<Arg> &api, Ip4Addr addr, PortType port, size_t rcv_wnd)
     {
         assert_init();
+
+        TcpProto &tcp = api.proto();
         
         // Setup the MTU reference.
         uint16_t pmtu;
@@ -264,11 +264,11 @@ public:
     }
     
     /**
-     * Return a reference to the TCP protocol.
+     * Return a reference to the TCP protocol API.
      * 
      * May only be called in CONNECTED state.
      */
-    TcpProto & getTcp () const
+    TcpApi<Arg> & getApi () const
     {
         AIPSTACK_ASSERT(isConnected())
         
@@ -351,7 +351,7 @@ public:
     {
         AIPSTACK_ASSERT(div >= 2)
         
-        SeqType max_rx_window = MinValueU(buffer_size, TcpProto::MaxRcvWnd);
+        SeqType max_rx_window = MinValueU(buffer_size, TcpApi<Arg>::MaxRcvWnd);
         SeqType thres = MaxValue((SeqType)1, (SeqType)(max_rx_window / div));
         setWindowUpdateThreshold(thres);
     }

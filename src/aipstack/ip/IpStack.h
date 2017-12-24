@@ -298,7 +298,7 @@ public:
      * The @ref getProtoApi function returns an actual reference to the protocol API.
      * 
      * @tparam ProtoApi Class template which represents the protocol API, for example @ref
-     *         UdpApi or @ref IpTcpProto.
+     *         UdpApi or @ref TcpApi.
      */
     template <template <typename> class ProtoApi>
     using GetProtoApiArg = typename GetProtoApiHelper<ProtoApi>::ProtoArg;
@@ -312,7 +312,7 @@ public:
      * See also @ref GetProtoApiArg.
      * 
      * @tparam ProtoApi Class template which represents the protocol API, for example @ref
-     *         UdpApi or @ref IpTcpProto.
+     *         UdpApi or @ref TcpApi.
      * @return Reference to protocol API.
      */
     template <template <typename> class ProtoApi>
@@ -1329,9 +1329,10 @@ public:
      * @tparam PlatformImpl_ Platform layer implementation, that is the PlatformImpl
      *         type to be used with @ref PlatformFacade.
      * @tparam ProtocolServicesList_ List of IP protocol handler services.
-     *         For example, to support only TCP, use
-     *         MakeTypeList\<IpTcpProtoService\<...\>\> with appropriate
-     *         parameters passed to IpTcpProtoService.
+     *         For example, to support TCP and UDP, use
+     *         `MakeTypeList\<IpTcpProtoService\<...\>, IpUdpProtoService\<...\>\>` with
+     *         appropriate parameters passed to @ref IpTcpProtoService and @ref
+     *         IpUdpProtoService.
      */
     template <typename PlatformImpl_, typename ProtocolServicesList_>
     struct Compose {

@@ -168,6 +168,28 @@ public:
     }
     
     /**
+     * Return a reference to the public API for this protocol.
+     * 
+     * The public API is meant to be the interface for using the protocol from application
+     * code. The @ref IpStack does not use the public API, only exposes it via @ref
+     * IpStack::GetProtoApiArg and @ref IpStack::getProtoApi. For more information see the
+     * main description in @ref IpProtocolHandlerStub.
+     * 
+     * This example declaration of the `getApi` function is against the recommendation that
+     * the protocol API is a separate class template since it returns a reference to this
+     * same class, but this is the simplest approach. Real protocol implementations are
+     * advised to define a separate class template for the protocol API, privately inherit
+     * it, and return a reference to it from this function. For an example of this
+     * approach, see the UDP implementation (@ref IpUdpProto.h).
+     * 
+     * @return Reference to the public API.
+     */
+    inline IpProtocolHandlerStub<Arg> & getApi ()
+    {
+        return *this;
+    }
+    
+    /**
      * Process a received IPv4 datagram for this protocol.
      * 
      * This is called when a (possibly reassembled) IPv4 datagram is
@@ -193,28 +215,6 @@ public:
      */
     void recvIp4Dgram (RxInfoIp4 const &ip_info, IpBufRef dgram)
     {
-    }
-    
-    /**
-     * Return a reference to the public API for this protocol.
-     * 
-     * The public API is meant to be the interface for using the protocol from application
-     * code. The @ref IpStack does not use the public API, only exposes it via @ref
-     * IpStack::GetProtoApiArg and @ref IpStack::getProtoApi. For more information see the
-     * main description in @ref IpProtocolHandlerStub.
-     * 
-     * This example declaration of the `getApi` function is against the recommendation that
-     * the protocol API is a separate class template since it returns a reference to this
-     * same class, but this is the simplest approach. Real protocol implementations are
-     * advised to define a separate class template for the protocol API, privately inherit
-     * it, and return a reference to it from this function. For an example of this
-     * approach, see the UDP implementation (@ref IpUdpProto.h).
-     * 
-     * @return Reference to the public API.
-     */
-    inline IpProtocolHandlerStub<Arg> & getApi ()
-    {
-        return *this;
     }
 
     /**
