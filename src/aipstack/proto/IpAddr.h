@@ -26,6 +26,7 @@
 #define AIPSTACK_IP_ADDR_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/infra/Struct.h>
@@ -111,7 +112,7 @@ public:
         AddrType addr = {};
         int byte_idx = 0;
         for (int elem_idx = 0; elem_idx < Length; elem_idx++) {
-            for (int i = 0; i < IpGenericAddr::ElemSize; i++) {
+            for (size_t i = 0; i < IpGenericAddr::ElemSize; i++) {
                 addr.data[elem_idx] |= (ElemType)bytes[byte_idx] << (8 * (IpGenericAddr::ElemSize - 1 - i));
                 byte_idx++;
             }

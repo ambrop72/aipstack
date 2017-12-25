@@ -26,6 +26,7 @@
 #define AIPSTACK_ETHERNET_PROTO_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #include <aipstack/infra/Struct.h>
 
@@ -42,7 +43,7 @@ public:
     static inline constexpr MacAddr BroadcastAddr ()
     {
         MacAddr result = {};
-        for (int i = 0; i < MacAddr::Size; i++) {
+        for (size_t i = 0; i < MacAddr::Size; i++) {
             result.data[i] = 0xFF;
         }
         return result;

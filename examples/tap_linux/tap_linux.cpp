@@ -196,11 +196,11 @@ void TapDevice::pollCb (int status, int events)
             return;
         }
         
-        AIPSTACK_ASSERT(read_res <= m_frame_mtu)
+        AIPSTACK_ASSERT(std::size_t(read_res) <= m_frame_mtu)
         
         AIpStack::IpBufNode node{
             m_read_buffer.data(),
-            (std::size_t)read_res,
+            std::size_t(read_res),
             nullptr
         };
         

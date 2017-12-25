@@ -220,7 +220,7 @@ public:
         do {
             // Verify that the fragment fits into the buffer.
             if (fragment_offset > MaxReassSize ||
-                dgram.tot_len > MaxReassSize - fragment_offset)
+                dgram.tot_len > uint16_t(MaxReassSize - fragment_offset))
             {
                 goto invalidate_reass;
             }
