@@ -209,6 +209,7 @@ private:
         }));
         
         AIPSTACK_ASSERT(!not_handled)
+        (void)not_handled;
     }
 };
 

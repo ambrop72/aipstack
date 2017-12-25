@@ -127,6 +127,7 @@ public:
         {
             bool inserted = m_tree.insert(e, nullptr, st);
             AIPSTACK_ASSERT(inserted)
+            (void)inserted;
         }
         
         inline void removeEntry (Ref e, State st = State())
