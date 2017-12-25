@@ -79,7 +79,11 @@
 #define AIPSTACK_AS_MAP_21(f, del, arg, pars) AIPSTACK_AS_MAP_20(f, del, arg, pars) del(dummy) f(arg, AIPSTACK_AS_GET_21 pars)
 #define AIPSTACK_AS_MAP_22(f, del, arg, pars) AIPSTACK_AS_MAP_21(f, del, arg, pars) del(dummy) f(arg, AIPSTACK_AS_GET_22 pars)
 
-#define AIPSTACK_AS_MAP(f, del, arg, pars) AIPSTACK_JOIN(AIPSTACK_AS_MAP_, AIPSTACK_NUM_TUPLE_ARGS(pars))(f, del, arg, pars)
+// This injects a dummy parameter to the end of pars in order to not call AIPSTACK_AS_GET_n
+// macros without any variadic argument, which is not allowed before C++20.
+#define AIPSTACK_AS_ADD_DUMMY_TO_PARS(...) (__VA_ARGS__, aipstack_as_dummy_end)
+
+#define AIPSTACK_AS_MAP(f, del, arg, pars) AIPSTACK_JOIN(AIPSTACK_AS_MAP_, AIPSTACK_NUM_TUPLE_ARGS(pars))(f, del, arg, AIPSTACK_AS_ADD_DUMMY_TO_PARS pars)
 
 #define AIPSTACK_AS_MAP_DELIMITER_NONE(dummy)
 #define AIPSTACK_AS_MAP_DELIMITER_COMMA(dummy) ,
