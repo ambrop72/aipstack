@@ -63,7 +63,7 @@ struct OneOfStruct<> {
     
     template <typename SelType>
     AIPSTACK_ALWAYS_INLINE
-    constexpr bool one_of (SelType const &sel) const
+    constexpr bool one_of (SelType const &) const
     {
         return false;
     }

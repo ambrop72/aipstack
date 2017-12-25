@@ -121,8 +121,8 @@ private:
 public:
     using Timer::platform;
     
-    inline MultiTimer (Platform platform) :
-        Timer(platform),
+    inline MultiTimer (Platform platform_) :
+        Timer(platform_),
         m_state(0)
     {
     }

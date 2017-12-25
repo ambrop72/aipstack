@@ -256,6 +256,8 @@ private:
     private:
         void dataReceived (std::size_t amount) override final
         {
+            (void)amount;
+
             if (m_state == State::RecvLine) {
                 return processReceived();
             }
@@ -263,6 +265,8 @@ private:
         
         void dataSent (std::size_t amount) override final
         {
+            (void)amount;
+            
             if (m_state == State::WaitRespBuf) {
                 // Re-try transferring the line to the send buffer.
                 if (writeResponse()) {

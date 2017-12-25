@@ -76,7 +76,7 @@ namespace EnumUtilsPrivate {
     struct GetSameOrBaseTypeHelper<true, Type> {
         using ResultType = std::underlying_type_t<Type>;
     };
-};
+}
 
 #endif
 

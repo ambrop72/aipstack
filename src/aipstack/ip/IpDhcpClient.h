@@ -358,7 +358,7 @@ public:
      * IP address and gateway address assignement for the interface and
      * that both of these are initially unassigned.
      * 
-     * @param platform The platform facade, should be the same as passed to
+     * @param platform_ The platform facade, should be the same as passed to
      *        the @ref IpStack::IpStack constructor.
      * @param stack The IP stack.
      * @param iface The interface to run on. It must be an Ethernet based interface
@@ -369,9 +369,9 @@ public:
      * @param callback Object which will receive callbacks about the status
      *        of the lease, null for none.
      */
-    IpDhcpClient (Platform platform, IpStack *stack, Iface *iface,
+    IpDhcpClient (Platform platform_, IpStack *stack, Iface *iface,
                   IpDhcpClientInitOptions const &opts, IpDhcpClientCallback *callback) :
-        IpDhcpClientTimers<Arg>::Timers(platform),
+        IpDhcpClientTimers<Arg>::Timers(platform_),
         m_ipstack(stack),
         m_iface(iface),
         m_callback(callback),
@@ -1005,6 +1005,7 @@ private:
     void arpInfoReceived (Ip4Addr ip_addr, MacAddr mac_addr) override final
     {
         AIPSTACK_ASSERT(m_state == DhcpState::Checking)
+        (void)mac_addr;
         
         // Is this an ARP message from the IP address we are checking?
         if (ip_addr == m_info.ip_address) {

@@ -487,10 +487,10 @@ public:
         /**
          * Construct referencing the specified memory.
          * 
-         * @param data Pointer to the start of the structure.
+         * @param data_ Pointer to the start of the structure.
          */
-        inline Ref (char *data)
-        : data(data)
+        inline Ref (char *data_)
+        : data(data_)
         {}
         
         /**

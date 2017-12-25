@@ -140,10 +140,10 @@ public:
     /**
      * Constructor.
      * 
-     * @param platform The platform facade.
+     * @param platform_ The platform facade.
      */
-    IpReassembly (Platform platform) :
-        IpReassemblyTimers<Arg>::Timers(platform)
+    IpReassembly (Platform platform_) :
+        IpReassemblyTimers<Arg>::Timers(platform_)
     {
         // Start the timer for the first interval.
         tim(PurgeTimer()).setAfter(PurgeTimerInterval);

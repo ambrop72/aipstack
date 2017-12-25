@@ -507,6 +507,7 @@ private:
     
     void assert_tree (State st) const
     {
+        (void)st;
 #if AIPSTACK_AVL_TREE_VERIFY
         verify_tree(st);
 #endif

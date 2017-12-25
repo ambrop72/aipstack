@@ -322,6 +322,7 @@ public:
     
     inline void assertValidHeap (State st = State())
     {
+        (void)st;
 #if AIPSTACK_LINKED_HEAP_VERIFY
         verifyHeap(st);
 #endif

@@ -285,17 +285,17 @@ public:
      * of virtual functions (such as sending frames to this interface) until the
      * derived class is constructed and ready to accept these calls.
      * 
-     * @param platform The platform facade (the same one that `stack` uses).
+     * @param platform_ The platform facade (the same one that `stack` uses).
      * @param stack Pointer to the IP stack (must outlive this interface).
      * @param info Interface information, see @ref InitInfo.
      */
-    EthIpIface (Platform platform, IpStack *stack, InitInfo const &info) :
+    EthIpIface (Platform platform_, IpStack *stack, InitInfo const &info) :
         Iface(stack, {
             /*ip_mtu=*/ (size_t)(info.eth_mtu - EthHeader::Size),
             /*hw_type=*/ IpHwType::Ethernet,
             /*hw_iface=*/ static_cast<EthHwIface *>(this)
         }),
-        EthIpIfaceTimers<Arg>::Timers(platform),
+        EthIpIfaceTimers<Arg>::Timers(platform_),
         m_mac_addr(info.mac_addr)
     {
         AIPSTACK_ASSERT(info.eth_mtu >= EthHeader::Size)

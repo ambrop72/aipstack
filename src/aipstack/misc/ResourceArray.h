@@ -226,7 +226,7 @@ namespace ResourceArrayPrivate {
         void destruct_elems (size_t count)
         {
             for (size_t i = count; i > 0; i--) {
-                elem_ptr(i - 1)->~Elem();
+                elem_ptr(i - 1)->Elem::~Elem();
             }
         }
     };

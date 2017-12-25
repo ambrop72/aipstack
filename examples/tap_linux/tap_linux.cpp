@@ -49,6 +49,19 @@
 
 namespace AIpStackExamples {
 
+inline static bool ErrIsEAGAINorEWOULDBLOCK (int err)
+{
+    if (err == EAGAIN) {
+        return true;
+    }
+#if EWOULDBLOCK != EAGAIN
+    if (err == EWOULDBLOCK) {
+        return true;
+    }
+#endif
+    return false;
+}
+
 TapDevice::TapDevice (uv_loop_t *loop, std::string const &device_id) :
     m_loop(loop),
     m_active(true)
@@ -133,7 +146,7 @@ AIpStack::IpErr TapDevice::sendFrame (AIpStack::IpBufRef frame)
     auto write_res = ::write(m_poll.user().fd.get(), buffer, len);
     if (write_res < 0) {
         int error = errno;
-        if (error == EAGAIN || error == EWOULDBLOCK) {
+        if (ErrIsEAGAINorEWOULDBLOCK(error)) {
             return AIpStack::IpErr::BUFFER_FULL;
         }
         return AIpStack::IpErr::HW_ERROR;
@@ -174,7 +187,7 @@ void TapDevice::pollCb (int status, int events)
             bool is_error = false;
             if (read_res < 0) {
                 int err = errno;
-                is_error = !(err == EAGAIN || err == EWOULDBLOCK);
+                is_error = !ErrIsEAGAINorEWOULDBLOCK(err);
             }
             if (is_error) {
                 std::fprintf(stderr, "TapDevice: read failed. Stopping.\n");

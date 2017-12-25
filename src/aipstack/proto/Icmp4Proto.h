@@ -59,7 +59,7 @@ static uint8_t const Icmp4CodeDestUnreachPortUnreach = 3;
  */
 static uint8_t const Icmp4CodeDestUnreachFragNeeded = 4;
 
-inline static uint16_t const Icmp4GetMtuFromRest (Icmp4RestType rest)
+inline uint16_t Icmp4GetMtuFromRest (Icmp4RestType rest)
 {
     return ReadBinaryInt<uint16_t, BinaryBigEndian>((char const *)rest.data + 2);
 }

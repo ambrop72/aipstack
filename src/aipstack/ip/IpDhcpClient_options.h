@@ -406,6 +406,7 @@ private:
                 }
                 uint8_t num_servers = opt_len / DhcpOptAddr::Size;
                 for (auto server_index : LoopRange(num_servers)) {
+                    (void)server_index;
                     // Must consume all servers from data even if we can't save
                     // them.
                     DhcpOptAddr::Val val;

@@ -433,8 +433,9 @@ struct IpBufRef {
     {
         AIPSTACK_ASSERT(tot_len > 0)
         
-        char ch;
+        char ch = 0;
         processBytes(1, [&](char *data, size_t len) {
+            (void)len;
             ch = *data;
         });
         return ch;
@@ -667,19 +668,19 @@ struct IpBufRef {
      * Return a sub-range of the buffer reference from the given
      * offset of the given length.
      * 
-     * This is implemented by calling @ref skipBytes(`offset`) on a copy
+     * This is implemented by calling @ref skipBytes(`offset_`) on a copy
      * of this object then returning @ref subTo(`len`) of this copy.
      * 
-     * @param offset Offset from the start of this memory range. Must be less than
+     * @param offset_ Offset from the start of this memory range. Must be less than
      *        or equal to @ref tot_len.
      * @param len Length of sub-range. Must be less than or equal to @ref tot_len
-     *        - `offset`.
-     * @return The sub-range starting at `offset` whose length is `len`.
+     *        - `offset_`.
+     * @return The sub-range starting at `offset_` whose length is `len`.
      */
-    inline IpBufRef subFromTo (size_t offset, size_t len) const
+    inline IpBufRef subFromTo (size_t offset_, size_t len) const
     {
         IpBufRef buf = *this;
-        buf.skipBytes(offset);
+        buf.skipBytes(offset_);
         buf = buf.subTo(len);
         return buf;
     }

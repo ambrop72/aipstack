@@ -618,7 +618,11 @@ public:
     void handleIp4DestUnreach (
         Ip4DestUnreachMeta const &du_meta, IpRxInfoIp4<TheIpStack> const &ip_info,
         IpBufRef dgram_initial)
-    {}
+    {
+        (void)du_meta;
+        (void)ip_info;
+        (void)dgram_initial;
+    }
 
 private:
     static bool verifyChecksum (
@@ -647,6 +651,8 @@ private:
     bool get_ephemeral_port (UdpAssociationKey &key)
     {
         for (PortType i : LoopRange(NumEphemeralPorts)) {
+            (void)i;
+            
             PortType port = m_next_ephemeral_port;
             m_next_ephemeral_port = (port < EphemeralPortLast) ?
                 (port + 1) : EphemeralPortFirst;

@@ -64,12 +64,12 @@ struct ListForEach<ConsTypeList<Head, Tail>> {
 template <>
 struct ListForEach<EmptyTypeList> {
     template <typename Func, typename... Args>
-    AIPSTACK_ALWAYS_INLINE static void call_forward (Func func, Args... args)
+    AIPSTACK_ALWAYS_INLINE static void call_forward (Func, Args...)
     {
     }
     
     template <typename Func, typename... Args>
-    AIPSTACK_ALWAYS_INLINE static bool call_forward_interruptible (Func func, Args... args)
+    AIPSTACK_ALWAYS_INLINE static bool call_forward_interruptible (Func, Args...)
     {
         return true;
     }

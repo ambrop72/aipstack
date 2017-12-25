@@ -214,9 +214,9 @@ class IpTcpProto :
     {
         using PcbMultiTimer::platform;
         
-        inline TcpPcb (typename IpTcpProto::Platform platform, IpTcpProto *tcp) :
-            PcbMultiTimer(platform),
-            tcp(tcp),
+        inline TcpPcb (typename IpTcpProto::Platform platform_, IpTcpProto *tcp_) :
+            PcbMultiTimer(platform_),
+            tcp(tcp_),
             state(TcpState::CLOSED)
         {
             con = nullptr;
@@ -794,6 +794,8 @@ private:
                                  Ip4Addr remote_addr, PortType remote_port)
     {
         for (PortType i : LoopRange(NumEphemeralPorts)) {
+            (void)i;
+            
             PortType port = m_next_ephemeral_port;
             m_next_ephemeral_port = (port < EphemeralPortLast) ?
                 (port + 1) : EphemeralPortFirst;
