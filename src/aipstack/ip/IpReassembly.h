@@ -375,7 +375,7 @@ public:
             reass->first_hole_offset = ReassNullLink;
             
             // Setup dgram to point to the reassembled data.
-            m_reass_node = IpBufNode{reass->data, MaxReassSize};
+            m_reass_node = IpBufNode{reass->data, MaxReassSize, nullptr};
             dgram = IpBufRef{&m_reass_node, 0, reass->data_length};
             
             // Continue to process the reassembled datagram.
