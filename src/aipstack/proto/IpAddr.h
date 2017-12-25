@@ -175,11 +175,26 @@ public:
         }
         return leading_ones;
     }
+
+    template <int ByteIndex>
+    constexpr uint8_t getByte () const
+    {
+        static_assert(ByteIndex >= 0, "");
+        static_assert(ByteIndex < IpGenericAddr::Size, "");
+
+        int elem_idx = ByteIndex / IpGenericAddr::ElemSize;
+        int elem_byte_idx = ByteIndex % IpGenericAddr::ElemSize;
+
+        ElemType elem = this->data[elem_idx];
+        return (elem >> (8 * (IpGenericAddr::ElemSize - 1 - elem_byte_idx))) & 0xFF;
+    }
 };
 
 class Ip4Addr : public IpGenericAddr<Ip4Addr, uint32_t, 1>
 {
 public:
+    using IpGenericAddr::FromBytes;
+    
     static constexpr Ip4Addr FromBytes (uint8_t n1, uint8_t n2, uint8_t n3, uint8_t n4)
     {
         uint8_t bytes[] = {n1, n2, n3, n4};
