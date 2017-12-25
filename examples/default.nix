@@ -9,7 +9,6 @@ let
 
     baseWarnings = [
         "-Wall" "-Wextra" "-Wpedantic"
-        "-Wno-missing-field-initializers"
     ];
     
     optionalWarnings = [
