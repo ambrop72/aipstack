@@ -173,8 +173,9 @@ int main (int argc, char *argv[])
         dhcp_client.reset(new MyDhcpClient(platform, &*stack, &*iface, dhcp_opts, nullptr));
     } else {
         // Assign static IP configuration.
-        iface->setIp4Addr({true, DevicePrefixLength, DeviceIpAddr});
-        iface->setIp4Gateway({true, DeviceGatewayAddr});
+        iface->setIp4Addr(
+            AIpStack::IpIfaceIp4AddrSetting(DevicePrefixLength, DeviceIpAddr));
+        iface->setIp4Gateway(AIpStack::IpIfaceIp4GatewaySetting(DeviceGatewayAddr));
     }
     
     // Construct the example server.

@@ -175,12 +175,9 @@ namespace AIpStack {
          */
         IpIfaceIp4AddrSetting getIp4Addr ()
         {
-            IpIfaceIp4AddrSetting value = {m_have_addr};
-            if (m_have_addr) {
-                value.prefix = m_addr.prefix;
-                value.addr = m_addr.addr;
-            }
-            return value;
+            return m_have_addr ?
+                IpIfaceIp4AddrSetting(m_addr.prefix, m_addr.addr) :
+                IpIfaceIp4AddrSetting();
         }
         
         /**
@@ -209,11 +206,8 @@ namespace AIpStack {
          */
         IpIfaceIp4GatewaySetting getIp4Gateway ()
         {
-            IpIfaceIp4GatewaySetting value = {m_have_gateway};
-            if (m_have_gateway) {
-                value.addr = m_gateway;
-            }
-            return value;
+            return m_have_gateway ?
+                IpIfaceIp4GatewaySetting(m_gateway) : IpIfaceIp4GatewaySetting();
         }
         
         /**

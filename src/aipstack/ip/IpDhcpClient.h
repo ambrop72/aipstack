@@ -1206,10 +1206,12 @@ private:
     {
         // Set IP address with prefix length.
         uint8_t prefix = m_info.subnet_mask.countLeadingOnes();
-        iface()->setIp4Addr(IpIfaceIp4AddrSetting{true, prefix, m_info.ip_address});
+        iface()->setIp4Addr(IpIfaceIp4AddrSetting(prefix, m_info.ip_address));
         
         // Set gateway (or clear if none).
-        iface()->setIp4Gateway(IpIfaceIp4GatewaySetting{m_info.have_router, m_info.router});
+        auto gateway = m_info.have_router ?
+            IpIfaceIp4GatewaySetting(m_info.router) : IpIfaceIp4GatewaySetting();
+        iface()->setIp4Gateway(gateway);
         
         // Call the callback if specified.
         if (m_callback != nullptr) {
@@ -1222,10 +1224,10 @@ private:
     void handle_dhcp_down (bool call_callback, bool link_down)
     {
         // Remove gateway.
-        iface()->setIp4Gateway(IpIfaceIp4GatewaySetting{false});
+        iface()->setIp4Gateway(IpIfaceIp4GatewaySetting());
         
         // Remove IP address.
-        iface()->setIp4Addr(IpIfaceIp4AddrSetting{false});
+        iface()->setIp4Addr(IpIfaceIp4AddrSetting());
         
         // Call the callback if desired and specified.
         if (call_callback && m_callback != nullptr) {

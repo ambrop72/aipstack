@@ -55,21 +55,42 @@ template <typename> class IpIface;
  */
 struct IpIfaceIp4AddrSetting {
     /**
+     * Default constructor for no IP address asignment.
+     * 
+     * Sets @ref present to false and other members to zero.
+     */
+    inline constexpr IpIfaceIp4AddrSetting () = default;
+
+    /**
+     * Constructor for a valid IP address assignment.
+     * 
+     * Sets @ref present to true and other members as specified.
+     * 
+     * @param prefix_ Subnet prefix length.
+     * @param addr_ IPv4 address.
+     */
+    inline constexpr IpIfaceIp4AddrSetting (uint8_t prefix_, Ip4Addr addr_) :
+        present(true),
+        prefix(prefix_),
+        addr(addr_)
+    {}
+
+    /**
      * Whether an IP address is or should be assigned.
      * 
      * If this is false, then other members of this structure are meaningless.
      */
-    bool present;
+    bool present = false;
     
     /**
      * The subnet prefix length.
      */
-    uint8_t prefix;
+    uint8_t prefix = 0;
     
     /**
      * The IPv4 address.
      */
-    Ip4Addr addr;
+    Ip4Addr addr = Ip4Addr::ZeroAddr();
 };
 
 /**
@@ -80,16 +101,35 @@ struct IpIfaceIp4AddrSetting {
  */
 struct IpIfaceIp4GatewaySetting {
     /**
+     * Default constructor for no gateway asignment.
+     * 
+     * Sets @ref present to false and other members to zero.
+     */
+    inline constexpr IpIfaceIp4GatewaySetting () = default;
+
+    /**
+     * Constructor for a valid gateway assignment.
+     * 
+     * Sets @ref present to true and other members as specified.
+     * 
+     * @param addr_ Gateway address.
+     */
+    inline constexpr IpIfaceIp4GatewaySetting (Ip4Addr addr_) :
+        present(true),
+        addr(addr_)
+    {}
+
+    /**
      * Whether a gateway address is or should be assigned.
      * 
      * If this is false, then other members of this structure are meaningless.
      */
-    bool present;
+    bool present = false;
     
     /**
      * The gateway address.
      */
-    Ip4Addr addr;
+    Ip4Addr addr = Ip4Addr::ZeroAddr();
 };
 
 /**
