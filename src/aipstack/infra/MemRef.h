@@ -60,9 +60,12 @@ struct MemRef {
     size_t len;
     
     /**
-     * Default constructor, leaves @ref ptr and @ref len uninitialized.
+     * Default constructor, sets null pointer and zero length (same as @ref Null).
      */
-    MemRef () = default;
+    inline MemRef () :
+        ptr(nullptr),
+        len(0)
+    {}
     
     /**
      * Construct from pointer and length.
