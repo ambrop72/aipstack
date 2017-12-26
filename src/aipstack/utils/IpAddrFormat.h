@@ -22,13 +22,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_IP_ADDR_UTILS_H
-#define AIPSTACK_IP_ADDR_UTILS_H
+#ifndef AIPSTACK_IP_ADDR_FORMAT_H
+#define AIPSTACK_IP_ADDR_FORMAT_H
 
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 
+#include <aipstack/misc/Hints.h>
+#include <aipstack/misc/Assert.h>
 #include <aipstack/infra/MemRef.h>
 #include <aipstack/proto/IpAddr.h>
 
@@ -49,7 +51,7 @@ namespace AIpStack {
 static size_t const MaxIp4AddrPrintLen = 16;
 
 /**
- * Format an IPv4 address to dot-decimal notation.
+ * Format an IPv4 address to dot-decimal representation.
  * 
  * This generates the representation "N.N.N.N" where each N is a decimal representation of
  * the corresponding byte with no redundant leading zeros (zero is represented as "0").
@@ -58,51 +60,60 @@ static size_t const MaxIp4AddrPrintLen = 16;
  * @param out_str Pointer to where the result will be written including a null terminator.
  *        It must not be null and there must be at least @ref MaxIp4AddrPrintLen bytes
  *        available.
+ * @return Pointer to one past the last non-null character written (and pointer to the
+ *         written null terminator).
  */
-inline void FormatIpAddr (Ip4Addr addr, char *out_str)
+AIPSTACK_OPTIMIZE_SIZE
+inline char * FormatIpAddr (Ip4Addr addr, char *out_str)
 {
-    ::sprintf(out_str, "%d.%d.%d.%d",
+    auto len = ::sprintf(out_str, "%d.%d.%d.%d",
         int(addr.getByte<0>()), int(addr.getByte<1>()),
         int(addr.getByte<2>()), int(addr.getByte<3>()));
+    AIPSTACK_ASSERT(len > 0)
+    return out_str + len;
 }
 
 /**
- * Parse an IPv4 address in dot-decimal notation.
+ * Parse an IPv4 address in dot-decimal representation.
  * 
  * This accepts any representation "N.N.N.N" where each N is a decimal representation of an
  * integer between 0 and 255 using between 1 and 3 decimal digits (and no other characters).
- * Inputs not satisfying this format will be rejected (this includes inputs with invalid
+ * Inputs not satisfying this format are rejected (this includes inputs with invalid
  * trailing data such as "1.2.3.4x").
  * 
- * @param str Pointer to input data and length, wrapped in @ref MemRef (the pointer may be
- *        null if the length is 0).
+ * @param str Input data to parse (`str.ptr` must not be null).
  * @param out_addr On success, is set to the parsed IP address (not changed on failure).
  * @return True on success, false on failure.
  */
+AIPSTACK_OPTIMIZE_SIZE
 inline bool ParseIpAddr (MemRef str, Ip4Addr &out_addr)
 {
+    AIPSTACK_ASSERT(str.ptr != nullptr)
+
     uint8_t bytes[4];
+
+    char const *ptr = str.ptr;
+    char const *end = str.ptr + str.len;
 
     for (int i = 0; i < 4; i++) {
         if (i > 0) {
-            if (str.len < 1 || str.ptr[0] != '.') {
+            if (ptr == end || *ptr != '.') {
                 return false;
             }
-            str = str.subFrom(1);
+            ptr++;
         }
 
         int byte_val = 0;
 
         for (int j = 0; j < 3; j++) {
-            if (str.len < 1 || str.ptr[0] == '.') {
+            if (ptr == end || *ptr == '.') {
                 if (j == 0) {
                     return false;
                 }
                 break;
             }
 
-            char ch = str.ptr[0];
-            str = str.subFrom(1);
+            char ch = *ptr++;
 
             unsigned char digit_val = (unsigned char)ch - (unsigned char)'0';
             if (digit_val > 9) {
@@ -119,7 +130,7 @@ inline bool ParseIpAddr (MemRef str, Ip4Addr &out_addr)
         bytes[i] = byte_val;
     }
 
-    if (str.len > 0) {
+    if (ptr != end) {
         return false;
     }
     
