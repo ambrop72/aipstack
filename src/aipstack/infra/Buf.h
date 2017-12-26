@@ -496,8 +496,7 @@ struct IpBufRef {
      * This moves to subsequent buffers eagerly (see @ref processBytesInterruptible), with
      * respect to the returned `remainder`.
      * 
-     * @param prefix Pointer to the prefix to check for (may be null if `prefix_len` is 0).
-     * @param prefix_len Length of the prefix to check for in bytes.
+     * @param prefix Prefix to check for (`prefix.ptr` may be null if `prefix.len` is 0).
      * @param remainder If the prefix is found, is set to a reference to the remainder of
      *        this memory range following the prefix (not modified if the prefix is not
      *        found).
