@@ -31,6 +31,7 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/MinMax.h>
+#include <aipstack/infra/MemRef.h>
 
 namespace AIpStack {
 
@@ -172,7 +173,7 @@ struct IpBufRef {
         
         return MinValue(tot_len, (size_t)(node->len - offset));
     }
-    
+
     /**
      * Move to the next buffer in the memory range.
      * 
@@ -380,21 +381,20 @@ struct IpBufRef {
     }
     
     /**
-     * Consume a number of bytes from the front of the memory
-     * range while copying bytes from the given memory location
-     * into the consumed part of the range.
+     * Consume a number of bytes from the front of the memory range while copying bytes
+     * from the given memory location into the consumed part of the range.
      * 
      * This moves to subsequent buffers eagerly (see @ref processBytes).
      * 
-     * @param amount Number of bytes to copy in and consume. Must be less than
-     *        or equal to @ref tot_len.
-     * @param src Location to copy from. May be null only if `amount` is zero.
+     * @param data Reference to bytes to copy in (as @ref MemRef). `data.len` must be less
+     *        than or equal to @ref tot_len. `data.ptr` may be null if `data.len` is zero.
      */
-    void giveBytes (size_t amount, char const *src)
+    void giveBytes (MemRef data)
     {
-        processBytes(amount, [&](char *data, size_t len) {
-            ::memcpy(data, src, len);
-            src += len;
+        char const *src = data.ptr;
+        processBytes(data.len, [&](char *cdata, size_t clen) {
+            ::memcpy(cdata, src, clen);
+            src += clen;
         });
     }
     
@@ -503,18 +503,18 @@ struct IpBufRef {
      *        found).
      * @return True if the prefix is found, false if not.
      */
-    bool startsWith (char const *prefix, size_t prefix_len, IpBufRef &remainder) const
+    bool startsWith (MemRef prefix, IpBufRef &remainder) const
     {
-        if (prefix_len > tot_len) {
+        if (prefix.len > tot_len) {
             return false;
         }
 
         IpBufRef copy_ref = *this;
         size_t position = 0;
 
-        bool mismatch = copy_ref.processBytesInterruptible(prefix_len,
+        bool mismatch = copy_ref.processBytesInterruptible(prefix.len,
         [&](char *data, size_t &len) {
-            if (::memcmp(data, prefix + position, len) != 0) {
+            if (::memcmp(data, prefix.ptr + position, len) != 0) {
                 return true;
             }
             position += len;
@@ -525,7 +525,7 @@ struct IpBufRef {
             return false;
         }
 
-        AIPSTACK_ASSERT(copy_ref.tot_len == tot_len - prefix_len)
+        AIPSTACK_ASSERT(copy_ref.tot_len == tot_len - prefix.len)
 
         remainder = copy_ref;
         return true;

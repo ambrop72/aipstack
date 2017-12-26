@@ -43,6 +43,7 @@
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Instance.h>
+#include <aipstack/infra/MemRef.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/platform/PlatformFacade.h>
@@ -338,7 +339,7 @@ private:
                 // m_rx_line_len; continue parsing the next line.
             }
         }
-        
+
         bool writeResponse ()
         {
             // We will transfer the prefix and the received line to the send buffer.
@@ -359,7 +360,7 @@ private:
                 m_rx_ring_buf.getReadRange(*this).subTo(recv_len);
             
             // Write the response prefix to the send buffer.
-            tx_free.giveBytes(ResponsePrefixLen, ResponsePrefix);
+            tx_free.giveBytes(AIpStack::MemRef(ResponsePrefix, ResponsePrefixLen));
             
             // Copy the line from the receive buffer to the send buffer.
             tx_free.giveBuf(rx_line);
