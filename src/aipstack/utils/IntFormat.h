@@ -196,7 +196,7 @@ bool ParseInteger (MemRef str, T &out_value)
 
     T value;
     if (isNegative) {
-        value = (uvalue == 0) ? 0 : (-T(uvalue - 1) - 1);
+        value = (uvalue == 0) ? -uvalue : (-T(uvalue - 1) - 1);
     } else {
         value = T(uvalue);
     }
