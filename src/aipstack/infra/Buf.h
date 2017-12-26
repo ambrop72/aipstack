@@ -485,6 +485,51 @@ struct IpBufRef {
             }
         });
     }
+
+    /**
+     * Check if this memory range begins with a specific prefix and if so return the
+     * reference to the remainder of the range.
+     * 
+     * This function does not modify this object but returns the remainder via the
+     * `remainder` output parameter, if the prefix is found.
+     * 
+     * This moves to subsequent buffers eagerly (see @ref processBytesInterruptible), with
+     * respect to the returned `remainder`.
+     * 
+     * @param prefix Pointer to the prefix to check for (may be null if `prefix_len` is 0).
+     * @param prefix_len Length of the prefix to check for in bytes.
+     * @param remainder If the prefix is found, is set to a reference to the remainder of
+     *        this memory range following the prefix (not modified if the prefix is not
+     *        found).
+     * @return True if the prefix is found, false if not.
+     */
+    bool startsWith (char const *prefix, size_t prefix_len, IpBufRef &remainder) const
+    {
+        if (prefix_len > tot_len) {
+            return false;
+        }
+
+        IpBufRef copy_ref = *this;
+        size_t position = 0;
+
+        bool mismatch = copy_ref.processBytesInterruptible(prefix_len,
+        [&](char *data, size_t &len) {
+            if (::memcmp(data, prefix + position, len) != 0) {
+                return true;
+            }
+            position += len;
+            return false;
+        });
+
+        if (mismatch) {
+            return false;
+        }
+
+        AIPSTACK_ASSERT(copy_ref.tot_len == tot_len - prefix_len)
+
+        remainder = copy_ref;
+        return true;
+    }
     
     /**
      * Process and consume a number of bytes from the front of the memory range by
