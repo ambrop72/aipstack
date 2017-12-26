@@ -193,7 +193,43 @@ struct MemRef {
         *this = subFrom(pos);
         return true;
     }
+
+    /**
+     * Search for the first occurrence of a character in this byte sequence.
+     * 
+     * @ref ptr must be non-null, even if @ref len is zero.
+     * 
+     * @param ch Character to search for.
+     * @param out_index If the character is found, is set to the index of its first
+     *        occurrence (not changed otherwise).
+     * @return True if the character is found, false if not.
+     */
+    bool findChar (char ch, size_t &out_index) const
+    {
+        char const *res = (char const *)::memchr(ptr, ch, len);
+        if (res == nullptr) {
+            return false;
+        }
+        out_index = res - ptr;
+        return true;
+    }
 };
+
+inline namespace Literals {
+inline namespace MemRefLiterals {
+    /**
+     * User-defined literal operator for @ref MemRef.
+     * 
+     * @param ptr Pointer to start of character array.
+     * @param len Length of the character array.
+     * @return @ref MemRef(`ptr`, `len`).
+     */
+    inline MemRef operator""_mr (char const *ptr, size_t len) noexcept
+    {
+        return MemRef(ptr, len);
+    }
+}
+}
 
 /** @} */
 
