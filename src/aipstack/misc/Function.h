@@ -60,8 +60,8 @@ public:
     {
         static_assert(sizeof(Callable) <= FunctionStorageSize,
                       "Callable too large (greater than FunctionStorageSize)");
-        static_assert(std::is_trivially_copyable<Callable>::value,
-                      "Callable not trivially copyable");
+        static_assert(std::is_trivially_copy_constructible<Callable>::value,
+                      "Callable not trivially copy constructible");
         static_assert(std::is_trivially_destructible<Callable>::value,
                       "Callable not trivially destructible");
 
