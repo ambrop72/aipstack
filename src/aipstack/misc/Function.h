@@ -43,6 +43,12 @@ class Function;
 template <typename Ret, typename ...Args>
 class Function<Ret(Args...)>
 {
+    struct Storage {
+        alignas(alignof(std::max_align_t)) char data[FunctionStorageSize];
+    };
+
+    using FunctionPointerType = Ret (*) (Storage, Args...);
+
 public:
     inline Function () noexcept :
         m_func_ptr(nullptr),
@@ -50,7 +56,7 @@ public:
     {}
 
     template <typename Callable>
-    Function (Callable const &callable) noexcept
+    Function (Callable callable) noexcept
     {
         static_assert(sizeof(Callable) <= FunctionStorageSize,
                       "Callable too large (greater than FunctionStorageSize)");
@@ -62,12 +68,12 @@ public:
         m_func_ptr = &trampoline<Callable>;
 
         if (std::is_empty<Callable>::value) {
-            std::memset(m_storage, 0, FunctionStorageSize);
+            m_storage = Storage{};
         } else {
-            std::memcpy(m_storage, std::addressof(callable), sizeof(Callable));
+            std::memcpy(m_storage.data, std::addressof(callable), sizeof(Callable));
 
             if (sizeof(Callable) < FunctionStorageSize) {
-                std::memset(m_storage + sizeof(Callable), 0,
+                std::memset(m_storage.data + sizeof(Callable), 0,
                             FunctionStorageSize - sizeof(Callable));
             }
         }
@@ -84,18 +90,16 @@ public:
     }
 
 private:
-    using FunctionPointerType = Ret (*) (void const *, Args...);
-
     template <typename Callable>
-    static Ret trampoline (void const *param, Args ...args)
+    static Ret trampoline (Storage storage, Args ...args)
     {
-        Callable const *c = static_cast<Callable const *>(param);
+        Callable const *c = reinterpret_cast<Callable const *>(storage.data);
         return (*c)(std::forward<Args>(args)...);
     }
 
 private:
     FunctionPointerType m_func_ptr;
-    alignas(alignof(std::max_align_t)) char m_storage[FunctionStorageSize];
+    Storage m_storage;
 };
 
 template <typename Callable>
