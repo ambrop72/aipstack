@@ -53,6 +53,16 @@ template <typename> class TcpApi;
 #endif
 
 /**
+ * Encapsulates connection parameters for @ref TcpConnection::startConnection.
+ */
+template <typename Arg>
+struct TcpStartConnectionArgs {
+    Ip4Addr addr = Ip4Addr::ZeroAddr();
+    uint16_t port = 0;
+    size_t rcv_wnd = 0;
+};
+
+/**
  * Represents a TCP connection.
  * Conceptually, the connection object has three main states:
  * - INIT: No connection has been made yet.
@@ -189,7 +199,7 @@ public:
      * On failure, the object remains in INIT state.
      * May only be called in INIT state.
      */
-    IpErr startConnection (TcpApi<Arg> &api, Ip4Addr addr, PortType port, size_t rcv_wnd)
+    IpErr startConnection (TcpApi<Arg> &api, TcpStartConnectionArgs<Arg> const &args)
     {
         assert_init();
 
@@ -197,13 +207,13 @@ public:
         
         // Setup the MTU reference.
         uint16_t pmtu;
-        if (!MtuRef::setup(tcp.m_stack, addr, nullptr, pmtu)) {
+        if (!MtuRef::setup(tcp.m_stack, args.addr, nullptr, pmtu)) {
             return IpErr::NO_IPMTU_AVAIL;
         }
         
         // Create the PCB for the connection.
         TcpPcb *pcb = nullptr;
-        IpErr err = tcp.create_connection(this, addr, port, rcv_wnd, pmtu, &pcb);
+        IpErr err = tcp.create_connection(this, args, pmtu, &pcb);
         if (err != IpErr::SUCCESS) {
             MtuRef::reset(tcp.m_stack);
             return err;

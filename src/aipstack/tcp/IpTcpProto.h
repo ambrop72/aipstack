@@ -708,12 +708,16 @@ private:
         }
     }
     
-    IpErr create_connection (Connection *con, Ip4Addr remote_addr, PortType remote_port,
-                             size_t user_rcv_wnd, uint16_t pmtu, TcpPcb **out_pcb)
+    IpErr create_connection (Connection *con, TcpStartConnectionArgs<Arg> const &args,
+                             uint16_t pmtu, TcpPcb **out_pcb)
     {
         AIPSTACK_ASSERT(con != nullptr)
         AIPSTACK_ASSERT(con->MtuRef::isSetup())
         AIPSTACK_ASSERT(out_pcb != nullptr)
+
+        Ip4Addr remote_addr = args.addr;
+        PortType remote_port = args.port;
+        size_t user_rcv_wnd = args.rcv_wnd;
         
         // Determine the interface and local IP address.
         Iface *iface;
