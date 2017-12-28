@@ -39,6 +39,7 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Modulo.h>
 #include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/infra/Options.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Err.h>
@@ -51,6 +52,8 @@
 #include <aipstack/tcp/TcpListener.h>
 #include <aipstack/tcp/TcpConnection.h>
 #include <aipstack/utils/TcpRingBufferUtils.h>
+#include <aipstack/utils/IpAddrFormat.h>
+#include <aipstack/utils/IntFormat.h>
 
 namespace AIpStackExamples {
 
@@ -79,6 +82,12 @@ class ExampleServer :
             m_parent->listenerConnectionEstablished(*this);
         }
     };
+    
+    // Function type used in the BaseClient constructor to initialize the connection
+    // (e.g. accept or start connection).
+    using ClientSetupFunc = AIpStack::Function<void(TcpConnection &)>;
+
+    enum class ClientType {Echo, Command};
     
 public:
     ExampleServer (TheIpStack *stack) :
@@ -112,6 +121,20 @@ private:
     
     void listenerConnectionEstablished (MyListener &listener)
     {
+        ClientType type = (&listener == &m_listener_echo) ?
+            ClientType::Echo : ClientType::Command;
+        
+        createConnection(type, [&listener](TcpConnection &con) {
+            // This is called from the BaseClient constructor to setup the connection.
+            AIpStack::IpErr err = con.acceptConnection(listener);
+            if (err != AIpStack::IpErr::SUCCESS) {
+                throw std::runtime_error("TcpConnection::acceptConnection failed");
+            }
+        });
+    }
+
+    void createConnection (ClientType type, ClientSetupFunc setupFunc)
+    {
         if (m_clients.size() >= Params::MaxClients) {
             std::fprintf(stderr, "Too many clients, rejecting connection.\n");
             return;
@@ -120,10 +143,10 @@ private:
         try {
             // Construct the appropriate BaseClient-derived object.
             std::unique_ptr<BaseClient> client;
-            if (&listener == &m_listener_echo) {
-                client.reset(new EchoClient(this, listener));
+            if (type == ClientType::Echo) {
+                client.reset(new EchoClient(this, setupFunc));
             } else {
-                client.reset(new LineParsingClient(this, listener));
+                client.reset(new LineParsingClient(this, setupFunc));
             }
             
             // Insert the object into m_clients.
@@ -140,26 +163,22 @@ private:
             AIPSTACK_ASSERT(false)
         }
     }
-    
+
     class BaseClient :
         protected TcpConnection,
         private AIpStack::NonCopyable<BaseClient>
     {
     public:
-        BaseClient (ExampleServer *parent, MyListener &listener) :
+        BaseClient (ExampleServer *parent, ClientSetupFunc setupFunc) :
             m_parent(parent)
         {
-            // Setup the TcpConnection by accepting a connection on the listener.
-            AIpStack::IpErr err = TcpConnection::acceptConnection(listener);
-            if (err != AIpStack::IpErr::SUCCESS) {
-                throw std::runtime_error("TcpConnection::acceptConnection failed");
-            }
-            
+            setupFunc(*this);
+
             std::fprintf(stderr, "Connection established.\n");
         }
         
         virtual ~BaseClient () {}
-        
+
     protected:
         // This is used to destroy the client object. It does this by removing
         // it from m_clients. Note that after this, the client object no longer
@@ -172,6 +191,8 @@ private:
             AIPSTACK_ASSERT(removed == 1)
             (void)removed;
         }
+
+        inline ExampleServer & parent () const { return *m_parent; }
         
     private:
         // This is called by TcpConnection when the connection has transitioned to
@@ -184,7 +205,7 @@ private:
             return destroy(false);
         }
         
-    protected:
+    private:
         ExampleServer *m_parent;
     };
     
@@ -194,8 +215,8 @@ private:
     class EchoClient : public BaseClient
     {
     public:
-        EchoClient (ExampleServer *parent, MyListener &listener) :
-            BaseClient(parent, listener),
+        EchoClient (ExampleServer *parent, ClientSetupFunc setupFunc) :
+            BaseClient(parent, setupFunc),
             m_buf_node({m_buffer, Params::EchoBufferSize, &m_buf_node})
         {
             TcpConnection::setProportionalWindowUpdateThreshold(
@@ -244,8 +265,8 @@ private:
         enum class State {RecvLine, WaitRespBuf, WaitFinSent};
         
     public:
-        LineParsingClient (ExampleServer *parent, MyListener &listener) :
-            BaseClient(parent, listener),
+        LineParsingClient (ExampleServer *parent, ClientSetupFunc setupFunc) :
+            BaseClient(parent, setupFunc),
             m_rx_line_len(0),
             m_state(State::RecvLine)
         {
@@ -325,6 +346,9 @@ private:
                     }
                     return;
                 }
+
+                // Process the line for commands.
+                processLine(rx_data.subTo(m_rx_line_len - 1));
                 
                 // Try to transfer the received line the send buffer.
                 if (!writeResponse()) {
@@ -378,6 +402,56 @@ private:
             m_rx_line_len = 0;
             
             return true;
+        }
+
+        void processLine (AIpStack::IpBufRef line_ref)
+        {
+            using namespace AIpStack::MemRefLiterals;
+            constexpr std::size_t BufSize = 100;
+
+            // Check if the line fits into BufSize.
+            if (line_ref.tot_len > BufSize) {
+                return;
+            }
+
+            // Copy the line into a local buffer.
+            char buf[BufSize];
+            AIpStack::MemRef line(buf, line_ref.tot_len);
+            line_ref.takeBytes(line.len, buf);
+            
+            if (line.removePrefix("connect ")) {
+                std::size_t colon_pos;
+                if (!line.findChar(':', colon_pos)) {
+                    return;
+                }
+
+                AIpStack::Ip4Addr addr;
+                if (!AIpStack::ParseIpAddr(line.subTo(colon_pos), addr)) {
+                    return;
+                }
+
+                std::uint16_t port;
+                if (!AIpStack::ParseInteger(line.subFrom(colon_pos + 1), port)) {
+                    return;
+                }
+
+                AIpStack::TcpStartConnectionArgs<TcpArg> con_args;
+                con_args.addr = addr;
+                con_args.port = port;
+                con_args.rcv_wnd = Params::EchoBufferSize;
+
+                ExampleServer &parent = BaseClient::parent();
+
+                parent.createConnection(ClientType::Echo, AIpStack::RefFunc(
+                [&](TcpConnection &con) {
+                    // This is called from the BaseClient constructor to setup the
+                    // connection.
+                    AIpStack::IpErr err = con.startConnection(parent.tcp(), con_args);
+                    if (err != AIpStack::IpErr::SUCCESS) {
+                        throw std::runtime_error("TcpConnection::startConnection failed");
+                    }
+                }));
+            }
         }
         
     private:
