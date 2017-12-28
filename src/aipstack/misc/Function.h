@@ -26,12 +26,11 @@
 #define AIPSTACK_FUNCTION_H
 
 #include <cstddef>
-#include <cstring>
 
 #include <type_traits>
 #include <functional>
-#include <memory>
 #include <utility>
+#include <new>
 
 namespace AIpStack {
 
@@ -51,8 +50,7 @@ class Function<Ret(Args...)>
 
 public:
     inline Function () noexcept :
-        m_func_ptr(nullptr),
-        m_storage{}
+        m_func_ptr(nullptr)
     {}
 
     template <typename Callable>
@@ -67,16 +65,7 @@ public:
 
         m_func_ptr = &trampoline<Callable>;
 
-        if (std::is_empty<Callable>::value) {
-            m_storage = Storage{};
-        } else {
-            std::memcpy(m_storage.data, std::addressof(callable), sizeof(Callable));
-
-            if (sizeof(Callable) < FunctionStorageSize) {
-                std::memset(m_storage.data + sizeof(Callable), 0,
-                            FunctionStorageSize - sizeof(Callable));
-            }
-        }
+        new(reinterpret_cast<Callable *>(m_storage.data)) Callable(callable);
     }
 
     inline explicit operator bool () const noexcept
