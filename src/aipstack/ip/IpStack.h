@@ -722,7 +722,7 @@ public:
      * @return True on success (route_info was filled in),
      *         false on error (route_info was not changed).
      */
-    bool routeIp4 (Ip4Addr dst_addr, RouteInfoIp4 &route_info)
+    bool routeIp4 (Ip4Addr dst_addr, RouteInfoIp4 &route_info) const
     {
         int best_prefix = -1;
         Iface *best_iface = nullptr;
