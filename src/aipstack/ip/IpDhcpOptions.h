@@ -37,8 +37,8 @@
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Struct.h>
 #include <aipstack/infra/MemRef.h>
-#include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/DhcpProto.h>
+#include <aipstack/ip/IpAddr.h>
 
 namespace AIpStack {
 

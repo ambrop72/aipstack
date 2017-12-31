@@ -38,7 +38,7 @@
 #include <aipstack/misc/Hints.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Err.h>
-#include <aipstack/proto/IpAddr.h>
+#include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpMtuRef.h>
 #include <aipstack/tcp/TcpUtils.h>
 #include <aipstack/tcp/TcpListener.h>

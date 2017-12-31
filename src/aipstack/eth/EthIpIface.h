@@ -49,9 +49,9 @@
 #include <aipstack/infra/Options.h>
 #include <aipstack/infra/ObserverNotification.h>
 #include <aipstack/infra/Instance.h>
-#include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/proto/ArpProto.h>
+#include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/ip/hw/EthHw.h>
 #include <aipstack/platform/PlatformFacade.h>

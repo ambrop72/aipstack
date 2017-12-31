@@ -32,7 +32,7 @@
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/structure/LinkedList.h>
-#include <aipstack/proto/IpAddr.h>
+#include <aipstack/ip/IpAddr.h>
 #include <aipstack/tcp/TcpUtils.h>
 
 #include "TcpListener.h"

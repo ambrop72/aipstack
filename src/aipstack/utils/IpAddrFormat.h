@@ -32,7 +32,7 @@
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/infra/MemRef.h>
-#include <aipstack/proto/IpAddr.h>
+#include <aipstack/ip/IpAddr.h>
 
 namespace AIpStack {
 

@@ -46,8 +46,8 @@
 #include <aipstack/infra/Instance.h>
 #include <aipstack/infra/MemRef.h>
 #include <aipstack/proto/Ip4Proto.h>
-#include <aipstack/proto/IpAddr.h>
 #include <aipstack/platform/PlatformFacade.h>
+#include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/tcp/TcpApi.h>
 #include <aipstack/tcp/TcpListener.h>

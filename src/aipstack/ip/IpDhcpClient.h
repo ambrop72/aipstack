@@ -41,10 +41,10 @@
 #include <aipstack/infra/Options.h>
 #include <aipstack/infra/MemRef.h>
 #include <aipstack/infra/Instance.h>
-#include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/DhcpProto.h>
 #include <aipstack/proto/EthernetProto.h>
+#include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/ip/hw/IpHwCommon.h>
 #include <aipstack/ip/hw/EthHw.h>

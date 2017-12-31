@@ -35,8 +35,8 @@
 #include <aipstack/misc/BinaryTools.h>
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/infra/Buf.h>
-#include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Tcp4Proto.h>
+#include <aipstack/ip/IpAddr.h>
 
 namespace AIpStack {
 

@@ -30,9 +30,9 @@
 
 #include <aipstack/misc/EnumBitfieldUtils.h>
 #include <aipstack/infra/Chksum.h>
-#include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Icmp4Proto.h>
+#include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/hw/IpHwCommon.h>
 #include <aipstack/platform/PlatformFacade.h>
 

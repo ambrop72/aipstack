@@ -37,8 +37,8 @@
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Options.h>
 #include <aipstack/infra/Instance.h>
-#include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
+#include <aipstack/ip/IpAddr.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/platform/TimerWrapper.h>
 

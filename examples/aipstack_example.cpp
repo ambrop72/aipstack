@@ -27,12 +27,12 @@
 #include <string>
 #include <stdexcept>
 
-#include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/structure/index/AvlTreeIndex.h>
 #include <aipstack/structure/index/MruListIndex.h>
 #include <aipstack/structure/minimum/LinkedHeap.h>
 #include <aipstack/platform/PlatformFacade.h>
+#include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/ip/IpPathMtuCache.h>
 #include <aipstack/ip/IpReassembly.h>

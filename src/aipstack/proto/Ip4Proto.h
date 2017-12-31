@@ -29,7 +29,7 @@
 #include <stddef.h>
 
 #include <aipstack/infra/Struct.h>
-#include <aipstack/proto/IpAddr.h>
+#include <aipstack/ip/IpAddr.h>
 
 namespace AIpStack {
 

@@ -36,7 +36,7 @@
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/SendRetry.h>
 #include <aipstack/infra/ObserverNotification.h>
-#include <aipstack/proto/IpAddr.h>
+#include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStackTypes.h>
 #include <aipstack/ip/hw/IpHwCommon.h>
 

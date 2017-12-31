@@ -47,10 +47,10 @@
 #include <aipstack/infra/Chksum.h>
 #include <aipstack/infra/SendRetry.h>
 #include <aipstack/proto/Ip4Proto.h>
-#include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Udp4Proto.h>
 #include <aipstack/proto/Icmp4Proto.h>
 #include <aipstack/platform/PlatformFacade.h>
+#include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 
 namespace AIpStack {

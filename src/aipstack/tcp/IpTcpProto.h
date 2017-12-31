@@ -49,9 +49,9 @@
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/SendRetry.h>
 #include <aipstack/infra/Options.h>
-#include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Tcp4Proto.h>
+#include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/platform/MultiTimer.h>
