@@ -67,7 +67,7 @@ class ExampleServer :
     
     using IpStack = AIpStack::IpStack<StackArg>;
 
-    using TcpArg = typename IpStack::template GetProtoApiArg<AIpStack::TcpApi>;
+    using TcpArg = typename IpStack::template GetProtoArg<AIpStack::TcpApi>;
     using TcpListener = AIpStack::TcpListener<TcpArg>;
     using TcpConnection = AIpStack::TcpConnection<TcpArg>;
 

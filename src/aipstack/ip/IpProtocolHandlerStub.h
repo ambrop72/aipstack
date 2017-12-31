@@ -69,7 +69,7 @@ namespace AIpStack {
  * code to use the protocol) via a separate class template. Each protocol handler must
  * define the @ref getApi function which returns a reference to its public API. The public
  * API must be a template class based on a class template with a single "type" template
- * parameter. @ref IpStack::GetProtoApiArg and @ref IpStack::getProtoApi will deduce this
+ * parameter. @ref IpStack::GetProtoArg and @ref IpStack::getProtoApi will deduce this
  * template parameter when application code requests a specific protocol API by specifying
  * only the API class template.
  * 
@@ -158,7 +158,7 @@ public:
      * 
      * The public API is meant to be the interface for using the protocol from application
      * code. The @ref IpStack does not use the public API, only exposes it via @ref
-     * IpStack::GetProtoApiArg and @ref IpStack::getProtoApi. For more information see the
+     * IpStack::GetProtoArg and @ref IpStack::getProtoApi. For more information see the
      * main description in @ref IpProtocolHandlerStub.
      * 
      * This example declaration of the `getApi` function is against the recommendation that

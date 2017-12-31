@@ -215,7 +215,7 @@ class IpDhcpClient :
 #ifndef IN_DOXYGEN
     ,
     private UdpListener<
-        typename IpStack<typename Arg::StackArg>::template GetProtoApiArg<UdpApi>>,
+        typename IpStack<typename Arg::StackArg>::template GetProtoArg<UdpApi>>,
     private IpIfaceStateObserver<typename Arg::StackArg>,
     private IpDhcpClientTimers<Arg>::Timers,
     private IpSendRetryRequest,
@@ -230,7 +230,7 @@ class IpDhcpClient :
     AIPSTACK_USE_TIMERS_CLASS(IpDhcpClientTimers<Arg>, (DhcpTimer)) 
     using IpDhcpClientTimers<Arg>::Timers::platform;
     
-    using UdpArg = typename IpStack<StackArg>::template GetProtoApiArg<UdpApi>;
+    using UdpArg = typename IpStack<StackArg>::template GetProtoArg<UdpApi>;
     AIPSTACK_USE_VALS(UdpApi<UdpArg>, (HeaderBeforeUdpData, MaxUdpDataLenIp4))
     
     static_assert(Params::MaxDnsServers > 0 && Params::MaxDnsServers < 32, "");

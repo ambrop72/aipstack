@@ -87,7 +87,7 @@ namespace AIpStack {
  * 
  * Application code which uses different transport-layer protocols (such as TCP) is
  * expected to go through @ref IpStack to gain access to the appropriate protocol
- * handlers, using @ref IpStack::GetProtoApiArg and @ref IpStack::getProtoApi.
+ * handlers, using @ref IpStack::GetProtoArg and @ref IpStack::getProtoApi.
  * 
  * @{
  */
@@ -101,7 +101,7 @@ namespace AIpStack {
  * Applications should configure and initialize this class and manage network
  * interfaces using the @ref IpIface class. Actual network access should be done
  * using the APIs provided by specific protocol handlers, which are exposed
- * via @ref GetProtoApiArg and @ref getProtoApi.
+ * via @ref GetProtoArg and @ref getProtoApi.
  * 
  * @tparam Arg An instantiation of the @ref IpStackService::Compose template or a
  *         dummy class derived from such; see @ref IpStackService for an example.
@@ -168,7 +168,7 @@ private:
     using ProtocolsList = MapTypeList<
         ProtocolHelpersList, TemplateFunc<ProtocolForHelper>>;
     
-    // This metaprogramming is for GetProtoApiArg and getProtoApi. It finds the protocol
+    // This metaprogramming is for GetProtoArg and getProtoApi. It finds the protocol
     // handler whose getApi() function returns a reference to ProtoApi<Arg> for some type
     // Arg.
     template <template <typename> class ProtoApi>
@@ -287,7 +287,7 @@ public:
      *         UdpApi or @ref TcpApi.
      */
     template <template <typename> class ProtoApi>
-    using GetProtoApiArg = typename GetProtoApiHelper<ProtoApi>::ProtoArg;
+    using GetProtoArg = typename GetProtoApiHelper<ProtoApi>::ProtoArg;
 
     /**
      * Get the reference to a protocol API given a protocol API class template.
@@ -295,14 +295,14 @@ public:
      * It is an error if no protocol handler configured for this @ref IpStack provides the
      * requested API.
      * 
-     * See also @ref GetProtoApiArg.
+     * See also @ref GetProtoArg.
      * 
      * @tparam ProtoApi Class template which represents the protocol API, for example @ref
      *         UdpApi or @ref TcpApi.
      * @return Reference to protocol API.
      */
     template <template <typename> class ProtoApi>
-    inline ProtoApi<GetProtoApiArg<ProtoApi>> & getProtoApi ()
+    inline ProtoApi<GetProtoArg<ProtoApi>> & getProtoApi ()
     {
         using Protocol = typename GetProtoApiHelper<ProtoApi>::Protocol;
         static int const ProtocolIndex = TypeListIndex<ProtocolsList, Protocol>::Value;
