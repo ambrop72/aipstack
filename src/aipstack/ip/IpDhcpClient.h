@@ -48,7 +48,7 @@
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/ip/hw/IpHwCommon.h>
 #include <aipstack/ip/hw/EthHw.h>
-#include <aipstack/ip/IpDhcpClient_options.h>
+#include <aipstack/ip/IpDhcpOptions.h>
 #include <aipstack/udp/IpUdpProto.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/platform/TimerWrapper.h>
@@ -255,7 +255,7 @@ class IpDhcpClient :
     static uint8_t const MaxMessageSize = sizeof(DeclineMessageArpResponse) - 1;
     
     // Instatiate the options class with needed configuration.
-    using Options = IpDhcpClient_options<
+    using Options = IpDhcpOptions<
         Params::MaxDnsServers, Params::MaxClientIdSize,
         Params::MaxVendorClassIdSize, MaxMessageSize>;
     AIPSTACK_USE_TYPES(Options, (DhcpRecvOptions, DhcpSendOptions))

@@ -22,8 +22,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_IP_DHCP_CLIENT_OPTIONS_H
-#define AIPSTACK_IP_DHCP_CLIENT_OPTIONS_H
+#ifndef AIPSTACK_IP_DHCP_OPTIONS_H
+#define AIPSTACK_IP_DHCP_OPTIONS_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -51,7 +51,7 @@ template <
     uint8_t MaxVendorClassIdSize,
     uint8_t MaxMessageSize
 >
-class IpDhcpClient_options
+class IpDhcpOptions
 {
     // Calculates option size for given option data size.
     static constexpr size_t OptSize (size_t data_size)
