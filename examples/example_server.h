@@ -156,10 +156,7 @@ private:
             BaseClient *clientPtr = &*client;
             m_clients.insert(std::make_pair(clientPtr, std::move(client)));
         }
-        catch (std::runtime_error const &ex) {
-            std::fprintf(stderr, "ERROR: could not create client: %s\n", ex.what());
-        }
-        catch (std::bad_alloc const &ex) {
+        catch (std::exception const &ex) {
             std::fprintf(stderr, "ERROR: could not create client: %s\n", ex.what());
         }
         catch (...) {
@@ -177,12 +174,41 @@ private:
         {
             setupFunc(*this);
 
-            std::fprintf(stderr, "Connection established.\n");
+            // Remember addresses needed by log() since these cannot be retrieved after
+            // connectionAborted().
+            m_local_addr = TcpConnection::getLocalIp4Addr();
+            m_remote_addr = TcpConnection::getRemoteIp4Addr();
+            m_local_port = TcpConnection::getLocalPort();
+            m_remote_port = TcpConnection::getRemotePort();
+
+            log("Connection established.");
         }
         
         virtual ~BaseClient () {}
 
     protected:
+        void log (char const *msg) const
+        {
+            char buf[200];
+            char *pos = buf;
+            char *end = buf + sizeof(buf) - 1;
+
+            *pos++ = '(';
+            pos = AIpStack::FormatIpAddr(m_local_addr, pos);
+            *pos++ = ':';
+            pos = AIpStack::FormatInteger(m_local_port, pos);
+            *pos++ = ' ';
+            pos = AIpStack::FormatIpAddr(m_remote_addr, pos);
+            *pos++ = ':';
+            pos = AIpStack::FormatInteger(m_remote_port, pos);
+            *pos++ = ')';
+            *pos++ = ' ';
+            pos += std::snprintf(pos, end - pos, "%s", msg);
+            *pos = '\0';
+
+            std::fprintf(stderr, "%s\n", buf);
+        }
+
         // This is used to destroy the client object. It does this by removing
         // it from m_clients. Note that after this, the client object no longer
         // exists and therefore must not be accessed in any way.
@@ -203,13 +229,17 @@ private:
         // possible, this immediately destroys the client object.
         void connectionAborted () override final
         {
-            std::fprintf(stderr, "Connection aborted.\n");
+            log("Connection aborted.");
             
             return destroy(false);
         }
         
     private:
         ExampleServer *m_parent;
+        AIpStack::Ip4Addr m_local_addr;
+        AIpStack::Ip4Addr m_remote_addr;
+        std::uint16_t m_local_port;
+        std::uint16_t m_remote_port;
     };
     
     // The echo client uses the same circular buffer for sending and receiving,
@@ -277,6 +307,8 @@ private:
                                 Params::WindowUpdateThresDiv);
             m_tx_ring_buf.setup(*this, m_tx_buffer, TxBufSize);
         }
+
+        using BaseClient::log;
         
     private:
         void dataReceived (std::size_t amount) override final
@@ -333,7 +365,7 @@ private:
                 if (!found_newline) {
                     // Check if the line is too long, if so then disconnect the client.
                     if (m_rx_line_len >= MaxRxLineLen) {
-                        std::fprintf(stderr, "Line too long, disconnecting client.\n");
+                        log("Line too long, disconnecting client.");
                         return BaseClient::destroy(true);
                     }
 
