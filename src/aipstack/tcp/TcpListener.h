@@ -50,9 +50,9 @@ template <typename> class TcpConnection;
  * Structure for listening parameters.
  */
 struct TcpListenParams {
-    Ip4Addr addr;
-    TcpUtils::PortType port;
-    int max_pcbs;
+    Ip4Addr addr = Ip4Addr::ZeroAddr();
+    TcpUtils::PortType port = 0;
+    int max_pcbs = 0;
 };
 
 /**

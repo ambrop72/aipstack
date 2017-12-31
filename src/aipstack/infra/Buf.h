@@ -73,17 +73,17 @@ struct IpBufNode {
     /**
      * Pointer to the buffer data.
      */
-    char *ptr;
+    char *ptr = nullptr;
     
     /**
      * Length of the buffer.
      */
-    size_t len;
+    size_t len = 0;
     
     /**
      * Pointer to the next buffer node, or null if this is the end of the chain.
      */
-    IpBufNode const *next;
+    IpBufNode const *next = nullptr;
 };
 
 /**
@@ -123,17 +123,17 @@ struct IpBufRef {
     /**
      * Pointer to the first buffer node.
      */
-    IpBufNode const *node;
+    IpBufNode const *node = nullptr;
     
     /**
      * Byte offset in the first buffer.
      */
-    size_t offset;
+    size_t offset = 0;
     
     /**
      * The total length of the data range.
      */
-    size_t tot_len;
+    size_t tot_len = 0;
     
     /**
      * Return the length of this memory range (@ref tot_len).

@@ -158,10 +158,10 @@ public:
     };
     
     struct ListenQueueParams {
-        size_t min_rcv_buf_size;
-        int queue_size;
-        TimeType queue_timeout;
-        ListenQueueEntry *queue_entries;
+        size_t min_rcv_buf_size = 0;
+        int queue_size = 0;
+        TimeType queue_timeout = 0;
+        ListenQueueEntry *queue_entries = nullptr;
     };
     
 private:

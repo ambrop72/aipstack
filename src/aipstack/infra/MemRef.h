@@ -52,12 +52,12 @@ struct MemRef {
      * @ref len bytes available. Whether @ref ptr may be null if @ref len is zero depends
      * on the requirements of the operation or whatever the @ref MemRef is passed to.
      */
-    char const *ptr;
+    char const *ptr = nullptr;
     
     /**
      * Number of bytes in the byte sequence.
      */
-    size_t len;
+    size_t len = 0;
     
     /**
      * Default constructor, sets null pointer and zero length (same as @ref Null).

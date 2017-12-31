@@ -180,7 +180,7 @@ struct IpIfaceDriverState {
     /**
      * Whether the link is up.
      */
-    bool link_up;
+    bool link_up = true;
 };
 
 /**
@@ -234,12 +234,12 @@ struct Ip4DestUnreachMeta {
      * 
      * For example, @ref Icmp4CodeDestUnreachFragNeeded may be of interest.
      */
-    uint8_t icmp_code;
+    uint8_t icmp_code = 0;
     
     /**
      * The "Rest of Header" part of the ICMP header (4 bytes).
      */
-    Icmp4RestType icmp_rest;
+    Icmp4RestType icmp_rest = {};
 };
 
 /**
