@@ -127,7 +127,7 @@ public:
         }
         
     private:
-        EntryList m_list;
+        mutable EntryList m_list;
     };
 };
 
