@@ -37,7 +37,7 @@
 #include <aipstack/infra/SendRetry.h>
 #include <aipstack/infra/ObserverNotification.h>
 #include <aipstack/proto/IpAddr.h>
-#include <aipstack/ip/IpStackHelperTypes.h>
+#include <aipstack/ip/IpStackTypes.h>
 #include <aipstack/ip/hw/IpHwCommon.h>
 
 namespace AIpStack {

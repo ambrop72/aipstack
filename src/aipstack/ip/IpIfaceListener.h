@@ -30,7 +30,7 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/infra/Buf.h>
-#include <aipstack/ip/IpStackHelperTypes.h>
+#include <aipstack/ip/IpStackTypes.h>
 
 namespace AIpStack {
 

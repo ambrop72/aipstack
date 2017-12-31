@@ -55,7 +55,7 @@
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Icmp4Proto.h>
-#include <aipstack/ip/IpStackHelperTypes.h>
+#include <aipstack/ip/IpStackTypes.h>
 #include <aipstack/ip/IpIface.h>
 #include <aipstack/ip/IpIfaceListener.h>
 #include <aipstack/ip/IpIfaceStateObserver.h>
