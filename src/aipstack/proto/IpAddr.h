@@ -126,6 +126,16 @@ public:
         return (first & mask) | (second & ~mask);
     }
     
+    bool isZero () const
+    {
+        return *this == IpGenericAddr::ZeroAddr();
+    }
+    
+    bool isAllOnes () const
+    {
+        return *this == IpGenericAddr::AllOnesAddr();
+    }
+    
     template <typename Func>
     constexpr AddrType bitwiseOp (IpGenericAddr const &other, Func func) const
     {
@@ -201,16 +211,6 @@ public:
         return IpGenericAddr::FromBytes(bytes);
     }
 
-    bool isZero () const
-    {
-        return *this == Ip4Addr::ZeroAddr();
-    }
-    
-    bool isAllOnes () const
-    {
-        return *this == Ip4Addr::AllOnesAddr();
-    }
-    
     bool isMulticast() const
     {
         return (*this & Ip4Addr::FromBytes(0xF0, 0, 0, 0)) == Ip4Addr::FromBytes(0xE0, 0, 0, 0);
