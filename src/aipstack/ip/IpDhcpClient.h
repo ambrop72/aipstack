@@ -205,32 +205,32 @@ AIPSTACK_DECL_TIMERS_CLASS(IpDhcpClientTimers, typename Arg::PlatformImpl,
 /**
  * DHCP client implementation.
  * 
- * @tparam Arg An instantiated @ref IpDhcpClientService::Compose template
- *         or a type derived from such; see @ref IpDhcpClientService.
+ * @tparam Arg An instantiation of the @ref IpDhcpClientService::Compose template
+ *         or a dummy class derived from such; see @ref IpDhcpClientService for an
+ *         example.
  */
 template <typename Arg>
 class IpDhcpClient :
     private NonCopyable<IpDhcpClient<Arg>>
 #ifndef IN_DOXYGEN
     ,
-    private UdpListener<typename Arg::IpStack::template GetProtoApiArg<UdpApi>>,
-    private Arg::IpStack::IfaceStateObserver,
+    private UdpListener<
+        typename IpStack<typename Arg::StackArg>::template GetProtoApiArg<UdpApi>>,
+    private IpIfaceStateObserver<typename Arg::StackArg>,
     private IpDhcpClientTimers<Arg>::Timers,
     private IpSendRetryRequest,
     private EthArpObserver
 #endif
 {
-    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, IpStack, Params))
+    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, StackArg, Params))
 
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
 
-    AIPSTACK_USE_TYPES(IpStack, (Iface, IfaceStateObserver))
-
     AIPSTACK_USE_TIMERS_CLASS(IpDhcpClientTimers<Arg>, (DhcpTimer)) 
     using IpDhcpClientTimers<Arg>::Timers::platform;
     
-    using UdpArg = typename IpStack::template GetProtoApiArg<UdpApi>;
+    using UdpArg = typename IpStack<StackArg>::template GetProtoApiArg<UdpApi>;
     AIPSTACK_USE_VALS(UdpApi<UdpArg>, (HeaderBeforeUdpData, MaxUdpDataLenIp4))
     
     static_assert(Params::MaxDnsServers > 0 && Params::MaxDnsServers < 32, "");
@@ -335,8 +335,8 @@ public:
     };
     
 private:
-    IpStack *m_ipstack;
-    Iface *m_iface;
+    IpStack<StackArg> *m_ipstack;
+    IpIface<StackArg> *m_iface;
     IpDhcpClientCallback *m_callback;
     MemRef m_client_id;
     MemRef m_vendor_class_id;
@@ -369,8 +369,10 @@ public:
      * @param callback Object which will receive callbacks about the status
      *        of the lease, null for none.
      */
-    IpDhcpClient (Platform platform_, IpStack *stack, Iface *iface,
-                  IpDhcpClientInitOptions const &opts, IpDhcpClientCallback *callback) :
+    IpDhcpClient (PlatformFacade<PlatformImpl> platform_, IpStack<StackArg> *stack,
+                  IpIface<StackArg> *iface, IpDhcpClientInitOptions const &opts,
+                  IpDhcpClientCallback *callback)
+    :
         IpDhcpClientTimers<Arg>::Timers(platform_),
         m_ipstack(stack),
         m_iface(iface),
@@ -390,7 +392,7 @@ public:
         UdpListener<UdpArg>::startListening(udp(), listen_params);
 
         // Start observing interface state.
-        IfaceStateObserver::observe(*iface);
+        IpIfaceStateObserver<StackArg>::observe(*iface);
         
         // Remember any requested IP address for Rebooting.
         m_info.ip_address = opts.request_ip_address;
@@ -443,7 +445,7 @@ public:
     }
     
 private:
-    inline Iface * iface () const
+    inline IpIface<StackArg> * iface () const
     {
         return m_iface;
     }
@@ -764,7 +766,7 @@ private:
     }
     
     UdpRecvResult recvUdpIp4Packet (
-        IpRxInfoIp4<IpStack> const &ip_info, UdpRxInfo<UdpArg> const &udp_info,
+        IpRxInfoIp4<StackArg> const &ip_info, UdpRxInfo<UdpArg> const &udp_info,
         IpBufRef udp_data) override final
     {
         // Check for expected source port.
@@ -773,7 +775,7 @@ private:
         }
         
         // Sanity check source address - reject broadcast addresses.
-        if (AIPSTACK_UNLIKELY(!IpStack::checkUnicastSrcAddr(ip_info))) {
+        if (AIPSTACK_UNLIKELY(!IpStack<StackArg>::checkUnicastSrcAddr(ip_info))) {
             goto out;
         }
 
@@ -1462,14 +1464,13 @@ struct IpDhcpClientOptions {
  * AIpStack::IpDhcpClientOptions::DhcpTTL::Is\<16\>. The defaults (achieved with
  * an emtpy parameter list) should be suitable for most uses.
  * 
- * To obtain an @ref IpDhcpClient class type, use @ref AIPSTACK_MAKE_INSTANCE with
- * @ref Compose, like this:
+ * An @ref IpDhcpClient class type can be obtained as follows:
  * 
  * ```
- * using MyDhcpClientService = AIpStack::IpDhcpClientService<...>;
- * AIPSTACK_MAKE_INSTANCE(MyDhcpClient, (MyDhcpClientService::template Compose<
- *     PlatformImpl, MyIpStack>))
- * MyDhcpClient dhcp_client(...);
+ * using MyDhcpClientService = AIpStack::IpDhcpClientService<...options...>;
+ * class MyDhcpClientArg : public MyDhcpClientService::template Compose<
+ *     PlatformImpl, IpStackArg> {};
+ * using MyDhcpClient = AIpStack::IpDhcpClient<MyDhcpClientArg>;
  * ```
  * 
  * @tparam Options Assignments of options defined in @ref IpDhcpClientOptions.
@@ -1495,21 +1496,25 @@ class IpDhcpClientService {
     
 public:
     /**
-     * Template for use with @ref AIPSTACK_MAKE_INSTANCE to get an @ref IpDhcpClient type.
+     * Template to get the template parameter for @ref IpDhcpClient.
      * 
      * See @ref IpDhcpClientService for an example of instantiating the @ref IpDhcpClient.
+     * It is advised to not pass this type directly to @ref IpDhcpClient but pass a dummy
+     * user-defined class which inherits from it.
      * 
      * @tparam PlatformImpl_ The platform implementation class, should be the same as
      *         passed to @ref IpStackService::Compose.
-     * @tparam IpStack_ The @ref IpStack template class type.
+     * @tparam StackArg_ Template parameter of @ref IpStack.
      */
-    template <typename PlatformImpl_, typename IpStack_>
+    template <typename PlatformImpl_, typename StackArg_>
     struct Compose {
 #ifndef IN_DOXYGEN
         using PlatformImpl = PlatformImpl_;
-        using IpStack = IpStack_;
+        using StackArg = StackArg_;
         using Params = IpDhcpClientService;
-        AIPSTACK_DEF_INSTANCE(Compose, IpDhcpClient)        
+
+        // This is for completeness and is not typically used.
+        AIPSTACK_DEF_INSTANCE(Compose, IpDhcpClient)
 #endif
     };
 };

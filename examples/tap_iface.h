@@ -44,36 +44,33 @@
 
 namespace AIpStackExamples {
 
-template <typename IpIface, typename TheEthIpIfaceService>
+template <typename StackArg, typename TheEthIpIfaceService>
 class TapIface;
 
 namespace Private {
-    template <typename IpIface, typename TheEthIpIfaceService>
-    struct TapIfaceHelper {
-        AIPSTACK_MAKE_INSTANCE(TheEthIpIface, (TheEthIpIfaceService::template Compose<
-            PlatformImplLibuv, IpIface>))
-    };
+    template <typename StackArg, typename TheEthIpIfaceService>
+    class EthIpIfaceArg : public TheEthIpIfaceService::template Compose<
+        PlatformImplLibuv, StackArg> {};
     
     struct TapIfaceMacAddr {
         AIpStack::MacAddr m_mac_addr;
     };
 }
 
-template <typename IpIface, typename TheEthIpIfaceService>
+template <typename StackArg, typename TheEthIpIfaceService>
 class TapIface :
     private TapDevice,
     private Private::TapIfaceMacAddr,
-    public Private::TapIfaceHelper<IpIface, TheEthIpIfaceService>::TheEthIpIface
+    public AIpStack::EthIpIface<Private::EthIpIfaceArg<StackArg, TheEthIpIfaceService>>
 {
     using Platform = AIpStack::PlatformFacade<PlatformImplLibuv>;
-    using TheEthIpIface = typename Private::TapIfaceHelper<
-        IpIface, TheEthIpIfaceService>::TheEthIpIface;
+
+    using TheEthIpIface =
+        AIpStack::EthIpIface<Private::EthIpIfaceArg<StackArg, TheEthIpIfaceService>>;
     
 public:
-    TapIface (typename TapIface::Platform platform,
-              typename TheEthIpIface::IfaceIpStack *stack,
-              std::string const &device_id,
-              AIpStack::MacAddr const &mac_addr)
+    TapIface (Platform platform, AIpStack::IpStack<StackArg> *stack,
+              std::string const &device_id, AIpStack::MacAddr const &mac_addr)
     :
         TapDevice(platform.ref().platformImpl()->loop(), device_id),
         TapIfaceMacAddr{mac_addr},

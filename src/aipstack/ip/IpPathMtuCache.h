@@ -43,6 +43,7 @@
 #include <aipstack/infra/Instance.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/Ip4Proto.h>
+#include <aipstack/ip/IpStackHelperTypes.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/platform/TimerWrapper.h>
 
@@ -54,6 +55,9 @@ namespace AIpStack {
  */
 
 #ifndef IN_DOXYGEN
+
+template <typename> class IpStack;
+template <typename> class IpIface;
 
 template <typename Arg>
 class IpPathMtuCache;
@@ -80,15 +84,14 @@ class IpPathMtuCache :
     ,private IpPathMtuCacheTimers<Arg>::Timers
 #endif
 {
-    AIPSTACK_USE_TYPES(Arg, (Params, PlatformImpl, IpStack))
+    AIPSTACK_USE_TYPES(Arg, (Params, PlatformImpl, StackArg))
     AIPSTACK_USE_VALS(Params, (NumMtuEntries, MtuTimeoutMinutes))
     AIPSTACK_USE_TYPES(Params, (MtuIndexService))
     
     using Platform = PlatformFacade<PlatformImpl>;    
     AIPSTACK_USE_TYPES(Platform, (TimeType))
     
-    AIPSTACK_USE_TYPES(IpStack, (Iface, RouteInfoIp4))
-    AIPSTACK_USE_VALS(IpStack, (MinMTU))
+    AIPSTACK_USE_VALS(IpStack<StackArg>, (MinMTU))
     
     static_assert(NumMtuEntries > 0, "");
     static_assert(MtuTimeoutMinutes > 0, "");
@@ -189,7 +192,7 @@ private:
     };
     
 private:
-    IpStack *m_ip_stack;
+    IpStack<StackArg> *m_ip_stack;
     StructureRaiiWrapper<typename MtuIndex::Index> m_mtu_index;
     StructureRaiiWrapper<MtuFreeList> m_mtu_free_list;
     MtuEntry m_mtu_entries[NumMtuEntries];
@@ -200,7 +203,8 @@ private:
                        &IpPathMtuCache::m_mtu_entries> {};
     
 public:
-    IpPathMtuCache (Platform platform, IpStack *ip_stack) :
+    IpPathMtuCache (PlatformFacade<PlatformImpl> platform, IpStack<StackArg> *ip_stack)
+    :
         IpPathMtuCacheTimers<Arg>::Timers(platform),
         m_ip_stack(ip_stack)
     {
@@ -230,7 +234,7 @@ public:
         uint16_t bump_mtu = MaxValue(MinMTU, mtu_info);
         
         // Make sure the PMTU will not exceed the interface MTU.
-        RouteInfoIp4 route_info;
+        IpRouteInfoIp4<StackArg> route_info;
         if (m_ip_stack->routeIp4(remote_addr, route_info)) {
             bump_mtu = MinValue(bump_mtu, route_info.iface->getMtu());
         }
@@ -326,7 +330,7 @@ public:
             return PrevLink::link != nullptr;
         }
         
-        bool setup (IpPathMtuCache *cache, Ip4Addr remote_addr, Iface *iface,
+        bool setup (IpPathMtuCache *cache, Ip4Addr remote_addr, IpIface<StackArg> *iface,
                     uint16_t &out_pmtu)
         {
             AIPSTACK_ASSERT(!isSetup())
@@ -372,7 +376,7 @@ public:
                 
                 // If no interface is provided, find the interface for the initial PMTU.
                 if (iface == nullptr) {
-                    RouteInfoIp4 route_info;
+                    IpRouteInfoIp4<StackArg> route_info;
                     if (!cache->m_ip_stack->routeIp4(remote_addr, route_info)) {
                         return false;
                     }
@@ -538,7 +542,7 @@ private:
         mtu_entry.minutes_old = 1;
         
         // Find the route to the destination.
-        RouteInfoIp4 route_info;
+        IpRouteInfoIp4<StackArg> route_info;
         if (!m_ip_stack->routeIp4(mtu_entry.remote_addr, route_info)) {
             // Couldn't find an interface, will try again next timeout.
         } else {
@@ -649,10 +653,10 @@ class IpPathMtuCacheService {
     
 public:
 #ifndef IN_DOXYGEN
-    template <typename PlatformImpl_, typename IpStack_>
+    template <typename PlatformImpl_, typename StackArg_>
     struct Compose {
         using PlatformImpl = PlatformImpl_;
-        using IpStack = IpStack_;
+        using StackArg = StackArg_;
         using Params = IpPathMtuCacheService;
         AIPSTACK_DEF_INSTANCE(Compose, IpPathMtuCache)        
     };

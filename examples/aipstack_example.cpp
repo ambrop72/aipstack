@@ -27,7 +27,6 @@
 #include <string>
 #include <stdexcept>
 
-#include <aipstack/infra/Instance.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/structure/index/AvlTreeIndex.h>
@@ -38,6 +37,7 @@
 #include <aipstack/ip/IpPathMtuCache.h>
 #include <aipstack/ip/IpReassembly.h>
 #include <aipstack/ip/IpDhcpClient.h>
+#include <aipstack/ip/IpProtocolHandlerStub.h>
 #include <aipstack/tcp/IpTcpProto.h>
 #include <aipstack/udp/IpUdpProto.h>
 #include <aipstack/eth/EthIpIface.h>
@@ -46,6 +46,9 @@
 #include "libuv_app_helper.h"
 #include "tap_iface.h"
 #include "example_server.h"
+
+
+// CONFIGURATION
 
 // Address configuration
 static bool const DeviceUseDhcp = true;
@@ -56,9 +59,6 @@ static AIpStack::Ip4Addr const DeviceGatewayAddr =
     AIpStack::Ip4Addr::FromBytes(192, 168, 64, 1);
 static AIpStack::MacAddr const DeviceMacAddr =
     AIpStack::MacAddr::Make(0x8e, 0x86, 0x90, 0x97, 0x65, 0xd5);
-
-// Type alias for our platform implementation class.
-using PlatformImpl = AIpStackExamples::PlatformImplLibuv;
 
 // Index data structure to use for various things.
 using IndexService = AIpStack::AvlTreeIndexService; // AVL tree
@@ -94,6 +94,8 @@ using ProtocolServicesList = AIpStack::MakeTypeList<
     AIpStack::IpUdpProtoService<
         AIpStack::IpUdpProtoOptions::UdpIndexService::Is<IndexService>
     >
+    // Uncomment to test that IpProtocolHandlerStub compiles
+    //,AIpStack::IpProtocolHandlerStubService
 >;
 
 // Ethernet layer (EthIpIface) configuration
@@ -106,35 +108,42 @@ using MyEthIpIfaceService = AIpStack::EthIpIfaceService<
     >
 >;
 
-// Type aliases for PlatformRef and PlatformFacade.
-using PlatformRef = AIpStack::PlatformRef<PlatformImpl>;
-using Platform = AIpStack::PlatformFacade<PlatformImpl>;
-
-// Instantiate the IpStack.
-AIPSTACK_MAKE_INSTANCE(MyIpStack, (MyIpStackService::template Compose<
-    PlatformImpl, ProtocolServicesList>))
-
-// Type alias for TAP interface.
-using MyTapIface = AIpStackExamples::TapIface<
-    typename MyIpStack::Iface, MyEthIpIfaceService>;
-
 // DHCP client (IpDhcpClient) configuration.
 using MyDhcpClientService = AIpStack::IpDhcpClientService<
     // use defaults    
 >;
-
-// Instantiate the IpDhcpClient.
-AIPSTACK_MAKE_INSTANCE(MyDhcpClient, (MyDhcpClientService::template Compose<
-    PlatformImpl, MyIpStack>))
 
 // Example server configuration.
 using MyExampleServerService = AIpStackExamples::ExampleServerService<
     // use defaults
 >;
 
+// CONFIGURATION - END
+
+
+// Type alias for our platform implementation class.
+using PlatformImpl = AIpStackExamples::PlatformImplLibuv;
+
+// Type aliases for PlatformRef and PlatformFacade.
+using PlatformRef = AIpStack::PlatformRef<PlatformImpl>;
+using Platform = AIpStack::PlatformFacade<PlatformImpl>;
+
+// Instantiate the IpStack.
+class IpStackArg : public MyIpStackService::template Compose<
+    PlatformImpl, ProtocolServicesList> {};
+using MyIpStack = AIpStack::IpStack<IpStackArg>;
+
+// Instantiate the TapIface.
+using MyTapIface = AIpStackExamples::TapIface<IpStackArg, MyEthIpIfaceService>;
+
+// Instantiate the IpDhcpClient.
+class DhcpClientArg : public MyDhcpClientService::template Compose<
+    PlatformImpl, IpStackArg> {};
+using MyDhcpClient = AIpStack::IpDhcpClient<DhcpClientArg>;
+
 // Instantiate the example server.
-AIPSTACK_MAKE_INSTANCE(MyExampleServer, (MyExampleServerService::template Compose<
-    MyIpStack>))
+class MyExampleServerArg : public MyExampleServerService::template Compose<IpStackArg> {};
+
 
 int main (int argc, char *argv[])
 {
@@ -152,12 +161,12 @@ int main (int argc, char *argv[])
     Platform platform{PlatformRef{&platform_impl}};
     
     // Construct the IP stack.
-    std::unique_ptr<MyIpStack> stack{new MyIpStack(platform)};
+    auto stack = std::make_unique<MyIpStack>(platform);
     
     // Construct the TAP interface.
     std::unique_ptr<MyTapIface> iface;
     try {
-        iface.reset(new MyTapIface(platform, &*stack, device_id, DeviceMacAddr));
+        iface = std::make_unique<MyTapIface>(platform, &*stack, device_id, DeviceMacAddr);
     }
     catch (std::runtime_error const &ex) {
         std::fprintf(stderr, "Error initializing TAP interface: %s\n",
@@ -170,7 +179,8 @@ int main (int argc, char *argv[])
     if (DeviceUseDhcp) {
         // Construct the DHCP client.
         AIpStack::IpDhcpClientInitOptions dhcp_opts;
-        dhcp_client.reset(new MyDhcpClient(platform, &*stack, &*iface, dhcp_opts, nullptr));
+        dhcp_client = std::make_unique<MyDhcpClient>(
+            platform, &*stack, &*iface, dhcp_opts, nullptr);
     } else {
         // Assign static IP configuration.
         iface->setIp4Addr(
@@ -179,7 +189,8 @@ int main (int argc, char *argv[])
     }
     
     // Construct the example server.
-    std::unique_ptr<MyExampleServer> example_server{new MyExampleServer(&*stack)};
+    auto example_server = 
+        std::make_unique<AIpStackExamples::ExampleServer<MyExampleServerArg>>(&*stack);
     
     std::fprintf(stderr, "Initialized, entering event loop.\n");
     

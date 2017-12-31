@@ -32,6 +32,9 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Err.h>
+#include <aipstack/tcp/TcpApi.h>
+#include <aipstack/tcp/TcpConnection.h>
+#include <aipstack/tcp/TcpListener.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/platform/TimerWrapper.h>
 
@@ -39,14 +42,16 @@ namespace AIpStack {
 
 template <
     typename PlatformImpl,
-    typename TcpProto,
+    typename TcpArg,
     size_t RxBufferSize
 >
 class TcpListenQueue {
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
-    AIPSTACK_USE_TYPES(TcpProto, (Listener, Connection))
     
+    using Connection = TcpConnection<TcpArg>;
+    using Listener = TcpListener<TcpArg>;
+
     static_assert(RxBufferSize > 0, "");
     
 public:
@@ -174,7 +179,7 @@ public:
         AIPSTACK_USE_TIMERS(QueuedListenerTimers)
         
     public:
-        QueuedListener (Platform platform) :
+        QueuedListener (PlatformFacade<PlatformImpl> platform) :
             QueuedListenerTimers(platform)
         {}
         
@@ -191,7 +196,7 @@ public:
             Listener::reset();
         }
         
-        bool startListening (TcpProto *tcp, TcpListenParams const &params, ListenQueueParams const &q_params)
+        bool startListening (TcpApi<TcpArg> &tcp, TcpListenParams const &params, ListenQueueParams const &q_params)
         {
             AIPSTACK_ASSERT(!Listener::isListening())
             AIPSTACK_ASSERT(q_params.queue_size >= 0)
@@ -241,7 +246,7 @@ public:
         //   data may have been stored there.
         // - A FIN may already have been received. If so you will not get a
         //   dataReceived(0) callback.
-        IpErr acceptConnection (Connection &dst_con, IpBufRef &initial_rx_data)
+        IpErr acceptConnection (TcpConnection<TcpArg> &dst_con, IpBufRef &initial_rx_data)
         {
             AIPSTACK_ASSERT(Listener::isListening())
             AIPSTACK_ASSERT(dst_con.isInit())

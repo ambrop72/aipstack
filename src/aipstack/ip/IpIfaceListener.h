@@ -30,6 +30,7 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/ip/IpStackHelperTypes.h>
 
 namespace AIpStack {
 
@@ -51,11 +52,11 @@ template <typename> class IpIface;
  * implementation. It may be removed at some point if a proper UDP protocol
  * handle is implemented that is usable for DHCP.
  * 
- * @tparam TheIpStack The @ref IpStack class type.
+ * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename TheIpStack>
+template <typename Arg>
 class IpIfaceListener :
-    private NonCopyable<IpIfaceListener<TheIpStack>>
+    private NonCopyable<IpIfaceListener<Arg>>
 {
     template <typename> friend class IpStack;
     
@@ -71,7 +72,7 @@ public:
      *        not removed while this object is still initialized.
      * @param proto IP protocol number that the user is interested on.
      */
-    IpIfaceListener (IpIface<TheIpStack> *iface, uint8_t proto) :
+    IpIfaceListener (IpIface<Arg> *iface, uint8_t proto) :
         m_iface(iface),
         m_proto(proto)
     {
@@ -91,7 +92,7 @@ public:
      * 
      * @return Interface on which this object is listening.
      */
-    inline IpIface<TheIpStack> * getIface () const
+    inline IpIface<Arg> * getIface () const
     {
         return m_iface;
     }
@@ -114,12 +115,11 @@ protected:
      * @param dgram Data of the received datagram.
      * @return True to inhibit further processing, false to continue.
      */
-    virtual bool recvIp4Dgram (
-        typename TheIpStack::RxInfoIp4 const &ip_info, IpBufRef dgram) = 0;
+    virtual bool recvIp4Dgram (IpRxInfoIp4<Arg> const &ip_info, IpBufRef dgram) = 0;
     
 private:
-    LinkedListNode<typename TheIpStack::IfaceListenerLinkModel> m_list_node;
-    IpIface<TheIpStack> *m_iface;
+    LinkedListNode<typename IpStack<Arg>::IfaceListenerLinkModel> m_list_node;
+    IpIface<Arg> *m_iface;
     uint8_t m_proto;
 };
 

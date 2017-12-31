@@ -31,7 +31,7 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Instance.h>
-#include <aipstack/ip/IpStackHelperTypes.h>
+#include <aipstack/ip/IpStack.h>
 #include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {
@@ -118,25 +118,11 @@ public:
     using Platform = PlatformFacade<PlatformImpl>;
     
     /**
-     * Type alias for the instantiated @ref IpStack as passed to Compose.
+     * Type alias for the template parameter of @ref IpStack as passed to Compose.
      * 
      * This alias is not required but is used in definitions here.
      */
-    using TheIpStack = typename Arg::TheIpStack;
-    
-    /**
-     * Type alias for @ref IpRxInfoIp4.
-     * 
-     * This alias is not required but is used in definitions here.
-     */
-    using RxInfoIp4 = typename TheIpStack::RxInfoIp4;
-    
-    /**
-     * Type alias for @ref IpProtocolHandlerArgs.
-     * 
-     * This alias is not required but is used in definitions here.
-     */
-    using ProtocolHandlerArgs = IpProtocolHandlerArgs<TheIpStack>;
+    using StackArg = typename Arg::StackArg;
     
     /**
      * Construct the protocol handler.
@@ -151,7 +137,7 @@ public:
      *        The protocol handler should remember the @ref IpStack pointer so
      *        that it can access the stack later.
      */
-    IpProtocolHandlerStub (ProtocolHandlerArgs args) :
+    IpProtocolHandlerStub (IpProtocolHandlerArgs<StackArg> args) :
         m_stack(args.stack)
     {
     }
@@ -213,8 +199,10 @@ public:
      * @param dgram IP payload of the datagram. The referenced buffers
      *        must not be used outside of this function.
      */
-    void recvIp4Dgram (RxInfoIp4 const &ip_info, IpBufRef dgram)
+    void recvIp4Dgram (IpRxInfoIp4<StackArg> const &ip_info, IpBufRef dgram)
     {
+        (void)ip_info;
+        (void)dgram;
     }
 
     /**
@@ -260,12 +248,15 @@ public:
      */
     void handleIp4DestUnreach (
         Ip4DestUnreachMeta const &du_meta,
-        RxInfoIp4 const &ip_info, IpBufRef dgram_initial)
+        IpRxInfoIp4<StackArg> const &ip_info, IpBufRef dgram_initial)
     {
+        (void)du_meta;
+        (void)ip_info;
+        (void)dgram_initial;
     }
     
 private:
-    TheIpStack *m_stack;
+    IpStack<StackArg> *m_stack;
 };
 
 /**
@@ -283,7 +274,7 @@ struct IpProtocolHandlerStubService {
      * The IP protocol number of the protocol handler.
      * 
      * This type alias must appear so that the stack knows which protocol
-     * number the handler is responsible for. The type alias should be for an
+     * number the handler is responsible for. The type alias should be for a
      * @ref WrapValue type using uint8_t as the value type.
      */
     using IpProtocolNumber = WrapValue<uint8_t, 99>;
@@ -304,19 +295,19 @@ struct IpProtocolHandlerStubService {
      *         the stack. Note that this is the original %PlatformImpl type
      *         provided to @ref IpStackService::Compose and not the
      *         @ref PlatformFacade.
-     * @tparam TheIpStack_ The @ref IpStack template class type.
+     * @tparam StackArg_ Template parameter of @ref IpStack.
      */
-    template <typename PlatformImpl_, typename TheIpStack_>
+    template <typename PlatformImpl_, typename StackArg_>
     struct Compose {
         /**
-         * Exposes the platform implementation template parameter.
+         * Exposes the `PlatformImpl_` template parameter.
          */
         using PlatformImpl = PlatformImpl_;
         
         /**
-         * Exposes the @ref IpStack class template parameter.
+         * Exposes the `StackArg_` template parameter.
          */
-        using TheIpStack = TheIpStack_;
+        using StackArg = StackArg_;
         
         /**
          * Alias for accessing the service definition.

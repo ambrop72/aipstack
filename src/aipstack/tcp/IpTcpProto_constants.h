@@ -33,7 +33,7 @@
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/proto/Tcp4Proto.h>
-#include <aipstack/ip/IpStackHelperTypes.h>
+#include <aipstack/ip/IpStack.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/tcp/TcpUtils.h>
 
@@ -42,14 +42,14 @@ namespace AIpStack {
 template <typename Arg>
 class IpTcpProto_constants
 {
-    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, TheIpStack))
+    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, StackArg))
     AIPSTACK_USE_TYPES(TcpUtils, (SeqType))
 
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
 
     // Make sure the MinMTU permits an unfragmented TCP segment with some data.
-    static_assert(TheIpStack::MinMTU >= Ip4TcpHeaderSize + 32, "");
+    static_assert(IpStack<StackArg>::MinMTU >= Ip4TcpHeaderSize + 32, "");
     
 public:
     // For retransmission time calculations we right-shift the TimeType
@@ -69,7 +69,7 @@ public:
 
     // Don't allow the remote host to lower the MSS beyond this.
     // NOTE: pcb_calc_snd_mss_from_pmtu relies on this definition.
-    static uint16_t const MinAllowedMss = TheIpStack::MinMTU - Ip4TcpHeaderSize;
+    static uint16_t const MinAllowedMss = IpStack<StackArg>::MinMTU - Ip4TcpHeaderSize;
     
     // Common flags passed to IpStack::sendIp4Dgram.
     // We disable fragmentation of TCP segments sent by us, due to PMTUD.

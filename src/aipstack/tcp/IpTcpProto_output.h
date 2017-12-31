@@ -56,11 +56,11 @@ class IpTcpProto_output
                                    OptionFlags, TcpOptions))
     AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lt2, seq_add_sat, tcplen,
                                  can_output_in_state, snd_open_in_state))
-    AIPSTACK_USE_TYPES(TcpProto, (RxInfoIp4, TcpPcb, PcbFlags, Input, TimeType, Constants,
-                                  OutputTimer, RtxTimer, TheIpStack, MtuRef, Connection,
-                                  PcbKey))
+    AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, PcbFlags, Input, TimeType, Constants, OutputTimer,
+                                  RtxTimer, StackArg, Connection, PcbKey))
     AIPSTACK_USE_TYPES(Constants, (RttType, RttNextType))
-    AIPSTACK_USE_VALS(TheIpStack, (HeaderBeforeIp4Dgram))
+    AIPSTACK_USE_VALS(IpStack<StackArg>, (HeaderBeforeIp4Dgram))
+    using MtuRef = IpMtuRef<StackArg>;
 
     static RttType const RttTypeMax = TypeMax<RttType>();
     
@@ -867,7 +867,7 @@ public:
     // Calculate snd_mss based on the current MtuRef information.
     static uint16_t pcb_calc_snd_mss_from_pmtu (TcpPcb *pcb, uint16_t pmtu)
     {
-        AIPSTACK_ASSERT(pmtu >= TheIpStack::MinMTU)
+        AIPSTACK_ASSERT(pmtu >= IpStack<StackArg>::MinMTU)
         
         // Calculate the snd_mss from the MTU, bound to no more than base_snd_mss.
         uint16_t mtu_mss = pmtu - Ip4TcpHeaderSize;
@@ -999,7 +999,7 @@ public:
     // Send an RST as a reply to a received segment.
     // This conforms to RFC 793 handling of segments not belonging to a known
     // connection.
-    static void send_rst_reply (TcpProto *tcp, RxInfoIp4 const &ip_info,
+    static void send_rst_reply (TcpProto *tcp, IpRxInfoIp4<StackArg> const &ip_info,
                                 TcpSegMeta const &tcp_meta, size_t tcp_data_len)
     {
         SeqType rst_seq_num;
@@ -1202,7 +1202,7 @@ private:
     private:
         bool prepared;
         IpChksumAccumulator::State partial_chksum_state;
-        typename TheIpStack::Ip4SendPrepared ip_prep;
+        IpSendPreparedIp4<StackArg> ip_prep;
         TxAllocHelper<Tcp4Header::Size, HeaderBeforeIp4Dgram> dgram_alloc;
         
     public:

@@ -39,6 +39,7 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
+template <typename> class IpStack;
 template <typename> class IpIface;
 #endif
 
@@ -340,19 +341,19 @@ struct IpIfaceInitInfo {
  * See @ref IpProtocolHandlerStub::IpProtocolHandlerStub for the documentation
  * of protocol handler construction.
  * 
- * @tparam TheIpStack The @ref IpStack class type.
+ * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename TheIpStack>
+template <typename Arg>
 struct IpProtocolHandlerArgs {
     /**
      * The platform facade, as passed to the @ref IpStack::IpStack constructor.
      */
-    PlatformFacade<typename TheIpStack::PlatformImpl> platform;
+    PlatformFacade<typename Arg::PlatformImpl> platform;
     
     /**
      * A pointer to the IP stack.
      */
-    TheIpStack *stack;
+    IpStack<Arg> *stack;
 };
 
 /**
@@ -362,14 +363,14 @@ struct IpProtocolHandlerArgs {
  * in this structure. The result is only valid temporarily because it contains a pointer to
  * an interface, which could be removed.
  * 
- * @tparam TheIpStack The @ref IpStack class type.
+ * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename TheIpStack>
+template <typename Arg>
 struct IpRouteInfoIp4 {
     /**
      * The interface to send through.
      */
-    IpIface<TheIpStack> *iface;
+    IpIface<Arg> *iface;
     
     /**
      * The address of the next hop.
@@ -383,9 +384,9 @@ struct IpRouteInfoIp4 {
  * This is filled in by the stack and passed to the recvIp4Dgram function of
  * protocol handlers and also to @ref IpIfaceListener::recvIp4Dgram.
  * 
- * @tparam TheIpStack The @ref IpStack class type.
+ * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename TheIpStack>
+template <typename Arg>
 struct IpRxInfoIp4 {
     /**
      * The source address.
@@ -405,7 +406,7 @@ struct IpRxInfoIp4 {
     /**
      * The interface through which the packet was received.
      */
-    IpIface<TheIpStack> *iface;
+    IpIface<Arg> *iface;
 
     /**
      * The length of the IPv4 header in bytes.
@@ -422,14 +423,14 @@ struct IpRxInfoIp4 {
  * Values filled in this structure are only valid temporarily because the
  * @ref route_info contains a pointer to an interface, which could be removed.
  * 
- * @tparam TheIpStack The @ref IpStack class type.
+ * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename TheIpStack>
+template <typename Arg>
 struct IpSendPreparedIp4 {
     /**
      * Routing information (may be read externally if found useful).
      */
-    IpRouteInfoIp4<TheIpStack> route_info;
+    IpRouteInfoIp4<Arg> route_info;
     
     /**
      * Partially calculated IP header checksum (should not be used externally).

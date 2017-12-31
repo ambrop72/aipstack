@@ -51,8 +51,7 @@
 #include <aipstack/proto/Udp4Proto.h>
 #include <aipstack/proto/Icmp4Proto.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/ip/IpIface.h>
-#include <aipstack/ip/IpStackHelperTypes.h>
+#include <aipstack/ip/IpStack.h>
 
 namespace AIpStack {
 
@@ -76,7 +75,7 @@ struct UdpListenParams {
     uint16_t port = 0;
     bool accept_broadcast = false;
     bool accept_nonlocal_dst = false;
-    IpIface<typename UdpApi<Arg>::TheIpStack> *iface = nullptr;
+    IpIface<typename Arg::StackArg> *iface = nullptr;
 };
 
 template <typename Arg>
@@ -136,15 +135,19 @@ private:
     UdpApi (int);
 
 public:
-    using TheIpStack = typename Arg::TheIpStack;
+    using StackArg = typename Arg::StackArg;
+
+    using Listener = UdpListener<Arg>;
+
+    using Association = UdpAssociation<Arg>;
 
     static size_t const HeaderBeforeUdpData =
-        TheIpStack::HeaderBeforeIp4Dgram + Udp4Header::Size;
+        IpStack<StackArg>::HeaderBeforeIp4Dgram + Udp4Header::Size;
 
     static size_t const MaxUdpDataLenIp4 = TypeMax<uint16_t>() - Udp4Header::Size;
 
     IpErr sendUdpIp4Packet (Ip4Addrs const &addrs, UdpTxInfo<Arg> const &udp_info,
-                            IpBufRef udp_data, IpIface<TheIpStack> *iface,
+                            IpBufRef udp_data, IpIface<StackArg> *iface,
                             IpSendRetryRequest *retryReq, IpSendFlags send_flags)
     {
         AIPSTACK_ASSERT(udp_data.tot_len <= MaxUdpDataLenIp4)
@@ -187,7 +190,7 @@ class UdpListener :
     AIPSTACK_USE_TYPES(IpUdpProto<Arg>, (ListenersLinkModel))
 
 public:
-    using TheIpStack = typename IpUdpProto<Arg>::TheIpStack;
+    using StackArg = typename Arg::StackArg;
 
     UdpListener () :
         m_udp(nullptr)
@@ -242,12 +245,12 @@ public:
 
 protected:
     virtual UdpRecvResult recvUdpIp4Packet (
-        IpRxInfoIp4<TheIpStack> const &ip_info, UdpRxInfo<Arg> const &udp_info,
+        IpRxInfoIp4<StackArg> const &ip_info, UdpRxInfo<Arg> const &udp_info,
         IpBufRef udp_data) = 0;
 
 private:
     bool incomingPacketMatches (
-        IpRxInfoIp4<TheIpStack> const &ip_info, UdpRxInfo<Arg> const &udp_info,
+        IpRxInfoIp4<StackArg> const &ip_info, UdpRxInfo<Arg> const &udp_info,
         bool dst_is_iface_addr) const
     {
         AIPSTACK_ASSERT(dst_is_iface_addr ==
@@ -295,7 +298,7 @@ class UdpAssociation :
     template <typename> friend class IpUdpProto;
     
 public:
-    using TheIpStack = typename IpUdpProto<Arg>::TheIpStack;
+    using StackArg = typename Arg::StackArg;
 
     UdpAssociation () :
         m_udp(nullptr)
@@ -343,7 +346,7 @@ public:
 
         if (m_params.key.local_addr.isZero()) {
             // Select the local IP address.
-            IpIface<TheIpStack> *iface;
+            IpIface<StackArg> *iface;
             IpErr select_err = udp.m_stack->selectLocalIp4Address(
                 m_params.key.remote_addr, iface, m_params.key.local_addr);
             if (select_err != IpErr::SUCCESS) {
@@ -370,7 +373,7 @@ public:
 
 protected:
     virtual UdpRecvResult recvUdpIp4Packet (
-        IpRxInfoIp4<TheIpStack> const &ip_info, UdpRxInfo<Arg> const &udp_info,
+        IpRxInfoIp4<StackArg> const &ip_info, UdpRxInfo<Arg> const &udp_info,
         IpBufRef udp_data) = 0;
     
 private:
@@ -392,7 +395,7 @@ class IpUdpProto :
 
     AIPSTACK_USE_VALS(Arg::Params, (UdpTTL, EphemeralPortFirst, EphemeralPortLast))
     AIPSTACK_USE_TYPES(Arg::Params, (UdpIndexService))
-    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, TheIpStack))
+    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, StackArg))
 
     static_assert(EphemeralPortFirst > 0, "");
     static_assert(EphemeralPortFirst <= EphemeralPortLast, "");
@@ -442,7 +445,7 @@ class IpUdpProto :
     };
 
 public:
-    IpUdpProto (IpProtocolHandlerArgs<TheIpStack> args) :
+    IpUdpProto (IpProtocolHandlerArgs<StackArg> args) :
         m_stack(args.stack),
         m_next_listener(nullptr),
         m_next_ephemeral_port(EphemeralPortFirst)
@@ -460,7 +463,7 @@ public:
         return *this;
     }
 
-    void recvIp4Dgram (IpRxInfoIp4<TheIpStack> const &ip_info, IpBufRef dgram)
+    void recvIp4Dgram (IpRxInfoIp4<StackArg> const &ip_info, IpBufRef dgram)
     {
         // Check that there is a UDP header.
         if (AIPSTACK_UNLIKELY(!dgram.hasHeader(Udp4Header::Size))) {
@@ -616,7 +619,7 @@ public:
     }
 
     void handleIp4DestUnreach (
-        Ip4DestUnreachMeta const &du_meta, IpRxInfoIp4<TheIpStack> const &ip_info,
+        Ip4DestUnreachMeta const &du_meta, IpRxInfoIp4<StackArg> const &ip_info,
         IpBufRef dgram_initial)
     {
         (void)du_meta;
@@ -626,7 +629,7 @@ public:
 
 private:
     static bool verifyChecksum (
-        IpRxInfoIp4<TheIpStack> const &ip_info, Udp4Header::Ref udp_header,
+        IpRxInfoIp4<StackArg> const &ip_info, Udp4Header::Ref udp_header,
         IpBufRef dgram, bool &has_checksum)
     {
         uint16_t checksum = udp_header.get(Udp4Header::Checksum());
@@ -668,7 +671,7 @@ private:
     }
     
 private:
-    TheIpStack *m_stack;
+    IpStack<StackArg> *m_stack;
     StructureRaiiWrapper<ListenersList> m_listeners_list;
     StructureRaiiWrapper<typename AssociationIndex::Index> m_associations_index;
     UdpListener<Arg> *m_next_listener;
@@ -699,10 +702,10 @@ public:
     using IpProtocolNumber = WrapValue<uint8_t, Ip4ProtocolUdp>;
     
 #ifndef IN_DOXYGEN
-    template <typename PlatformImpl_, typename TheIpStack_>
+    template <typename PlatformImpl_, typename StackArg_>
     struct Compose {
         using PlatformImpl = PlatformImpl_;
-        using TheIpStack = TheIpStack_;
+        using StackArg = StackArg_;
         using Params = IpUdpProtoService;
         AIPSTACK_DEF_INSTANCE(Compose, IpUdpProto)
     };

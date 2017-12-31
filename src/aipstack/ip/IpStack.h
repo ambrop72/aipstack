@@ -103,7 +103,8 @@ namespace AIpStack {
  * using the APIs provided by specific protocol handlers, which are exposed
  * via @ref GetProtoApiArg and @ref getProtoApi.
  * 
- * @tparam Arg Instantiation parameters (instantiate via @ref IpStackService).
+ * @tparam Arg An instantiation of the @ref IpStackService::Compose template or a
+ *         dummy class derived from such; see @ref IpStackService for an example.
  */
 template <typename Arg>
 class IpStack :
@@ -119,7 +120,8 @@ class IpStack :
 
 public:
     /**
-     * The platform implementation type, as given to @ref IpStackService::Compose.
+     * The platform implementation type, as given to @ref AIpStack::IpStackService::Compose
+     * "IpStackService::Compose".
      */
     using PlatformImpl = typename Arg::PlatformImpl;
     
@@ -134,7 +136,7 @@ private:
     AIPSTACK_MAKE_INSTANCE(Reassembly, (ReassemblyService::template Compose<PlatformImpl>))
     
     AIPSTACK_MAKE_INSTANCE(PathMtuCache, (
-        PathMtuCacheService::template Compose<PlatformImpl, IpStack>))
+        PathMtuCacheService::template Compose<PlatformImpl, Arg>))
     
     // Instantiate the protocols.
     template <int ProtocolIndex>
@@ -147,7 +149,7 @@ private:
         
         // Instantiate the protocol.
         AIPSTACK_MAKE_INSTANCE(Protocol, (
-            ProtocolService::template Compose<PlatformImpl, IpStack>))
+            ProtocolService::template Compose<PlatformImpl, Arg>))
         
         // Helper function to get the pointer to the protocol.
         inline static Protocol * get (IpStack *stack)
@@ -203,6 +205,12 @@ private:
         using Protocol = typename TheMatch::MatchProtocol;
     };
 
+    using Iface = IpIface<Arg>;
+    using IfaceListener = IpIfaceListener<Arg>;
+    
+    using IfaceLinkModel = PointerLinkModel<Iface>;
+    using IfaceListenerLinkModel = PointerLinkModel<IfaceListener>;
+    
 public:
     /**
      * Number of bytes which must be available in outgoing datagrams for headers.
@@ -215,28 +223,6 @@ public:
      */
     static size_t const HeaderBeforeIp4Dgram = HeaderBeforeIp + Ip4Header::Size;
     
-    /**
-     * The @ref IpProtocolHandlerArgs structure type for this @ref IpStack, encapsulating
-     * parameters passed to protocol handler constructors.
-     */
-    using ProtocolHandlerArgs = IpProtocolHandlerArgs<IpStack>;
-    
-    /**
-     * The @ref IpIface class for this @ref IpStack, representing a network interface.
-     */
-    using Iface = IpIface<IpStack>;
-    
-    /**
-     * The @ref IpIfaceListener class for this @ref IpStack, for receiving IP datagrams
-     * from a specific network interface.
-     */
-    using IfaceListener = IpIfaceListener<IpStack>;
-    
-private:
-    using IfaceLinkModel = PointerLinkModel<Iface>;
-    using IfaceListenerLinkModel = PointerLinkModel<IfaceListener>;
-    
-public:
     /**
      * Minimum permitted MTU and PMTU.
      * 
@@ -258,11 +244,11 @@ public:
      *        PlatformFacade\<PlatformImpl\> where PlatformImpl is as given
      *        to @ref IpStackService::Compose.
      */
-    IpStack (Platform platform) :
+    IpStack (PlatformFacade<PlatformImpl> platform) :
         m_reassembly(platform),
         m_path_mtu_cache(platform, this),
         m_next_id(0),
-        m_protocols(ResourceTupleInitSame(), ProtocolHandlerArgs{platform, this})
+        m_protocols(ResourceTupleInitSame(), IpProtocolHandlerArgs<Arg>{platform, this})
     {}
     
     /**
@@ -282,7 +268,7 @@ public:
      * 
      * @return The platform facade.
      */
-    inline Platform platform () const
+    inline PlatformFacade<PlatformImpl> platform () const
     {
         return m_reassembly.platform();
     }
@@ -325,18 +311,6 @@ public:
 
 public:
     /**
-     * The @ref IpRouteInfoIp4 structure type for this @ref IpStack, encapsulating route
-     * information.
-     */
-    using RouteInfoIp4 = IpRouteInfoIp4<IpStack>;
-
-    /**
-     * The @ref IpRxInfoIp4 structure type for this @ref IpStack, encapsulating information
-     * about a received IPv4 datagram.
-     */
-    using RxInfoIp4 = IpRxInfoIp4<IpStack>;
-
-    /**
      * Send an IPv4 datagram.
      * 
      * This is the primary send function intended to be used by protocol handlers.
@@ -378,7 +352,7 @@ public:
      */
     AIPSTACK_NO_INLINE
     IpErr sendIp4Dgram (Ip4Addrs const &addrs, Ip4TtlProto ttl_proto, IpBufRef dgram,
-                        Iface *iface, IpSendRetryRequest *retryReq,
+                        IpIface<Arg> *iface, IpSendRetryRequest *retryReq,
                         IpSendFlags send_flags)
     {
         AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<uint16_t>())
@@ -389,7 +363,7 @@ public:
         IpBufRef pkt = dgram.revealHeaderMust(Ip4Header::Size);
         
         // Find an interface and address for output.
-        RouteInfoIp4 route_info;
+        IpRouteInfoIp4<Arg> route_info;
         bool route_ok;
         if (AIPSTACK_UNLIKELY(iface != nullptr)) {
             route_ok = routeIp4ForceIface(addrs.remote_addr, iface, route_info);
@@ -467,7 +441,7 @@ public:
     }
     
 private:
-    IpErr send_fragmented (IpBufRef pkt, RouteInfoIp4 route_info,
+    IpErr send_fragmented (IpBufRef pkt, IpRouteInfoIp4<Arg> route_info,
                            IpSendFlags send_flags, IpSendRetryRequest *retryReq)
     {
         // Recalculate pkt_send_len (not passed for optimization).
@@ -543,12 +517,6 @@ private:
     
 public:
     /**
-     * The @ref IpSendPreparedIp4 structure type for this @ref IpStack, which stores
-     * reusable data for sending multiple packets efficiently.
-     */
-    using Ip4SendPrepared = IpSendPreparedIp4<IpStack>;
-
-    /**
      * Prepare for sending multiple datagrams with similar header fields.
      * 
      * This determines routing information, fills in common header fields and
@@ -574,7 +542,7 @@ public:
     AIPSTACK_ALWAYS_INLINE
     IpErr prepareSendIp4Dgram (Ip4Addrs const &addrs, Ip4TtlProto ttl_proto,
                                char *header_end_ptr, IpSendFlags send_flags,
-                               Ip4SendPrepared &prep)
+                               IpSendPreparedIp4<Arg> &prep)
     {
         AIPSTACK_ASSERT((send_flags & ~IpSendFlags::AllFlags) == EnumZero)
         
@@ -639,7 +607,7 @@ public:
      * @return Success or error code.
      */
     AIPSTACK_ALWAYS_INLINE
-    IpErr sendIp4DgramFast (Ip4SendPrepared const &prep, IpBufRef dgram,
+    IpErr sendIp4DgramFast (IpSendPreparedIp4<Arg> const &prep, IpBufRef dgram,
                             IpSendRetryRequest *retryReq)
     {
         AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<uint16_t>())
@@ -722,7 +690,7 @@ public:
      * @return True on success (route_info was filled in),
      *         false on error (route_info was not changed).
      */
-    bool routeIp4 (Ip4Addr dst_addr, RouteInfoIp4 &route_info) const
+    bool routeIp4 (Ip4Addr dst_addr, IpRouteInfoIp4<Arg> &route_info) const
     {
         int best_prefix = -1;
         Iface *best_iface = nullptr;
@@ -773,7 +741,8 @@ public:
      * @return True on success (route_info was filled in),
      *         false on error (route_info was not changed).
      */
-    bool routeIp4ForceIface (Ip4Addr dst_addr, Iface *iface, RouteInfoIp4 &route_info)
+    bool routeIp4ForceIface (Ip4Addr dst_addr, IpIface<Arg> *iface,
+                             IpRouteInfoIp4<Arg> &route_info)
     {
         AIPSTACK_ASSERT(iface != nullptr)
         
@@ -847,18 +816,12 @@ public:
      * @return True if the source address appears to be a unicast address,
      *         false if not.
      */
-    static bool checkUnicastSrcAddr (RxInfoIp4 const &ip_info)
+    static bool checkUnicastSrcAddr (IpRxInfoIp4<Arg> const &ip_info)
     {
         return !ip_info.src_addr.isAllOnesOrMulticast() &&
                !ip_info.iface->ip4AddrIsLocalBcast(ip_info.src_addr);
     }
     
-    /**
-     * The @ref IpIfaceStateObserver class for this @ref IpStack, for observing changes in
-     * the driver-reported state of a network interface.
-     */
-    using IfaceStateObserver = IpIfaceStateObserver<IpStack>;
-
     /**
      * Send an IPv4 ICMP Destination Unreachable message.
      * 
@@ -879,11 +842,11 @@ public:
      *        message.
      * @param rx_dgram IP payload of the datagram which triggered this ICMP message. Note
      *        that this function expects to find the IPv4 header before this data (it knows
-     *        how far back the header starts via @ref RxInfoIp4::header_len).
+     *        how far back the header starts via @ref IpRxInfoIp4::header_len).
      * @param du_meta Information about the Destination Unreachable message.
      * @return Success or error code.
      */
-    IpErr sendIp4DestUnreach (RxInfoIp4 const &rx_ip_info, IpBufRef rx_dgram,
+    IpErr sendIp4DestUnreach (IpRxInfoIp4<Arg> const &rx_ip_info, IpBufRef rx_dgram,
                               Ip4DestUnreachMeta const &du_meta)
     {
         AIPSTACK_ASSERT(rx_dgram.offset >= rx_ip_info.header_len)
@@ -919,10 +882,10 @@ public:
      * @return Success or error code.
      */
     IpErr selectLocalIp4Address (
-        Ip4Addr remote_addr, Iface *&out_iface, Ip4Addr &out_local_addr) const
+        Ip4Addr remote_addr, IpIface<Arg> *&out_iface, Ip4Addr &out_local_addr) const
     {
         // Determine the local interface.
-        RouteInfoIp4 route_info;
+        IpRouteInfoIp4<Arg> route_info;
         if (!routeIp4(remote_addr, route_info)) {
             return IpErr::NO_IP_ROUTE;
         }
@@ -954,13 +917,6 @@ public:
     using BaseMtuRef = typename PathMtuCache::MtuRef;
 #endif
     
-public:
-    /**
-     * The @ref IpMtuRef class type for this @ref IpStack, for keeping track of the Path
-     * MTU estimate for a remote address.
-     */
-    using MtuRef = IpMtuRef<IpStack>;
-
 private:
     static void processRecvedIp4Packet (Iface *iface, IpBufRef pkt)
     {
@@ -1072,15 +1028,15 @@ private:
             // Note, dgram was modified pointing to the reassembled data.
         }
         
-        // Create the RxInfoIp4 struct.
-        RxInfoIp4 ip_info = {src_addr, dst_addr, ttl_proto, iface, header_len};
+        // Create the IpRxInfoIp4 struct.
+        IpRxInfoIp4<Arg> ip_info = {src_addr, dst_addr, ttl_proto, iface, header_len};
 
         // Do the real processing now that the datagram is complete and
         // sanity checked.
         recvIp4Dgram(ip_info, dgram);
     }
     
-    static void recvIp4Dgram (RxInfoIp4 ip_info, IpBufRef dgram)
+    static void recvIp4Dgram (IpRxInfoIp4<Arg> ip_info, IpBufRef dgram)
     {
         uint8_t proto = ip_info.ttl_proto.proto();
         
@@ -1102,7 +1058,7 @@ private:
         {
             if (proto == Helper::IpProtocolNumber::Value) {
                 Helper::get(ip_info.iface->m_stack)->recvIp4Dgram(
-                    static_cast<RxInfoIp4 const &>(ip_info),
+                    static_cast<IpRxInfoIp4<Arg> const &>(ip_info),
                     static_cast<IpBufRef>(dgram));
                 return false;
             }
@@ -1120,7 +1076,7 @@ private:
         }
     }
     
-    static void recvIcmp4Dgram (RxInfoIp4 const &ip_info, IpBufRef const &dgram)
+    static void recvIcmp4Dgram (IpRxInfoIp4<Arg> const &ip_info, IpBufRef const &dgram)
     {
         // Sanity check source address - reject broadcast addresses.
         if (AIPSTACK_UNLIKELY(!checkUnicastSrcAddr(ip_info))) {
@@ -1257,8 +1213,8 @@ private:
         // Create the Ip4DestUnreachMeta struct.
         Ip4DestUnreachMeta du_meta = {code, rest};
         
-        // Create the RxInfoIp4 struct.
-        RxInfoIp4 ip_info = {src_addr, dst_addr, ttl_proto, iface, header_len};
+        // Create the IpRxInfoIp4 struct.
+        IpRxInfoIp4<Arg> ip_info = {src_addr, dst_addr, ttl_proto, iface, header_len};
         
         // Get the included IP data.
         size_t data_len = MinValueU(icmp_data.tot_len, total_len) - header_len;
@@ -1269,7 +1225,7 @@ private:
             if (ip_info.ttl_proto.proto() == Helper::IpProtocolNumber::Value) {
                 Helper::get(this)->handleIp4DestUnreach(
                     static_cast<Ip4DestUnreachMeta const &>(du_meta),
-                    static_cast<RxInfoIp4 const &>(ip_info),
+                    static_cast<IpRxInfoIp4<Arg> const &>(ip_info),
                     static_cast<IpBufRef>(dgram_initial));
                 return false;
             }
@@ -1284,7 +1240,6 @@ private:
     uint16_t m_next_id;
     InstantiateVariadic<ResourceTuple, ProtocolsList> m_protocols;
 };
-
 
 /**
  * Static configuration options for @ref IpStackService.
@@ -1332,14 +1287,13 @@ struct IpStackOptions {
  * The template parameters of this class are assignments of options defined in
  * @ref IpStackOptions, for example: AIpStack::IpStackOptions::IcmpTTL::Is\<16\>.
  * 
- * To to obtain an @ref IpStack class type, use @ref AIPSTACK_MAKE_INSTANCE with
- * @ref Compose, like this:
+ * An @ref IpStack class type can be obtained as follows:
  * 
  * ```
- * using MyIpStackService = AIpStack::IpStackService<...>;
- * AIPSTACK_MAKE_INSTANCE(MyIpStack, (MyIpStackService::template Compose<
- *     PlatformImpl, ProtocolServicesList>))
- * MyIpStack ip_stack(...);
+ * using MyIpStackService = AIpStack::IpStackService<...options...>;
+ * class MyIpStackArg : public MyIpStackService::template Compose<
+ *     PlatformImpl, ProtocolServicesList> {};
+ * using MyIpStack = AIpStack::IpStack<MyIpStackArg>;
  * ```
  * 
  * @tparam Options Assignments of options defined in @ref IpStackOptions.
@@ -1357,9 +1311,11 @@ class IpStackService {
     
 public:
     /**
-     * Template for use with @ref AIPSTACK_MAKE_INSTANCE to get an @ref IpStack type.
+     * Template to get the template parameter for @ref IpStack.
      * 
      * See @ref IpStackService for an example of instantiating the @ref IpStack.
+     * It is advised to not pass this type directly to @ref IpStack but pass a dummy
+     * user-defined class which inherits from it.
      * 
      * @tparam PlatformImpl_ Platform layer implementation, that is the PlatformImpl
      *         type to be used with @ref PlatformFacade.
@@ -1375,7 +1331,9 @@ public:
         using PlatformImpl = PlatformImpl_;
         using ProtocolServicesList = ProtocolServicesList_;
         using Params = IpStackService;
-        AIPSTACK_DEF_INSTANCE(Compose, IpStack)        
+
+        // This is for completeness and is not typically used.
+        AIPSTACK_DEF_INSTANCE(Compose, IpStack) 
 #endif
     };
 };

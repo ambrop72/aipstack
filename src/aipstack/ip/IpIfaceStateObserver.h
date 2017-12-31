@@ -30,6 +30,7 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
+template <typename> class IpStack;
 template <typename> class IpIface;
 #endif
 
@@ -49,11 +50,11 @@ template <typename> class IpIface;
  * of that class is exposed. The specific @ref observe function is provided to
  * start observing an interface.
  * 
- * @tparam TheIpStack The @ref IpStack class type.
+ * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename TheIpStack>
+template <typename Arg>
 class IpIfaceStateObserver :
-    public Observer<IpIfaceStateObserver<TheIpStack>>
+    public Observer<IpIfaceStateObserver<Arg>>
 {
     template <typename> friend class IpIface;
     friend Observable<IpIfaceStateObserver>;
@@ -66,7 +67,7 @@ public:
      * 
      * @param iface Interface to observe.
      */
-    inline void observe (IpIface<TheIpStack> &iface)
+    inline void observe (IpIface<Arg> &iface)
     {
         iface.m_state_observable.addObserver(*this);
     }
@@ -86,7 +87,6 @@ protected:
      */
     virtual void ifaceStateChanged () = 0;
 };
-
 
 /** @} */
 

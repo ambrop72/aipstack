@@ -126,25 +126,28 @@ AIPSTACK_DECL_TIMERS_CLASS(EthIpIfaceTimers, typename Arg::PlatformImpl,
  * resolution is successful through the @ref send-retry "send-retry" mechanism so that it
  * can retry sending, but such notification is not guaranteed.
  * 
- * @tparam Arg Instantiation parameters (instantiate via @ref EthIpIfaceService).
+ * @tparam Arg An instantiation of the @ref EthIpIfaceService::Compose template
+ *         or a dummy class derived from such; see @ref EthIpIfaceService for an
+ *         example.
  */
 template <typename Arg>
 class EthIpIface :
-    public Arg::Iface,
+    public IpIface<typename Arg::StackArg>,
     private EthIpIfaceTimers<Arg>::Timers,
     private EthHwIface,
     private NonCopyable<EthIpIface<Arg>>
 {
     AIPSTACK_USE_VALS(Arg::Params, (NumArpEntries, ArpProtectCount, HeaderBeforeEth))
     AIPSTACK_USE_TYPES(Arg::Params, (TimersStructureService))
-    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, Iface))
+    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, StackArg))
     
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
+    
     AIPSTACK_USE_TIMERS_CLASS(EthIpIfaceTimers<Arg>, (ArpTimer))
     using EthIpIfaceTimers<Arg>::Timers::platform;
     
-    using IpStack = typename Iface::IfaceIpStack;
+    using Iface = IpIface<StackArg>;
     
     static size_t const EthArpPktSize = EthHeader::Size + ArpIp4Header::Size;
     
@@ -289,7 +292,9 @@ public:
      * @param stack Pointer to the IP stack (must outlive this interface).
      * @param info Interface information, see @ref InitInfo.
      */
-    EthIpIface (Platform platform_, IpStack *stack, InitInfo const &info) :
+    EthIpIface (PlatformFacade<PlatformImpl> platform_, IpStack<StackArg> *stack,
+                InitInfo const &info)
+    :
         Iface(stack, {
             /*ip_mtu=*/ (size_t)(info.eth_mtu - EthHeader::Size),
             /*hw_type=*/ IpHwType::Ethernet,
@@ -315,8 +320,6 @@ public:
     }
     
 protected:
-    // These functions are implemented or called by the Ethernet driver.
-    
     /**
      * Driver function to send an Ethernet frame through the interface.
      * 
@@ -1002,14 +1005,13 @@ struct EthIpIfaceOptions {
  * @ref EthIpIfaceOptions, for example:
  * AIpStack::EthIpIfaceOptions::NumArpEntries::Is\<64\>.
  * 
- * To to obtain an @ref EthIpIface class type, use @ref AIPSTACK_MAKE_INSTANCE with
- * @ref Compose, like this:
+ * An @ref EthIpIface class type can be obtained as follows:
  * 
  * ```
- * using MyEthIpIfaceService = AIpStack::EthIpIfaceService<...>;
- * AIPSTACK_MAKE_INSTANCE(MyEthIpIface, (MyEthIpIfaceService::template Compose<
- *     PlatformImpl, MyIpStack::Iface>))
- * // MyEthIpIface is an EthIpIface class; at some point define a derived class.
+ * using MyEthIpIfaceService = AIpStack::EthIpIfaceService<...options...>;
+ * class MyEthIpIfaceArg : public MyEthIpIfaceService::template Compose<
+ *     PlatformImpl, IpStackArg> {};
+ * using MyEthIpIface = AIpStack::EthIpIface<MyEthIpIfaceArg>;
  * ```
  * 
  * @tparam Options Assignments of options defined in @ref EthIpIfaceOptions.
@@ -1026,21 +1028,24 @@ class EthIpIfaceService {
     
 public:
     /**
-     * Template for use with @ref AIPSTACK_MAKE_INSTANCE to get an @ref EthIpIface type.
+     * Template to get the template parameter for @ref EthIpIface.
      * 
      * See @ref EthIpIfaceService for an example of instantiating the @ref EthIpIface.
+     * It is advised to not pass this type directly to @ref EthIpIface but pass a dummy
+     * user-defined class which inherits from it.
      * 
      * @tparam PlatformImpl_ Platform layer implementation, the same one as used by the
      *         @ref IpStack (see @ref IpStackService::Compose).
-     * @tparam Iface_ The @ref IpIface class type of the @ref IpStack type which
-     *         will be used.
+     * @tparam StackArg_ Template parameter of @ref IpStack.
      */
-    template <typename PlatformImpl_, typename Iface_>
+    template <typename PlatformImpl_, typename StackArg_>
     struct Compose {
 #ifndef IN_DOXYGEN
         using PlatformImpl = PlatformImpl_;
-        using Iface = Iface_;
+        using StackArg = StackArg_;
         using Params = EthIpIfaceService;
+
+        // This is for completeness and is not typically used.
         AIPSTACK_DEF_INSTANCE(Compose, EthIpIface)
 #endif
     };

@@ -66,22 +66,17 @@ namespace AIpStack {
      * The IP stack does not provide or impose any model for management of interfaces
      * and interface drivers. Such a system could be build on top if it is needed.
      * 
-     * @tparam TheIpStack The @ref IpStack class type.
+     * @tparam Arg Template parameter of @ref IpStack.
      */
-    template <typename TheIpStack>
+    template <typename Arg>
     class IpIface :
-        private NonCopyable<IpIface<TheIpStack>>
+        private NonCopyable<IpIface<Arg>>
     {
         template <typename> friend class IpStack;
         template <typename> friend class IpIfaceListener;
         template <typename> friend class IpIfaceStateObserver;
 
     public:
-        /**
-         * The @ref AIpStack::IpStack "IpStack" type that this class is associated with.
-         */
-        using IfaceIpStack = TheIpStack;
-        
         /**
          * Construct the interface.
          * 
@@ -96,7 +91,7 @@ namespace AIpStack {
          * @param stack Pointer to the IP stack.
          * @param info Interface information, see @ref IpIfaceInitInfo.
          */
-        IpIface (TheIpStack *stack, IpIfaceInitInfo const &info) :
+        IpIface (IpStack<Arg> *stack, IpIfaceInitInfo const &info) :
             m_stack(stack),
             m_hw_iface(info.hw_iface),
             m_ip_mtu(MinValueU(TypeMax<uint16_t>(), info.ip_mtu)),
@@ -105,7 +100,7 @@ namespace AIpStack {
             m_have_gateway(false)
         {
             AIPSTACK_ASSERT(stack != nullptr)
-            AIPSTACK_ASSERT(m_ip_mtu >= TheIpStack::MinMTU)
+            AIPSTACK_ASSERT(m_ip_mtu >= IpStack<Arg>::MinMTU)
             
             // Register interface.
             m_stack->m_iface_list.prepend(*this);
@@ -365,7 +360,7 @@ namespace AIpStack {
          */
         inline void recvIp4PacketFromDriver (IpBufRef pkt)
         {
-            TheIpStack::processRecvedIp4Packet(this, pkt);
+            IpStack<Arg>::processRecvedIp4Packet(this, pkt);
         }
         
         /**
@@ -399,18 +394,17 @@ namespace AIpStack {
          */
         void stateChangedFromDriver ()
         {
-            m_state_observable.notifyKeepObservers([&](
-                typename TheIpStack::IfaceStateObserver &observer)
-            {
+            m_state_observable.notifyKeepObservers(
+            [&](IpIfaceStateObserver<Arg> &observer) {
                 observer.ifaceStateChanged();
             });
         }
         
     private:
-        LinkedListNode<typename TheIpStack::IfaceLinkModel> m_iface_list_node;
-        StructureRaiiWrapper<typename TheIpStack::IfaceListenerList> m_listeners_list;
-        Observable<typename TheIpStack::IfaceStateObserver> m_state_observable;
-        TheIpStack *m_stack;
+        LinkedListNode<typename IpStack<Arg>::IfaceLinkModel> m_iface_list_node;
+        StructureRaiiWrapper<typename IpStack<Arg>::IfaceListenerList> m_listeners_list;
+        Observable<IpIfaceStateObserver<Arg>> m_state_observable;
+        IpStack<Arg> *m_stack;
         void *m_hw_iface;
         uint16_t m_ip_mtu;
         IpIfaceIp4Addrs m_addr;

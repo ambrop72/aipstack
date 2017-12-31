@@ -33,6 +33,7 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
+template <typename> class IpStack;
 template <typename> class IpIface;
 #endif
 
@@ -44,15 +45,15 @@ template <typename> class IpIface;
 /**
  * Allows keeping track of the Path MTU estimate for a remote address.
  * 
- * @tparam TheIpStack The @ref IpStack class type.
+ * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename TheIpStack>
+template <typename Arg>
 class IpMtuRef
 #ifndef IN_DOXYGEN
-    : private TheIpStack::BaseMtuRef
+    : private IpStack<Arg>::BaseMtuRef
 #endif
 {
-    AIPSTACK_USE_TYPES(TheIpStack, (BaseMtuRef, PathMtuCache))
+    AIPSTACK_USE_TYPES(IpStack<Arg>, (BaseMtuRef, PathMtuCache))
 
 public:
     /**
@@ -87,7 +88,7 @@ public:
      * 
      * @param stack The IP stack.
      */
-    inline void reset (TheIpStack *stack)
+    inline void reset (IpStack<Arg> *stack)
     {
         return BaseMtuRef::reset(mtu_cache(stack));
     }
@@ -124,7 +125,7 @@ public:
      * @return True on success (object enters setup state), false on failure
      *         (object remains in not-setup state).
      */
-    inline bool setup (TheIpStack *stack, Ip4Addr remote_addr, IpIface<TheIpStack> *iface,
+    inline bool setup (IpStack<Arg> *stack, Ip4Addr remote_addr, IpIface<Arg> *iface,
                        uint16_t &out_pmtu)
     {
         return BaseMtuRef::setup(mtu_cache(stack), remote_addr, iface, out_pmtu);
@@ -163,7 +164,7 @@ protected:
     virtual void pmtuChanged (uint16_t pmtu) = 0;
     
 private:
-    inline static PathMtuCache * mtu_cache (TheIpStack *stack)
+    inline static PathMtuCache * mtu_cache (IpStack<Arg> *stack)
     {
         return &stack->m_path_mtu_cache;
     }

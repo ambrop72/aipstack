@@ -60,13 +60,13 @@ class IpTcpProto_input
     AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lte, seq_lt2, tcplen,
                                  can_output_in_state, accepting_data_in_state,
                                  state_is_synsent_synrcvd, snd_open_in_state))
-    AIPSTACK_USE_TYPES(TcpProto, (RxInfoIp4, Listener, Connection, TcpPcb, PcbFlags,
-                                   Output, Constants, AbrtTimer, RtxTimer, OutputTimer,
-                                   TheIpStack))
+    AIPSTACK_USE_TYPES(TcpProto, (Listener, Connection, TcpPcb, PcbFlags, Output, Constants,
+                                  AbrtTimer, RtxTimer, OutputTimer, StackArg))
     AIPSTACK_USE_VALS(TcpProto, (pcb_aborted_in_callback))
     
 public:
-    static void recvIp4Dgram (TcpProto *tcp, RxInfoIp4 const &ip_info, IpBufRef dgram)
+    static void recvIp4Dgram (TcpProto *tcp, IpRxInfoIp4<StackArg> const &ip_info,
+                              IpBufRef dgram)
     {
         // The destination address must be the address of the incoming interface.
         if (AIPSTACK_UNLIKELY(!ip_info.iface->ip4AddrIsLocalAddr(ip_info.dst_addr))) {
@@ -135,7 +135,7 @@ public:
         // minor detail that the original check might have been against
         // a different subnet broadcast address but we prefer speed to
         // completeness of this check.
-        if (AIPSTACK_UNLIKELY(!TheIpStack::checkUnicastSrcAddr(ip_info))) {
+        if (AIPSTACK_UNLIKELY(!IpStack<StackArg>::checkUnicastSrcAddr(ip_info))) {
             return;
         }
         
@@ -151,8 +151,9 @@ public:
         }
     }
     
-    static void handleIp4DestUnreach (TcpProto *tcp, Ip4DestUnreachMeta const &du_meta,
-                                RxInfoIp4 const &ip_info, IpBufRef dgram_initial)
+    static void handleIp4DestUnreach (
+        TcpProto *tcp, Ip4DestUnreachMeta const &du_meta,
+        IpRxInfoIp4<StackArg> const &ip_info, IpBufRef dgram_initial)
     {
         // We only care about ICMP code "fragmentation needed and DF set".
         if (du_meta.icmp_code != Icmp4CodeDestUnreachFragNeeded) {
@@ -366,7 +367,7 @@ public:
     }
     
 private:
-    static void listen_input (Listener *lis, RxInfoIp4 const &ip_info,
+    static void listen_input (Listener *lis, IpRxInfoIp4<StackArg> const &ip_info,
                               TcpSegMeta const &tcp_meta, size_t tcp_data_len)
     {
         do {

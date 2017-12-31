@@ -48,6 +48,7 @@
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/IpAddr.h>
 #include <aipstack/platform/PlatformFacade.h>
+#include <aipstack/ip/IpStack.h>
 #include <aipstack/tcp/TcpApi.h>
 #include <aipstack/tcp/TcpListener.h>
 #include <aipstack/tcp/TcpConnection.h>
@@ -61,10 +62,12 @@ template <typename Arg>
 class ExampleServer :
     private AIpStack::NonCopyable<ExampleServer<Arg>>
 {
-    using TheIpStack = typename Arg::TheIpStack;
+    using StackArg = typename Arg::StackArg;
     using Params = typename Arg::Params;
     
-    using TcpArg = typename TheIpStack::template GetProtoApiArg<AIpStack::TcpApi>;
+    using IpStack = AIpStack::IpStack<StackArg>;
+
+    using TcpArg = typename IpStack::template GetProtoApiArg<AIpStack::TcpApi>;
     using TcpListener = AIpStack::TcpListener<TcpArg>;
     using TcpConnection = AIpStack::TcpConnection<TcpArg>;
 
@@ -90,7 +93,7 @@ class ExampleServer :
     enum class ClientType {Echo, Command};
     
 public:
-    ExampleServer (TheIpStack *stack) :
+    ExampleServer (IpStack *stack) :
         m_stack(stack),
         m_listener_echo(this),
         m_listener_command(this)
@@ -464,7 +467,7 @@ private:
     };
     
 private:
-    TheIpStack *m_stack;
+    IpStack *m_stack;
     MyListener m_listener_echo;
     MyListener m_listener_command;
     std::unordered_map<BaseClient *, std::unique_ptr<BaseClient>> m_clients;
@@ -499,11 +502,11 @@ class ExampleServerService {
     AIPSTACK_OPTION_CONFIG_VALUE(ExampleServerOptions, WindowUpdateThresDiv)
     
 public:
-    template <typename TheIpStack_>
+    template <typename StackArg_>
     struct Compose {
-        using TheIpStack = TheIpStack_;
+        using StackArg = StackArg_;
         using Params = ExampleServerService;
-        AIPSTACK_DEF_INSTANCE(Compose, ExampleServer)        
+        AIPSTACK_DEF_INSTANCE(Compose, ExampleServer) 
     };
 };
 

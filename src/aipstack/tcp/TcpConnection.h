@@ -74,19 +74,19 @@ template <typename Arg>
 class TcpConnection :
     private NonCopyable<TcpConnection<Arg>>,
     // MTU reference.
-    private IpMtuRef<typename Arg::TheIpStack>
+    private IpMtuRef<typename Arg::StackArg>
 {
     template <typename> friend class IpTcpProto;
     template <typename> friend class IpTcpProto_input;
     template <typename> friend class IpTcpProto_output;
     
-    using MtuRef = IpMtuRef<typename Arg::TheIpStack>;
-    using TcpProto = IpTcpProto<Arg>;
-
     AIPSTACK_USE_TYPES(TcpUtils, (TcpState, PortType, SeqType))
     AIPSTACK_USE_VALS(TcpUtils, (state_is_active, snd_open_in_state))
-    AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Input, Output, Constants, OosBuffer))
+
+    using TcpProto = IpTcpProto<Arg>;
+    AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Input, Output, Constants, OosBuffer, StackArg))
     AIPSTACK_USE_TYPES(Constants, (RttType))
+    using MtuRef = IpMtuRef<StackArg>;
     
 public:
     /**

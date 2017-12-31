@@ -78,13 +78,12 @@ class IpTcpProto :
                                     EphemeralPortFirst, EphemeralPortLast,
                                     LinkWithArrayIndices))
     AIPSTACK_USE_TYPES(Arg::Params, (PcbIndexService))
-    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, TheIpStack))
+    AIPSTACK_USE_TYPES(Arg, (PlatformImpl, StackArg))
     
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPE(Platform, TimeType)
     
-    AIPSTACK_USE_TYPES(TheIpStack, (RxInfoIp4, RouteInfoIp4, Iface, MtuRef,
-                                     ProtocolHandlerArgs))
+    using MtuRef = IpMtuRef<StackArg>;
     
     static_assert(NumTcpPcbs > 0, "");
     static_assert(NumOosSegs > 0 && NumOosSegs < 16, "");
@@ -362,7 +361,7 @@ public:
      * 
      * The TCP will register itself with the IpStack to receive incoming TCP packets.
      */
-    IpTcpProto (ProtocolHandlerArgs args) :
+    IpTcpProto (IpProtocolHandlerArgs<StackArg> args) :
         m_stack(args.stack),
         m_current_pcb(nullptr),
         m_next_ephemeral_port(EphemeralPortFirst),
@@ -388,13 +387,13 @@ public:
         return *this;
     }
 
-    inline void recvIp4Dgram (RxInfoIp4 const &ip_info, IpBufRef dgram)
+    inline void recvIp4Dgram (IpRxInfoIp4<StackArg> const &ip_info, IpBufRef dgram)
     {
         Input::recvIp4Dgram(this, ip_info, dgram);
     }
     
     inline void handleIp4DestUnreach (Ip4DestUnreachMeta const &du_meta,
-                RxInfoIp4 const &ip_info, IpBufRef dgram_initial)
+                IpRxInfoIp4<StackArg> const &ip_info, IpBufRef dgram_initial)
     {
         Input::handleIp4DestUnreach(this, du_meta, ip_info, dgram_initial);
     }
@@ -720,7 +719,7 @@ private:
         size_t user_rcv_wnd = args.rcv_wnd;
         
         // Determine the interface and local IP address.
-        Iface *iface;
+        IpIface<StackArg> *iface;
         Ip4Addr local_addr;
         IpErr select_err = m_stack->selectLocalIp4Address(remote_addr, iface, local_addr);
         if (select_err != IpErr::SUCCESS) {
@@ -893,7 +892,7 @@ private:
         MemberAccessor<TcpPcb, LinkedListNode<PcbLinkModel>, &TcpPcb::unrefed_list_node>,
         PcbLinkModel, true>;
     
-    TheIpStack *m_stack;
+    IpStack<StackArg> *m_stack;
     StructureRaiiWrapper<ListenersList> m_listeners_list;
     TcpPcb *m_current_pcb;
     IpBufRef m_received_opts_buf;
@@ -937,10 +936,10 @@ public:
     using IpProtocolNumber = WrapValue<uint8_t, Ip4ProtocolTcp>;
     
 #ifndef IN_DOXYGEN
-    template <typename PlatformImpl_, typename TheIpStack_>
+    template <typename PlatformImpl_, typename StackArg_>
     struct Compose {
         using PlatformImpl = PlatformImpl_;
-        using TheIpStack = TheIpStack_;
+        using StackArg = StackArg_;
         using Params = IpTcpProtoService;
         AIPSTACK_DEF_INSTANCE(Compose, IpTcpProto)
     };
