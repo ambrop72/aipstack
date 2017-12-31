@@ -67,8 +67,6 @@ private:
 public:
     using SeqType = TcpUtils::SeqType;
 
-    using PortType = TcpUtils::PortType;
-
     using Listener = TcpListener<Arg>;
 
     using Connection = TcpConnection<Arg>;

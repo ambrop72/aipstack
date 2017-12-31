@@ -236,6 +236,11 @@ struct Ip4Addrs {
     Ip4Addr remote_addr;
 };
 
+/**
+ * Unsigned 16-bit integer type used for port numbers.
+ */
+using PortNum = uint16_t;
+
 }
 
 #endif

@@ -44,7 +44,6 @@ class TcpUtils {
 public:
     using FlagsType = uint16_t;
     using SeqType = uint32_t;
-    using PortType = uint16_t;
     
 private:
     static uint8_t const Bit0 = 1 << 0;
@@ -87,8 +86,8 @@ public:
     
     // Container for data in the TCP header (used both in RX and TX).
     struct TcpSegMeta {
-        PortType local_port;
-        PortType remote_port;
+        PortNum local_port;
+        PortNum remote_port;
         SeqType seq_num;
         SeqType ack_num;
         uint16_t window_size;
@@ -323,14 +322,14 @@ public:
         PcbKey () = default;
         
         inline PcbKey (Ip4Addr local_addr_, Ip4Addr remote_addr_,
-                       PortType local_port_, PortType remote_port_)
+                       PortNum local_port_, PortNum remote_port_)
         : Ip4Addrs{local_addr_, remote_addr_},
           local_port(local_port_), remote_port(remote_port_)
         {
         }
         
-        PortType local_port;
-        PortType remote_port;
+        PortNum local_port;
+        PortNum remote_port;
     };
     
     // Provides comparison functions for PcbKey

@@ -80,7 +80,7 @@ class TcpConnection :
     template <typename> friend class IpTcpProto_input;
     template <typename> friend class IpTcpProto_output;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (TcpState, PortType, SeqType))
+    AIPSTACK_USE_TYPES(TcpUtils, (TcpState, SeqType))
     AIPSTACK_USE_VALS(TcpUtils, (state_is_active, snd_open_in_state))
 
     using TcpProto = IpTcpProto<Arg>;

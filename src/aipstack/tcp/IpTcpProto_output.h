@@ -52,8 +52,8 @@ class IpTcpProto_output
 {
     using TcpProto = IpTcpProto<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (FlagsType, SeqType, PortType, TcpState, TcpSegMeta,
-                                   OptionFlags, TcpOptions))
+    AIPSTACK_USE_TYPES(TcpUtils, (FlagsType, SeqType, TcpState, TcpSegMeta, OptionFlags,
+                                  TcpOptions))
     AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lt2, seq_add_sat, tcplen,
                                  can_output_in_state, snd_open_in_state))
     AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, PcbFlags, Input, TimeType, Constants, OutputTimer,

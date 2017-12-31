@@ -101,8 +101,7 @@ class IpTcpProto :
     using Input = IpTcpProto_input<Arg>;
     using Output = IpTcpProto_output<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (TcpState, TcpOptions, PcbKey, PcbKeyCompare, SeqType,
-                                  PortType))
+    AIPSTACK_USE_TYPES(TcpUtils, (TcpState, TcpOptions, PcbKey, PcbKeyCompare, SeqType))
     AIPSTACK_USE_VALS(TcpUtils, (state_is_active, accepting_data_in_state,
                                  snd_open_in_state))
     AIPSTACK_USE_TYPES(Constants, (RttType))
@@ -147,7 +146,7 @@ class IpTcpProto :
     }; };
     
     // Number of ephemeral ports.
-    static PortType const NumEphemeralPorts = EphemeralPortLast - EphemeralPortFirst + 1;
+    static PortNum const NumEphemeralPorts = EphemeralPortLast - EphemeralPortFirst + 1;
     
     // Unsigned integer type usable as an index for the PCBs array.
     // We use the largest value of that type as null (which cannot
@@ -684,7 +683,7 @@ private:
         return platform().getTime();
     }
     
-    Listener * find_listener (Ip4Addr addr, PortType port)
+    Listener * find_listener (Ip4Addr addr, PortNum port)
     {
         for (Listener *lis = m_listeners_list.first();
              lis != nullptr; lis = m_listeners_list.next(*lis))
@@ -715,7 +714,7 @@ private:
         AIPSTACK_ASSERT(out_pcb != nullptr)
 
         Ip4Addr remote_addr = args.addr;
-        PortType remote_port = args.port;
+        PortNum remote_port = args.port;
         size_t user_rcv_wnd = args.rcv_wnd;
         
         // Determine the interface and local IP address.
@@ -727,7 +726,7 @@ private:
         }
         
         // Determine the local port.
-        PortType local_port = get_ephemeral_port(local_addr, remote_addr, remote_port);
+        PortNum local_port = get_ephemeral_port(local_addr, remote_addr, remote_port);
         if (local_port == 0) {
             return IpErr::NO_PORT_AVAIL;
         }
@@ -794,13 +793,13 @@ private:
         return IpErr::SUCCESS;
     }
     
-    PortType get_ephemeral_port (Ip4Addr local_addr,
-                                 Ip4Addr remote_addr, PortType remote_port)
+    PortNum get_ephemeral_port (Ip4Addr local_addr,
+                                 Ip4Addr remote_addr, PortNum remote_port)
     {
-        for (PortType i : LoopRange(NumEphemeralPorts)) {
+        for (PortNum i : LoopRange(NumEphemeralPorts)) {
             (void)i;
             
-            PortType port = m_next_ephemeral_port;
+            PortNum port = m_next_ephemeral_port;
             m_next_ephemeral_port = (port < EphemeralPortLast) ?
                 (port + 1) : EphemeralPortFirst;
             
@@ -847,7 +846,7 @@ private:
     
     // Find a listener by local address and port. This also considers listeners bound
     // to wildcard address since it is used to associate received segments with a listener.
-    Listener * find_listener_for_rx (Ip4Addr local_addr, PortType local_port)
+    Listener * find_listener_for_rx (Ip4Addr local_addr, PortNum local_port)
     {
         for (Listener *lis = m_listeners_list.first();
              lis != nullptr; lis = m_listeners_list.next(*lis))
@@ -897,7 +896,7 @@ private:
     TcpPcb *m_current_pcb;
     IpBufRef m_received_opts_buf;
     TcpOptions m_received_opts;
-    PortType m_next_ephemeral_port;
+    PortNum m_next_ephemeral_port;
     StructureRaiiWrapper<UnrefedPcbsList> m_unrefed_pcbs_list;
     StructureRaiiWrapper<typename PcbIndex::Index> m_pcb_index_active;
     StructureRaiiWrapper<typename PcbIndex::Index> m_pcb_index_timewait;

@@ -51,7 +51,7 @@ template <typename> class TcpConnection;
  */
 struct TcpListenParams {
     Ip4Addr addr = Ip4Addr::ZeroAddr();
-    TcpUtils::PortType port = 0;
+    PortNum port = 0;
     int max_pcbs = 0;
 };
 
@@ -68,7 +68,7 @@ class TcpListener :
     
     using TcpProto = IpTcpProto<Arg>;
 
-    AIPSTACK_USE_TYPES(TcpUtils, (PortType, SeqType))
+    AIPSTACK_USE_TYPES(TcpUtils, (SeqType))
     AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Constants))
     
 public:
@@ -214,7 +214,7 @@ private:
     SeqType m_initial_rcv_wnd;
     TcpPcb *m_accept_pcb;
     Ip4Addr m_addr;
-    PortType m_port;
+    PortNum m_port;
     int m_max_pcbs;
     int m_num_pcbs;
     bool m_listening;

@@ -402,9 +402,7 @@ class IpUdpProto :
 
     using Platform = PlatformFacade<PlatformImpl>;
 
-    using PortType = uint16_t;
-
-    static PortType const NumEphemeralPorts = EphemeralPortLast - EphemeralPortFirst + 1;
+    static PortNum const NumEphemeralPorts = EphemeralPortLast - EphemeralPortFirst + 1;
 
     struct ListenerListNodeAccessor;
     using ListenersLinkModel = PointerLinkModel<UdpListener<Arg>>;
@@ -653,10 +651,10 @@ private:
 
     bool get_ephemeral_port (UdpAssociationKey &key)
     {
-        for (PortType i : LoopRange(NumEphemeralPorts)) {
+        for (PortNum i : LoopRange(NumEphemeralPorts)) {
             (void)i;
             
-            PortType port = m_next_ephemeral_port;
+            PortNum port = m_next_ephemeral_port;
             m_next_ephemeral_port = (port < EphemeralPortLast) ?
                 (port + 1) : EphemeralPortFirst;
             
@@ -675,7 +673,7 @@ private:
     StructureRaiiWrapper<ListenersList> m_listeners_list;
     StructureRaiiWrapper<typename AssociationIndex::Index> m_associations_index;
     UdpListener<Arg> *m_next_listener;
-    PortType m_next_ephemeral_port;
+    PortNum m_next_ephemeral_port;
 };
 
 #endif

@@ -41,6 +41,7 @@
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Tcp4Proto.h>
 #include <aipstack/proto/Icmp4Proto.h>
+#include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/tcp/TcpUtils.h>
 
@@ -56,7 +57,7 @@ class IpTcpProto_input
     using TcpProto = IpTcpProto<Arg>;
     
     AIPSTACK_USE_TYPES(TcpUtils, (FlagsType, SeqType, TcpState, TcpSegMeta, TcpOptions,
-                                   OptionFlags, PortType))
+                                  OptionFlags))
     AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lte, seq_lt2, tcplen,
                                  can_output_in_state, accepting_data_in_state,
                                  state_is_synsent_synrcvd, snd_open_in_state))
@@ -170,8 +171,8 @@ public:
         // NOTE: No other header fields must be read, that would
         // be out-of-bound memory access!
         auto tcp_header = Tcp4Header::MakeRef(dgram_initial.getChunkPtr());
-        PortType local_port  = tcp_header.get(Tcp4Header::SrcPort());
-        PortType remote_port = tcp_header.get(Tcp4Header::DstPort());
+        PortNum local_port   = tcp_header.get(Tcp4Header::SrcPort());
+        PortNum remote_port  = tcp_header.get(Tcp4Header::DstPort());
         SeqType seq_num      = tcp_header.get(Tcp4Header::SeqNum());
         
         // Look for a PCB associated with these addresses.
