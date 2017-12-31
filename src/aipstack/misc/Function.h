@@ -97,6 +97,56 @@ inline std::reference_wrapper<Callable const> RefFunc (Callable const &callable)
     return std::reference_wrapper<Callable const>(callable);
 }
 
+namespace BindPrivate {
+    template <typename Container, typename Ret, typename ...Args>
+    struct BindImpl {
+        template <Ret (Container::*MemberFunc)(Args...)>
+        class Callable {
+        public:
+            inline constexpr Callable (Container *container) :
+                m_container(container)
+            {}
+
+            inline Ret operator() (Args ...args) const
+            {
+                return (m_container->*MemberFunc)(std::forward<Args>(args)...);
+            }
+
+        private:
+            Container *m_container;
+        };
+    };
+
+    template <typename Container, typename Ret, typename ...Args>
+    struct BindImplConst {
+        template <Ret (Container::*MemberFunc)(Args...) const>
+        class Callable {
+        public:
+            inline constexpr Callable (Container const *container) :
+                m_container(container)
+            {}
+
+            inline Ret operator() (Args ...args) const
+            {
+                return (m_container->*MemberFunc)(std::forward<Args>(args)...);
+            }
+
+        private:
+            Container const *m_container;
+        };
+    };
+
+    template <typename Container, typename Ret, typename ...Args>
+    BindImpl<Container, Ret, Args...> DeduceImpl (Ret (Container::*)(Args...));
+
+    template <typename Container, typename Ret, typename ...Args>
+    BindImplConst<Container, Ret, Args...> DeduceImpl (Ret (Container::*)(Args...) const);
+}
+
+#define AIPSTACK_BIND_MEMBER(member_func, container_ptr) \
+    (decltype(AIpStack::BindPrivate::DeduceImpl(member_func)) \
+     ::template Callable<member_func>((container_ptr)))
+
 }
 
 #endif
