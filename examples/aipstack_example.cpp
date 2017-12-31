@@ -45,7 +45,7 @@
 #include "libuv_platform.h"
 #include "libuv_app_helper.h"
 #include "tap_iface.h"
-#include "example_server.h"
+#include "example_app.h"
 
 
 // CONFIGURATION
@@ -113,8 +113,8 @@ using MyDhcpClientService = AIpStack::IpDhcpClientService<
     // use defaults    
 >;
 
-// Example server configuration.
-using MyExampleServerService = AIpStackExamples::ExampleServerService<
+// Example application configuration.
+using MyExampleAppService = AIpStackExamples::ExampleAppService<
     // use defaults
 >;
 
@@ -141,8 +141,8 @@ class DhcpClientArg : public MyDhcpClientService::template Compose<
     PlatformImpl, IpStackArg> {};
 using MyDhcpClient = AIpStack::IpDhcpClient<DhcpClientArg>;
 
-// Instantiate the example server.
-class MyExampleServerArg : public MyExampleServerService::template Compose<IpStackArg> {};
+// Instantiate the example application.
+class MyExampleAppArg : public MyExampleAppService::template Compose<IpStackArg> {};
 
 
 int main (int argc, char *argv[])
@@ -188,9 +188,9 @@ int main (int argc, char *argv[])
         iface->setIp4Gateway(AIpStack::IpIfaceIp4GatewaySetting(DeviceGatewayAddr));
     }
     
-    // Construct the example server.
-    auto example_server = 
-        std::make_unique<AIpStackExamples::ExampleServer<MyExampleServerArg>>(&*stack);
+    // Construct the example application.
+    auto example_app = 
+        std::make_unique<AIpStackExamples::ExampleApp<MyExampleAppArg>>(&*stack);
     
     std::fprintf(stderr, "Initialized, entering event loop.\n");
     

@@ -59,8 +59,8 @@
 namespace AIpStackExamples {
 
 template <typename Arg>
-class ExampleServer :
-    private AIpStack::NonCopyable<ExampleServer<Arg>>
+class ExampleApp :
+    private AIpStack::NonCopyable<ExampleApp<Arg>>
 {
     using StackArg = typename Arg::StackArg;
     using Params = typename Arg::Params;
@@ -73,12 +73,12 @@ class ExampleServer :
 
     class MyListener : public TcpListener {
     public:
-        MyListener (ExampleServer *parent) :
+        MyListener (ExampleApp *parent) :
             m_parent(parent)
         {}
         
     private:
-        ExampleServer *m_parent;
+        ExampleApp *m_parent;
         
         void connectionEstablished () override final
         {
@@ -93,7 +93,7 @@ class ExampleServer :
     enum class ClientType {Echo, Command};
     
 public:
-    ExampleServer (IpStack *stack) :
+    ExampleApp (IpStack *stack) :
         m_stack(stack),
         m_listener_echo(this),
         m_listener_command(this)
@@ -116,7 +116,7 @@ private:
             /*port=*/ port,
             /*max_pcbs=*/ std::numeric_limits<int>::max()
         })) {
-            throw std::runtime_error("ExampleServer: startListening failed.");
+            throw std::runtime_error("ExampleApp: startListening failed.");
         }
         
         listener.setInitialReceiveWindow(buffer_size);
@@ -169,7 +169,7 @@ private:
         private AIpStack::NonCopyable<BaseClient>
     {
     public:
-        BaseClient (ExampleServer *parent, ClientSetupFunc setupFunc) :
+        BaseClient (ExampleApp *parent, ClientSetupFunc setupFunc) :
             m_parent(parent)
         {
             setupFunc(*this);
@@ -221,7 +221,7 @@ private:
             (void)removed;
         }
 
-        inline ExampleServer & parent () const { return *m_parent; }
+        inline ExampleApp & parent () const { return *m_parent; }
         
     private:
         // This is called by TcpConnection when the connection has transitioned to
@@ -235,7 +235,7 @@ private:
         }
         
     private:
-        ExampleServer *m_parent;
+        ExampleApp *m_parent;
         AIpStack::Ip4Addr m_local_addr;
         AIpStack::Ip4Addr m_remote_addr;
         std::uint16_t m_local_port;
@@ -248,7 +248,7 @@ private:
     class EchoClient : public BaseClient
     {
     public:
-        EchoClient (ExampleServer *parent, ClientSetupFunc setupFunc) :
+        EchoClient (ExampleApp *parent, ClientSetupFunc setupFunc) :
             BaseClient(parent, setupFunc),
             m_buf_node({m_buffer, Params::EchoBufferSize, &m_buf_node})
         {
@@ -298,7 +298,7 @@ private:
         enum class State {RecvLine, WaitRespBuf, WaitFinSent};
         
     public:
-        LineParsingClient (ExampleServer *parent, ClientSetupFunc setupFunc) :
+        LineParsingClient (ExampleApp *parent, ClientSetupFunc setupFunc) :
             BaseClient(parent, setupFunc),
             m_rx_line_len(0),
             m_state(State::RecvLine)
@@ -475,7 +475,7 @@ private:
                 con_args.port = port;
                 con_args.rcv_wnd = Params::EchoBufferSize;
 
-                ExampleServer &parent = BaseClient::parent();
+                ExampleApp &parent = BaseClient::parent();
 
                 parent.createConnection(ClientType::Echo, AIpStack::RefFunc(
                 [&](TcpConnection &con) {
@@ -506,9 +506,9 @@ private:
 };
 
 template <typename Arg>
-constexpr char const ExampleServer<Arg>::LineParsingClient::ResponsePrefix[];
+constexpr char const ExampleApp<Arg>::LineParsingClient::ResponsePrefix[];
 
-struct ExampleServerOptions {
+struct ExampleAppOptions {
     AIPSTACK_OPTION_DECL_VALUE(EchoPort, std::uint16_t, 2001)
     AIPSTACK_OPTION_DECL_VALUE(EchoBufferSize, std::size_t, 10000)
     AIPSTACK_OPTION_DECL_VALUE(LineParsingPort, std::uint16_t, 2002)
@@ -520,25 +520,25 @@ struct ExampleServerOptions {
 };
 
 template <typename... Options>
-class ExampleServerService {
+class ExampleAppService {
     template <typename>
-    friend class ExampleServer;
+    friend class ExampleApp;
     
-    AIPSTACK_OPTION_CONFIG_VALUE(ExampleServerOptions, EchoPort)
-    AIPSTACK_OPTION_CONFIG_VALUE(ExampleServerOptions, EchoBufferSize)
-    AIPSTACK_OPTION_CONFIG_VALUE(ExampleServerOptions, LineParsingPort)
-    AIPSTACK_OPTION_CONFIG_VALUE(ExampleServerOptions, LineParsingRxBufferSize)
-    AIPSTACK_OPTION_CONFIG_VALUE(ExampleServerOptions, LineParsingTxBufferSize)
-    AIPSTACK_OPTION_CONFIG_VALUE(ExampleServerOptions, LineParsingMaxRxLineLen)
-    AIPSTACK_OPTION_CONFIG_VALUE(ExampleServerOptions, MaxClients)
-    AIPSTACK_OPTION_CONFIG_VALUE(ExampleServerOptions, WindowUpdateThresDiv)
+    AIPSTACK_OPTION_CONFIG_VALUE(ExampleAppOptions, EchoPort)
+    AIPSTACK_OPTION_CONFIG_VALUE(ExampleAppOptions, EchoBufferSize)
+    AIPSTACK_OPTION_CONFIG_VALUE(ExampleAppOptions, LineParsingPort)
+    AIPSTACK_OPTION_CONFIG_VALUE(ExampleAppOptions, LineParsingRxBufferSize)
+    AIPSTACK_OPTION_CONFIG_VALUE(ExampleAppOptions, LineParsingTxBufferSize)
+    AIPSTACK_OPTION_CONFIG_VALUE(ExampleAppOptions, LineParsingMaxRxLineLen)
+    AIPSTACK_OPTION_CONFIG_VALUE(ExampleAppOptions, MaxClients)
+    AIPSTACK_OPTION_CONFIG_VALUE(ExampleAppOptions, WindowUpdateThresDiv)
     
 public:
     template <typename StackArg_>
     struct Compose {
         using StackArg = StackArg_;
-        using Params = ExampleServerService;
-        AIPSTACK_DEF_INSTANCE(Compose, ExampleServer) 
+        using Params = ExampleAppService;
+        AIPSTACK_DEF_INSTANCE(Compose, ExampleApp) 
     };
 };
 
