@@ -98,16 +98,16 @@ constexpr size_t MaxIntegerFormatLen = Private::MaxIntegerFormatLenBase<T>() + 1
  * zeros and with a leading minus sign in case of negative values.
  * 
  * @tparam T Integer type (excluding bool), see @ref IsInteger.
- * @param value Integer to be formatted.
  * @param out_str Pointer to where the result will be written including a null terminator.
  *        It must not be null and there must be at least @ref MaxIntegerFormatLen<T> bytes
  *        available.
+ * @param value Integer to be formatted.
  * @return Pointer to one past the last non-null character written (and pointer to the
  *         written null terminator).
  */
 template <typename T, typename = std::enable_if_t<IsInteger<T>>>
 AIPSTACK_OPTIMIZE_SIZE
-char * FormatInteger (T value, char *out_str)
+char * FormatInteger (char *out_str, T value)
 {
     using UT = std::make_unsigned_t<T>;
 

@@ -194,13 +194,13 @@ private:
             char *end = buf + sizeof(buf) - 1;
 
             *pos++ = '(';
-            pos = AIpStack::FormatIpAddr(m_local_addr, pos);
+            pos = AIpStack::FormatIpAddr(pos, m_local_addr);
             *pos++ = ':';
-            pos = AIpStack::FormatInteger(m_local_port, pos);
+            pos = AIpStack::FormatInteger(pos, m_local_port);
             *pos++ = ' ';
-            pos = AIpStack::FormatIpAddr(m_remote_addr, pos);
+            pos = AIpStack::FormatIpAddr(pos, m_remote_addr);
             *pos++ = ':';
-            pos = AIpStack::FormatInteger(m_remote_port, pos);
+            pos = AIpStack::FormatInteger(pos, m_remote_port);
             *pos++ = ')';
             *pos++ = ' ';
             pos += std::snprintf(pos, end - pos, "%s", msg);

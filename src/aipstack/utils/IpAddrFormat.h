@@ -56,15 +56,15 @@ static size_t const MaxIp4AddrPrintLen = 16;
  * This generates the representation "N.N.N.N" where each N is a decimal representation of
  * the corresponding byte with no redundant leading zeros (zero is represented as "0").
  * 
- * @param addr IPv4 address to be formatted.
  * @param out_str Pointer to where the result will be written including a null terminator.
  *        It must not be null and there must be at least @ref MaxIp4AddrPrintLen bytes
  *        available.
+ * @param addr IPv4 address to be formatted.
  * @return Pointer to one past the last non-null character written (and pointer to the
  *         written null terminator).
  */
 AIPSTACK_OPTIMIZE_SIZE
-inline char * FormatIpAddr (Ip4Addr addr, char *out_str)
+inline char * FormatIpAddr (char *out_str, Ip4Addr addr)
 {
     auto len = ::sprintf(out_str, "%d.%d.%d.%d",
         int(addr.getByte<0>()), int(addr.getByte<1>()),
