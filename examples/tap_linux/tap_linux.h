@@ -34,9 +34,9 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/platform_specific/FileDescriptorWrapper.h>
 
 #include "../libuv_platform.h"
-#include "file_descriptor_wrapper.h"
 
 namespace AIpStackExamples {
 
@@ -44,7 +44,7 @@ class TapDevice :
     private AIpStack::NonCopyable<TapDevice>
 {
     struct PollUserDara {
-        FileDescriptorWrapper fd;
+        AIpStack::FileDescriptorWrapper fd;
     };
     
     using PollWrapper = UvHandleWrapper<uv_poll_t, PollUserDara>;

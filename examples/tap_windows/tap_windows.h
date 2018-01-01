@@ -35,9 +35,9 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/platform_specific/WinHandleWrapper.h>
 
 #include "../libuv_platform.h"
-#include "win_handle_wrapper.h"
 
 namespace AIpStackExamples {
 
@@ -48,7 +48,7 @@ class TapDevice :
     
     struct OverlappedUserData {
         TapDevice *parent;
-        std::shared_ptr<WinHandleWrapper> device;
+        std::shared_ptr<AIpStack::WinHandleWrapper> device;
         std::vector<char> buffer;
         bool active;
     };
@@ -57,7 +57,7 @@ class TapDevice :
     
 private:
     uv_loop_t *m_loop;
-    std::shared_ptr<WinHandleWrapper> m_device;
+    std::shared_ptr<AIpStack::WinHandleWrapper> m_device;
     std::size_t m_frame_mtu;
     std::size_t m_send_first;
     std::size_t m_send_count;

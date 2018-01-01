@@ -55,7 +55,7 @@ TapDevice::TapDevice (uv_loop_t *loop, std::string const &device_id) :
         throw std::runtime_error("Failed to find TAP device.");
     }
     
-    m_device = std::make_shared<WinHandleWrapper>(CreateFileA(
+    m_device = std::make_shared<AIpStack::WinHandleWrapper>(CreateFileA(
         device_path.c_str(), GENERIC_READ|GENERIC_WRITE, 0, nullptr,
         OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM|FILE_FLAG_OVERLAPPED, nullptr));
     if (m_device->get() == INVALID_HANDLE_VALUE) {

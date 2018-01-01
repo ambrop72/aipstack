@@ -22,85 +22,63 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_FILE_DESCRIPTOR_WRAPPER_H
-#define AIPSTACK_FILE_DESCRIPTOR_WRAPPER_H
+#ifndef AIPSTACK_WIN_HANDLE_WRAPPER_H
+#define AIPSTACK_WIN_HANDLE_WRAPPER_H
 
-#include <cstdio>
-#include <cerrno>
-#include <stdexcept>
-
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/socket.h>
+#include <windows.h>
 
 #include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/Assert.h>
 
-namespace AIpStackExamples {
+namespace AIpStack {
 
-class FileDescriptorWrapper :
-    private AIpStack::NonCopyable<FileDescriptorWrapper>
+class WinHandleWrapper :
+    private AIpStack::NonCopyable<WinHandleWrapper>
 {
 private:
-    int m_fd;
+    HANDLE m_handle;
     
 public:
-    FileDescriptorWrapper () :
-        m_fd(-1)
+    WinHandleWrapper () :
+        m_handle(INVALID_HANDLE_VALUE)
     {}
     
-    FileDescriptorWrapper (FileDescriptorWrapper &&other) :
-        m_fd(other.m_fd)
+    WinHandleWrapper (WinHandleWrapper &&other) :
+        m_handle(other.m_handle)
     {
-        other.m_fd = -1;
+        other.m_handle = INVALID_HANDLE_VALUE;
     }
     
-    explicit FileDescriptorWrapper (int fd) :
-        m_fd(fd)
+    explicit WinHandleWrapper (HANDLE handle) :
+        m_handle(handle)
     {}
     
-    ~FileDescriptorWrapper ()
+    ~WinHandleWrapper ()
     {
         close_it();
     }
     
-    FileDescriptorWrapper & operator= (FileDescriptorWrapper &&other)
+    WinHandleWrapper & operator= (WinHandleWrapper &&other)
     {
         if (&other != this) {
             close_it();
-            m_fd = other.m_fd;
-            other.m_fd = -1;
+            m_handle = other.m_handle;
+            other.m_handle = INVALID_HANDLE_VALUE;
         }
         return *this;
     }
     
-    inline int get () const
+    inline HANDLE get () const
     {
-        return m_fd;
-    }
-    
-    void setNonblocking ()
-    {
-        int flags = ::fcntl(m_fd, F_GETFL, 0);
-        if (flags < 0) {
-            throw std::runtime_error("fcntl(F_GETFL) failed.");
-        }
-        
-        int res = ::fcntl(m_fd, F_SETFL, flags|O_NONBLOCK);
-        if (res == -1) {
-            throw std::runtime_error("fcntl(F_SETFL, flags|O_NONBLOCK) failed.");
-        }
+        return m_handle;
     }
     
 private:
     void close_it ()
     {
-        if (m_fd >= 0) {
-            if (::close(m_fd) < 0) {
-                int err = errno;
-                std::fprintf(stderr, "FileDescriptorWrapper: close failed, errno=%d\n",
-                             err);
-            }
-            m_fd = -1;
+        if (m_handle != INVALID_HANDLE_VALUE) {
+            AIPSTACK_ASSERT_FORCE(CloseHandle(m_handle))
+            m_handle = INVALID_HANDLE_VALUE;
         }
     }
 };

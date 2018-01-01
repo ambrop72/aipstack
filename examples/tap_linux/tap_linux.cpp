@@ -66,7 +66,7 @@ TapDevice::TapDevice (uv_loop_t *loop, std::string const &device_id) :
     m_loop(loop),
     m_active(true)
 {
-    FileDescriptorWrapper fd{::open("/dev/net/tun", O_RDWR)};
+    AIpStack::FileDescriptorWrapper fd{::open("/dev/net/tun", O_RDWR)};
     if (fd.get() < 0) {
         throw std::runtime_error("Failed to open /dev/net/tun.");
     }
@@ -85,7 +85,7 @@ TapDevice::TapDevice (uv_loop_t *loop, std::string const &device_id) :
     
     std::string devname_real(ifr.ifr_name);
     
-    FileDescriptorWrapper sock{::socket(AF_INET, SOCK_DGRAM, 0)};
+    AIpStack::FileDescriptorWrapper sock{::socket(AF_INET, SOCK_DGRAM, 0)};
     if (sock.get() < 0) {
         throw std::runtime_error("socket(AF_INET, SOCK_DGRAM) failed.");
     }
