@@ -25,10 +25,8 @@
 #include <cstring>
 #include <cstdio>
 #include <cerrno>
-#include <cstring>
 #include <cstddef>
 #include <stdexcept>
-#include <utility>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -39,8 +37,6 @@
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <linux/if_tun.h>
-
-#include <uv.h>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/proto/EthernetProto.h>
@@ -62,63 +58,57 @@ inline static bool ErrIsEAGAINorEWOULDBLOCK (int err)
     return false;
 }
 
-TapDevice::TapDevice (uv_loop_t *loop, std::string const &device_id) :
-    m_loop(loop),
+TapDevice::TapDevice (AIpStack::EventLoop &loop, std::string const &device_id) :
+    EventLoopFdWatcher(loop),
     m_active(true)
 {
-    AIpStack::FileDescriptorWrapper fd{::open("/dev/net/tun", O_RDWR)};
-    if (fd.get() < 0) {
+    m_fd = AIpStack::FileDescriptorWrapper{::open("/dev/net/tun", O_RDWR)};
+    if (!m_fd) {
         throw std::runtime_error("Failed to open /dev/net/tun.");
     }
     
-    fd.setNonblocking();
+    m_fd.setNonblocking();
     
-    struct ifreq ifr;
-    
-    std::memset(&ifr, 0, sizeof(ifr));
-    ifr.ifr_flags |= IFF_NO_PI|IFF_TAP;
-    std::snprintf(ifr.ifr_name, IFNAMSIZ, "%s", device_id.c_str());
-    
-    if (::ioctl(fd.get(), TUNSETIFF, (void *)&ifr) < 0) {
-        throw std::runtime_error("ioctl(TUNSETIFF) failed.");
+    std::string devname_real;
+
+    {
+        struct ifreq ifr;
+        std::memset(&ifr, 0, sizeof(ifr));
+        ifr.ifr_flags |= IFF_NO_PI|IFF_TAP;
+        std::snprintf(ifr.ifr_name, IFNAMSIZ, "%s", device_id.c_str());
+        
+        if (::ioctl(*m_fd, TUNSETIFF, (void *)&ifr) < 0) {
+            throw std::runtime_error("ioctl(TUNSETIFF) failed.");
+        }
+
+        devname_real = ifr.ifr_name;
     }
     
-    std::string devname_real(ifr.ifr_name);
-    
-    AIpStack::FileDescriptorWrapper sock{::socket(AF_INET, SOCK_DGRAM, 0)};
-    if (sock.get() < 0) {
-        throw std::runtime_error("socket(AF_INET, SOCK_DGRAM) failed.");
+    {
+        AIpStack::FileDescriptorWrapper sock{::socket(AF_INET, SOCK_DGRAM, 0)};
+        if (!sock) {
+            throw std::runtime_error("socket(AF_INET, SOCK_DGRAM) failed.");
+        }
+        
+        struct ifreq ifr;
+        std::memset(&ifr, 0, sizeof(ifr));
+        std::strcpy(ifr.ifr_name, devname_real.c_str());
+        
+        if (::ioctl(*sock, SIOCGIFMTU, (void *)&ifr) < 0) {
+            throw std::runtime_error("ioctl(SIOCGIFMTU) failed.");
+        }
+        
+        m_frame_mtu = ifr.ifr_mtu + AIpStack::EthHeader::Size;
     }
-    
-    std::memset(&ifr, 0, sizeof(ifr));
-    std::strcpy(ifr.ifr_name, devname_real.c_str());
-    
-    if (::ioctl(sock.get(), SIOCGIFMTU, (void *)&ifr) < 0) {
-        throw std::runtime_error("ioctl(SIOCGIFMTU) failed.");
-    }
-    
-    m_frame_mtu = ifr.ifr_mtu + AIpStack::EthHeader::Size;
     
     m_read_buffer.resize(m_frame_mtu);
     m_write_buffer.resize(m_frame_mtu);
     
-    if (m_poll.initialize([&](uv_poll_t *dst) {
-        return uv_poll_init(m_loop, dst, fd.get());
-    }) != 0) {
-        throw std::runtime_error("uv_poll_init failed.");
-    }
-    
-    m_poll.get()->data = this;
-    m_poll.user().fd = std::move(fd);
-    
-    if (uv_poll_start(m_poll.get(), UV_READABLE, &TapDevice::pollCbTrampoline) != 0) {
-        throw std::runtime_error("uv_poll_start failed.");
-    }
+    EventLoopFdWatcher::initFd(*m_fd, AIpStack::EventLoopFdEvents::Read);
 }
 
 TapDevice::~TapDevice ()
-{
-}
+{}
 
 std::size_t TapDevice::getMtu () const
 {
@@ -143,7 +133,7 @@ AIpStack::IpErr TapDevice::sendFrame (AIpStack::IpBufRef frame)
     std::size_t len = frame.tot_len;
     frame.takeBytes(len, buffer);
     
-    auto write_res = ::write(m_poll.user().fd.get(), buffer, len);
+    auto write_res = ::write(*m_fd, buffer, len);
     if (write_res < 0) {
         int error = errno;
         if (ErrIsEAGAINorEWOULDBLOCK(error)) {
@@ -158,31 +148,21 @@ AIpStack::IpErr TapDevice::sendFrame (AIpStack::IpBufRef frame)
     return AIpStack::IpErr::SUCCESS;
 }
 
-void TapDevice::pollCbTrampoline (uv_poll_t *handle, int status, int events)
-{
-    TapDevice *obj = reinterpret_cast<TapDevice *>(handle->data);
-    AIPSTACK_ASSERT(handle == obj->m_poll.get())
-    
-    obj->pollCb(status, events);
-}
-
-void TapDevice::pollCb (int status, int events)
+void TapDevice::handleFdEvents (AIpStack::EventLoopFdEvents events)
 {
     AIPSTACK_ASSERT(m_active)
     
     do {
-        if (status < 0) {
-            std::fprintf(stderr, "TapDevice: poll error, status=%d. Stopping.\n",
-                         status);
+        if ((events & AIpStack::EventLoopFdEvents::Error) != AIpStack::EnumZero) {
+            std::fprintf(stderr, "TapDevice: Error event. Stopping.\n");
+            goto error;
+        }
+        if ((events & AIpStack::EventLoopFdEvents::Hup) != AIpStack::EnumZero) {
+            std::fprintf(stderr, "TapDevice: HUP event. Stopping.\n");
             goto error;
         }
         
-        if ((events & UV_DISCONNECT) != 0) {
-            std::fprintf(stderr, "TapDevice: device disconnected. Stopping.\n");
-            goto error;
-        }
-        
-        auto read_res = ::read(m_poll.user().fd.get(), m_read_buffer.data(), m_frame_mtu);
+        auto read_res = ::read(*m_fd, m_read_buffer.data(), m_frame_mtu);
         if (read_res <= 0) {
             bool is_error = false;
             if (read_res < 0) {
@@ -204,13 +184,13 @@ void TapDevice::pollCb (int status, int events)
             nullptr
         };
         
-        frameReceived(AIpStack::IpBufRef{&node, 0, (std::size_t)read_res});
+        frameReceived(AIpStack::IpBufRef{&node, 0, std::size_t(read_res)});
     } while (false);
     
     return;
     
 error:
-    uv_poll_stop(m_poll.get());
+    EventLoopFdWatcher::reset();
     m_active = false;
 }
 

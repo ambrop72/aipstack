@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Ambroz Bizjak
+ * Copyright (c) 2018 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,76 +22,66 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_WIN_HANDLE_WRAPPER_H
-#define AIPSTACK_WIN_HANDLE_WRAPPER_H
+#ifndef AIPSTACK_EVENT_PROVIDER_LINUX_H
+#define AIPSTACK_EVENT_PROVIDER_LINUX_H
 
-#include <windows.h>
+#include <sys/epoll.h>
+
+#include <cstdint>
 
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/misc/Assert.h>
+#include <aipstack/platform_impl/EventLoopCommon.h>
+#include <aipstack/platform_specific/FileDescriptorWrapper.h>
 
 namespace AIpStack {
 
-class WinHandleWrapper :
-    private AIpStack::NonCopyable<WinHandleWrapper>
+template <typename Callback>
+class EventProviderLinuxFd;
+
+template <typename Callback>
+class EventProviderLinux :
+    private NonCopyable<EventProviderLinux<Callback>>
 {
-private:
-    HANDLE m_handle;
+    template <typename> friend class EventProviderLinuxFd;
     
+    static int const MaxEpollEvents = 64;
+
 public:
-    WinHandleWrapper () :
-        m_handle(INVALID_HANDLE_VALUE)
-    {}
-    
-    WinHandleWrapper (WinHandleWrapper &&other) :
-        m_handle(other.m_handle)
-    {
-        other.m_handle = INVALID_HANDLE_VALUE;
-    }
-    
-    explicit WinHandleWrapper (HANDLE handle) :
-        m_handle(handle)
-    {}
-    
-    ~WinHandleWrapper ()
-    {
-        close_it();
-    }
-    
-    WinHandleWrapper & operator= (WinHandleWrapper &&other)
-    {
-        if (&other != this) {
-            close_it();
-            m_handle = other.m_handle;
-            other.m_handle = INVALID_HANDLE_VALUE;
-        }
-        return *this;
-    }
-    
-    inline HANDLE get () const
-    {
-        return m_handle;
-    }
+    using Fd = EventProviderLinuxFd<Callback>;
 
-    inline HANDLE operator* () const
-    {
-        AIPSTACK_ASSERT(m_handle != INVALID_HANDLE_VALUE)
-        return m_handle;
-    }
+    EventProviderLinux ();
 
-    inline explicit operator bool () const
-    {
-        return m_handle != INVALID_HANDLE_VALUE;
-    }
-    
+    ~EventProviderLinux ();
+
+    void waitForEvents (EventLoopWaitTimeoutInfo timeout_info);
+
+    bool dispatchSystemEvents ();
+
 private:
-    void close_it ()
-    {
-        if (m_handle != INVALID_HANDLE_VALUE) {
-            AIPSTACK_ASSERT_FORCE(CloseHandle(m_handle))
-            m_handle = INVALID_HANDLE_VALUE;
-        }
-    }
+    void control_epoll (int op, int fd, std::uint32_t events, void *data_ptr);
+
+private:
+    FileDescriptorWrapper m_epoll_fd;
+    FileDescriptorWrapper m_timer_fd;
+    int m_cur_epoll_event;
+    int m_num_epoll_events;
+    struct epoll_event m_epoll_events[MaxEpollEvents];
+};
+
+template <typename Callback>
+class EventProviderLinuxFd :
+    private NonCopyable<EventProviderLinuxFd<Callback>>
+{
+public:
+    EventProviderLinuxFd () = default;
+
+    ~EventProviderLinuxFd () = default;
+
+    void initFdImpl (int fd, EventLoopFdEvents events);
+
+    void updateEventsImpl (int fd, EventLoopFdEvents events);
+
+    void resetImpl (int fd);
 };
 
 }

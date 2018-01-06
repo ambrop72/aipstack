@@ -32,6 +32,8 @@
 #include <aipstack/structure/index/MruListIndex.h>
 #include <aipstack/structure/minimum/LinkedHeap.h>
 #include <aipstack/platform/PlatformFacade.h>
+#include <aipstack/platform_impl/EventLoop.h>
+#include <aipstack/platform_impl/HostedPlatformImpl.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/ip/IpPathMtuCache.h>
@@ -42,11 +44,8 @@
 #include <aipstack/udp/IpUdpProto.h>
 #include <aipstack/eth/EthIpIface.h>
 
-#include "libuv_platform.h"
-#include "libuv_app_helper.h"
 #include "tap_iface.h"
 #include "example_app.h"
-
 
 // CONFIGURATION
 
@@ -122,7 +121,7 @@ using MyExampleAppService = AIpStackExamples::ExampleAppService<
 
 
 // Type alias for our platform implementation class.
-using PlatformImpl = AIpStackExamples::PlatformImplLibuv;
+using PlatformImpl = AIpStack::HostedPlatformImpl;
 
 // Type aliases for PlatformRef and PlatformFacade.
 using PlatformRef = AIpStack::PlatformRef<PlatformImpl>;
@@ -143,17 +142,18 @@ using MyDhcpClient = AIpStack::IpDhcpClient<DhcpClientArg>;
 
 // Instantiate the example application.
 class MyExampleAppArg : public MyExampleAppService::template Compose<IpStackArg> {};
+using MyExampleApp = AIpStackExamples::ExampleApp<MyExampleAppArg>;
 
 
 int main (int argc, char *argv[])
 {
     std::string device_id = (argc > 1) ? argv[1] : "";
     
-    // Construct the LibuvAppHelper (manages the event loop etc).
-    AIpStackExamples::LibuvAppHelper app_helper;
+    // Construct the event loop.
+    AIpStack::EventLoop event_loop;
     
     // Construct the platform implementation class instance.
-    PlatformImpl platform_impl{app_helper.getLoop()};
+    PlatformImpl platform_impl{event_loop};
     
     // Construct a PlatformFacade instance for passing to various constructors.
     // This is a value-like class just referencing the platform_impl, it has no
@@ -189,13 +189,12 @@ int main (int argc, char *argv[])
     }
     
     // Construct the example application.
-    auto example_app = 
-        std::make_unique<AIpStackExamples::ExampleApp<MyExampleAppArg>>(&*stack);
+    auto example_app = std::make_unique<MyExampleApp>(&*stack);
     
     std::fprintf(stderr, "Initialized, entering event loop.\n");
     
     // Run the event loop.
-    app_helper.run();
+    event_loop.run();
     
     return 0;
 }

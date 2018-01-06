@@ -112,7 +112,7 @@ bool operator!= (SelType const &sel, OneOfStruct<OptRefType...> opt_struct)
  */
 template <typename... OptType>
 AIPSTACK_ALWAYS_INLINE
-OneOfStruct<OptType...> OneOf (OptType ... opt)
+constexpr OneOfStruct<OptType...> OneOf (OptType ... opt)
 {
     return OneOfStruct<OptType...>(opt...);
 }

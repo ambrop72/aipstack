@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 
 #include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/Assert.h>
 
 namespace AIpStack {
 
@@ -76,6 +77,17 @@ public:
     inline int get () const
     {
         return m_fd;
+    }
+
+    inline int operator* () const
+    {
+        AIPSTACK_ASSERT(m_fd >= 0)
+        return m_fd;
+    }
+
+    inline explicit operator bool () const
+    {
+        return m_fd >= 0;
     }
     
     void setNonblocking ()

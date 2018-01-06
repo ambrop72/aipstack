@@ -5,7 +5,7 @@ let
     
     stdFlags = "-std=c++14";
     defines = "-DAIPSTACK_CONFIG_ENABLE_ASSERTIONS";
-    optFlags = "-O2";
+    optFlags = "-O2 -fsanitize=address,undefined";
 
     baseWarnings = [
         "-Wall" "-Wextra" "-Wpedantic"
@@ -35,10 +35,9 @@ let
         };
     
     aipstackExampleFunc =
-        { stdenv, libuv }:
+        { stdenv }:
         stdenv.mkDerivation rec {
             name = "aipstack_example";
-            buildInputs = [ libuv ];
             buildCommand = ''
                 mkdir -p $out/bin
                 cd ${aipstackSrc}
@@ -48,10 +47,8 @@ let
                         ${stdenv.lib.concatStringsSep " " baseWarnings} \
                         $(cat ${filterSupportedWarnings {inherit stdenv;}}) \
                         examples/aipstack_example.cpp \
-                        examples/libuv_platform.cpp \
-                        examples/libuv_app_helper.cpp \
                         examples/tap_linux/tap_linux.cpp \
-                        -luv \
+                        src/aipstack/platform_impl/EventLoop.cpp \
                         -o $out/bin/aipstack_example
                 )
             '';

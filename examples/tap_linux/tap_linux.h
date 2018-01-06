@@ -29,47 +29,41 @@
 #include <string>
 #include <vector>
 
-#include <uv.h>
-
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/platform_specific/FileDescriptorWrapper.h>
-
-#include "../libuv_platform.h"
+#include <aipstack/platform_impl/EventLoop.h>
 
 namespace AIpStackExamples {
 
+struct TapDeviceFdHelper {
+    AIpStack::FileDescriptorWrapper m_fd;
+};
+
 class TapDevice :
-    private AIpStack::NonCopyable<TapDevice>
+    private AIpStack::NonCopyable<TapDevice>,
+    private TapDeviceFdHelper,
+    private AIpStack::EventLoopFdWatcher
 {
-    struct PollUserDara {
-        AIpStack::FileDescriptorWrapper fd;
-    };
-    
-    using PollWrapper = UvHandleWrapper<uv_poll_t, PollUserDara>;
-    
 private:
-    uv_loop_t *m_loop;
     std::size_t m_frame_mtu;
-    PollWrapper m_poll;
     std::vector<char> m_read_buffer;
     std::vector<char> m_write_buffer;
     bool m_active;
     
 public:
-    TapDevice (uv_loop_t *loop, std::string const &device_id);
+    TapDevice (AIpStack::EventLoop &loop, std::string const &device_id);
     ~TapDevice ();
     
     std::size_t getMtu () const;
     AIpStack::IpErr sendFrame (AIpStack::IpBufRef frame);
+
+private:
+    void handleFdEvents (AIpStack::EventLoopFdEvents events) override;
     
 protected:
     virtual void frameReceived (AIpStack::IpBufRef frame) = 0;
-    
-private:
-    static void pollCbTrampoline (uv_poll_t *handle, int status, int events);
-    void pollCb (int status, int events);
 };
 
 }

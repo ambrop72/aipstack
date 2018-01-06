@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Ambroz Bizjak
+ * Copyright (c) 2018 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,52 +22,31 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_LIBUV_APP_HELPER_H
-#define AIPSTACK_LIBUV_APP_HELPER_H
+#ifndef AIPSTACK_EVENT_LOOP_COMMON_H
+#define AIPSTACK_EVENT_LOOP_COMMON_H
 
-#include <csignal>
+#include <chrono>
 #include <type_traits>
 
-#include <uv.h>
+namespace AIpStack {
 
-#include <aipstack/misc/NonCopyable.h>
+using EventLoopClock = std::chrono::steady_clock;
 
-#include "libuv_platform.h"
+using EventLoopTime = EventLoopClock::time_point;
 
-namespace AIpStackExamples {
-
-static int const WatchedSignals[] = {
-SIGINT, SIGTERM, SIGHUP
-#ifndef _WIN32
-,SIGQUIT
-#endif
+struct EventLoopWaitTimeoutInfo {
+    EventLoopTime time;
+    bool time_changed;
 };
 
-static int const NumWatchedSignals = std::extent<decltype(WatchedSignals)>::value;
-
-class LibuvAppHelper :
-    public AIpStack::NonCopyable<LibuvAppHelper>
-{
-private:
-    uv_loop_t m_loop;
-    UvHandleWrapper<uv_signal_t> m_signals[NumWatchedSignals];
-    
-public:
-    LibuvAppHelper ();
-    
-    ~LibuvAppHelper ();
-    
-    inline uv_loop_t * getLoop ()
-    {
-        return &m_loop;
-    }
-    
-    int run ();
-    
-private:
-    static void signalHandlerTrampoline (uv_signal_t *handle, int signum);
-    void signalHandler (int signum);
+enum class EventLoopFdEvents {
+    Read  = 1 << 0,
+    Write = 1 << 1,
+    Error = 1 << 2,
+    Hup   = 1 << 3,
+    All   = Read|Write|Error|Hup,
 };
+AIPSTACK_ENUM_BITFIELD_OPS(EventLoopFdEvents)
 
 }
 

@@ -33,8 +33,7 @@
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/eth/EthIpIface.h>
-
-#include "libuv_platform.h"
+#include <aipstack/platform_impl/HostedPlatformImpl.h>
 
 #ifdef _WIN32
 #include "tap_windows/tap_windows.h"
@@ -50,7 +49,7 @@ class TapIface;
 namespace Private {
     template <typename StackArg, typename TheEthIpIfaceService>
     class EthIpIfaceArg : public TheEthIpIfaceService::template Compose<
-        PlatformImplLibuv, StackArg> {};
+        AIpStack::HostedPlatformImpl, StackArg> {};
     
     struct TapIfaceMacAddr {
         AIpStack::MacAddr m_mac_addr;
@@ -63,7 +62,7 @@ class TapIface :
     private Private::TapIfaceMacAddr,
     public AIpStack::EthIpIface<Private::EthIpIfaceArg<StackArg, TheEthIpIfaceService>>
 {
-    using Platform = AIpStack::PlatformFacade<PlatformImplLibuv>;
+    using Platform = AIpStack::PlatformFacade<AIpStack::HostedPlatformImpl>;
 
     using TheEthIpIface =
         AIpStack::EthIpIface<Private::EthIpIfaceArg<StackArg, TheEthIpIfaceService>>;
@@ -72,7 +71,7 @@ public:
     TapIface (Platform platform, AIpStack::IpStack<StackArg> *stack,
               std::string const &device_id, AIpStack::MacAddr const &mac_addr)
     :
-        TapDevice(platform.ref().platformImpl()->loop(), device_id),
+        TapDevice(platform.ref().platformImpl()->getEventLoop(), device_id),
         TapIfaceMacAddr{mac_addr},
         TheEthIpIface(platform, stack, {
             /*eth_mtu=*/ TapDevice::getMtu(),
