@@ -31,7 +31,6 @@
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Function.h>
-#include <aipstack/structure/TreeCompare.h>
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/minimum/LinkedHeap.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
@@ -58,10 +57,9 @@ class EventLoop :
     friend class EventLoopTimer;
 
     struct TimerHeapNodeAccessor;
-    struct TimerKeyFuncs;
+    struct TimerCompare;
 
     using TimerLinkModel = PointerLinkModel<EventLoopTimer>;
-    using TimerCompare = TreeCompare<TimerLinkModel, TimerKeyFuncs>;
     using TimerHeap = LinkedHeap<TimerHeapNodeAccessor, TimerCompare, TimerLinkModel>;
     using TimerHeapNode = LinkedHeapNode<TimerLinkModel>;
 
@@ -82,11 +80,6 @@ class EventLoop :
                      TimerState::TempSet, TimerState::Pending);
     }
 
-    struct TimerKey {
-        EventLoopTime time;
-        TimerState state;
-    };
-    
 public:
     EventLoop ();
 
@@ -125,7 +118,7 @@ class EventLoopTimer :
 {
     friend class EventLoop;
 
-    AIPSTACK_USE_TYPES(EventLoop, (TimerHeapNode, TimerState, TimerKey))
+    AIPSTACK_USE_TYPES(EventLoop, (TimerHeapNode, TimerState))
 
 public:
     EventLoopTimer (EventLoop &loop);
@@ -134,12 +127,12 @@ public:
 
     inline bool isSet () const
     {
-        return m_key.state != OneOf(TimerState::Idle, TimerState::TempUnset);
+        return m_state != OneOf(TimerState::Idle, TimerState::TempUnset);
     }
 
     inline EventLoopTime getSetTime () const
     {
-        return m_key.time;
+        return m_time;
     }
 
     void unset ();
@@ -154,7 +147,8 @@ protected:
 private:
     TimerHeapNode m_heap_node;
     EventLoop &m_loop;
-    TimerKey m_key;
+    EventLoopTime m_time;
+    TimerState m_state;
 };
 
 #if AIPSTACK_EVENT_PROVIDER_SUPPORTS_FD || defined(IN_DOXYGEN)

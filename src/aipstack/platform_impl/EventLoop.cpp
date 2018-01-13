@@ -37,34 +37,36 @@ namespace AIpStack {
 struct EventLoop::TimerHeapNodeAccessor :
     public MemberAccessor<EventLoopTimer, TimerHeapNode, &EventLoopTimer::m_heap_node> {};
 
-struct EventLoop::TimerKeyFuncs {
-    inline static TimerKey GetKeyOfEntry (EventLoopTimer const &tim)
-    {
-        return tim.m_key;
-    }
+struct EventLoop::TimerCompare {
+    AIPSTACK_USE_TYPES(TimerLinkModel, (State, Ref))
 
-    static int CompareKeys (TimerKey key1, TimerKey key2)
+    inline static int compareEntries (State, Ref ref1, Ref ref2)
     {
-        std::uint8_t order1 = std::uint8_t(key1.state) & TimerStateOrderMask;
-        std::uint8_t order2 = std::uint8_t(key2.state) & TimerStateOrderMask;
+        EventLoopTimer &tim1 = *ref1;
+        EventLoopTimer &tim2 = *ref2;
+
+        std::uint8_t order1 = std::uint8_t(tim1.m_state) & TimerStateOrderMask;
+        std::uint8_t order2 = std::uint8_t(tim2.m_state) & TimerStateOrderMask;
 
         if (order1 != order2) {
             return (order1 < order2) ? -1 : 1;
         }
 
-        if (key1.time != key2.time) {
-            return (key1.time < key2.time) ? -1 : 1;
+        if (tim1.m_time != tim2.m_time) {
+            return (tim1.m_time < tim2.m_time) ? -1 : 1;
         }
 
         return 0;
     }
 
-    static int CompareKeys (EventLoopTime time1, TimerKey key2)
+    inline static int compareKeyEntry (State, EventLoopTime time1, Ref ref2)
     {
-        AIPSTACK_ASSERT(key2.state == TimerState::Pending)
+        EventLoopTimer &tim2 = *ref2;
+
+        AIPSTACK_ASSERT(tim2.m_state == TimerState::Pending)
         
-        if (time1 != key2.time) {
-            return (time1 < key2.time) ? -1 : 1;
+        if (time1 != tim2.m_time) {
+            return (time1 < tim2.m_time) ? -1 : 1;
         }
 
         return 0;
@@ -117,9 +119,9 @@ void EventLoop::prepare_timers_for_dispatch (EventLoopTime now)
     bool changed = false;
 
     m_timer_heap.findAllLesserOrEqual(now, [&](EventLoopTimer *tim) {
-        AIPSTACK_ASSERT(tim->m_key.state == TimerState::Pending)
+        AIPSTACK_ASSERT(tim->m_state == TimerState::Pending)
 
-        tim->m_key.state = TimerState::Dispatch;
+        tim->m_state = TimerState::Dispatch;
         changed = true;
     });
 
@@ -131,13 +133,13 @@ void EventLoop::prepare_timers_for_dispatch (EventLoopTime now)
 bool EventLoop::dispatch_timers ()
 {
     while (EventLoopTimer *tim = m_timer_heap.first()) {
-        AIPSTACK_ASSERT(tim->m_key.state == OneOfHeapTimerStates())
+        AIPSTACK_ASSERT(tim->m_state == OneOfHeapTimerStates())
 
-        if (tim->m_key.state != TimerState::Dispatch) {
+        if (tim->m_state != TimerState::Dispatch) {
             break;
         }
 
-        tim->m_key.state = TimerState::TempUnset;
+        tim->m_state = TimerState::TempUnset;
         m_timer_heap.fixup(*tim);
 
         tim->handleTimerExpired();
@@ -155,19 +157,19 @@ EventLoopWaitTimeoutInfo EventLoop::prepare_timers_for_wait ()
     EventLoopTime first_time = EventLoopTime::max();
 
     while (EventLoopTimer *tim = m_timer_heap.first()) {
-        AIPSTACK_ASSERT(tim->m_key.state == OneOf(
+        AIPSTACK_ASSERT(tim->m_state == OneOf(
             TimerState::TempUnset, TimerState::TempSet, TimerState::Pending))
         
-        if (tim->m_key.state == TimerState::TempUnset) {
+        if (tim->m_state == TimerState::TempUnset) {
             m_timer_heap.remove(*tim);
-            tim->m_key.state = TimerState::Idle;
+            tim->m_state = TimerState::Idle;
         }
-        else if (tim->m_key.state == TimerState::TempSet) {
-            tim->m_key.state = TimerState::Pending;
+        else if (tim->m_state == TimerState::TempSet) {
+            tim->m_state = TimerState::Pending;
             m_timer_heap.fixup(*tim);
         }
         else {
-            first_time = tim->m_key.time;
+            first_time = tim->m_time;
             break;
         }
     }
@@ -186,37 +188,38 @@ bool EventProviderBase::getStop () const
 
 EventLoopTimer::EventLoopTimer (EventLoop &loop) :
     m_loop(loop),
-    m_key{EventLoopTime(), TimerState::Idle}
+    m_time(EventLoopTime()),
+    m_state(TimerState::Idle)
 {}
 
 EventLoopTimer::~EventLoopTimer ()
 {
-    if (m_key.state != TimerState::Idle) {
+    if (m_state != TimerState::Idle) {
         m_loop.m_timer_heap.remove(*this);
     }
 }
 
 void EventLoopTimer::unset ()
 {
-    if (m_key.state == OneOf(TimerState::TempUnset, TimerState::TempSet)) {
-        m_key.state = TimerState::TempUnset;
+    if (m_state == OneOf(TimerState::TempUnset, TimerState::TempSet)) {
+        m_state = TimerState::TempUnset;
     } else {
-        if (m_key.state != TimerState::Idle) {
+        if (m_state != TimerState::Idle) {
             m_loop.m_timer_heap.remove(*this);
-            m_key.state = TimerState::Idle;
+            m_state = TimerState::Idle;
         }
     }
 }
 
 void EventLoopTimer::setAt (EventLoopTime time)
 {
-    m_key.time = time;
+    m_time = time;
 
-    if (m_key.state == OneOf(TimerState::TempUnset, TimerState::TempSet)) {
-        m_key.state = TimerState::TempSet;
+    if (m_state == OneOf(TimerState::TempUnset, TimerState::TempSet)) {
+        m_state = TimerState::TempSet;
     } else {
-        TimerState old_state = m_key.state;
-        m_key.state = TimerState::Pending;
+        TimerState old_state = m_state;
+        m_state = TimerState::Pending;
 
         if (old_state == TimerState::Idle) {
             m_loop.m_timer_heap.insert(*this);
