@@ -30,7 +30,7 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/misc/Use.h>
-#include <aipstack/misc/EnumBitfieldUtils.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/structure/TreeCompare.h>
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/minimum/LinkedHeap.h>
@@ -38,29 +38,24 @@
 #include <aipstack/platform_impl/EventLoopCommon.h>
 
 #if defined(__linux__)
-    #include <aipstack/platform_specific/EventProviderLinux.h>
-    #define AIPSTACK_EVENT_PROVIDER EventProviderLinux
-    #define AIPSTACK_EVENT_PROVIDER_SUPPORTS_FD 1
+#include <aipstack/platform_specific/EventProviderLinux.h>
 #else
-    #error "Unsupported OS"
+#error "Unsupported OS"
 #endif
 
 namespace AIpStack {
 
-template <typename Callback>
-using EventProvider = AIPSTACK_EVENT_PROVIDER<Callback>;
-
-class EventLoopCallback;
+#ifndef IN_DOXYGEN
 class EventLoopTimer;
+#endif
 
 class EventLoop :
     private NonCopyable<EventLoop>,
-    private EventProvider<EventLoopCallback>
+    private EventProvider
 {
-    friend class EventLoopCallback;
+    friend class EventProviderBase;
+    friend class EventProviderFdBase;
     friend class EventLoopTimer;
-
-    using Provider = EventProvider<EventLoopCallback>;
 
     struct TimerHeapNodeAccessor;
     struct TimerKeyFuncs;
@@ -81,9 +76,11 @@ class EventLoop :
         Pending    = 3
     };
 
-    static constexpr auto OneOfHeapTimerStates =
-        OneOf(TimerState::Dispatch, TimerState::TempUnset,
-              TimerState::TempSet, TimerState::Pending);
+    static constexpr auto OneOfHeapTimerStates ()
+    {
+        return OneOf(TimerState::Dispatch, TimerState::TempUnset,
+                     TimerState::TempSet, TimerState::Pending);
+    }
 
     struct TimerKey {
         EventLoopTime time;
@@ -99,9 +96,15 @@ public:
 
     void run ();
 
-    inline static EventLoopTime getTime ();
+    inline static EventLoopTime getTime ()
+    {
+        return EventLoopClock::now();
+    }
 
-    inline EventLoopTime getEventTime () const;
+    inline EventLoopTime getEventTime () const
+    {
+        return m_event_time;
+    }
 
 private:
     void prepare_timers_for_dispatch (EventLoopTime now);
@@ -129,63 +132,60 @@ public:
 
     ~EventLoopTimer ();
 
-    inline bool isSet () const;
+    inline bool isSet () const
+    {
+        return m_key.state != OneOf(TimerState::Idle, TimerState::TempUnset);
+    }
 
-    inline EventLoopTime getSetTime () const;
+    inline EventLoopTime getSetTime () const
+    {
+        return m_key.time;
+    }
 
     void unset ();
 
     void setAt (EventLoopTime time);
+
+    void setAfter (EventLoopDuration duration);
 
 protected:
     virtual void handleTimerExpired () = 0;
 
 private:
     TimerHeapNode m_heap_node;
-    EventLoop *m_loop;
+    EventLoop &m_loop;
     TimerKey m_key;
 };
 
-EventLoopTime EventLoop::getTime ()
-{
-    return EventLoopClock::now();
-}
-
-EventLoopTime EventLoop::getEventTime () const
-{
-    return m_event_time;
-}
-
-bool EventLoopTimer::isSet () const
-{
-    return m_key.state != OneOf(TimerState::Idle, TimerState::TempUnset);
-}
-
-EventLoopTime EventLoopTimer::getSetTime () const
-{
-    return m_key.time;
-}
-
-#if AIPSTACK_EVENT_PROVIDER_SUPPORTS_FD
+#if AIPSTACK_EVENT_PROVIDER_SUPPORTS_FD || defined(IN_DOXYGEN)
 
 class EventLoopFdWatcher :
     private NonCopyable<EventLoopFdWatcher>,
-    private EventProvider<EventLoopCallback>::Fd
+    private EventProviderFd
 {
-    friend class EventLoopCallback;
-
-    using ProviderFd = EventProvider<EventLoopCallback>::Fd;
+    friend class EventProviderFdBase;
 
 public:
-    EventLoopFdWatcher (EventLoop &loop);
+    using FdEventHandler = Function<void(EventLoopFdEvents events)>;
+
+    EventLoopFdWatcher (EventLoop &loop, FdEventHandler handler);
 
     ~EventLoopFdWatcher ();
 
-    inline bool hasFd () const;
+    inline bool hasFd () const
+    {
+        return m_watched_fd >= 0;
+    }
 
-    inline int getFd () const;
+    inline int getFd () const
+    {
+        return m_watched_fd;
+    }
 
-    inline EventLoopFdEvents getEvents () const;
+    inline EventLoopFdEvents getEvents () const
+    {
+        return m_events;
+    }
 
     void initFd (int fd, EventLoopFdEvents events = {});
 
@@ -193,29 +193,12 @@ public:
 
     void reset ();
 
-protected:
-    virtual void handleFdEvents (EventLoopFdEvents events) = 0;
-
 private:
-    EventLoop *m_loop;
+    EventLoop &m_loop;
+    FdEventHandler m_handler;
     int m_watched_fd;
     EventLoopFdEvents m_events;
 };
-
-bool EventLoopFdWatcher::hasFd () const
-{
-    return m_watched_fd >= 0;
-}
-
-int EventLoopFdWatcher::getFd () const
-{
-    return m_watched_fd;
-}
-
-EventLoopFdEvents EventLoopFdWatcher::getEvents () const
-{
-    return m_events;
-}
 
 #endif
 

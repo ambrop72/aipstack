@@ -39,6 +39,7 @@
 #include <linux/if_tun.h>
 
 #include <aipstack/misc/Assert.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/proto/EthernetProto.h>
 
 #include "tap_linux.h"
@@ -59,7 +60,7 @@ inline static bool ErrIsEAGAINorEWOULDBLOCK (int err)
 }
 
 TapDevice::TapDevice (AIpStack::EventLoop &loop, std::string const &device_id) :
-    EventLoopFdWatcher(loop),
+    m_fd_watcher(loop, AIPSTACK_BIND_MEMBER(&TapDevice::handleFdEvents, this)),
     m_active(true)
 {
     m_fd = AIpStack::FileDescriptorWrapper{::open("/dev/net/tun", O_RDWR)};
@@ -104,7 +105,7 @@ TapDevice::TapDevice (AIpStack::EventLoop &loop, std::string const &device_id) :
     m_read_buffer.resize(m_frame_mtu);
     m_write_buffer.resize(m_frame_mtu);
     
-    EventLoopFdWatcher::initFd(*m_fd, AIpStack::EventLoopFdEvents::Read);
+    m_fd_watcher.initFd(*m_fd, AIpStack::EventLoopFdEvents::Read);
 }
 
 TapDevice::~TapDevice ()
@@ -190,7 +191,7 @@ void TapDevice::handleFdEvents (AIpStack::EventLoopFdEvents events)
     return;
     
 error:
-    EventLoopFdWatcher::reset();
+    m_fd_watcher.reset();
     m_active = false;
 }
 

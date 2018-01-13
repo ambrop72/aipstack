@@ -25,26 +25,32 @@
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
 #include <sys/eventfd.h>
+#include <sys/signalfd.h>
 
 #include <cerrno>
 #include <cstdint>
 #include <stdexcept>
 #include <type_traits>
 #include <chrono>
+#include <utility>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/Hints.h>
+#include <aipstack/platform_impl/EventLoopCommon.h>
 #include <aipstack/platform_specific/EventProviderLinux.h>
 
 namespace AIpStack {
 
+namespace {
+
 static std::uint32_t events_to_epoll (EventLoopFdEvents req_ev)
 {
-    uint32_t epoll_ev = 0;
+    std::uint32_t epoll_ev = 0;
     if ((req_ev & EventLoopFdEvents::Read) != EnumZero) {
         epoll_ev |= EPOLLIN;
     }
@@ -54,7 +60,7 @@ static std::uint32_t events_to_epoll (EventLoopFdEvents req_ev)
     return epoll_ev;
 }
 
-static EventLoopFdEvents get_fd_events_to_report (
+static EventLoopFdEvents get_events_to_report (
     std::uint32_t epoll_ev, EventLoopFdEvents req_ev)
 {
     EventLoopFdEvents events = EventLoopFdEvents();
@@ -73,8 +79,9 @@ static EventLoopFdEvents get_fd_events_to_report (
     return events;
 }
 
-template <typename Callback>
-EventProviderLinux<Callback>::EventProviderLinux () :
+}
+
+EventProviderLinux::EventProviderLinux () :
     m_cur_epoll_event(0),
     m_num_epoll_events(0)
 {
@@ -90,12 +97,10 @@ EventProviderLinux<Callback>::EventProviderLinux () :
     }
 }
 
-template <typename Callback>
-EventProviderLinux<Callback>::~EventProviderLinux ()
+EventProviderLinux::~EventProviderLinux ()
 {}
 
-template <typename Callback>
-void EventProviderLinux<Callback>::waitForEvents (EventLoopWaitTimeoutInfo timeout_info)
+void EventProviderLinux::waitForEvents (EventLoopWaitTimeoutInfo timeout_info)
 {
     namespace chrono = std::chrono;
     using Period = EventLoopTime::period;
@@ -109,16 +114,22 @@ void EventProviderLinux<Callback>::waitForEvents (EventLoopWaitTimeoutInfo timeo
     static_assert(std::is_signed<Rep>::value, "");
     static_assert(std::is_signed<SecType>::value, "");
     static_assert(TypeMax<Rep>() / Period::den <= TypeMax<SecType>(), "");
-    static_assert(TypeMin<Rep>() / Period::den >= TypeMin<SecType>(), "");
-    static_assert(Rep(-1) % Period::den == Period::den - 1, "");
+    static_assert(TypeMin<Rep>() / Period::den >= TypeMin<SecType>() + 1, "");
 
     if (timeout_info.time_changed) {
         EventLoopTime::duration time_dur = timeout_info.time.time_since_epoch();
 
+        SecType sec = time_dur.count() / Period::den;
+        Rep subsec = time_dur.count() % Period::den;
+        if (subsec < 0) {
+            sec--;
+            subsec += Period::den;
+        }
+
         struct itimerspec itspec = {};
-        itspec.it_value.tv_sec = time_dur.count() / Period::den;
+        itspec.it_value.tv_sec = sec;
         itspec.it_value.tv_nsec =
-            chrono::duration_cast<NsecDuration>(time_dur % Period::den).count();
+            chrono::duration_cast<NsecDuration>(EventLoopTime::duration(subsec)).count();
 
         int res = ::timerfd_settime(m_timer_fd.get(), TFD_TIMER_ABSTIME, &itspec, nullptr);
         AIPSTACK_ASSERT_FORCE(res == 0)
@@ -128,9 +139,10 @@ void EventProviderLinux<Callback>::waitForEvents (EventLoopWaitTimeoutInfo timeo
     while (true) {
         wait_res = ::epoll_wait(m_epoll_fd.get(), m_epoll_events, MaxEpollEvents, -1);
         if (wait_res >= 0) {
-            int err = errno;
-            AIPSTACK_ASSERT_FORCE(err == EINTR)
+            break;
         }
+        int err = errno;
+        AIPSTACK_ASSERT_FORCE(err == EINTR)
     }
 
     AIPSTACK_ASSERT_FORCE(wait_res <= MaxEpollEvents)
@@ -139,8 +151,7 @@ void EventProviderLinux<Callback>::waitForEvents (EventLoopWaitTimeoutInfo timeo
     m_num_epoll_events = wait_res;
 }
 
-template <typename Callback>
-bool EventProviderLinux<Callback>::dispatchSystemEvents ()
+bool EventProviderLinux::dispatchEvents ()
 {
     while (m_cur_epoll_event < m_num_epoll_events) {
         struct epoll_event *ev = &m_epoll_events[m_cur_epoll_event++];
@@ -150,16 +161,16 @@ bool EventProviderLinux<Callback>::dispatchSystemEvents ()
             continue;
         }
 
-        auto &fd = *static_cast<EventProviderLinuxFd<Callback> *>(data_ptr);
-        Callback::fdSanityCheck(fd);
+        auto &fd = *static_cast<EventProviderLinuxFd *>(data_ptr);
+        fd.EventProviderFdBase::sanityCheck();
 
         EventLoopFdEvents events =
-            get_fd_events_to_report(ev->events, Callback::fdGetEvents(fd));
+            get_events_to_report(ev->events, fd.EventProviderFdBase::getFdEvents());
 
         if (events != EnumZero) {
-            Callback::fdCallHandler(fd, events);
+            fd.EventProviderFdBase::callFdEventHandler(events);
 
-            if (AIPSTACK_UNLIKELY(Callback::getStop(*this))) {
+            if (AIPSTACK_UNLIKELY(EventProviderBase::getStop())) {
                 return false;
             }
         }
@@ -168,8 +179,7 @@ bool EventProviderLinux<Callback>::dispatchSystemEvents ()
     return true;
 }
 
-template <typename Callback>
-void EventProviderLinux<Callback>::control_epoll (
+void EventProviderLinux::control_epoll (
     int op, int fd, std::uint32_t events, void *data_ptr)
 {
     epoll_event ev = {};
@@ -180,26 +190,23 @@ void EventProviderLinux<Callback>::control_epoll (
     AIPSTACK_ASSERT_FORCE(res == 0)    
 }
 
-template <typename Callback>
-void EventProviderLinuxFd<Callback>::initFdImpl (int fd, EventLoopFdEvents events)
+void EventProviderLinuxFd::initFdImpl (int fd, EventLoopFdEvents events)
 {
-    EventProviderLinux<Callback> &prov = Callback::fdGetProvider(*this);
+    EventProviderLinux &prov = getProvider();
 
     prov.control_epoll(EPOLL_CTL_ADD, fd, events_to_epoll(events), this);
 }
 
-template <typename Callback>
-void EventProviderLinuxFd<Callback>::updateEventsImpl (int fd, EventLoopFdEvents events)
+void EventProviderLinuxFd::updateEventsImpl (int fd, EventLoopFdEvents events)
 {
-    EventProviderLinux<Callback> &prov = Callback::fdGetProvider(*this);
+    EventProviderLinux &prov = getProvider();
 
     prov.control_epoll(EPOLL_CTL_MOD, fd, events_to_epoll(events), this);
 }
 
-template <typename Callback>
-void EventProviderLinuxFd<Callback>::resetImpl (int fd)
+void EventProviderLinuxFd::resetImpl (int fd)
 {
-    EventProviderLinux<Callback> &prov = Callback::fdGetProvider(*this);
+    EventProviderLinux &prov = getProvider();
 
     prov.control_epoll(EPOLL_CTL_DEL, fd, 0, nullptr);
 
@@ -209,6 +216,11 @@ void EventProviderLinuxFd<Callback>::resetImpl (int fd)
             ev->data.ptr = nullptr;
         }
     }
+}
+
+EventProviderLinux & EventProviderLinuxFd::getProvider () const
+{
+    return static_cast<EventProviderLinux &>(EventProviderFdBase::getProvider());
 }
 
 }

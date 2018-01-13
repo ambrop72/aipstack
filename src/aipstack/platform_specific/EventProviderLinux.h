@@ -35,27 +35,24 @@
 
 namespace AIpStack {
 
-template <typename Callback>
 class EventProviderLinuxFd;
 
-template <typename Callback>
 class EventProviderLinux :
-    private NonCopyable<EventProviderLinux<Callback>>
+    public EventProviderBase,
+    private NonCopyable<EventProviderLinux>
 {
-    template <typename> friend class EventProviderLinuxFd;
+    friend class EventProviderLinuxFd;
     
     static int const MaxEpollEvents = 64;
 
 public:
-    using Fd = EventProviderLinuxFd<Callback>;
-
     EventProviderLinux ();
 
     ~EventProviderLinux ();
 
     void waitForEvents (EventLoopWaitTimeoutInfo timeout_info);
 
-    bool dispatchSystemEvents ();
+    bool dispatchEvents ();
 
 private:
     void control_epoll (int op, int fd, std::uint32_t events, void *data_ptr);
@@ -68,9 +65,9 @@ private:
     struct epoll_event m_epoll_events[MaxEpollEvents];
 };
 
-template <typename Callback>
 class EventProviderLinuxFd :
-    private NonCopyable<EventProviderLinuxFd<Callback>>
+    public EventProviderFdBase,
+    private NonCopyable<EventProviderLinuxFd>
 {
 public:
     EventProviderLinuxFd () = default;
@@ -82,7 +79,14 @@ public:
     void updateEventsImpl (int fd, EventLoopFdEvents events);
 
     void resetImpl (int fd);
+
+private:
+    inline EventProviderLinux & getProvider () const;
 };
+
+using EventProvider = EventProviderLinux;
+using EventProviderFd = EventProviderLinuxFd;
+#define AIPSTACK_EVENT_PROVIDER_SUPPORTS_FD 1
 
 }
 

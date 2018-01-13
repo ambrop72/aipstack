@@ -26,13 +26,16 @@
 #define AIPSTACK_EVENT_LOOP_COMMON_H
 
 #include <chrono>
-#include <type_traits>
+
+#include <aipstack/misc/EnumBitfieldUtils.h>
 
 namespace AIpStack {
 
 using EventLoopClock = std::chrono::steady_clock;
 
 using EventLoopTime = EventLoopClock::time_point;
+
+using EventLoopDuration = EventLoopClock::duration;
 
 struct EventLoopWaitTimeoutInfo {
     EventLoopTime time;
@@ -47,6 +50,19 @@ enum class EventLoopFdEvents {
     All   = Read|Write|Error|Hup,
 };
 AIPSTACK_ENUM_BITFIELD_OPS(EventLoopFdEvents)
+
+class EventProviderBase {
+public:
+    inline bool getStop () const;
+};
+
+class EventProviderFdBase {
+public:
+    inline EventProviderBase & getProvider () const;
+    inline void sanityCheck () const;
+    inline EventLoopFdEvents getFdEvents () const;
+    inline void callFdEventHandler (EventLoopFdEvents events);
+};
 
 }
 

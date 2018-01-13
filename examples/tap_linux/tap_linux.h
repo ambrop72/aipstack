@@ -37,16 +37,12 @@
 
 namespace AIpStackExamples {
 
-struct TapDeviceFdHelper {
-    AIpStack::FileDescriptorWrapper m_fd;
-};
-
 class TapDevice :
-    private AIpStack::NonCopyable<TapDevice>,
-    private TapDeviceFdHelper,
-    private AIpStack::EventLoopFdWatcher
+    private AIpStack::NonCopyable<TapDevice>
 {
 private:
+    AIpStack::FileDescriptorWrapper m_fd;
+    AIpStack::EventLoopFdWatcher m_fd_watcher;
     std::size_t m_frame_mtu;
     std::vector<char> m_read_buffer;
     std::vector<char> m_write_buffer;
@@ -60,7 +56,7 @@ public:
     AIpStack::IpErr sendFrame (AIpStack::IpBufRef frame);
 
 private:
-    void handleFdEvents (AIpStack::EventLoopFdEvents events) override;
+    void handleFdEvents (AIpStack::EventLoopFdEvents events);
     
 protected:
     virtual void frameReceived (AIpStack::IpBufRef frame) = 0;

@@ -102,30 +102,36 @@ void EventLoop::run ()
             return;
         }
 
-        if (!Provider::dispatchSystemEvents()) {
+        if (!EventProvider::dispatchEvents()) {
             return;
         }
 
         EventLoopWaitTimeoutInfo timeout_info = prepare_timers_for_wait();
 
-        Provider::waitForEvents(timeout_info);
+        EventProvider::waitForEvents(timeout_info);
     }
 }
 
 void EventLoop::prepare_timers_for_dispatch (EventLoopTime now)
 {
+    bool changed = false;
+
     m_timer_heap.findAllLesserOrEqual(now, [&](EventLoopTimer *tim) {
         AIPSTACK_ASSERT(tim->m_key.state == TimerState::Pending)
+
         tim->m_key.state = TimerState::Dispatch;
+        changed = true;
     });
 
-    m_timer_heap.assertValidHeap();
+    if (changed) {
+        m_timer_heap.assertValidHeap();
+    }
 }
 
 bool EventLoop::dispatch_timers ()
 {
     while (EventLoopTimer *tim = m_timer_heap.first()) {
-        AIPSTACK_ASSERT(tim->m_key.state == OneOfHeapTimerStates)
+        AIPSTACK_ASSERT(tim->m_key.state == OneOfHeapTimerStates())
 
         if (tim->m_key.state != TimerState::Dispatch) {
             break;
@@ -172,15 +178,21 @@ EventLoopWaitTimeoutInfo EventLoop::prepare_timers_for_wait ()
     return {first_time, time_changed};
 }
 
+bool EventProviderBase::getStop () const
+{
+    auto &event_loop = static_cast<EventLoop const &>(*this);
+    return event_loop.m_stop;
+}
+
 EventLoopTimer::EventLoopTimer (EventLoop &loop) :
-    m_loop(&loop),
+    m_loop(loop),
     m_key{EventLoopTime(), TimerState::Idle}
 {}
 
 EventLoopTimer::~EventLoopTimer ()
 {
     if (m_key.state != TimerState::Idle) {
-        m_loop->m_timer_heap.remove(*this);
+        m_loop.m_timer_heap.remove(*this);
     }
 }
 
@@ -190,7 +202,7 @@ void EventLoopTimer::unset ()
         m_key.state = TimerState::TempUnset;
     } else {
         if (m_key.state != TimerState::Idle) {
-            m_loop->m_timer_heap.remove(*this);
+            m_loop.m_timer_heap.remove(*this);
             m_key.state = TimerState::Idle;
         }
     }
@@ -207,55 +219,23 @@ void EventLoopTimer::setAt (EventLoopTime time)
         m_key.state = TimerState::Pending;
 
         if (old_state == TimerState::Idle) {
-            m_loop->m_timer_heap.insert(*this);
+            m_loop.m_timer_heap.insert(*this);
         } else {
-            m_loop->m_timer_heap.fixup(*this);            
+            m_loop.m_timer_heap.fixup(*this);            
         }
     }
 }
 
-class EventLoopCallback {
-    AIPSTACK_USE_TYPES(EventLoop, (Provider))
-
-public:
-    static bool getStop (Provider const &prov)
-    {
-        return static_cast<EventLoop const &>(prov).m_stop;
-    }
-
-    #if AIPSTACK_EVENT_PROVIDER_SUPPORTS_FD
-
-    static void fdSanityCheck (Provider::Fd const &prov_fd)
-    {
-        auto &fdw = static_cast<EventLoopFdWatcher const &>(prov_fd);
-        AIPSTACK_ASSERT(fdw.m_watched_fd >= 0)
-        AIPSTACK_ASSERT((fdw.m_events & ~EventLoopFdEvents::All) == EnumZero)
-    }
-
-    static EventLoopFdEvents fdGetEvents (Provider::Fd const &prov_fd)
-    {
-        auto &fdw = static_cast<EventLoopFdWatcher const &>(prov_fd);
-        return fdw.m_events;
-    }
-
-    static void fdCallHandler (Provider::Fd &prov_fd, EventLoopFdEvents events)
-    {
-        return static_cast<EventLoopFdWatcher &>(prov_fd).handleFdEvents(events);
-    }
-
-    static Provider & fdGetProvider (Provider::Fd const &prov_fd)
-    {
-        auto &fdw = static_cast<EventLoopFdWatcher const &>(prov_fd);
-        return *fdw.m_loop;
-    }
-
-    #endif
-};
+void EventLoopTimer::setAfter (EventLoopDuration duration)
+{
+    return setAt(m_loop.getEventTime() + duration);
+}
 
 #if AIPSTACK_EVENT_PROVIDER_SUPPORTS_FD
 
-EventLoopFdWatcher::EventLoopFdWatcher (EventLoop &loop) :
-    m_loop(&loop),
+EventLoopFdWatcher::EventLoopFdWatcher (EventLoop &loop, FdEventHandler handler) :
+    m_loop(loop),
+    m_handler(handler),
     m_watched_fd(-1),
     m_events(EventLoopFdEvents())
 {}
@@ -263,7 +243,7 @@ EventLoopFdWatcher::EventLoopFdWatcher (EventLoop &loop) :
 EventLoopFdWatcher::~EventLoopFdWatcher ()
 {
     if (m_watched_fd >= 0) {
-        ProviderFd::resetImpl(m_watched_fd);
+        EventProviderFd::resetImpl(m_watched_fd);
     }
 }
 
@@ -273,7 +253,7 @@ void EventLoopFdWatcher::initFd (int fd, EventLoopFdEvents events)
     AIPSTACK_ASSERT(fd >= 0)
     AIPSTACK_ASSERT((events & ~EventLoopFdEvents::All) == EnumZero)
 
-    ProviderFd::initFdImpl(fd, events);
+    EventProviderFd::initFdImpl(fd, events);
 
     m_watched_fd = fd;
     m_events = events;
@@ -285,7 +265,7 @@ void EventLoopFdWatcher::updateEvents (EventLoopFdEvents events)
     AIPSTACK_ASSERT((events & ~EventLoopFdEvents::All) == EnumZero)
 
     if (events != m_events) {
-        ProviderFd::updateEventsImpl(m_watched_fd, events);
+        EventProviderFd::updateEventsImpl(m_watched_fd, events);
 
         m_events = events;
     }
@@ -294,11 +274,36 @@ void EventLoopFdWatcher::updateEvents (EventLoopFdEvents events)
 void EventLoopFdWatcher::reset ()
 {
     if (m_watched_fd >= 0) {
-        ProviderFd::resetImpl(m_watched_fd);
+        EventProviderFd::resetImpl(m_watched_fd);
 
         m_watched_fd = -1;
         m_events = EventLoopFdEvents();
     }
+}
+
+EventProviderBase & EventProviderFdBase::getProvider () const
+{
+    auto &fd_watcher = static_cast<EventLoopFdWatcher const &>(*this);
+    return fd_watcher.m_loop;
+}
+
+void EventProviderFdBase::sanityCheck () const
+{
+    auto &fd_watcher = static_cast<EventLoopFdWatcher const &>(*this);
+    AIPSTACK_ASSERT(fd_watcher.m_watched_fd >= 0)
+    AIPSTACK_ASSERT((fd_watcher.m_events & ~EventLoopFdEvents::All) == EnumZero)    
+}
+
+EventLoopFdEvents EventProviderFdBase::getFdEvents () const
+{
+    auto &fd_watcher = static_cast<EventLoopFdWatcher const &>(*this);
+    return fd_watcher.m_events;
+}
+
+void EventProviderFdBase::callFdEventHandler (EventLoopFdEvents events)
+{
+    auto &fd_watcher = static_cast<EventLoopFdWatcher &>(*this);
+    return fd_watcher.m_handler(events);
 }
 
 #endif
