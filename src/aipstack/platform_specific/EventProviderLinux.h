@@ -86,7 +86,6 @@ private:
 
 using EventProvider = EventProviderLinux;
 using EventProviderFd = EventProviderLinuxFd;
-#define AIPSTACK_EVENT_PROVIDER_SUPPORTS_FD 1
 
 }
 

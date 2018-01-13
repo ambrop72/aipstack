@@ -53,8 +53,10 @@ class EventLoop :
     private EventProvider
 {
     friend class EventProviderBase;
-    friend class EventProviderFdBase;
     friend class EventLoopTimer;
+    #if AIPSTACK_EVENT_LOOP_HAS_FD
+    friend class EventProviderFdBase;
+    #endif
 
     struct TimerHeapNodeAccessor;
     struct TimerCompare;
@@ -151,7 +153,7 @@ private:
     TimerState m_state;
 };
 
-#if AIPSTACK_EVENT_PROVIDER_SUPPORTS_FD || defined(IN_DOXYGEN)
+#if AIPSTACK_EVENT_LOOP_HAS_FD || defined(IN_DOXYGEN)
 
 class EventLoopFdWatcher :
     private NonCopyable<EventLoopFdWatcher>,

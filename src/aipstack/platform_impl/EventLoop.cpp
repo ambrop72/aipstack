@@ -234,7 +234,7 @@ void EventLoopTimer::setAfter (EventLoopDuration duration)
     return setAt(m_loop.getEventTime() + duration);
 }
 
-#if AIPSTACK_EVENT_PROVIDER_SUPPORTS_FD
+#if AIPSTACK_EVENT_LOOP_HAS_FD
 
 EventLoopFdWatcher::EventLoopFdWatcher (EventLoop &loop, FdEventHandler handler) :
     m_loop(loop),

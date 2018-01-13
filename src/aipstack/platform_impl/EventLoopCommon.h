@@ -29,6 +29,12 @@
 
 #include <aipstack/misc/EnumBitfieldUtils.h>
 
+#if defined(__linux__)
+#define AIPSTACK_EVENT_LOOP_HAS_FD 1
+#else
+#define AIPSTACK_EVENT_LOOP_HAS_FD 0
+#endif
+
 namespace AIpStack {
 
 using EventLoopClock = std::chrono::steady_clock;
@@ -42,6 +48,13 @@ struct EventLoopWaitTimeoutInfo {
     bool time_changed;
 };
 
+class EventProviderBase {
+public:
+    inline bool getStop () const;
+};
+
+#if AIPSTACK_EVENT_LOOP_HAS_FD || defined(IN_DOXYGEN)
+
 enum class EventLoopFdEvents {
     Read  = 1 << 0,
     Write = 1 << 1,
@@ -51,11 +64,6 @@ enum class EventLoopFdEvents {
 };
 AIPSTACK_ENUM_BITFIELD_OPS(EventLoopFdEvents)
 
-class EventProviderBase {
-public:
-    inline bool getStop () const;
-};
-
 class EventProviderFdBase {
 public:
     inline EventProviderBase & getProvider () const;
@@ -63,6 +71,8 @@ public:
     inline EventLoopFdEvents getFdEvents () const;
     inline void callFdEventHandler (EventLoopFdEvents events);
 };
+
+#endif
 
 }
 
