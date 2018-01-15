@@ -82,6 +82,7 @@ static EventLoopFdEvents get_events_to_report (
 }
 
 EventProviderLinux::EventProviderLinux () :
+    m_force_timerfd_update(true),
     m_cur_epoll_event(0),
     m_num_epoll_events(0)
 {
@@ -118,7 +119,9 @@ void EventProviderLinux::waitForEvents (EventLoopWaitTimeoutInfo timeout_info)
     static_assert(TypeMax<Rep>() / Period::den <= TypeMax<SecType>(), "");
     static_assert(TypeMin<Rep>() / Period::den >= TypeMin<SecType>() + 1, "");
 
-    if (timeout_info.time_changed) {
+    if (timeout_info.time_changed || m_force_timerfd_update) {
+        m_force_timerfd_update = false;
+
         EventLoopTime::duration time_dur = timeout_info.time.time_since_epoch();
 
         SecType sec = time_dur.count() / Period::den;
@@ -164,7 +167,10 @@ bool EventProviderLinux::dispatchEvents ()
         }
 
         if (data_ptr == &m_timer_fd) {
-            // TODO
+            // Don't read from timer fd since this is relatively expensive, but make sure
+            // that we call timerfd_settime before the next epoll_wait, which clears events
+            // from the timer.
+            m_force_timerfd_update = true;
             continue;
         }
 

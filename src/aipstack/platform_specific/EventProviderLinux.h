@@ -60,6 +60,7 @@ private:
 private:
     FileDescriptorWrapper m_epoll_fd;
     FileDescriptorWrapper m_timer_fd;
+    bool m_force_timerfd_update;
     int m_cur_epoll_event;
     int m_num_epoll_events;
     struct epoll_event m_epoll_events[MaxEpollEvents];
