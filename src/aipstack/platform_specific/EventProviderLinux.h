@@ -87,6 +87,9 @@ private:
 using EventProvider = EventProviderLinux;
 using EventProviderFd = EventProviderLinuxFd;
 
+#define AIPSTACK_EVENT_PROVIDER_IMPL_FILE \
+    <aipstack/platform_specific/EventProviderLinux_impl.h>
+
 }
 
 #endif

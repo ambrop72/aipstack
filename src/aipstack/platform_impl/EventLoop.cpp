@@ -313,6 +313,4 @@ void EventProviderFdBase::callFdEventHandler (EventLoopFdEvents events)
 
 }
 
-#if defined(__linux__)
-#include <aipstack/platform_specific/EventProviderLinux_impl.h>
-#endif
+#include AIPSTACK_EVENT_PROVIDER_IMPL_FILE
