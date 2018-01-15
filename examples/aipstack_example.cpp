@@ -145,6 +145,36 @@ class MyExampleAppArg : public MyExampleAppService::template Compose<IpStackArg>
 using MyExampleApp = AIpStackExamples::ExampleApp<MyExampleAppArg>;
 
 
+// DhcpClientCallback class for printing DHCP client events
+class DhcpClientCallback : public AIpStack::IpDhcpClientCallback {
+public:
+    void dhcpClientEvent (AIpStack::IpDhcpClientEvent event_type) override final
+    {
+        char const *event_str = nullptr;
+        switch (event_type) {
+            case AIpStack::IpDhcpClientEvent::LeaseObtained:
+                event_str = "Lease obtained";
+                break;
+            case AIpStack::IpDhcpClientEvent::LeaseRenewed:
+                event_str = "Lease renewed";
+                break;
+            case AIpStack::IpDhcpClientEvent::LeaseLost:
+                event_str = "Lease lost";
+                break;
+            case AIpStack::IpDhcpClientEvent::LinkDown:
+                event_str = "Link down";
+                break;
+            default:
+                break;
+        }
+
+        if (event_str != nullptr) {
+            std::printf("DHCP: %s\n", event_str);
+        }
+    }
+};
+
+
 int main (int argc, char *argv[])
 {
     std::string device_id = (argc > 1) ? argv[1] : "";
@@ -175,12 +205,13 @@ int main (int argc, char *argv[])
     }
     
     std::unique_ptr<MyDhcpClient> dhcp_client;
+    DhcpClientCallback dhcp_callback;
     
     if (DeviceUseDhcp) {
         // Construct the DHCP client.
         AIpStack::IpDhcpClientInitOptions dhcp_opts;
         dhcp_client = std::make_unique<MyDhcpClient>(
-            platform, &*stack, &*iface, dhcp_opts, nullptr);
+            platform, &*stack, &*iface, dhcp_opts, &dhcp_callback);
     } else {
         // Assign static IP configuration.
         iface->setIp4Addr(
