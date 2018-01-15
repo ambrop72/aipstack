@@ -95,6 +95,8 @@ EventProviderLinux::EventProviderLinux () :
     if (!m_timer_fd) {
         throw std::runtime_error("timerfd_create failed");
     }
+
+    control_epoll(EPOLL_CTL_ADD, *m_timer_fd, EPOLLIN, &m_timer_fd);
 }
 
 EventProviderLinux::~EventProviderLinux ()
@@ -158,6 +160,11 @@ bool EventProviderLinux::dispatchEvents ()
         void *data_ptr = ev->data.ptr;
 
         if (data_ptr == nullptr) {
+            continue;
+        }
+
+        if (data_ptr == &m_timer_fd) {
+            // TODO
             continue;
         }
 
