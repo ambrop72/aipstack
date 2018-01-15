@@ -102,6 +102,19 @@ public:
             throw std::runtime_error("fcntl(F_SETFL, flags|O_NONBLOCK) failed.");
         }
     }
+
+    static bool errIsEAGAINorEWOULDBLOCK (int err)
+    {
+        if (err == EAGAIN) {
+            return true;
+        }
+        #if EWOULDBLOCK != EAGAIN
+        if (err == EWOULDBLOCK) {
+            return true;
+        }
+        #endif
+        return false;
+    }
     
 private:
     void close_it ()

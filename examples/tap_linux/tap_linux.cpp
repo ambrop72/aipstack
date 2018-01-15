@@ -46,19 +46,6 @@
 
 namespace AIpStackExamples {
 
-inline static bool ErrIsEAGAINorEWOULDBLOCK (int err)
-{
-    if (err == EAGAIN) {
-        return true;
-    }
-#if EWOULDBLOCK != EAGAIN
-    if (err == EWOULDBLOCK) {
-        return true;
-    }
-#endif
-    return false;
-}
-
 TapDevice::TapDevice (AIpStack::EventLoop &loop, std::string const &device_id) :
     m_fd_watcher(loop, AIPSTACK_BIND_MEMBER(&TapDevice::handleFdEvents, this)),
     m_active(true)
@@ -137,7 +124,7 @@ AIpStack::IpErr TapDevice::sendFrame (AIpStack::IpBufRef frame)
     auto write_res = ::write(*m_fd, buffer, len);
     if (write_res < 0) {
         int error = errno;
-        if (ErrIsEAGAINorEWOULDBLOCK(error)) {
+        if (AIpStack::FileDescriptorWrapper::errIsEAGAINorEWOULDBLOCK(error)) {
             return AIpStack::IpErr::BUFFER_FULL;
         }
         return AIpStack::IpErr::HW_ERROR;
@@ -168,7 +155,7 @@ void TapDevice::handleFdEvents (AIpStack::EventLoopFdEvents events)
             bool is_error = false;
             if (read_res < 0) {
                 int err = errno;
-                is_error = !ErrIsEAGAINorEWOULDBLOCK(err);
+                is_error = !AIpStack::FileDescriptorWrapper::errIsEAGAINorEWOULDBLOCK(err);
             }
             if (is_error) {
                 std::fprintf(stderr, "TapDevice: read failed. Stopping.\n");
