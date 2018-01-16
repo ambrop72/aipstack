@@ -34,6 +34,8 @@
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/platform_impl/EventLoop.h>
 #include <aipstack/platform_impl/HostedPlatformImpl.h>
+#include <aipstack/platform_impl/SignalBlocker.h>
+#include <aipstack/platform_impl/SignalWatcher.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/ip/IpPathMtuCache.h>
@@ -179,8 +181,20 @@ int main (int argc, char *argv[])
 {
     std::string device_id = (argc > 1) ? argv[1] : "";
     
+    // Construct the SignalBlocker.
+    AIpStack::SignalBlocker signal_blocker(AIpStack::SignalType::ExitSignals);
+
     // Construct the event loop.
     AIpStack::EventLoop event_loop;
+
+    // Construct the SignalWatcher.
+    AIpStack::SignalWatcher signal_watcher(event_loop, signal_blocker,
+    [&event_loop](AIpStack::SignalInfo signal_info) {
+        std::printf("Got signal %s, terminating...\n",
+            nativeNameForSignalType(signal_info.type));
+        event_loop.stop();
+    });
+    signal_watcher.startWatching(AIpStack::SignalType::ExitSignals);
     
     // Construct the platform implementation class instance.
     PlatformImpl platform_impl{event_loop};
