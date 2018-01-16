@@ -22,49 +22,54 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <aipstack/misc/Assert.h>
-#include <aipstack/platform_impl/SignalWatcher.h>
+#ifndef AIPSTACK_SIGNAL_WATCHER_H
+#define AIPSTACK_SIGNAL_WATCHER_H
+
+#include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/Function.h>
+#include <aipstack/event_loop/EventLoop.h>
+#include <aipstack/event_loop/SignalWatcherCommon.h>
+#include <aipstack/event_loop/SignalBlocker.h>
+
+#if defined(__linux__)
+#include <aipstack/event_loop/platform_specific/SignalWatcherImplLinux.h>
+#else
+#error "Unsupported OS"
+#endif
 
 namespace AIpStack {
 
-SignalWatcher::SignalWatcher (EventLoop &loop, SignalBlocker &blocker, SignalHandler handler) :
-    SignalWatcherImpl(loop, blocker),
-    m_handler(handler),
-    m_watching(false),
-    m_watched_signals(SignalType())
-{}
-
-SignalWatcher::~SignalWatcher ()
+class SignalWatcher :
+    private NonCopyable<SignalWatcher>,
+    private SignalWatcherImpl
 {
-    if (m_watching) {
-        SignalWatcherImpl::stop();
+    friend class SignalWatcherImplBase;
+    
+public:
+    using SignalHandler = Function<void(SignalInfo signal_info)>;
+
+    SignalWatcher (EventLoop &loop, SignalBlocker &blocker, SignalHandler handler);
+
+    ~SignalWatcher ();
+
+    void startWatching (SignalType signals);
+
+    void reset ();
+
+    inline bool isWatching () const {
+        return m_watching;
     }
-}
 
-void SignalWatcher::startWatching (SignalType signals)
-{
-    AIPSTACK_ASSERT(!m_watching)
-
-    SignalWatcherImpl::start(signals);
-    m_watching = true;
-    m_watched_signals = signals;
-}
-
-void SignalWatcher::reset ()
-{
-    if (m_watching) {
-        SignalWatcherImpl::stop();
-        m_watching = false;
-        m_watched_signals = SignalType();
+    inline SignalType getWatchedSignals () const {
+        return m_watched_signals;
     }
+
+private:
+    SignalHandler m_handler;
+    bool m_watching;
+    SignalType m_watched_signals;
+};
+
 }
 
-void SignalWatcherImplBase::callHandler(SignalInfo signal_info)
-{
-    auto &signal_watcher = static_cast<SignalWatcher &>(*this);
-    return signal_watcher.m_handler(signal_info);
-}
-
-}
-
-#include AIPSTACK_SIGNAL_WATCHER_IMPL_IMPL_FILE
+#endif

@@ -30,8 +30,8 @@
 #include <cstdint>
 
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/platform_impl/EventLoopCommon.h>
-#include <aipstack/platform_specific/FileDescriptorWrapper.h>
+#include <aipstack/platform/FileDescriptorWrapper.h>
+#include <aipstack/event_loop/EventLoopCommon.h>
 
 namespace AIpStack {
 
@@ -89,7 +89,7 @@ using EventProvider = EventProviderLinux;
 using EventProviderFd = EventProviderLinuxFd;
 
 #define AIPSTACK_EVENT_PROVIDER_IMPL_FILE \
-    <aipstack/platform_specific/EventProviderLinux_impl.h>
+    <aipstack/event_loop/platform_specific/EventProviderLinux_impl.h>
 
 }
 

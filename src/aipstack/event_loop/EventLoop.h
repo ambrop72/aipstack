@@ -34,10 +34,10 @@
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/minimum/LinkedHeap.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
-#include <aipstack/platform_impl/EventLoopCommon.h>
+#include <aipstack/event_loop/EventLoopCommon.h>
 
 #if defined(__linux__)
-#include <aipstack/platform_specific/EventProviderLinux.h>
+#include <aipstack/event_loop/platform_specific/EventProviderLinux.h>
 #else
 #error "Unsupported OS"
 #endif

@@ -32,10 +32,10 @@
 #include <aipstack/structure/index/MruListIndex.h>
 #include <aipstack/structure/minimum/LinkedHeap.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/platform_impl/EventLoop.h>
-#include <aipstack/platform_impl/HostedPlatformImpl.h>
-#include <aipstack/platform_impl/SignalBlocker.h>
-#include <aipstack/platform_impl/SignalWatcher.h>
+#include <aipstack/platform/HostedPlatformImpl.h>
+#include <aipstack/event_loop/EventLoop.h>
+#include <aipstack/event_loop/SignalBlocker.h>
+#include <aipstack/event_loop/SignalWatcher.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/ip/IpPathMtuCache.h>

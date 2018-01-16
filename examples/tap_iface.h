@@ -31,9 +31,9 @@
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/platform/PlatformFacade.h>
+#include <aipstack/platform/HostedPlatformImpl.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/eth/EthIpIface.h>
-#include <aipstack/platform_impl/HostedPlatformImpl.h>
 
 #ifdef _WIN32
 #include "tap_windows/tap_windows.h"

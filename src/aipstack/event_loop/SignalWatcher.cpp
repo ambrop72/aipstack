@@ -22,24 +22,49 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <aipstack/platform_impl/SignalBlocker.h>
+#include <aipstack/misc/Assert.h>
+#include <aipstack/event_loop/SignalWatcher.h>
 
 namespace AIpStack {
 
-SignalBlocker::SignalBlocker (SignalType signals, bool unblock) :
-    m_signals(signals),
-    m_unblock(unblock)
-{
-    SignalBlockerImpl::block(m_signals);
-}
+SignalWatcher::SignalWatcher (EventLoop &loop, SignalBlocker &blocker, SignalHandler handler) :
+    SignalWatcherImpl(loop, blocker),
+    m_handler(handler),
+    m_watching(false),
+    m_watched_signals(SignalType())
+{}
 
-SignalBlocker::~SignalBlocker ()
+SignalWatcher::~SignalWatcher ()
 {
-    if (m_unblock) {
-        SignalBlockerImpl::unblock(m_signals);
+    if (m_watching) {
+        SignalWatcherImpl::stop();
     }
 }
 
+void SignalWatcher::startWatching (SignalType signals)
+{
+    AIPSTACK_ASSERT(!m_watching)
+
+    SignalWatcherImpl::start(signals);
+    m_watching = true;
+    m_watched_signals = signals;
 }
 
-#include AIPSTACK_SIGNAL_BLOCKER_IMPL_IMPL_FILE
+void SignalWatcher::reset ()
+{
+    if (m_watching) {
+        SignalWatcherImpl::stop();
+        m_watching = false;
+        m_watched_signals = SignalType();
+    }
+}
+
+void SignalWatcherImplBase::callHandler(SignalInfo signal_info)
+{
+    auto &signal_watcher = static_cast<SignalWatcher &>(*this);
+    return signal_watcher.m_handler(signal_info);
+}
+
+}
+
+#include AIPSTACK_SIGNAL_WATCHER_IMPL_IMPL_FILE

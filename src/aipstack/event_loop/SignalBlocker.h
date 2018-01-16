@@ -22,46 +22,41 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_SIGNAL_WATCHER_IMPL_LINUX_H
-#define AIPSTACK_SIGNAL_WATCHER_IMPL_LINUX_H
-
-#include <signal.h>
+#ifndef AIPSTACK_SIGNAL_BLOCKER_H
+#define AIPSTACK_SIGNAL_BLOCKER_H
 
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/platform_impl/EventLoop.h>
-#include <aipstack/platform_impl/SignalWatcherCommon.h>
-#include <aipstack/platform_impl/SignalBlocker.h>
-#include <aipstack/platform_specific/FileDescriptorWrapper.h>
+#include <aipstack/event_loop/SignalCommon.h>
+
+#if defined(__linux__)
+#include <aipstack/event_loop/platform_specific/SignalBlockerImplLinux.h>
+#else
+#error "Unsupported OS"
+#endif
 
 namespace AIpStack {
 
-class SignalWatcherImplLinux :
-    public SignalWatcherImplBase,
-    private NonCopyable<SignalWatcherImplLinux>
+class SignalBlocker :
+    private NonCopyable<SignalBlocker>,
+    private SignalBlockerImpl
 {
 public:
-    SignalWatcherImplLinux (EventLoop &loop, SignalBlocker &blocker);
+    SignalBlocker (SignalType signals, bool unblock = true);
 
-    ~SignalWatcherImplLinux () = default;
+    ~SignalBlocker ();
 
-    void start (SignalType signals);
+    inline SignalType getBlockedSignals () const {
+        return m_signals;
+    }
 
-    void stop ();
+    inline bool getUnblock () const {
+        return m_unblock;
+    }
 
 private:
-    void watcherHandler(EventLoopFdEvents events);
-    
-private:
-    SignalBlocker &m_blocker;
-    // First fd then watcher for proper destruction order.
-    FileDescriptorWrapper m_signalfd_fd;
-    EventLoopFdWatcher m_watcher;
+    SignalType const m_signals;
+    bool const m_unblock;
 };
-
-using SignalWatcherImpl = SignalWatcherImplLinux;
-
-#define AIPSTACK_SIGNAL_WATCHER_IMPL_IMPL_FILE \
-    <aipstack/platform_specific/SignalWatcherImplLinux_impl.h>
 
 }
 

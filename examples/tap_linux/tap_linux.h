@@ -32,8 +32,8 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Buf.h>
-#include <aipstack/platform_specific/FileDescriptorWrapper.h>
-#include <aipstack/platform_impl/EventLoop.h>
+#include <aipstack/platform/FileDescriptorWrapper.h>
+#include <aipstack/event_loop/EventLoop.h>
 
 namespace AIpStackExamples {
 

@@ -22,54 +22,38 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_SIGNAL_WATCHER_H
-#define AIPSTACK_SIGNAL_WATCHER_H
+#include <stdio.h>
+#include <stdexcept>
 
-#include <aipstack/misc/NonCopyable.h>
-#include <aipstack/misc/Function.h>
-#include <aipstack/platform_impl/EventLoop.h>
-#include <aipstack/platform_impl/SignalWatcherCommon.h>
-#include <aipstack/platform_impl/SignalBlocker.h>
+#include <signal.h>
 
-#if defined(__linux__)
-#include <aipstack/platform_specific/SignalWatcherImplLinux.h>
-#else
-#error "Unsupported OS"
-#endif
+#include <aipstack/event_loop/platform_specific/SignalBlockerImplLinux.h>
 
 namespace AIpStack {
 
-class SignalWatcher :
-    private NonCopyable<SignalWatcher>,
-    private SignalWatcherImpl
+void SignalBlockerImplLinux::block (SignalType signals)
 {
-    friend class SignalWatcherImplBase;
-    
-public:
-    using SignalHandler = Function<void(SignalInfo signal_info)>;
+    ::sigset_t sset;
+    initSigSetToSignals(sset, signals);
 
-    SignalWatcher (EventLoop &loop, SignalBlocker &blocker, SignalHandler handler);
-
-    ~SignalWatcher ();
-
-    void startWatching (SignalType signals);
-
-    void reset ();
-
-    inline bool isWatching () const {
-        return m_watching;
+    ::sigset_t orig_sset;
+    if (::pthread_sigmask(SIG_BLOCK, &sset, &orig_sset) != 0) {
+        throw std::runtime_error("pthread_sigmask failed for SignalBlocker.");
     }
 
-    inline SignalType getWatchedSignals () const {
-        return m_watched_signals;
-    }
-
-private:
-    SignalHandler m_handler;
-    bool m_watching;
-    SignalType m_watched_signals;
-};
-
+    m_orig_blocked_signals = getSignalsFromSigSet(orig_sset);
 }
 
-#endif
+void SignalBlockerImplLinux::unblock (SignalType blocked_signals)
+{
+    SignalType unblock_signals = ~m_orig_blocked_signals & blocked_signals;
+
+    ::sigset_t sset;
+    initSigSetToSignals(sset, unblock_signals);
+
+    if (::pthread_sigmask(SIG_UNBLOCK, &sset, nullptr) != 0) {
+        std::fprintf(stderr, "pthread_sigmask failed to unblock signals.");
+    }
+}
+
+}

@@ -22,34 +22,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_SIGNAL_BLOCKER_IMPL_LINUX_H
-#define AIPSTACK_SIGNAL_BLOCKER_IMPL_LINUX_H
+#ifndef AIPSTACK_SIGNAL_WATCHER_COMMON_H
+#define AIPSTACK_SIGNAL_WATCHER_COMMON_H
 
-#include <aipstack/misc/NonCopyable.h>
-#include <aipstack/platform_impl/SignalCommon.h>
+#include <aipstack/event_loop/SignalCommon.h>
 
 namespace AIpStack {
 
-class SignalBlockerImplLinux :
-    private NonCopyable<SignalBlockerImplLinux>
-{
-public:
-    SignalBlockerImplLinux () = default;
-
-    ~SignalBlockerImplLinux () = default;
-
-    void block (SignalType signals);
-
-    void unblock (SignalType blocked_signals);
-
-private:
-    SignalType m_orig_blocked_signals;
+struct SignalInfo {
+    SignalType type;
 };
 
-using SignalBlockerImpl = SignalBlockerImplLinux;
-
-#define AIPSTACK_SIGNAL_BLOCKER_IMPL_IMPL_FILE \
-    <aipstack/platform_specific/SignalBlockerImplLinux_impl.h>
+class SignalWatcherImplBase {
+public:
+    inline void callHandler(SignalInfo signal_info);
+};
 
 }
 

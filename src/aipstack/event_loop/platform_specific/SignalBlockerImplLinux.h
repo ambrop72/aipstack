@@ -22,41 +22,34 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_SIGNAL_BLOCKER_H
-#define AIPSTACK_SIGNAL_BLOCKER_H
+#ifndef AIPSTACK_SIGNAL_BLOCKER_IMPL_LINUX_H
+#define AIPSTACK_SIGNAL_BLOCKER_IMPL_LINUX_H
 
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/platform_impl/SignalCommon.h>
-
-#if defined(__linux__)
-#include <aipstack/platform_specific/SignalBlockerImplLinux.h>
-#else
-#error "Unsupported OS"
-#endif
+#include <aipstack/event_loop/SignalCommon.h>
 
 namespace AIpStack {
 
-class SignalBlocker :
-    private NonCopyable<SignalBlocker>,
-    private SignalBlockerImpl
+class SignalBlockerImplLinux :
+    private NonCopyable<SignalBlockerImplLinux>
 {
 public:
-    SignalBlocker (SignalType signals, bool unblock = true);
+    SignalBlockerImplLinux () = default;
 
-    ~SignalBlocker ();
+    ~SignalBlockerImplLinux () = default;
 
-    inline SignalType getBlockedSignals () const {
-        return m_signals;
-    }
+    void block (SignalType signals);
 
-    inline bool getUnblock () const {
-        return m_unblock;
-    }
+    void unblock (SignalType blocked_signals);
 
 private:
-    SignalType const m_signals;
-    bool const m_unblock;
+    SignalType m_orig_blocked_signals;
 };
+
+using SignalBlockerImpl = SignalBlockerImplLinux;
+
+#define AIPSTACK_SIGNAL_BLOCKER_IMPL_IMPL_FILE \
+    <aipstack/event_loop/platform_specific/SignalBlockerImplLinux_impl.h>
 
 }
 

@@ -29,7 +29,7 @@
 
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/platform_impl/EventLoop.h>
+#include <aipstack/event_loop/EventLoop.h>
 
 namespace AIpStack {
 

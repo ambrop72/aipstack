@@ -41,8 +41,8 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/Hints.h>
-#include <aipstack/platform_impl/EventLoopCommon.h>
-#include <aipstack/platform_specific/EventProviderLinux.h>
+#include <aipstack/event_loop/EventLoopCommon.h>
+#include <aipstack/event_loop/platform_specific/EventProviderLinux.h>
 
 namespace AIpStack {
 

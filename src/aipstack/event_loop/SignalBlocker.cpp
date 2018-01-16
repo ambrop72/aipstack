@@ -22,38 +22,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdexcept>
-
-#include <signal.h>
-
-#include <aipstack/platform_specific/SignalBlockerImplLinux.h>
+#include <aipstack/event_loop/SignalBlocker.h>
 
 namespace AIpStack {
 
-void SignalBlockerImplLinux::block (SignalType signals)
+SignalBlocker::SignalBlocker (SignalType signals, bool unblock) :
+    m_signals(signals),
+    m_unblock(unblock)
 {
-    ::sigset_t sset;
-    initSigSetToSignals(sset, signals);
-
-    ::sigset_t orig_sset;
-    if (::pthread_sigmask(SIG_BLOCK, &sset, &orig_sset) != 0) {
-        throw std::runtime_error("pthread_sigmask failed for SignalBlocker.");
-    }
-
-    m_orig_blocked_signals = getSignalsFromSigSet(orig_sset);
+    SignalBlockerImpl::block(m_signals);
 }
 
-void SignalBlockerImplLinux::unblock (SignalType blocked_signals)
+SignalBlocker::~SignalBlocker ()
 {
-    SignalType unblock_signals = ~m_orig_blocked_signals & blocked_signals;
-
-    ::sigset_t sset;
-    initSigSetToSignals(sset, unblock_signals);
-
-    if (::pthread_sigmask(SIG_UNBLOCK, &sset, nullptr) != 0) {
-        std::fprintf(stderr, "pthread_sigmask failed to unblock signals.");
+    if (m_unblock) {
+        SignalBlockerImpl::unblock(m_signals);
     }
 }
 
 }
+
+#include AIPSTACK_SIGNAL_BLOCKER_IMPL_IMPL_FILE

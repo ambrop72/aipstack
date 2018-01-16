@@ -30,7 +30,7 @@
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/structure/Accessor.h>
-#include <aipstack/platform_impl/EventLoop.h>
+#include <aipstack/event_loop/EventLoop.h>
 
 namespace AIpStack {
 

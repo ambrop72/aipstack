@@ -22,21 +22,46 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_SIGNAL_WATCHER_COMMON_H
-#define AIPSTACK_SIGNAL_WATCHER_COMMON_H
+#ifndef AIPSTACK_SIGNAL_WATCHER_IMPL_LINUX_H
+#define AIPSTACK_SIGNAL_WATCHER_IMPL_LINUX_H
 
-#include <aipstack/platform_impl/SignalCommon.h>
+#include <signal.h>
+
+#include <aipstack/misc/NonCopyable.h>
+#include <aipstack/platform/FileDescriptorWrapper.h>
+#include <aipstack/event_loop/EventLoop.h>
+#include <aipstack/event_loop/SignalWatcherCommon.h>
+#include <aipstack/event_loop/SignalBlocker.h>
 
 namespace AIpStack {
 
-struct SignalInfo {
-    SignalType type;
+class SignalWatcherImplLinux :
+    public SignalWatcherImplBase,
+    private NonCopyable<SignalWatcherImplLinux>
+{
+public:
+    SignalWatcherImplLinux (EventLoop &loop, SignalBlocker &blocker);
+
+    ~SignalWatcherImplLinux () = default;
+
+    void start (SignalType signals);
+
+    void stop ();
+
+private:
+    void watcherHandler(EventLoopFdEvents events);
+    
+private:
+    SignalBlocker &m_blocker;
+    // First fd then watcher for proper destruction order.
+    FileDescriptorWrapper m_signalfd_fd;
+    EventLoopFdWatcher m_watcher;
 };
 
-class SignalWatcherImplBase {
-public:
-    inline void callHandler(SignalInfo signal_info);
-};
+using SignalWatcherImpl = SignalWatcherImplLinux;
+
+#define AIPSTACK_SIGNAL_WATCHER_IMPL_IMPL_FILE \
+    <aipstack/event_loop/platform_specific/SignalWatcherImplLinux_impl.h>
 
 }
 

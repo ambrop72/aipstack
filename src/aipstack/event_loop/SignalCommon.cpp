@@ -22,7 +22,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <aipstack/platform_impl/SignalCommon.h>
+#include <aipstack/event_loop/SignalCommon.h>
 
 namespace AIpStack {
 
