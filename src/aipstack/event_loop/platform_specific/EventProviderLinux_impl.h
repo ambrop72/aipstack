@@ -136,6 +136,11 @@ void EventProviderLinux::waitForEvents (EventLoopWaitTimeoutInfo timeout_info)
         itspec.it_value.tv_nsec =
             chrono::duration_cast<NsecDuration>(EventLoopTime::duration(subsec)).count();
 
+        // Prevent accidentally disarming the timerfd.
+        if (itspec.it_value.tv_sec == 0 && itspec.it_value.tv_nsec == 0) {
+            itspec.it_value.tv_nsec = 1;
+        }
+
         int res = ::timerfd_settime(m_timer_fd.get(), TFD_TIMER_ABSTIME, &itspec, nullptr);
         AIPSTACK_ASSERT_FORCE(res == 0)
     }
