@@ -46,9 +46,9 @@
 
 namespace AIpStack {
 
-namespace {
+namespace EventProviderLinuxPriv {
 
-static std::uint32_t events_to_epoll (EventLoopFdEvents req_ev)
+inline std::uint32_t events_to_epoll (EventLoopFdEvents req_ev)
 {
     std::uint32_t epoll_ev = 0;
     if ((req_ev & EventLoopFdEvents::Read) != EnumZero) {
@@ -60,7 +60,7 @@ static std::uint32_t events_to_epoll (EventLoopFdEvents req_ev)
     return epoll_ev;
 }
 
-static EventLoopFdEvents get_events_to_report (
+inline EventLoopFdEvents get_events_to_report (
     std::uint32_t epoll_ev, EventLoopFdEvents req_ev)
 {
     EventLoopFdEvents events = EventLoopFdEvents();
@@ -182,8 +182,8 @@ bool EventProviderLinux::dispatchEvents ()
         auto &fd = *static_cast<EventProviderLinuxFd *>(data_ptr);
         fd.EventProviderFdBase::sanityCheck();
 
-        EventLoopFdEvents events =
-            get_events_to_report(ev->events, fd.EventProviderFdBase::getFdEvents());
+        EventLoopFdEvents events = EventProviderLinuxPriv::get_events_to_report(
+            ev->events, fd.EventProviderFdBase::getFdEvents());
 
         if (events != EnumZero) {
             fd.EventProviderFdBase::callFdEventHandler(events);
@@ -212,14 +212,16 @@ void EventProviderLinuxFd::initFdImpl (int fd, EventLoopFdEvents events)
 {
     EventProviderLinux &prov = getProvider();
 
-    prov.control_epoll(EPOLL_CTL_ADD, fd, events_to_epoll(events), this);
+    auto epoll_events = EventProviderLinuxPriv::events_to_epoll(events);
+    prov.control_epoll(EPOLL_CTL_ADD, fd, epoll_events, this);
 }
 
 void EventProviderLinuxFd::updateEventsImpl (int fd, EventLoopFdEvents events)
 {
     EventProviderLinux &prov = getProvider();
 
-    prov.control_epoll(EPOLL_CTL_MOD, fd, events_to_epoll(events), this);
+    auto epoll_events = EventProviderLinuxPriv::events_to_epoll(events);
+    prov.control_epoll(EPOLL_CTL_MOD, fd, epoll_events, this);
 }
 
 void EventProviderLinuxFd::resetImpl (int fd)
