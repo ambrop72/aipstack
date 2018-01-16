@@ -48,10 +48,7 @@ let
                         $(cat ${filterSupportedWarnings {inherit stdenv;}}) \
                         examples/aipstack_example.cpp \
                         examples/tap_linux/tap_linux.cpp \
-                        src/aipstack/event_loop/EventLoop.cpp \
-                        src/aipstack/event_loop/SignalCommon.cpp \
-                        src/aipstack/event_loop/SignalWatcher.cpp \
-                        src/aipstack/event_loop/SignalBlocker.cpp \
+                        src/aipstack/event_loop/EventLoopAmalgamation.cpp \
                         -o $out/bin/aipstack_example
                 )
             '';
