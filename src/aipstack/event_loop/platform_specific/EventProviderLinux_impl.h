@@ -33,6 +33,7 @@
 
 #include <cerrno>
 #include <cstdint>
+#include <cstdio>
 #include <stdexcept>
 #include <type_traits>
 #include <chrono>
@@ -97,7 +98,13 @@ EventProviderLinux::EventProviderLinux () :
         throw std::runtime_error("timerfd_create failed");
     }
 
+    m_event_fd = FileDescriptorWrapper(::eventfd(0, EFD_NONBLOCK|EFD_CLOEXEC));
+    if (!m_event_fd) {
+        throw std::runtime_error("eventfd failed");
+    }
+
     control_epoll(EPOLL_CTL_ADD, *m_timer_fd, EPOLLIN, &m_timer_fd);
+    control_epoll(EPOLL_CTL_ADD, *m_event_fd, EPOLLIN, &m_event_fd);
 }
 
 EventProviderLinux::~EventProviderLinux ()
@@ -179,6 +186,25 @@ bool EventProviderLinux::dispatchEvents ()
             continue;
         }
 
+        if (data_ptr == &m_event_fd) {
+            std::uint64_t value;
+            auto res = ::read(*m_event_fd, &value, sizeof(value));
+            
+            if (AIPSTACK_UNLIKELY(res < 0)) {
+                int err = errno;
+                if (err != EAGAIN) {
+                    std::fprintf(stderr,
+                        "EventProviderLinux: read from eventfd failed, err=%d", err);
+                }
+            }
+
+            if (!EventProviderBase::dispatchAsyncSignals()) {
+                return false;
+            }
+
+            continue;
+        }
+
         auto &fd = *static_cast<EventProviderLinuxFd *>(data_ptr);
         fd.EventProviderFdBase::sanityCheck();
 
@@ -195,6 +221,20 @@ bool EventProviderLinux::dispatchEvents ()
     }
 
     return true;
+}
+
+void EventProviderLinux::signalToCheckAsyncSignals ()
+{
+    std::uint64_t value = 1;
+    auto res = ::write(*m_event_fd, &value, sizeof(value));
+
+    if (AIPSTACK_UNLIKELY(res < 0)) {
+        int err = errno;
+        if (err != EAGAIN) {
+            std::fprintf(stderr,
+                "EventProviderLinux: write to eventfd failed, err=%d", err);
+        }
+    }
 }
 
 void EventProviderLinux::control_epoll (

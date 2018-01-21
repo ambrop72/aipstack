@@ -23,6 +23,7 @@
  */
 
 #include <cstdint>
+#include <mutex>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/OneOf.h>
@@ -73,15 +74,23 @@ struct EventLoop::TimerCompare {
     }
 };
 
+struct EventLoop::AsyncSignalNodeAccessor : public MemberAccessor<
+    AsyncSignalNode, AsyncSignalListNode, &AsyncSignalNode::m_list_node> {};
+
 EventLoop::EventLoop () :
     m_stop(false),
     m_event_time(getTime()),
     m_last_wait_time(EventLoopTime::max())
-{}
+{
+    AsyncSignalList::initLonely(m_pending_async_list);
+    AsyncSignalList::initLonely(m_dispatch_async_list);
+}
 
 EventLoop::~EventLoop ()
 {
     AIPSTACK_ASSERT(m_timer_heap.isEmpty())
+    AIPSTACK_ASSERT(AsyncSignalList::isLonely(m_pending_async_list))
+    AIPSTACK_ASSERT(AsyncSignalList::isLonely(m_dispatch_async_list))
 }
 
 void EventLoop::stop ()
@@ -180,10 +189,56 @@ EventLoopWaitTimeoutInfo EventLoop::prepare_timers_for_wait ()
     return {first_time, time_changed};
 }
 
+bool EventLoop::dispatch_async_signals ()
+{
+    AIPSTACK_ASSERT(AsyncSignalList::isLonely(m_dispatch_async_list))
+
+    std::unique_lock<std::mutex> lock(m_async_signal_mutex);
+
+    if (AsyncSignalList::isLonely(m_pending_async_list)) {
+        return true;
+    }
+
+    AsyncSignalList::initReplaceNotLonely(m_dispatch_async_list, m_pending_async_list);
+    AsyncSignalList::initLonely(m_pending_async_list);
+
+    while (true) {
+        AsyncSignalNode *node = AsyncSignalList::next(m_dispatch_async_list);
+        if (node == &m_dispatch_async_list) {
+            break;
+        }
+
+        EventLoopAsyncSignal &asig = *static_cast<EventLoopAsyncSignal *>(node);
+        AIPSTACK_ASSERT(&asig.m_loop == this)
+        AIPSTACK_ASSERT(!AsyncSignalList::isRemoved(asig))
+
+        AsyncSignalList::remove(asig);
+        AsyncSignalList::markRemoved(asig);
+
+        lock.unlock();
+
+        asig.m_handler();
+
+        if (AIPSTACK_UNLIKELY(m_stop)) {
+            return false;
+        }
+
+        lock.lock();
+    }
+
+    return true;
+}
+
 bool EventProviderBase::getStop () const
 {
     auto &event_loop = static_cast<EventLoop const &>(*this);
     return event_loop.m_stop;
+}
+
+bool EventProviderBase::dispatchAsyncSignals ()
+{
+    auto &event_loop = static_cast<EventLoop &>(*this);
+    return event_loop.dispatch_async_signals();
 }
 
 EventLoopTimer::EventLoopTimer (EventLoop &loop) :
@@ -310,6 +365,48 @@ void EventProviderFdBase::callFdEventHandler (EventLoopFdEvents events)
 }
 
 #endif
+
+EventLoopAsyncSignal::EventLoopAsyncSignal (EventLoop &loop, SignalEventHandler handler) :
+    m_loop(loop),
+    m_handler(handler)
+{
+    AsyncSignalList::markRemoved(*this);
+}
+
+EventLoopAsyncSignal::~EventLoopAsyncSignal ()
+{
+    reset();
+}
+
+void EventLoopAsyncSignal::signal ()
+{
+    bool inserted_first = false;
+
+    {
+        std::lock_guard<std::mutex> lock(m_loop.m_async_signal_mutex);
+
+        if (AsyncSignalList::isRemoved(*this)) {
+            inserted_first = AsyncSignalList::isLonely(m_loop.m_pending_async_list);
+            AsyncSignalList::initBefore(*this, m_loop.m_pending_async_list);
+        }
+    }
+
+    if (inserted_first) {
+        m_loop.EventProvider::signalToCheckAsyncSignals();
+    }
+}
+
+void EventLoopAsyncSignal::reset ()
+{
+    {
+        std::lock_guard<std::mutex> lock(m_loop.m_async_signal_mutex);
+
+        if (!AsyncSignalList::isRemoved(*this)) {
+            AsyncSignalList::remove(*this);
+            AsyncSignalList::markRemoved(*this);
+        }
+    }
+}
 
 }
 

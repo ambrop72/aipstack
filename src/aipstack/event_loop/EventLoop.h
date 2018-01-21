@@ -26,14 +26,16 @@
 #define AIPSTACK_EVENT_LOOP_H
 
 #include <cstdint>
+#include <mutex>
 
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Function.h>
 #include <aipstack/structure/LinkModel.h>
-#include <aipstack/structure/minimum/LinkedHeap.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
+#include <aipstack/structure/LinkedList.h>
+#include <aipstack/structure/minimum/LinkedHeap.h>
 #include <aipstack/event_loop/EventLoopCommon.h>
 
 #if defined(__linux__)
@@ -46,6 +48,7 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 class EventLoopTimer;
+class EventLoopAsyncSignal;
 #endif
 
 class EventLoop :
@@ -54,6 +57,7 @@ class EventLoop :
 {
     friend class EventProviderBase;
     friend class EventLoopTimer;
+    friend class EventLoopAsyncSignal;
     #if AIPSTACK_EVENT_LOOP_HAS_FD
     friend class EventProviderFdBase;
     #endif
@@ -82,6 +86,18 @@ class EventLoop :
                      TimerState::TempSet, TimerState::Pending);
     }
 
+    struct AsyncSignalNode;
+    struct AsyncSignalNodeAccessor;
+
+    using AsyncSignalLinkModel = PointerLinkModel<AsyncSignalNode>;
+    using AsyncSignalList = CircularLinkedList<
+        AsyncSignalNodeAccessor, AsyncSignalLinkModel>;
+    using AsyncSignalListNode = LinkedListNode<AsyncSignalLinkModel>;
+
+    struct AsyncSignalNode {
+        AsyncSignalListNode m_list_node;
+    };
+
 public:
     EventLoop ();
 
@@ -108,11 +124,16 @@ private:
 
     EventLoopWaitTimeoutInfo prepare_timers_for_wait ();
 
+    bool dispatch_async_signals ();
+
 private:
     StructureRaiiWrapper<TimerHeap> m_timer_heap;
     bool m_stop;
     EventLoopTime m_event_time;
     EventLoopTime m_last_wait_time;
+    std::mutex m_async_signal_mutex;
+    AsyncSignalNode m_pending_async_list;
+    AsyncSignalNode m_dispatch_async_list;
 };
 
 class EventLoopTimer :
@@ -151,6 +172,30 @@ private:
     EventLoop &m_loop;
     EventLoopTime m_time;
     TimerState m_state;
+};
+
+class EventLoopAsyncSignal :
+    private NonCopyable<EventLoopAsyncSignal>,
+    private EventLoop::AsyncSignalNode
+{
+    friend class EventLoop;
+
+    AIPSTACK_USE_TYPES(EventLoop, (AsyncSignalList))
+
+public:
+    using SignalEventHandler = Function<void()>;
+
+    EventLoopAsyncSignal (EventLoop &loop, SignalEventHandler handler);
+
+    ~EventLoopAsyncSignal ();
+
+    void signal ();
+
+    void reset ();
+
+private:
+    EventLoop &m_loop;
+    SignalEventHandler m_handler;
 };
 
 #if AIPSTACK_EVENT_LOOP_HAS_FD || defined(IN_DOXYGEN)

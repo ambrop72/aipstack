@@ -54,12 +54,15 @@ public:
 
     bool dispatchEvents ();
 
+    void signalToCheckAsyncSignals ();
+
 private:
     void control_epoll (int op, int fd, std::uint32_t events, void *data_ptr);
 
 private:
     FileDescriptorWrapper m_epoll_fd;
     FileDescriptorWrapper m_timer_fd;
+    FileDescriptorWrapper m_event_fd;
     bool m_force_timerfd_update;
     int m_cur_epoll_event;
     int m_num_epoll_events;

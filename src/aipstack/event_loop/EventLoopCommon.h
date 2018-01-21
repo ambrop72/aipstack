@@ -51,6 +51,7 @@ struct EventLoopWaitTimeoutInfo {
 class EventProviderBase {
 public:
     inline bool getStop () const;
+    inline bool dispatchAsyncSignals ();
 };
 
 #if AIPSTACK_EVENT_LOOP_HAS_FD || defined(IN_DOXYGEN)
