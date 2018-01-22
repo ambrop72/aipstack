@@ -35,19 +35,20 @@
 
 namespace AIpStack {
 
-struct EventLoop::TimerHeapNodeAccessor :
+struct EventLoopPriv::TimerHeapNodeAccessor :
     public MemberAccessor<EventLoopTimer, TimerHeapNode, &EventLoopTimer::m_heap_node> {};
 
-struct EventLoop::TimerCompare {
+struct EventLoopPriv::TimerCompare {
     AIPSTACK_USE_TYPES(TimerLinkModel, (State, Ref))
+    AIPSTACK_USE_TYPES(EventLoop, (TimerState))
 
     inline static int compareEntries (State, Ref ref1, Ref ref2)
     {
         EventLoopTimer &tim1 = *ref1;
         EventLoopTimer &tim2 = *ref2;
 
-        std::uint8_t order1 = std::uint8_t(tim1.m_state) & TimerStateOrderMask;
-        std::uint8_t order2 = std::uint8_t(tim2.m_state) & TimerStateOrderMask;
+        std::uint8_t order1 = std::uint8_t(tim1.m_state) & EventLoop::TimerStateOrderMask;
+        std::uint8_t order2 = std::uint8_t(tim2.m_state) & EventLoop::TimerStateOrderMask;
 
         if (order1 != order2) {
             return (order1 < order2) ? -1 : 1;
@@ -74,17 +75,22 @@ struct EventLoop::TimerCompare {
     }
 };
 
-struct EventLoop::AsyncSignalNodeAccessor : public MemberAccessor<
+struct EventLoopPriv::AsyncSignalNodeAccessor : public MemberAccessor<
     AsyncSignalNode, AsyncSignalListNode, &AsyncSignalNode::m_list_node> {};
 
-EventLoop::EventLoop () :
+EventLoopMembers::EventLoopMembers() :
     m_stop(false),
-    m_event_time(getTime()),
+    m_event_time(EventLoop::getTime()),
     m_last_wait_time(EventLoopTime::max())
 {
-    AsyncSignalList::initLonely(m_pending_async_list);
-    AsyncSignalList::initLonely(m_dispatch_async_list);
+    EventLoop::AsyncSignalList::initLonely(m_pending_async_list);
+    EventLoop::AsyncSignalList::initLonely(m_dispatch_async_list);    
 }
+
+EventLoop::EventLoop () :
+    EventLoopMembers(),
+    EventProvider()
+{}
 
 EventLoop::~EventLoop ()
 {
@@ -292,10 +298,13 @@ void EventLoopTimer::setAfter (EventLoopDuration duration)
 #if AIPSTACK_EVENT_LOOP_HAS_FD
 
 EventLoopFdWatcher::EventLoopFdWatcher (EventLoop &loop, FdEventHandler handler) :
-    m_loop(loop),
-    m_handler(handler),
-    m_watched_fd(-1),
-    m_events(EventLoopFdEvents())
+    EventLoopFdWatcherMembers{
+        /*m_loop=*/loop,
+        /*m_handler=*/handler,
+        /*m_watched_fd=*/-1,
+        /*m_events=*/EventLoopFdEvents()
+    },
+    EventProviderFd()
 {}
 
 EventLoopFdWatcher::~EventLoopFdWatcher ()

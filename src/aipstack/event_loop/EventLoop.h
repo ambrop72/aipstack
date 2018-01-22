@@ -47,20 +47,15 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
+struct EventLoopMembers;
+class EventLoop;
 class EventLoopTimer;
 class EventLoopAsyncSignal;
 #endif
 
-class EventLoop :
-    private NonCopyable<EventLoop>,
-    private EventProvider
-{
-    friend class EventProviderBase;
-    friend class EventLoopTimer;
-    friend class EventLoopAsyncSignal;
-    #if AIPSTACK_EVENT_LOOP_HAS_FD
-    friend class EventProviderFdBase;
-    #endif
+class EventLoopPriv {
+    friend struct EventLoopMembers;
+    friend class EventLoop;
 
     struct TimerHeapNodeAccessor;
     struct TimerCompare;
@@ -68,6 +63,49 @@ class EventLoop :
     using TimerLinkModel = PointerLinkModel<EventLoopTimer>;
     using TimerHeap = LinkedHeap<TimerHeapNodeAccessor, TimerCompare, TimerLinkModel>;
     using TimerHeapNode = LinkedHeapNode<TimerLinkModel>;
+
+    struct AsyncSignalNode;
+    struct AsyncSignalNodeAccessor;
+
+    using AsyncSignalLinkModel = PointerLinkModel<AsyncSignalNode>;
+    using AsyncSignalList = CircularLinkedList<
+        AsyncSignalNodeAccessor, AsyncSignalLinkModel>;
+    using AsyncSignalListNode = LinkedListNode<AsyncSignalLinkModel>;
+
+    struct AsyncSignalNode {
+        AsyncSignalListNode m_list_node;
+    };
+};
+
+#ifndef IN_DOXYGEN
+struct EventLoopMembers {
+    EventLoopMembers();
+    
+    StructureRaiiWrapper<EventLoopPriv::TimerHeap> m_timer_heap;
+    bool m_stop;
+    EventLoopTime m_event_time;
+    EventLoopTime m_last_wait_time;
+    std::mutex m_async_signal_mutex;
+    EventLoopPriv::AsyncSignalNode m_pending_async_list;
+    EventLoopPriv::AsyncSignalNode m_dispatch_async_list;
+};
+#endif
+
+class EventLoop :
+    private NonCopyable<EventLoop>,
+    private EventLoopMembers,
+    private EventProvider
+{
+    friend class EventProviderBase;
+    friend class EventLoopPriv;
+    friend struct EventLoopMembers;
+    friend class EventLoopTimer;
+    friend class EventLoopAsyncSignal;
+    #if AIPSTACK_EVENT_LOOP_HAS_FD
+    friend class EventProviderFdBase;
+    #endif
+
+    AIPSTACK_USE_TYPES(EventLoopPriv, (TimerHeapNode))
 
     static int const TimerStateOrderBits = 2;
     static std::uint8_t const TimerStateOrderMask = (1 << TimerStateOrderBits) - 1;
@@ -86,17 +124,7 @@ class EventLoop :
                      TimerState::TempSet, TimerState::Pending);
     }
 
-    struct AsyncSignalNode;
-    struct AsyncSignalNodeAccessor;
-
-    using AsyncSignalLinkModel = PointerLinkModel<AsyncSignalNode>;
-    using AsyncSignalList = CircularLinkedList<
-        AsyncSignalNodeAccessor, AsyncSignalLinkModel>;
-    using AsyncSignalListNode = LinkedListNode<AsyncSignalLinkModel>;
-
-    struct AsyncSignalNode {
-        AsyncSignalListNode m_list_node;
-    };
+    AIPSTACK_USE_TYPES(EventLoopPriv, (AsyncSignalNode, AsyncSignalList))
 
 public:
     EventLoop ();
@@ -127,18 +155,12 @@ private:
     bool dispatch_async_signals ();
 
 private:
-    StructureRaiiWrapper<TimerHeap> m_timer_heap;
-    bool m_stop;
-    EventLoopTime m_event_time;
-    EventLoopTime m_last_wait_time;
-    std::mutex m_async_signal_mutex;
-    AsyncSignalNode m_pending_async_list;
-    AsyncSignalNode m_dispatch_async_list;
 };
 
 class EventLoopTimer :
     private NonCopyable<EventLoopTimer>
 {
+    friend class EventLoopPriv;
     friend class EventLoop;
 
     AIPSTACK_USE_TYPES(EventLoop, (TimerHeapNode, TimerState))
@@ -200,8 +222,18 @@ private:
 
 #if AIPSTACK_EVENT_LOOP_HAS_FD || defined(IN_DOXYGEN)
 
+#ifndef IN_DOXYGEN
+struct EventLoopFdWatcherMembers {
+    EventLoop &m_loop;
+    Function<void(EventLoopFdEvents)> m_handler;
+    int m_watched_fd;
+    EventLoopFdEvents m_events;
+};
+#endif
+
 class EventLoopFdWatcher :
     private NonCopyable<EventLoopFdWatcher>,
+    private EventLoopFdWatcherMembers,
     private EventProviderFd
 {
     friend class EventProviderFdBase;
@@ -233,12 +265,6 @@ public:
     void updateEvents (EventLoopFdEvents events);
 
     void reset ();
-
-private:
-    EventLoop &m_loop;
-    FdEventHandler m_handler;
-    int m_watched_fd;
-    EventLoopFdEvents m_events;
 };
 
 #endif
