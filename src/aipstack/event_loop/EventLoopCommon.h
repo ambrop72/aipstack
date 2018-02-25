@@ -35,24 +35,49 @@
 #define AIPSTACK_EVENT_LOOP_HAS_FD 0
 #endif
 
+#if defined(_WIN32)
+#define AIPSTACK_EVENT_LOOP_HAS_IOCP 1
+#else
+#define AIPSTACK_EVENT_LOOP_HAS_IOCP 0
+#endif
+
+#if AIPSTACK_EVENT_LOOP_HAS_IOCP
+#include <windows.h>
+#endif
+
 namespace AIpStack {
 
+#ifdef IN_DOXYGEN
+using EventLoopClock = PLATFORM_DEPENDENT;
+#else
+#if defined(_WIN32)
+using EventLoopClock = std::chrono::system_clock;
+#else
 using EventLoopClock = std::chrono::steady_clock;
+#endif
+#endif
 
 using EventLoopTime = EventLoopClock::time_point;
 
 using EventLoopDuration = EventLoopClock::duration;
 
+#ifndef IN_DOXYGEN
 struct EventLoopWaitTimeoutInfo {
     EventLoopTime time;
     bool time_changed;
 };
+#endif
 
+#ifndef IN_DOXYGEN
 class EventProviderBase {
 public:
     inline bool getStop () const;
     inline bool dispatchAsyncSignals ();
+    #if AIPSTACK_EVENT_LOOP_HAS_IOCP
+    inline bool handleIocpResult (void *completion_key, OVERLAPPED *overlapped);
+    #endif
 };
+#endif
 
 #if AIPSTACK_EVENT_LOOP_HAS_FD || defined(IN_DOXYGEN)
 
@@ -65,6 +90,7 @@ enum class EventLoopFdEvents {
 };
 AIPSTACK_ENUM_BITFIELD_OPS(EventLoopFdEvents)
 
+#ifndef IN_DOXYGEN
 class EventProviderFdBase {
 public:
     inline EventProviderBase & getProvider () const;
@@ -72,6 +98,7 @@ public:
     inline EventLoopFdEvents getFdEvents () const;
     inline void callFdEventHandler (EventLoopFdEvents events);
 };
+#endif
 
 #endif
 

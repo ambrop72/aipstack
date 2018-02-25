@@ -33,6 +33,11 @@
 #include <aipstack/structure/Accessor.h>
 #include <aipstack/event_loop/EventLoop.h>
 
+#if AIPSTACK_EVENT_LOOP_HAS_IOCP
+#include <utility>
+#include <memory>
+#endif
+
 namespace AIpStack {
 
 struct EventLoopPriv::TimerHeapNodeAccessor :
@@ -85,6 +90,11 @@ EventLoopMembers::EventLoopMembers() :
 {
     EventLoop::AsyncSignalList::initLonely(m_pending_async_list);
     EventLoop::AsyncSignalList::initLonely(m_dispatch_async_list);    
+
+    #if AIPSTACK_EVENT_LOOP_HAS_IOCP
+    m_num_iocp_notifiers = 0;
+    m_num_iocp_resources = 0;
+    #endif
 }
 
 EventLoop::EventLoop () :
@@ -97,6 +107,13 @@ EventLoop::~EventLoop ()
     AIPSTACK_ASSERT(m_timer_heap.isEmpty())
     AIPSTACK_ASSERT(AsyncSignalList::isLonely(m_pending_async_list))
     AIPSTACK_ASSERT(AsyncSignalList::isLonely(m_dispatch_async_list))
+    #if AIPSTACK_EVENT_LOOP_HAS_IOCP
+    AIPSTACK_ASSERT(m_num_iocp_notifiers == 0)
+    #endif
+    
+    #if AIPSTACK_EVENT_LOOP_HAS_IOCP
+    wait_for_final_iocp_results();
+    #endif
 }
 
 void EventLoop::stop ()
@@ -189,10 +206,14 @@ EventLoopWaitTimeoutInfo EventLoop::prepare_timers_for_wait ()
         }
     }
 
-    bool time_changed = (first_time != m_last_wait_time);
-    m_last_wait_time = first_time;
+    return update_last_wait_time(first_time);
+}
 
-    return {first_time, time_changed};
+EventLoopWaitTimeoutInfo EventLoop::update_last_wait_time (EventLoopTime wait_time)
+{
+    bool time_changed = (wait_time != m_last_wait_time);
+    m_last_wait_time = wait_time;
+    return {wait_time, time_changed};
 }
 
 bool EventLoop::dispatch_async_signals ()
@@ -246,6 +267,14 @@ bool EventProviderBase::dispatchAsyncSignals ()
     auto &event_loop = static_cast<EventLoop &>(*this);
     return event_loop.dispatch_async_signals();
 }
+
+#if AIPSTACK_EVENT_LOOP_HAS_IOCP
+bool EventProviderBase::handleIocpResult (void *completion_key, OVERLAPPED *overlapped)
+{
+    auto &event_loop = static_cast<EventLoop &>(*this);
+    return event_loop.handle_iocp_result(completion_key, overlapped);
+}
+#endif
 
 EventLoopTimer::EventLoopTimer (EventLoop &loop) :
     m_loop(loop),
@@ -371,6 +400,132 @@ void EventProviderFdBase::callFdEventHandler (EventLoopFdEvents events)
 {
     auto &fd_watcher = static_cast<EventLoopFdWatcher &>(*this);
     return fd_watcher.m_handler(events);
+}
+
+#endif
+
+#if AIPSTACK_EVENT_LOOP_HAS_IOCP
+
+EventLoopIocpNotifier::EventLoopIocpNotifier (EventLoop &loop, IocpEventHandler handler) :
+    m_loop(loop),
+    m_handler(handler),
+    m_iocp_resource(nullptr),
+    m_busy(false)
+{
+    m_loop.m_num_iocp_notifiers++;
+}
+
+EventLoopIocpNotifier::~EventLoopIocpNotifier ()
+{
+    reset();
+
+    AIPSTACK_ASSERT(m_loop.m_num_iocp_notifiers > 0)
+    m_loop.m_num_iocp_notifiers--;
+}
+
+bool EventLoopIocpNotifier::associateHandle (HANDLE handle, DWORD &out_error)
+{
+    AIPSTACK_ASSERT(m_iocp_resource == nullptr)
+    AIPSTACK_ASSERT(!m_busy)
+
+    auto temp_iocp_resource = std::make_unique<IocpResource>();
+
+    auto iocp_res = ::CreateIoCompletionPort(
+        handle, m_loop.EventProvider::getIocpHandle(),
+        /*CompletionKey=*/(ULONG_PTR)&m_loop, /*NumberOfConcurrentThreads=*/0);
+
+    if (iocp_res == nullptr) {
+        out_error = ::GetLastError();
+        return false;
+    }
+
+    m_iocp_resource = temp_iocp_resource.release();
+    m_iocp_resource->overlapped = {};
+    m_iocp_resource->loop = &m_loop;
+    m_iocp_resource->notifier = this;
+    m_loop.m_num_iocp_resources++;
+
+    return true;
+}
+
+void EventLoopIocpNotifier::reset ()
+{
+    if (m_iocp_resource != nullptr) {
+        if (m_busy) {
+            m_iocp_resource->notifier = nullptr;
+        } else {
+            AIPSTACK_ASSERT(m_loop.m_num_iocp_resources > 0)
+            m_loop.m_num_iocp_resources--;
+            delete m_iocp_resource;
+        }
+
+        m_iocp_resource = nullptr;
+        m_busy = false;
+    }
+}
+
+void EventLoopIocpNotifier::ioStarted (std::shared_ptr<void> user_resource)
+{
+    AIPSTACK_ASSERT(m_iocp_resource != nullptr)
+    AIPSTACK_ASSERT(!m_busy)
+
+    m_iocp_resource->user_resource = std::move(user_resource);
+    m_busy = true;
+}
+
+OVERLAPPED & EventLoopIocpNotifier::getOverlapped ()
+{
+    AIPSTACK_ASSERT(m_iocp_resource != nullptr)
+
+    return m_iocp_resource->overlapped;
+}
+
+bool EventLoop::handle_iocp_result (void *completion_key, OVERLAPPED *overlapped)
+{
+    AIPSTACK_ASSERT(completion_key == this)
+
+    IocpResource *iocp_resource = (IocpResource *)overlapped;
+    AIPSTACK_ASSERT(iocp_resource->loop == this)
+
+    iocp_resource->user_resource.reset();
+
+    EventLoopIocpNotifier *notifier = iocp_resource->notifier;
+
+    if (notifier == nullptr) {
+        AIPSTACK_ASSERT(m_num_iocp_resources > 0)
+        m_num_iocp_resources--;
+        delete iocp_resource;
+    } else {
+        AIPSTACK_ASSERT(&notifier->m_loop == this)
+        AIPSTACK_ASSERT(notifier->m_busy)
+        AIPSTACK_ASSERT(notifier->m_iocp_resource == iocp_resource)
+
+        notifier->m_busy = false;
+
+        notifier->m_handler();
+        if (AIPSTACK_UNLIKELY(m_stop)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void EventLoop::wait_for_final_iocp_results ()
+{
+    bool first_try = true;
+    while (m_num_iocp_resources > 0) {
+        if (!first_try) {
+            EventLoopWaitTimeoutInfo timeout_info =
+                update_last_wait_time(EventLoopTime::max());
+            
+            EventProvider::waitForEvents(timeout_info);
+        }
+        
+        first_try = false;
+
+        EventProvider::dispatchEvents();
+    }
 }
 
 #endif

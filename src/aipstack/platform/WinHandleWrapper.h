@@ -75,22 +75,27 @@ public:
 
     inline HANDLE operator* () const
     {
-        AIPSTACK_ASSERT(m_handle != INVALID_HANDLE_VALUE)
+        AIPSTACK_ASSERT(handleIsValid(m_handle))
         return m_handle;
     }
 
     inline explicit operator bool () const
     {
-        return m_handle != INVALID_HANDLE_VALUE;
+        return handleIsValid(m_handle);
+    }
+
+    inline static bool handleIsValid (HANDLE handle)
+    {
+        return handle != INVALID_HANDLE_VALUE && handle != nullptr;
     }
     
 private:
     void close_it ()
     {
-        if (m_handle != INVALID_HANDLE_VALUE) {
+        if (handleIsValid(m_handle)) {
             AIPSTACK_ASSERT_FORCE(CloseHandle(m_handle))
-            m_handle = INVALID_HANDLE_VALUE;
         }
+        m_handle = INVALID_HANDLE_VALUE;
     }
 };
 

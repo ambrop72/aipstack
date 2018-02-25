@@ -22,6 +22,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cerrno>
+#include <cstdint>
+#include <cstdio>
+#include <stdexcept>
+#include <type_traits>
+#include <chrono>
+#include <utility>
+
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -30,14 +38,6 @@
 #include <sys/timerfd.h>
 #include <sys/eventfd.h>
 #include <sys/signalfd.h>
-
-#include <cerrno>
-#include <cstdint>
-#include <cstdio>
-#include <stdexcept>
-#include <type_traits>
-#include <chrono>
-#include <utility>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
@@ -112,6 +112,8 @@ EventProviderLinux::~EventProviderLinux ()
 
 void EventProviderLinux::waitForEvents (EventLoopWaitTimeoutInfo timeout_info)
 {
+    AIPSTACK_ASSERT(m_cur_epoll_event == m_num_epoll_events)
+    
     namespace chrono = std::chrono;
     using Period = EventLoopTime::period;
     using Rep = EventLoopTime::rep;

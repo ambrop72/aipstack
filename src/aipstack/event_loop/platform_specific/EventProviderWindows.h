@@ -22,33 +22,29 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_EVENT_PROVIDER_LINUX_H
-#define AIPSTACK_EVENT_PROVIDER_LINUX_H
+#ifndef AIPSTACK_EVENT_PROVIDER_WINDOWS_H
+#define AIPSTACK_EVENT_PROVIDER_WINDOWS_H
 
 #include <cstdint>
 
-#include <sys/epoll.h>
+#include <windows.h>
 
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/platform/FileDescriptorWrapper.h>
+#include <aipstack/platform/WinHandleWrapper.h>
 #include <aipstack/event_loop/EventLoopCommon.h>
 
 namespace AIpStack {
 
-class EventProviderLinuxFd;
-
-class EventProviderLinux :
+class EventProviderWindows :
     public EventProviderBase,
-    private NonCopyable<EventProviderLinux>
+    private NonCopyable<EventProviderWindows>
 {
-    friend class EventProviderLinuxFd;
-    
-    static int const MaxEpollEvents = 64;
+    static int const MaxIocpEvents = 64;
 
 public:
-    EventProviderLinux ();
+    EventProviderWindows ();
 
-    ~EventProviderLinux ();
+    ~EventProviderWindows ();
 
     void waitForEvents (EventLoopWaitTimeoutInfo timeout_info);
 
@@ -56,43 +52,26 @@ public:
 
     void signalToCheckAsyncSignals ();
 
-private:
-    void control_epoll (int op, int fd, std::uint32_t events, void *data_ptr);
+    inline HANDLE getIocpHandle () const { return *m_iocp_handle; }
 
 private:
-    FileDescriptorWrapper m_epoll_fd;
-    FileDescriptorWrapper m_timer_fd;
-    FileDescriptorWrapper m_event_fd;
-    bool m_force_timerfd_update;
-    int m_cur_epoll_event;
-    int m_num_epoll_events;
-    struct epoll_event m_epoll_events[MaxEpollEvents];
+    static void CALLBACK timerApcCallbackTrampoline(void *arg, DWORD lowVal, DWORD highVal);
+    void timerApcCallback(DWORD lowVal, DWORD highVal);
+
+private:
+    WinHandleWrapper m_iocp_handle;
+    WinHandleWrapper m_timer_handle;
+    int m_cur_iocp_event;
+    int m_num_iocp_events;
+    bool m_force_timer_update;
+    OVERLAPPED m_async_signal_overlapped;
+    OVERLAPPED_ENTRY m_iocp_events[MaxIocpEvents];
 };
 
-class EventProviderLinuxFd :
-    public EventProviderFdBase,
-    private NonCopyable<EventProviderLinuxFd>
-{
-public:
-    EventProviderLinuxFd () = default;
-
-    ~EventProviderLinuxFd () = default;
-
-    void initFdImpl (int fd, EventLoopFdEvents events);
-
-    void updateEventsImpl (int fd, EventLoopFdEvents events);
-
-    void resetImpl (int fd);
-
-private:
-    inline EventProviderLinux & getProvider () const;
-};
-
-using EventProvider = EventProviderLinux;
-using EventProviderFd = EventProviderLinuxFd;
+using EventProvider = EventProviderWindows;
 
 #define AIPSTACK_EVENT_PROVIDER_IMPL_FILE \
-    <aipstack/event_loop/platform_specific/EventProviderLinux_impl.h>
+    <aipstack/event_loop/platform_specific/EventProviderWindows_impl.h>
 
 }
 

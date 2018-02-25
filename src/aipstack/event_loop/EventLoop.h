@@ -40,8 +40,16 @@
 
 #if defined(__linux__)
 #include <aipstack/event_loop/platform_specific/EventProviderLinux.h>
+#elif defined(_WIN32)
+#include <aipstack/event_loop/platform_specific/EventProviderWindows.h>
 #else
 #error "Unsupported OS"
+#endif
+
+#if AIPSTACK_EVENT_LOOP_HAS_IOCP
+#include <cstddef>
+#include <memory>
+#include <windows.h>
 #endif
 
 namespace AIpStack {
@@ -51,8 +59,12 @@ struct EventLoopMembers;
 class EventLoop;
 class EventLoopTimer;
 class EventLoopAsyncSignal;
+#if AIPSTACK_EVENT_LOOP_HAS_IOCP
+class EventLoopIocpNotifier;
+#endif
 #endif
 
+#ifndef IN_DOXYGEN
 class EventLoopPriv {
     friend struct EventLoopMembers;
     friend class EventLoop;
@@ -75,7 +87,19 @@ class EventLoopPriv {
     struct AsyncSignalNode {
         AsyncSignalListNode m_list_node;
     };
+
+    #if AIPSTACK_EVENT_LOOP_HAS_IOCP
+    struct IocpResource {
+        // The overlapped must be the first field so that we can easily convert
+        // from OVERLAPPED* to IocpResource*.
+        OVERLAPPED overlapped;
+        EventLoop *loop;
+        EventLoopIocpNotifier *notifier;
+        std::shared_ptr<void> user_resource;
+    };
+    #endif
 };
+#endif
 
 #ifndef IN_DOXYGEN
 struct EventLoopMembers {
@@ -88,13 +112,19 @@ struct EventLoopMembers {
     std::mutex m_async_signal_mutex;
     EventLoopPriv::AsyncSignalNode m_pending_async_list;
     EventLoopPriv::AsyncSignalNode m_dispatch_async_list;
+    #if AIPSTACK_EVENT_LOOP_HAS_IOCP
+    std::size_t m_num_iocp_notifiers;
+    std::size_t m_num_iocp_resources;
+    #endif
 };
 #endif
 
 class EventLoop :
-    private NonCopyable<EventLoop>,
-    private EventLoopMembers,
+    private NonCopyable<EventLoop>
+    #ifndef IN_DOXYGEN
+    ,private EventLoopMembers,
     private EventProvider
+    #endif
 {
     friend class EventProviderBase;
     friend class EventLoopPriv;
@@ -103,6 +133,9 @@ class EventLoop :
     friend class EventLoopAsyncSignal;
     #if AIPSTACK_EVENT_LOOP_HAS_FD
     friend class EventProviderFdBase;
+    #endif
+    #if AIPSTACK_EVENT_LOOP_HAS_IOCP
+    friend class EventLoopIocpNotifier;
     #endif
 
     AIPSTACK_USE_TYPES(EventLoopPriv, (TimerHeapNode))
@@ -125,6 +158,10 @@ class EventLoop :
     }
 
     AIPSTACK_USE_TYPES(EventLoopPriv, (AsyncSignalNode, AsyncSignalList))
+
+    #if AIPSTACK_EVENT_LOOP_HAS_IOCP
+    AIPSTACK_USE_TYPES(EventLoopPriv, (IocpResource))
+    #endif
 
 public:
     EventLoop ();
@@ -152,9 +189,14 @@ private:
 
     EventLoopWaitTimeoutInfo prepare_timers_for_wait ();
 
+    EventLoopWaitTimeoutInfo update_last_wait_time (EventLoopTime wait_time);
+
     bool dispatch_async_signals ();
 
-private:
+    #if AIPSTACK_EVENT_LOOP_HAS_IOCP
+    bool handle_iocp_result (void *completion_key, OVERLAPPED *overlapped);
+    void wait_for_final_iocp_results ();
+    #endif
 };
 
 class EventLoopTimer :
@@ -197,8 +239,10 @@ private:
 };
 
 class EventLoopAsyncSignal :
-    private NonCopyable<EventLoopAsyncSignal>,
-    private EventLoop::AsyncSignalNode
+    private NonCopyable<EventLoopAsyncSignal>
+    #ifndef IN_DOXYGEN
+    ,private EventLoop::AsyncSignalNode
+    #endif
 {
     friend class EventLoop;
 
@@ -232,9 +276,11 @@ struct EventLoopFdWatcherMembers {
 #endif
 
 class EventLoopFdWatcher :
-    private NonCopyable<EventLoopFdWatcher>,
-    private EventLoopFdWatcherMembers,
+    private NonCopyable<EventLoopFdWatcher>
+    #ifndef IN_DOXYGEN
+    ,private EventLoopFdWatcherMembers,
     private EventProviderFd
+    #endif
 {
     friend class EventProviderFdBase;
 
@@ -265,6 +311,43 @@ public:
     void updateEvents (EventLoopFdEvents events);
 
     void reset ();
+};
+
+#endif
+
+#if AIPSTACK_EVENT_LOOP_HAS_IOCP || defined(IN_DOXYGEN)
+
+class EventLoopIocpNotifier :
+    private NonCopyable<EventLoopIocpNotifier>
+{
+    friend class EventLoop;
+
+    AIPSTACK_USE_TYPES(EventLoop, (IocpResource))
+
+public:
+    using IocpEventHandler = Function<void()>;
+
+    EventLoopIocpNotifier (EventLoop &loop, IocpEventHandler handler);
+
+    ~EventLoopIocpNotifier ();
+
+    bool associateHandle (HANDLE handle, DWORD &out_error);
+
+    void reset ();
+
+    void ioStarted (std::shared_ptr<void> user_resource);
+
+    inline bool isAssociated () const { return m_iocp_resource != nullptr; }
+
+    inline bool isBusy () const { return m_busy; }
+
+    OVERLAPPED & getOverlapped ();
+
+private:
+    EventLoop &m_loop;
+    Function<void()> m_handler;
+    IocpResource *m_iocp_resource;
+    bool m_busy;
 };
 
 #endif
