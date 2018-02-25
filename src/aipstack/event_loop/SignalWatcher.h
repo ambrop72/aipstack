@@ -29,7 +29,6 @@
 #include <aipstack/misc/Function.h>
 #include <aipstack/event_loop/EventLoop.h>
 #include <aipstack/event_loop/SignalWatcherCommon.h>
-#include <aipstack/event_loop/SignalBlocker.h>
 
 #if defined(__linux__)
 #include <aipstack/event_loop/platform_specific/SignalWatcherImplLinux.h>
@@ -39,35 +38,55 @@
 
 namespace AIpStack {
 
+#ifndef IN_DOXYGEN
+struct SignalCollectorMembers {
+    SignalType const m_signals;
+};
+#endif
+
+class SignalCollector :
+    private NonCopyable<SignalCollector>
+    #ifndef IN_DOXYGEN
+    ,private SignalCollectorMembers,
+    private SignalCollectorImpl
+    #endif
+{
+    friend class SignalCollectorImplBase;
+    friend class SignalWatcherImplBase;
+
+public:
+    SignalCollector (SignalType signals);
+
+    ~SignalCollector ();
+
+    inline SignalType getSignals () const {
+        return m_signals;
+    }
+};
+
+#ifndef IN_DOXYGEN
+struct SignalWatcherMembers {
+    EventLoop &m_loop;
+    SignalCollector &m_collector;
+    Function<void(SignalInfo)> m_handler;
+};
+#endif
+
 class SignalWatcher :
-    private NonCopyable<SignalWatcher>,
+    private NonCopyable<SignalWatcher>
+    #ifndef IN_DOXYGEN
+    ,private SignalWatcherMembers,
     private SignalWatcherImpl
+    #endif
 {
     friend class SignalWatcherImplBase;
     
 public:
     using SignalHandler = Function<void(SignalInfo signal_info)>;
 
-    SignalWatcher (EventLoop &loop, SignalBlocker &blocker, SignalHandler handler);
+    SignalWatcher (EventLoop &loop, SignalCollector &collector, SignalHandler handler);
 
     ~SignalWatcher ();
-
-    void startWatching (SignalType signals);
-
-    void reset ();
-
-    inline bool isWatching () const {
-        return m_watching;
-    }
-
-    inline SignalType getWatchedSignals () const {
-        return m_watched_signals;
-    }
-
-private:
-    SignalHandler m_handler;
-    bool m_watching;
-    SignalType m_watched_signals;
 };
 
 }

@@ -25,6 +25,7 @@
 #ifndef AIPSTACK_SIGNAL_WATCHER_COMMON_H
 #define AIPSTACK_SIGNAL_WATCHER_COMMON_H
 
+#include <aipstack/event_loop/EventLoop.h>
 #include <aipstack/event_loop/SignalCommon.h>
 
 namespace AIpStack {
@@ -33,9 +34,16 @@ struct SignalInfo {
     SignalType type;
 };
 
+class SignalCollectorImplBase {
+public:
+    inline SignalType baseGetSignals () const;
+};
+
 class SignalWatcherImplBase {
 public:
-    inline void callHandler(SignalInfo signal_info);
+    inline EventLoop & getEventLoop () const;
+    inline SignalCollectorImplBase & getCollector () const;
+    inline void callHandler (SignalInfo signal_info);
 };
 
 }

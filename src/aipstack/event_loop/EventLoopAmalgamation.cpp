@@ -24,7 +24,6 @@
 
 #include "EventLoop.cpp"
 #ifndef _WIN32
-#include "SignalBlocker.cpp"
 #include "SignalCommon.cpp"
 #include "SignalWatcher.cpp"
 #endif

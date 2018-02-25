@@ -33,29 +33,53 @@
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/Function.h>
+#include <aipstack/event_loop/SignalCommon.h>
 #include <aipstack/event_loop/platform_specific/SignalWatcherImplLinux.h>
 
 namespace AIpStack {
 
-SignalWatcherImplLinux::SignalWatcherImplLinux (EventLoop &loop, SignalBlocker &blocker) :
-    m_blocker(blocker),
-    m_watcher(loop, AIPSTACK_BIND_MEMBER(&SignalWatcherImplLinux::watcherHandler, this))
-{}
-
-void SignalWatcherImplLinux::start (SignalType signals)
+SignalCollectorImplLinux::SignalCollectorImplLinux ()
 {
-    AIPSTACK_ASSERT(!m_signalfd_fd)
+    SignalType signals = SignalCollectorImplBase::baseGetSignals();
 
-    if ((signals & ~m_blocker.getBlockedSignals()) != EnumZero) {
-        throw std::logic_error("Not all watched signals are blocked in SignaBlocker.");
+    ::sigset_t sset;
+    initSigSetToSignals(sset, signals);
+
+    ::sigset_t orig_sset;
+    if (::pthread_sigmask(SIG_BLOCK, &sset, &orig_sset) != 0) {
+        throw std::runtime_error("SignalCollector: pthread_sigmask failed to block");
     }
+
+    m_orig_blocked_signals = getSignalsFromSigSet(orig_sset);
+}
+
+SignalCollectorImplLinux::~SignalCollectorImplLinux ()
+{
+    SignalType signals = SignalCollectorImplBase::baseGetSignals();
+
+    SignalType unblock_signals = signals & ~m_orig_blocked_signals;
+
+    ::sigset_t sset;
+    initSigSetToSignals(sset, unblock_signals);
+
+    if (::pthread_sigmask(SIG_UNBLOCK, &sset, nullptr) != 0) {
+        std::fprintf(stderr, "SignalCollector: pthread_sigmask failed to unblock");
+    }
+}
+
+SignalWatcherImplLinux::SignalWatcherImplLinux () :
+    m_watcher(SignalWatcherImplBase::getEventLoop(),
+              AIPSTACK_BIND_MEMBER(&SignalWatcherImplLinux::watcherHandler, this))
+{
+    SignalType signals = getCollector().SignalCollectorImplBase::baseGetSignals();
 
     ::sigset_t sset;
     initSigSetToSignals(sset, signals);
 
     FileDescriptorWrapper fd(::signalfd(-1, &sset, SFD_NONBLOCK|SFD_CLOEXEC));
     if (!fd) {
-        throw std::runtime_error("signalfd() failed for SignalWatcherImplLinux");
+        throw std::runtime_error("SignalWatcher: signalfd() failed");
     }
 
     m_watcher.initFd(*fd, EventLoopFdEvents::Read);
@@ -65,18 +89,16 @@ void SignalWatcherImplLinux::start (SignalType signals)
     m_signalfd_fd = std::move(fd);
 }
 
-void SignalWatcherImplLinux::stop ()
-{
-    AIPSTACK_ASSERT(m_signalfd_fd)
+SignalWatcherImplLinux::~SignalWatcherImplLinux ()
+{}
 
-    // First reset watcher then close fd.
-    m_watcher.reset();
-    m_signalfd_fd = FileDescriptorWrapper();
+SignalCollectorImplLinux & SignalWatcherImplLinux::getCollector () const
+{
+    return static_cast<SignalCollectorImplLinux &>(SignalWatcherImplBase::getCollector());
 }
 
 void SignalWatcherImplLinux::watcherHandler(EventLoopFdEvents events)
 {
-    AIPSTACK_ASSERT(m_signalfd_fd)
     (void)events;
 
     struct signalfd_siginfo siginfo;

@@ -31,32 +31,47 @@
 #include <aipstack/platform/FileDescriptorWrapper.h>
 #include <aipstack/event_loop/EventLoop.h>
 #include <aipstack/event_loop/SignalWatcherCommon.h>
-#include <aipstack/event_loop/SignalBlocker.h>
 
 namespace AIpStack {
+
+class SignalWatcherImplLinux;
+
+class SignalCollectorImplLinux :
+    public SignalCollectorImplBase,
+    private NonCopyable<SignalCollectorImplLinux>
+{
+    friend class SignalWatcherImplLinux;
+    
+public:
+    SignalCollectorImplLinux ();
+
+    ~SignalCollectorImplLinux ();
+
+private:
+    SignalType m_orig_blocked_signals;
+};
 
 class SignalWatcherImplLinux :
     public SignalWatcherImplBase,
     private NonCopyable<SignalWatcherImplLinux>
 {
 public:
-    SignalWatcherImplLinux (EventLoop &loop, SignalBlocker &blocker);
+    SignalWatcherImplLinux ();
 
-    ~SignalWatcherImplLinux () = default;
-
-    void start (SignalType signals);
-
-    void stop ();
+    ~SignalWatcherImplLinux ();
 
 private:
+    inline SignalCollectorImplLinux & getCollector () const;
+
     void watcherHandler(EventLoopFdEvents events);
     
 private:
-    SignalBlocker &m_blocker;
     // First fd then watcher for proper destruction order.
     FileDescriptorWrapper m_signalfd_fd;
     EventLoopFdWatcher m_watcher;
 };
+
+using SignalCollectorImpl = SignalCollectorImplLinux;
 
 using SignalWatcherImpl = SignalWatcherImplLinux;
 

@@ -27,42 +27,46 @@
 
 namespace AIpStack {
 
-SignalWatcher::SignalWatcher (EventLoop &loop, SignalBlocker &blocker, SignalHandler handler) :
-    SignalWatcherImpl(loop, blocker),
-    m_handler(handler),
-    m_watching(false),
-    m_watched_signals(SignalType())
+SignalCollector::SignalCollector (SignalType signals) :
+    SignalCollectorMembers{signals},
+    SignalCollectorImpl()
+{}
+
+SignalCollector::~SignalCollector ()
+{}
+
+SignalWatcher::SignalWatcher (
+    EventLoop &loop, SignalCollector &collector, SignalHandler handler)
+:
+    SignalWatcherMembers{loop, collector, handler},
+    SignalWatcherImpl()
 {}
 
 SignalWatcher::~SignalWatcher ()
+{}
+
+SignalType SignalCollectorImplBase::baseGetSignals () const
 {
-    if (m_watching) {
-        SignalWatcherImpl::stop();
-    }
+    auto &collector = static_cast<SignalCollector const &>(*this);
+    return collector.m_signals;
 }
 
-void SignalWatcher::startWatching (SignalType signals)
+EventLoop & SignalWatcherImplBase::getEventLoop () const
 {
-    AIPSTACK_ASSERT(!m_watching)
-
-    SignalWatcherImpl::start(signals);
-    m_watching = true;
-    m_watched_signals = signals;
+    auto &watcher = static_cast<SignalWatcher const &>(*this);
+    return watcher.m_loop;
 }
 
-void SignalWatcher::reset ()
+SignalCollectorImplBase & SignalWatcherImplBase::getCollector () const
 {
-    if (m_watching) {
-        SignalWatcherImpl::stop();
-        m_watching = false;
-        m_watched_signals = SignalType();
-    }
+    auto &watcher = static_cast<SignalWatcher const &>(*this);
+    return watcher.m_collector;
 }
 
 void SignalWatcherImplBase::callHandler(SignalInfo signal_info)
 {
-    auto &signal_watcher = static_cast<SignalWatcher &>(*this);
-    return signal_watcher.m_handler(signal_info);
+    auto &watcher = static_cast<SignalWatcher &>(*this);
+    return watcher.m_handler(signal_info);
 }
 
 }
