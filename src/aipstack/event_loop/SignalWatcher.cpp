@@ -22,23 +22,46 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdexcept>
+
 #include <aipstack/misc/Assert.h>
 #include <aipstack/event_loop/SignalWatcher.h>
 
 namespace AIpStack {
 
 SignalCollector::SignalCollector (SignalType signals) :
-    SignalCollectorMembers{signals},
+    SignalCollectorMembers{signals, /*m_collector_watcher=*/nullptr},
     SignalCollectorImpl()
 {}
 
 SignalCollector::~SignalCollector ()
 {}
 
+SignalWatcherMembers::SignalWatcherMembers (
+    EventLoop &loop, SignalCollector &collector, Function<void(SignalInfo)> handler)
+:
+    m_loop(loop),
+    m_collector(collector),
+    m_handler(handler)
+{
+    if (m_collector.m_collector_watcher != nullptr) {
+        throw std::runtime_error(
+            "SignalWatcher: Only one instance may be used with one SignalCollector.");
+    }
+
+    m_collector.m_collector_watcher = static_cast<SignalWatcher *>(this);
+}
+
+SignalWatcherMembers::~SignalWatcherMembers ()
+{
+    AIPSTACK_ASSERT(m_collector.m_collector_watcher == static_cast<SignalWatcher *>(this))
+    m_collector.m_collector_watcher = nullptr;
+}
+
 SignalWatcher::SignalWatcher (
     EventLoop &loop, SignalCollector &collector, SignalHandler handler)
 :
-    SignalWatcherMembers{loop, collector, handler},
+    SignalWatcherMembers(loop, collector, handler),
     SignalWatcherImpl()
 {}
 

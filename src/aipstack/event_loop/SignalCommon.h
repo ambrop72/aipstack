@@ -45,7 +45,8 @@ enum class SignalType {
     Alarm        = 1 << 7,
     InputOutput  = 1 << 8,
     WindowResize = 1 << 9,
-    ExitSignals  = Interrupt|Terminate|Hangup|Quit,
+    Break        = 1 << 10,
+    ExitSignals  = Interrupt|Terminate|Hangup|Quit|Break,
 };
 AIPSTACK_ENUM_BITFIELD_OPS(SignalType)
 

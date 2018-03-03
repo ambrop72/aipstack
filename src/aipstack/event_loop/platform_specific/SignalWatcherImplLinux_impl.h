@@ -57,7 +57,6 @@ SignalCollectorImplLinux::SignalCollectorImplLinux ()
 SignalCollectorImplLinux::~SignalCollectorImplLinux ()
 {
     SignalType signals = SignalCollectorImplBase::baseGetSignals();
-
     SignalType unblock_signals = signals & ~m_orig_blocked_signals;
 
     ::sigset_t sset;
@@ -125,6 +124,12 @@ void SignalWatcherImplLinux::watcherHandler(EventLoopFdEvents events)
 
     SignalType sig = signumToSignalType(signum);
     if (sig == SignalType::None) {
+        std::fprintf(stderr, "SignalWatcher: read signal number not recognized.\n");
+        return;
+    }
+
+    SignalType signals = getCollector().SignalCollectorImplBase::baseGetSignals();
+    if ((sig & signals) == EnumZero) {
         std::fprintf(stderr, "SignalWatcher: read signal number is not requested.\n");
         return;
     }

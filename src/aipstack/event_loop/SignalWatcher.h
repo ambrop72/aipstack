@@ -32,6 +32,8 @@
 
 #if defined(__linux__)
 #include <aipstack/event_loop/platform_specific/SignalWatcherImplLinux.h>
+#elif defined(_WIN32)
+#include <aipstack/event_loop/platform_specific/SignalWatcherImplWindows.h>
 #else
 #error "Unsupported OS"
 #endif
@@ -39,8 +41,14 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
+class SignalWatcherMembers;
+class SignalWatcher;
+#endif
+
+#ifndef IN_DOXYGEN
 struct SignalCollectorMembers {
     SignalType const m_signals;
+    SignalWatcher *m_collector_watcher;
 };
 #endif
 
@@ -53,6 +61,7 @@ class SignalCollector :
 {
     friend class SignalCollectorImplBase;
     friend class SignalWatcherImplBase;
+    friend class SignalWatcherMembers;
 
 public:
     SignalCollector (SignalType signals);
@@ -65,7 +74,15 @@ public:
 };
 
 #ifndef IN_DOXYGEN
-struct SignalWatcherMembers {
+class SignalWatcherMembers {
+    friend class SignalWatcherImplBase;
+    friend class SignalWatcher;
+
+    SignalWatcherMembers (
+        EventLoop &loop, SignalCollector &collector, Function<void(SignalInfo)> handler);
+
+    ~SignalWatcherMembers ();
+
     EventLoop &m_loop;
     SignalCollector &m_collector;
     Function<void(SignalInfo)> m_handler;
@@ -79,6 +96,7 @@ class SignalWatcher :
     private SignalWatcherImpl
     #endif
 {
+    friend class SignalWatcherMembers;
     friend class SignalWatcherImplBase;
     
 public:
