@@ -30,7 +30,7 @@
 #include <sys/epoll.h>
 
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/platform/FileDescriptorWrapper.h>
+#include <aipstack/misc/platform_specific/FileDescriptorWrapper.h>
 #include <aipstack/event_loop/EventLoopCommon.h>
 
 namespace AIpStack {

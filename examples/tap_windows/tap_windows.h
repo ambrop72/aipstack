@@ -33,9 +33,9 @@
 #include <uv.h>
 
 #include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/platform_specific/WinHandleWrapper.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Buf.h>
-#include <aipstack/platform/WinHandleWrapper.h>
 
 #include "../libuv_platform.h"
 

@@ -30,7 +30,7 @@
 #include <windows.h>
 
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/platform/WinHandleWrapper.h>
+#include <aipstack/misc/platform_specific/WinHandleWrapper.h>
 #include <aipstack/event_loop/EventLoopCommon.h>
 
 namespace AIpStack {

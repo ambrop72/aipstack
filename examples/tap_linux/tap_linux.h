@@ -30,9 +30,9 @@
 #include <vector>
 
 #include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/platform_specific/FileDescriptorWrapper.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Buf.h>
-#include <aipstack/platform/FileDescriptorWrapper.h>
 #include <aipstack/event_loop/EventLoop.h>
 
 namespace AIpStackExamples {

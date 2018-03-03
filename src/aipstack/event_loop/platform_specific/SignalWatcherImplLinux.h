@@ -28,7 +28,7 @@
 #include <signal.h>
 
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/platform/FileDescriptorWrapper.h>
+#include <aipstack/misc/platform_specific/FileDescriptorWrapper.h>
 #include <aipstack/event_loop/EventLoop.h>
 #include <aipstack/event_loop/SignalWatcherCommon.h>
 
