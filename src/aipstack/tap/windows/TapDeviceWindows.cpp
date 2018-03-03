@@ -25,12 +25,13 @@
 #include <cstring>
 #include <cstdio>
 #include <stdexcept>
-
-#include <uv.h>
+#include <utility>
 
 #include <windows.h>
 
 #include <aipstack/misc/Assert.h>
+#include <aipstack/misc/Function.h>
+#include <aipstack/misc/Modulo.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/tap/windows/TapDeviceWindows.h>
 #include <aipstack/tap/windows/tapwin_funcs.h>
@@ -38,10 +39,44 @@
 
 namespace AIpStack {
 
-TapDeviceWindows::TapDeviceWindows (uv_loop_t *loop, std::string const &device_id) :
-    m_loop(loop),
+TapDeviceWindows::IoUnit::IoUnit (EventLoop &loop, TapDeviceWindows &parent) :
+    m_iocp_notifier(loop, AIPSTACK_BIND_MEMBER(&IoUnit::iocpNotifierHandler, this)),
+    m_parent(parent)
+{}
+
+void TapDeviceWindows::IoUnit::init (
+    std::shared_ptr<WinHandleWrapper> device, std::size_t buffer_size)
+{
+    AIPSTACK_ASSERT(m_resource == nullptr)
+
+    m_iocp_notifier.prepare();
+
+    auto resource = std::make_shared<IoResource>();
+    resource->device = std::move(device);
+    resource->buffer.resize(buffer_size);
+
+    m_resource = std::move(resource);    
+}
+
+void TapDeviceWindows::IoUnit::ioStarted ()
+{
+    m_iocp_notifier.ioStarted(std::static_pointer_cast<void>(m_resource));
+}
+
+void TapDeviceWindows::IoUnit::iocpNotifierHandler ()
+{
+    if (this == &m_parent.m_recv_unit) {
+        return m_parent.recvCompleted(*this);
+    } else {
+        return m_parent.sendCompleted(*this);
+    }
+}
+
+TapDeviceWindows::TapDeviceWindows (EventLoop &loop, std::string const &device_id) :
     m_send_first(0),
-    m_send_count(0)
+    m_send_count(0),
+    m_send_units(ResourceArrayInitSame(), std::ref(loop), std::ref(*this)),
+    m_recv_unit(loop, *this)
 {
     std::string component_id;
     std::string device_name;
@@ -54,40 +89,39 @@ TapDeviceWindows::TapDeviceWindows (uv_loop_t *loop, std::string const &device_i
         throw std::runtime_error("Failed to find TAP device.");
     }
     
-    m_device = std::make_shared<AIpStack::WinHandleWrapper>(CreateFileA(
+    m_device = std::make_shared<WinHandleWrapper>(::CreateFileA(
         device_path.c_str(), GENERIC_READ|GENERIC_WRITE, 0, nullptr,
         OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM|FILE_FLAG_OVERLAPPED, nullptr));
-    if (m_device->get() == INVALID_HANDLE_VALUE) {
+    if (!*m_device) {
         throw std::runtime_error("Failed to open TAP device.");
     }
     
     DWORD len;
     
     ULONG mtu = 0;
-    if (!DeviceIoControl(m_device->get(), TAP_IOCTL_GET_MTU, &mtu, sizeof(mtu),
-                         &mtu, sizeof(mtu), &len, nullptr))
+    if (!::DeviceIoControl(**m_device, TAP_IOCTL_GET_MTU,
+            &mtu, sizeof(mtu), &mtu, sizeof(mtu), &len, nullptr))
     {
         throw std::runtime_error("TAP_IOCTL_GET_MTU failed.");
     }
     
-    m_frame_mtu = mtu + AIpStack::EthHeader::Size;
+    m_frame_mtu = mtu + EthHeader::Size;
     
     ULONG status = 1;
-    if (!DeviceIoControl(m_device->get(), TAP_IOCTL_SET_MEDIA_STATUS, &status,
-                         sizeof(status), &status, sizeof(status), &len, nullptr))
+    if (!DeviceIoControl(**m_device, TAP_IOCTL_SET_MEDIA_STATUS, &status,
+            sizeof(status), &status, sizeof(status), &len, nullptr))
     {
         throw std::runtime_error("TAP_IOCTL_SET_MEDIA_STATUS failed.");
     }
     
-    for (OverlappedWrapper &wrapper : m_uv_olap_send) {
-        initOverlapped(wrapper);
+    for (IoUnit &send_unit : m_send_units) {
+        send_unit.init(m_device, m_frame_mtu);
     }
+
+    m_recv_unit.init(m_device, m_frame_mtu);
     
-    initOverlapped(m_uv_olap_recv);
-    
-    HANDLE loop_iocp = uv_overlapped_get_iocp(m_uv_olap_recv.get());
-    
-    if (!CreateIoCompletionPort(m_device->get(), loop_iocp, 0, 0)) {
+    DWORD add_error;
+    if (!loop.addHandleToIocp(**m_device, add_error)) {
         throw std::runtime_error("CreateIoCompletionPort failed.");
     }
     
@@ -98,182 +132,120 @@ TapDeviceWindows::TapDeviceWindows (uv_loop_t *loop, std::string const &device_i
 
 TapDeviceWindows::~TapDeviceWindows ()
 {
-    if (!CancelIo(m_device->get())) {
+    if (!CancelIo(**m_device)) {
         std::fprintf(stderr, "TAP CancelIo failed (%u)!\n",
-                     (unsigned int)GetLastError());
+            (unsigned int)GetLastError());
     }
-    
-    // Buffers associated with ongoing I/O operations are part of OverlappedUserData
-    // within OverlappedWrapper so they will only be freed by UvHandleWrapper after
-    // those I/O operations complete. Our callbacks (olapSendCb, olapRecvCb) will
-    // not be called any more because the OverlappedWrapper destructor will call
-    // uv_close on uv_overlapped_t and uv_overlapped_t ensures the callbacks are
-    // not called after that.
 }
 
-std::size_t TapDeviceWindows::getMtu () const
+IpErr TapDeviceWindows::sendFrame (IpBufRef frame)
 {
-    return m_frame_mtu;
-}
-
-AIpStack::IpErr TapDeviceWindows::sendFrame (AIpStack::IpBufRef frame)
-{
-    if (frame.tot_len < AIpStack::EthHeader::Size) {
-        return AIpStack::IpErr::HW_ERROR;
+    if (frame.tot_len < EthHeader::Size) {
+        return IpErr::HW_ERROR;
     }
     else if (frame.tot_len > m_frame_mtu) {
-        return AIpStack::IpErr::PKT_TOO_LARGE;
+        return IpErr::PKT_TOO_LARGE;
     }
     
-    if (m_send_count >= NumSendBuffers) {
+    if (m_send_count >= NumSendUnits) {
         //std::fprintf(stderr, "TAP send: out of buffers\n");
-        return AIpStack::IpErr::BUFFER_FULL;
+        return IpErr::BUFFER_FULL;
     }
     
-    std::size_t buf_index = send_ring_add(m_send_first, m_send_count);
+    std::size_t unit_index = Modulo(NumSendUnits).add(m_send_first, m_send_count);
     
-    OverlappedWrapper &wrapper = m_uv_olap_send[buf_index];
-    AIPSTACK_ASSERT(!wrapper.user().active)
+    IoUnit &send_unit = m_send_units[unit_index];
+    AIPSTACK_ASSERT(!send_unit.m_iocp_notifier.isBusy())
     
-    char *buffer = wrapper.user().buffer.data();
+    char *buffer = send_unit.m_resource->buffer.data();
     
     std::size_t len = frame.tot_len;
     frame.takeBytes(len, buffer);
     
-    OVERLAPPED *olap = uv_overlapped_get_overlapped(wrapper.get());
-    std::memset(olap, 0, sizeof(*olap));
+    OVERLAPPED &olap = send_unit.m_iocp_notifier.getOverlapped();
+    std::memset(&olap, 0, sizeof(olap));
     
-    bool res = WriteFile(m_device->get(), buffer, len, nullptr, olap);
+    bool res = ::WriteFile(**m_device, buffer, len, nullptr, &olap);
     DWORD error;
-    if (!res && (error = GetLastError()) != ERROR_IO_PENDING) {
+    if (!res && (error = ::GetLastError()) != ERROR_IO_PENDING) {
         std::fprintf(stderr, "TAP WriteFile failed (err=%u)!\n",
-                     (unsigned int)error);
-        return AIpStack::IpErr::HW_ERROR;
+            (unsigned int)error);
+        return IpErr::HW_ERROR;
     }
     
-    uv_overlapped_start(wrapper.get(),
-                        &TapDeviceWindows::olapCbTrampoline<&TapDeviceWindows::olapSendCb>);
-    
-    wrapper.user().active = true;
+    send_unit.ioStarted();
     m_send_count++;
     
-    return AIpStack::IpErr::SUCCESS;
-}
-
-std::size_t TapDeviceWindows::send_ring_add (std::size_t a, std::size_t b)
-{
-    return (a + b) % NumSendBuffers;
-}
-
-std::size_t TapDeviceWindows::send_ring_sub (std::size_t a, std::size_t b)
-{
-    return (NumSendBuffers + a - b) % NumSendBuffers;
-}
-
-void TapDeviceWindows::initOverlapped (OverlappedWrapper &wrapper)
-{
-    if (wrapper.initialize([&](uv_overlapped_t *dst) {
-        return uv_overlapped_init(m_loop, dst);
-    }) != 0) {
-        throw std::runtime_error("uv_overlapped_init failed.");
-    }
-    
-    wrapper.get()->data = &wrapper;
-    
-    wrapper.user().parent = this;
-    wrapper.user().device = m_device;
-    wrapper.user().buffer.resize(m_frame_mtu);
-    wrapper.user().active = false;
+    return IpErr::SUCCESS;
 }
 
 bool TapDeviceWindows::startRecv ()
 {
-    OverlappedWrapper &wrapper = m_uv_olap_recv;
-    AIPSTACK_ASSERT(!wrapper.user().active)
+    IoUnit &recv_unit = m_recv_unit;
+    AIPSTACK_ASSERT(!recv_unit.m_iocp_notifier.isBusy())
     
-    char *buffer = wrapper.user().buffer.data();
+    char *buffer = recv_unit.m_resource->buffer.data();
     
-    OVERLAPPED *olap = uv_overlapped_get_overlapped(wrapper.get());
-    std::memset(olap, 0, sizeof(*olap));
+    OVERLAPPED &olap = recv_unit.m_iocp_notifier.getOverlapped();
+    std::memset(&olap, 0, sizeof(olap));
     
-    bool res = ReadFile(m_device->get(), buffer, m_frame_mtu, nullptr, olap);
+    bool res = ::ReadFile(**m_device, buffer, m_frame_mtu, nullptr, &olap);
     DWORD error;
-    if (!res && (error = GetLastError()) != ERROR_IO_PENDING) {
+    if (!res && (error = ::GetLastError()) != ERROR_IO_PENDING) {
         std::fprintf(stderr, "TAP ReadFile failed (err=%u)!\n",
-                     (unsigned int)error);
+            (unsigned int)error);
         return false;
     }
     
-    uv_overlapped_start(wrapper.get(),
-                        &TapDeviceWindows::olapCbTrampoline<&TapDeviceWindows::olapRecvCb>);
-    
-    wrapper.user().active = true;
+    recv_unit.ioStarted();
     
     return true;
 }
 
-template <void (TapDeviceWindows::*Cb) (TapDeviceWindows::OverlappedWrapper &)>
-void TapDeviceWindows::olapCbTrampoline (uv_overlapped_t *handle)
+void TapDeviceWindows::sendCompleted (IoUnit &send_unit)
 {
-    OverlappedWrapper *wrapper = reinterpret_cast<OverlappedWrapper *>(handle->data);
-    AIPSTACK_ASSERT(handle == wrapper->get())
-    TapDeviceWindows &parent = *wrapper->user().parent;
-    
-    (parent.*Cb)(*wrapper);
-}
-
-void TapDeviceWindows::olapSendCb (OverlappedWrapper &wrapper)
-{
-    std::size_t index = &wrapper - m_uv_olap_send;
+    std::size_t index = &send_unit - &m_send_units[0];
     (void)index;
-    AIPSTACK_ASSERT(index >= 0 && index < NumSendBuffers)
-    AIPSTACK_ASSERT(send_ring_sub(index, m_send_first) < m_send_count)
-    AIPSTACK_ASSERT(wrapper.user().active)
+    AIPSTACK_ASSERT(index >= 0 && index < NumSendUnits)
+    AIPSTACK_ASSERT(Modulo(NumSendUnits).sub(index, m_send_first) < m_send_count)
     
-    wrapper.user().active = false;
-    
-    OVERLAPPED *olap = uv_overlapped_get_overlapped(wrapper.get());
+    OVERLAPPED &olap = send_unit.m_iocp_notifier.getOverlapped();
     
     DWORD bytes;
-    if (!GetOverlappedResult(m_device->get(), olap, &bytes, false)) {
+    if (!::GetOverlappedResult(**m_device, &olap, &bytes, false)) {
         std::fprintf(stderr, "TAP WriteFile async failed (err=%u)!\n",
-                     (unsigned int)GetLastError());
+            (unsigned int)::GetLastError());
     } else {
-        AIPSTACK_ASSERT(bytes >= AIpStack::EthHeader::Size)
+        AIPSTACK_ASSERT(bytes >= EthHeader::Size)
         AIPSTACK_ASSERT(bytes <= m_frame_mtu)
     }
     
-    while (m_send_count > 0 && !m_uv_olap_send[m_send_first].user().active) {
-        m_send_first = send_ring_add(m_send_first, 1);
+    while (m_send_count > 0 && !m_send_units[m_send_first].m_iocp_notifier.isBusy()) {
+        m_send_first = Modulo(NumSendUnits).inc(m_send_first);
         m_send_count--;
     }
 }
 
-void TapDeviceWindows::olapRecvCb (OverlappedWrapper &wrapper)
+void TapDeviceWindows::recvCompleted (IoUnit &recv_unit)
 {
-    AIPSTACK_ASSERT(&wrapper == &m_uv_olap_recv)
-    AIPSTACK_ASSERT(wrapper.user().active)
-    
-    wrapper.user().active = false;
-    
-    OVERLAPPED *olap = uv_overlapped_get_overlapped(wrapper.get());
+    AIPSTACK_ASSERT(&recv_unit == &m_recv_unit)
+
+    OVERLAPPED &olap = recv_unit.m_iocp_notifier.getOverlapped();
     
     DWORD bytes;
-    if (!GetOverlappedResult(m_device->get(), olap, &bytes, false)) {
+    if (!::GetOverlappedResult(**m_device, &olap, &bytes, false)) {
         std::fprintf(stderr, "TAP ReadFile async failed (err=%u)!\n",
-                     (unsigned int)GetLastError());
+            (unsigned int)::GetLastError());
         return;
     }
     
     AIPSTACK_ASSERT(bytes <= m_frame_mtu)
+
+    char *buffer = recv_unit.m_resource->buffer.data();
     
-    AIpStack::IpBufNode node{
-        wrapper.user().buffer.data(),
-        (std::size_t)bytes,
-        nullptr
-    };
+    IpBufNode node{buffer, (std::size_t)bytes, nullptr};
     
-    frameReceived(AIpStack::IpBufRef{&node, 0, (std::size_t)bytes});
+    frameReceived(IpBufRef{&node, 0, (std::size_t)bytes});
     
     startRecv();
 }

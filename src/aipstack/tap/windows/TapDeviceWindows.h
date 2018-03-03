@@ -29,62 +29,67 @@
 #include <string>
 #include <memory>
 #include <vector>
-
-#include <uv.h>
+#include <functional>
 
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/platform_specific/WinHandleWrapper.h>
+#include <aipstack/misc/ResourceArray.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/event_loop/EventLoop.h>
 
 namespace AIpStack {
 
 class TapDeviceWindows :
-    private AIpStack::NonCopyable<TapDeviceWindows>
+    private NonCopyable<TapDeviceWindows>
 {
-    static std::size_t const NumSendBuffers = 16;
+    static std::size_t const NumSendUnits = 16;
     
-    struct OverlappedUserData {
-        TapDeviceWindows *parent;
-        std::shared_ptr<AIpStack::WinHandleWrapper> device;
+    struct IoResource {
+        std::shared_ptr<WinHandleWrapper> device;
         std::vector<char> buffer;
-        bool active;
+    };
+
+    struct IoUnit {
+        IoUnit (EventLoop &loop, TapDeviceWindows &parent);
+
+        void init (std::shared_ptr<WinHandleWrapper> device, std::size_t buffer_size);
+
+        void ioStarted ();
+        
+        void iocpNotifierHandler ();
+
+        EventLoopIocpNotifier m_iocp_notifier;
+        TapDeviceWindows &m_parent;
+        std::shared_ptr<IoResource> m_resource;
     };
     
-    using OverlappedWrapper = UvHandleWrapper<uv_overlapped_t, OverlappedUserData>;
-    
 private:
-    uv_loop_t *m_loop;
-    std::shared_ptr<AIpStack::WinHandleWrapper> m_device;
+    std::shared_ptr<WinHandleWrapper> m_device;
     std::size_t m_frame_mtu;
     std::size_t m_send_first;
     std::size_t m_send_count;
-    OverlappedWrapper m_uv_olap_send[NumSendBuffers];
-    OverlappedWrapper m_uv_olap_recv;
+    ResourceArray<IoUnit, NumSendUnits> m_send_units;
+    IoUnit m_recv_unit;
     
 public:
-    TapDeviceWindows (uv_loop_t *loop, std::string const &device_id);
+    TapDeviceWindows (EventLoop &loop, std::string const &device_id);
+
     ~TapDeviceWindows ();
     
-    std::size_t getMtu () const;
-    AIpStack::IpErr sendFrame (AIpStack::IpBufRef frame);
+    std::size_t getMtu () const {
+        return m_frame_mtu;
+    }
+
+    IpErr sendFrame (IpBufRef frame);
     
 protected:
-    virtual void frameReceived (AIpStack::IpBufRef frame) = 0;
+    virtual void frameReceived (IpBufRef frame) = 0;
     
 private:
-    static std::size_t send_ring_add (std::size_t a, std::size_t b);
-    static std::size_t send_ring_sub (std::size_t a, std::size_t b);
-    
-    void initOverlapped (OverlappedWrapper &wrapper);
-    
     bool startRecv ();
-    
-    template <void (TapDeviceWindows::*Cb) (OverlappedWrapper &)>
-    static void olapCbTrampoline (uv_overlapped_t *handle);
-    
-    void olapSendCb (OverlappedWrapper &wrapper);
-    void olapRecvCb (OverlappedWrapper &wrapper);
+    void sendCompleted (IoUnit &send_unit);
+    void recvCompleted (IoUnit &recv_unit);
 };
 
 }
