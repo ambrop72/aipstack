@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Ambroz Bizjak
+ * Copyright (c) 2018 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,46 +22,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_TAP_LINUX_H
-#define AIPSTACK_TAP_LINUX_H
-
-#include <cstddef>
-#include <string>
-#include <vector>
-
-#include <aipstack/misc/NonCopyable.h>
-#include <aipstack/misc/platform_specific/FileDescriptorWrapper.h>
-#include <aipstack/infra/Err.h>
-#include <aipstack/infra/Buf.h>
-#include <aipstack/event_loop/EventLoop.h>
-
-namespace AIpStackExamples {
-
-class TapDevice :
-    private AIpStack::NonCopyable<TapDevice>
-{
-private:
-    AIpStack::FileDescriptorWrapper m_fd;
-    AIpStack::EventLoopFdWatcher m_fd_watcher;
-    std::size_t m_frame_mtu;
-    std::vector<char> m_read_buffer;
-    std::vector<char> m_write_buffer;
-    bool m_active;
-    
-public:
-    TapDevice (AIpStack::EventLoop &loop, std::string const &device_id);
-    ~TapDevice ();
-    
-    std::size_t getMtu () const;
-    AIpStack::IpErr sendFrame (AIpStack::IpBufRef frame);
-
-private:
-    void handleFdEvents (AIpStack::EventLoopFdEvents events);
-    
-protected:
-    virtual void frameReceived (AIpStack::IpBufRef frame) = 0;
-};
-
-}
-
+#if defined(__linux__)
+#include <aipstack/tap/linux/TapDeviceLinux.cpp>
+#elif defined(_WIN32)
+#include <aipstack/tap/windows/TapDeviceWindows.cpp>
+#include <aipstack/tap/windows/tapwin_funcs.cpp>
 #endif

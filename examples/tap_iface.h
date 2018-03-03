@@ -34,12 +34,7 @@
 #include <aipstack/platform/HostedPlatformImpl.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/eth/EthIpIface.h>
-
-#ifdef _WIN32
-#include "tap_windows/tap_windows.h"
-#else
-#include "tap_linux/tap_linux.h"
-#endif
+#include <aipstack/tap/TapDevice.h>
 
 namespace AIpStackExamples {
 
@@ -58,7 +53,7 @@ namespace Private {
 
 template <typename StackArg, typename TheEthIpIfaceService>
 class TapIface :
-    private TapDevice,
+    private AIpStack::TapDevice,
     private Private::TapIfaceMacAddr,
     public AIpStack::EthIpIface<Private::EthIpIfaceArg<StackArg, TheEthIpIfaceService>>
 {
@@ -71,10 +66,10 @@ public:
     TapIface (Platform platform, AIpStack::IpStack<StackArg> *stack,
               std::string const &device_id, AIpStack::MacAddr const &mac_addr)
     :
-        TapDevice(platform.ref().platformImpl()->getEventLoop(), device_id),
+        AIpStack::TapDevice(platform.ref().platformImpl()->getEventLoop(), device_id),
         TapIfaceMacAddr{mac_addr},
         TheEthIpIface(platform, stack, {
-            /*eth_mtu=*/ TapDevice::getMtu(),
+            /*eth_mtu=*/ AIpStack::TapDevice::getMtu(),
             /*mac_addr=*/ &this->TapIfaceMacAddr::m_mac_addr
         })
     {}
@@ -89,7 +84,7 @@ private:
     // Implement TheEthIpIface::driverSendFrame
     AIpStack::IpErr driverSendFrame (AIpStack::IpBufRef frame) override final
     {
-        return TapDevice::sendFrame(frame);
+        return AIpStack::TapDevice::sendFrame(frame);
     }
     
     // Implement TheEthIpIface::driverGetEthState

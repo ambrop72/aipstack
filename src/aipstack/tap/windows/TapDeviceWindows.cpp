@@ -32,14 +32,13 @@
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/proto/EthernetProto.h>
+#include <aipstack/tap/windows/TapDeviceWindows.h>
+#include <aipstack/tap/windows/tapwin_funcs.h>
+#include <aipstack/tap/windows/tapwin_common.h>
 
-#include "tapwin_funcs.h"
-#include "tapwin_common.h"
-#include "tap_windows.h"
+namespace AIpStack {
 
-namespace AIpStackExamples {
-
-TapDevice::TapDevice (uv_loop_t *loop, std::string const &device_id) :
+TapDeviceWindows::TapDeviceWindows (uv_loop_t *loop, std::string const &device_id) :
     m_loop(loop),
     m_send_first(0),
     m_send_count(0)
@@ -97,7 +96,7 @@ TapDevice::TapDevice (uv_loop_t *loop, std::string const &device_id) :
     }
 }
 
-TapDevice::~TapDevice ()
+TapDeviceWindows::~TapDeviceWindows ()
 {
     if (!CancelIo(m_device->get())) {
         std::fprintf(stderr, "TAP CancelIo failed (%u)!\n",
@@ -112,12 +111,12 @@ TapDevice::~TapDevice ()
     // not called after that.
 }
 
-std::size_t TapDevice::getMtu () const
+std::size_t TapDeviceWindows::getMtu () const
 {
     return m_frame_mtu;
 }
 
-AIpStack::IpErr TapDevice::sendFrame (AIpStack::IpBufRef frame)
+AIpStack::IpErr TapDeviceWindows::sendFrame (AIpStack::IpBufRef frame)
 {
     if (frame.tot_len < AIpStack::EthHeader::Size) {
         return AIpStack::IpErr::HW_ERROR;
@@ -153,7 +152,7 @@ AIpStack::IpErr TapDevice::sendFrame (AIpStack::IpBufRef frame)
     }
     
     uv_overlapped_start(wrapper.get(),
-                        &TapDevice::olapCbTrampoline<&TapDevice::olapSendCb>);
+                        &TapDeviceWindows::olapCbTrampoline<&TapDeviceWindows::olapSendCb>);
     
     wrapper.user().active = true;
     m_send_count++;
@@ -161,17 +160,17 @@ AIpStack::IpErr TapDevice::sendFrame (AIpStack::IpBufRef frame)
     return AIpStack::IpErr::SUCCESS;
 }
 
-std::size_t TapDevice::send_ring_add (std::size_t a, std::size_t b)
+std::size_t TapDeviceWindows::send_ring_add (std::size_t a, std::size_t b)
 {
     return (a + b) % NumSendBuffers;
 }
 
-std::size_t TapDevice::send_ring_sub (std::size_t a, std::size_t b)
+std::size_t TapDeviceWindows::send_ring_sub (std::size_t a, std::size_t b)
 {
     return (NumSendBuffers + a - b) % NumSendBuffers;
 }
 
-void TapDevice::initOverlapped (OverlappedWrapper &wrapper)
+void TapDeviceWindows::initOverlapped (OverlappedWrapper &wrapper)
 {
     if (wrapper.initialize([&](uv_overlapped_t *dst) {
         return uv_overlapped_init(m_loop, dst);
@@ -187,7 +186,7 @@ void TapDevice::initOverlapped (OverlappedWrapper &wrapper)
     wrapper.user().active = false;
 }
 
-bool TapDevice::startRecv ()
+bool TapDeviceWindows::startRecv ()
 {
     OverlappedWrapper &wrapper = m_uv_olap_recv;
     AIPSTACK_ASSERT(!wrapper.user().active)
@@ -206,24 +205,24 @@ bool TapDevice::startRecv ()
     }
     
     uv_overlapped_start(wrapper.get(),
-                        &TapDevice::olapCbTrampoline<&TapDevice::olapRecvCb>);
+                        &TapDeviceWindows::olapCbTrampoline<&TapDeviceWindows::olapRecvCb>);
     
     wrapper.user().active = true;
     
     return true;
 }
 
-template <void (TapDevice::*Cb) (TapDevice::OverlappedWrapper &)>
-void TapDevice::olapCbTrampoline (uv_overlapped_t *handle)
+template <void (TapDeviceWindows::*Cb) (TapDeviceWindows::OverlappedWrapper &)>
+void TapDeviceWindows::olapCbTrampoline (uv_overlapped_t *handle)
 {
     OverlappedWrapper *wrapper = reinterpret_cast<OverlappedWrapper *>(handle->data);
     AIPSTACK_ASSERT(handle == wrapper->get())
-    TapDevice &parent = *wrapper->user().parent;
+    TapDeviceWindows &parent = *wrapper->user().parent;
     
     (parent.*Cb)(*wrapper);
 }
 
-void TapDevice::olapSendCb (OverlappedWrapper &wrapper)
+void TapDeviceWindows::olapSendCb (OverlappedWrapper &wrapper)
 {
     std::size_t index = &wrapper - m_uv_olap_send;
     (void)index;
@@ -250,7 +249,7 @@ void TapDevice::olapSendCb (OverlappedWrapper &wrapper)
     }
 }
 
-void TapDevice::olapRecvCb (OverlappedWrapper &wrapper)
+void TapDeviceWindows::olapRecvCb (OverlappedWrapper &wrapper)
 {
     AIPSTACK_ASSERT(&wrapper == &m_uv_olap_recv)
     AIPSTACK_ASSERT(wrapper.user().active)

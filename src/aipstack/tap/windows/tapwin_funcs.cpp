@@ -38,7 +38,7 @@
 
 #define TAPWIN32_MAX_REG_SIZE 256
 
-namespace AIpStackExamples {
+namespace AIpStack {
 
 static bool split_string (std::string const &str, char const *sep,
                           std::size_t num_fields, std::vector<std::string> &out)

@@ -41,13 +41,12 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Function.h>
 #include <aipstack/proto/EthernetProto.h>
+#include <aipstack/tap/linux/TapDeviceLinux.h>
 
-#include "tap_linux.h"
+namespace AIpStack {
 
-namespace AIpStackExamples {
-
-TapDevice::TapDevice (AIpStack::EventLoop &loop, std::string const &device_id) :
-    m_fd_watcher(loop, AIPSTACK_BIND_MEMBER(&TapDevice::handleFdEvents, this)),
+TapDeviceLinux::TapDeviceLinux (AIpStack::EventLoop &loop, std::string const &device_id) :
+    m_fd_watcher(loop, AIPSTACK_BIND_MEMBER(&TapDeviceLinux::handleFdEvents, this)),
     m_active(true)
 {
     m_fd = AIpStack::FileDescriptorWrapper{::open("/dev/net/tun", O_RDWR)};
@@ -95,15 +94,15 @@ TapDevice::TapDevice (AIpStack::EventLoop &loop, std::string const &device_id) :
     m_fd_watcher.initFd(*m_fd, AIpStack::EventLoopFdEvents::Read);
 }
 
-TapDevice::~TapDevice ()
+TapDeviceLinux::~TapDeviceLinux ()
 {}
 
-std::size_t TapDevice::getMtu () const
+std::size_t TapDeviceLinux::getMtu () const
 {
     return m_frame_mtu;
 }
 
-AIpStack::IpErr TapDevice::sendFrame (AIpStack::IpBufRef frame)
+AIpStack::IpErr TapDeviceLinux::sendFrame (AIpStack::IpBufRef frame)
 {
     if (!m_active) {
         return AIpStack::IpErr::HW_ERROR;
@@ -136,17 +135,17 @@ AIpStack::IpErr TapDevice::sendFrame (AIpStack::IpBufRef frame)
     return AIpStack::IpErr::SUCCESS;
 }
 
-void TapDevice::handleFdEvents (AIpStack::EventLoopFdEvents events)
+void TapDeviceLinux::handleFdEvents (AIpStack::EventLoopFdEvents events)
 {
     AIPSTACK_ASSERT(m_active)
     
     do {
         if ((events & AIpStack::EventLoopFdEvents::Error) != AIpStack::EnumZero) {
-            std::fprintf(stderr, "TapDevice: Error event. Stopping.\n");
+            std::fprintf(stderr, "TapDeviceLinux: Error event. Stopping.\n");
             goto error;
         }
         if ((events & AIpStack::EventLoopFdEvents::Hup) != AIpStack::EnumZero) {
-            std::fprintf(stderr, "TapDevice: HUP event. Stopping.\n");
+            std::fprintf(stderr, "TapDeviceLinux: HUP event. Stopping.\n");
             goto error;
         }
         
@@ -158,7 +157,7 @@ void TapDevice::handleFdEvents (AIpStack::EventLoopFdEvents events)
                 is_error = !AIpStack::FileDescriptorWrapper::errIsEAGAINorEWOULDBLOCK(err);
             }
             if (is_error) {
-                std::fprintf(stderr, "TapDevice: read failed. Stopping.\n");
+                std::fprintf(stderr, "TapDeviceLinux: read failed. Stopping.\n");
                 goto error;
             }
             return;

@@ -47,8 +47,8 @@ let
                         ${stdenv.lib.concatStringsSep " " baseWarnings} \
                         $(cat ${filterSupportedWarnings {inherit stdenv;}}) \
                         examples/aipstack_example.cpp \
-                        examples/tap_linux/tap_linux.cpp \
                         src/aipstack/event_loop/EventLoopAmalgamation.cpp \
+                        src/aipstack/tap/TapDeviceAmalgamation.cpp \
                         -o $out/bin/aipstack_example
                 )
             '';

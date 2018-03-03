@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Ambroz Bizjak
+ * Copyright (c) 2018 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,20 +22,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_TAPWIN_FUNCS_H
-#define AIPSTACK_TAPWIN_FUNCS_H
+#ifndef AIPSTACK_TAP_DEVICE_H
+#define AIPSTACK_TAP_DEVICE_H
 
-#include <string>
+#if defined(__linux__)
+#include <aipstack/tap/linux/TapDeviceLinux.h>
+#elif defined(_WIN32)
+#include <aipstack/tap/windows/TapDeviceWindows.h>
+#else
+#error "TapDevice is not supported on this platform"
+#endif
 
-namespace AIpStackExamples {
+namespace AIpStack {
 
-bool tapwin_parse_tap_spec (std::string const &name,
-                            std::string &out_component_id,
-                            std::string &out_human_name);
-
-bool tapwin_find_device (std::string const &device_component_id,
-                         std::string const &device_name,
-                         std::string &out_device_path);
+#if defined(__linux__)
+using TapDevice = TapDeviceLinux;
+#elif defined(_WIN32)
+using TapDevice = TapDeviceWindows;
+#endif
 
 }
 

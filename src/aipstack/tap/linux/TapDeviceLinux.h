@@ -22,71 +22,44 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_TAP_WINDOWS_H
-#define AIPSTACK_TAP_WINDOWS_H
+#ifndef AIPSTACK_TAP_DEVICE_LINUX_H
+#define AIPSTACK_TAP_DEVICE_LINUX_H
 
 #include <cstddef>
 #include <string>
-#include <memory>
 #include <vector>
 
-#include <uv.h>
-
 #include <aipstack/misc/NonCopyable.h>
-#include <aipstack/misc/platform_specific/WinHandleWrapper.h>
+#include <aipstack/misc/platform_specific/FileDescriptorWrapper.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/event_loop/EventLoop.h>
 
-#include "../libuv_platform.h"
+namespace AIpStack {
 
-namespace AIpStackExamples {
-
-class TapDevice :
-    private AIpStack::NonCopyable<TapDevice>
+class TapDeviceLinux :
+    private AIpStack::NonCopyable<TapDeviceLinux>
 {
-    static std::size_t const NumSendBuffers = 16;
-    
-    struct OverlappedUserData {
-        TapDevice *parent;
-        std::shared_ptr<AIpStack::WinHandleWrapper> device;
-        std::vector<char> buffer;
-        bool active;
-    };
-    
-    using OverlappedWrapper = UvHandleWrapper<uv_overlapped_t, OverlappedUserData>;
-    
 private:
-    uv_loop_t *m_loop;
-    std::shared_ptr<AIpStack::WinHandleWrapper> m_device;
+    AIpStack::FileDescriptorWrapper m_fd;
+    AIpStack::EventLoopFdWatcher m_fd_watcher;
     std::size_t m_frame_mtu;
-    std::size_t m_send_first;
-    std::size_t m_send_count;
-    OverlappedWrapper m_uv_olap_send[NumSendBuffers];
-    OverlappedWrapper m_uv_olap_recv;
+    std::vector<char> m_read_buffer;
+    std::vector<char> m_write_buffer;
+    bool m_active;
     
 public:
-    TapDevice (uv_loop_t *loop, std::string const &device_id);
-    ~TapDevice ();
+    TapDeviceLinux (AIpStack::EventLoop &loop, std::string const &device_id);
+    ~TapDeviceLinux ();
     
     std::size_t getMtu () const;
     AIpStack::IpErr sendFrame (AIpStack::IpBufRef frame);
+
+private:
+    void handleFdEvents (AIpStack::EventLoopFdEvents events);
     
 protected:
     virtual void frameReceived (AIpStack::IpBufRef frame) = 0;
-    
-private:
-    static std::size_t send_ring_add (std::size_t a, std::size_t b);
-    static std::size_t send_ring_sub (std::size_t a, std::size_t b);
-    
-    void initOverlapped (OverlappedWrapper &wrapper);
-    
-    bool startRecv ();
-    
-    template <void (TapDevice::*Cb) (OverlappedWrapper &)>
-    static void olapCbTrampoline (uv_overlapped_t *handle);
-    
-    void olapSendCb (OverlappedWrapper &wrapper);
-    void olapRecvCb (OverlappedWrapper &wrapper);
 };
 
 }
