@@ -117,6 +117,22 @@ SignalType getSignalsFromSigSet(::sigset_t const &set)
     return signals;
 }
 
+#elif defined(_WIN32)
+
+char const * nativeNameForSignalType(SignalType signal)
+{
+    switch (signal) {
+        case SignalType::Interrupt:
+            return "CTRL_C_EVENT";
+        case SignalType::Break:
+            return "CTRL_BREAK_EVENT";
+        case SignalType::Hangup:
+            return "CTRL_CLOSE_EVENT";
+        default:
+            return "unknown";
+    }
+}
+
 #endif
 
 }
