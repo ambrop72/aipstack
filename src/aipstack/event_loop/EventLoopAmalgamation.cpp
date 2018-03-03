@@ -23,7 +23,5 @@
  */
 
 #include "EventLoop.cpp"
-#ifndef _WIN32
 #include "SignalCommon.cpp"
 #include "SignalWatcher.cpp"
-#endif
