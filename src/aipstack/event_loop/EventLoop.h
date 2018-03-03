@@ -182,6 +182,10 @@ public:
         return m_event_time;
     }
 
+    #if AIPSTACK_EVENT_LOOP_HAS_IOCP
+    bool addHandleToIocp (HANDLE handle, DWORD &out_error);
+    #endif
+
 private:
     void prepare_timers_for_dispatch (EventLoopTime now);
 
@@ -331,13 +335,13 @@ public:
 
     ~EventLoopIocpNotifier ();
 
-    bool associateHandle (HANDLE handle, DWORD &out_error);
+    void prepare ();
 
     void reset ();
 
     void ioStarted (std::shared_ptr<void> user_resource);
 
-    inline bool isAssociated () const { return m_iocp_resource != nullptr; }
+    inline bool isPrepared () const { return m_iocp_resource != nullptr; }
 
     inline bool isBusy () const { return m_busy; }
 

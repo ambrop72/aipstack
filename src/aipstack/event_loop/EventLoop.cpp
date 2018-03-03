@@ -423,29 +423,18 @@ EventLoopIocpNotifier::~EventLoopIocpNotifier ()
     m_loop.m_num_iocp_notifiers--;
 }
 
-bool EventLoopIocpNotifier::associateHandle (HANDLE handle, DWORD &out_error)
+void EventLoopIocpNotifier::prepare ()
 {
     AIPSTACK_ASSERT(m_iocp_resource == nullptr)
     AIPSTACK_ASSERT(!m_busy)
 
     auto temp_iocp_resource = std::make_unique<IocpResource>();
-
-    auto iocp_res = ::CreateIoCompletionPort(
-        handle, m_loop.EventProvider::getIocpHandle(),
-        /*CompletionKey=*/(ULONG_PTR)&m_loop, /*NumberOfConcurrentThreads=*/0);
-
-    if (iocp_res == nullptr) {
-        out_error = ::GetLastError();
-        return false;
-    }
+    temp_iocp_resource->overlapped = {};
+    temp_iocp_resource->loop = &m_loop;
+    temp_iocp_resource->notifier = this;
 
     m_iocp_resource = temp_iocp_resource.release();
-    m_iocp_resource->overlapped = {};
-    m_iocp_resource->loop = &m_loop;
-    m_iocp_resource->notifier = this;
     m_loop.m_num_iocp_resources++;
-
-    return true;
 }
 
 void EventLoopIocpNotifier::reset ()
@@ -478,6 +467,20 @@ OVERLAPPED & EventLoopIocpNotifier::getOverlapped ()
     AIPSTACK_ASSERT(m_iocp_resource != nullptr)
 
     return m_iocp_resource->overlapped;
+}
+
+bool EventLoop::addHandleToIocp (HANDLE handle, DWORD &out_error)
+{
+    auto iocp_res = ::CreateIoCompletionPort(
+        handle, EventProvider::getIocpHandle(),
+        /*CompletionKey=*/(ULONG_PTR)this, /*NumberOfConcurrentThreads=*/0);
+
+    if (iocp_res == nullptr) {
+        out_error = ::GetLastError();
+        return false;
+    }
+
+    return true;
 }
 
 bool EventLoop::handle_iocp_result (void *completion_key, OVERLAPPED *overlapped)
