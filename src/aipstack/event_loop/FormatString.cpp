@@ -22,7 +22,59 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "EventLoop.cpp"
-#include "SignalCommon.cpp"
-#include "SignalWatcher.cpp"
-#include "FormatString.cpp"
+#include <cstring>
+#include <cstdarg>
+#include <cstddef>
+#include <string>
+#include <stdexcept>
+#include <limits>
+#include <type_traits>
+
+#include <aipstack/event_loop/FormatString.h>
+
+namespace AIpStack {
+
+static std::size_t const FormatSizeHint = 25;
+
+std::string formatString (char const *fmt, ...)
+{
+    std::size_t fmt_len = std::strlen(fmt);
+    if (fmt_len > std::numeric_limits<std::size_t>::max() - FormatSizeHint) {
+        throw std::bad_alloc();
+    }
+    std::size_t initial_size = fmt_len + FormatSizeHint;
+    
+    std::string str(initial_size, '\0');
+
+    while (true) {
+        if (str.size() > std::numeric_limits<int>::max()) {
+            throw std::bad_alloc();
+        }
+
+        std::va_list args;
+        va_start(args, fmt);
+        auto print_res = std::vsnprintf(&str[0], str.size(), fmt, args);
+        va_end(args);
+
+        if (print_res < 0) {
+            throw std::runtime_error("vsnprintf failed");
+        }
+
+        auto print_bytes = std::make_unsigned_t<decltype(print_res)>(print_res);
+
+        if (print_bytes < str.size()) {
+            str.resize(print_bytes);
+            break;
+        }
+
+        if (print_bytes > std::numeric_limits<std::size_t>::max() - 1) {
+            throw std::bad_alloc();
+        }
+
+        str.resize(print_bytes + 1);
+    }
+
+    return str;
+}
+
+}

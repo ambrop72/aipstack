@@ -22,7 +22,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "EventLoop.cpp"
-#include "SignalCommon.cpp"
-#include "SignalWatcher.cpp"
-#include "FormatString.cpp"
+#ifndef AIPSTACK_FORMAT_STRING_H
+#define AIPSTACK_FORMAT_STRING_H
+
+#include <string>
+
+namespace AIpStack {
+
+#ifdef __GNUC__
+__attribute__((format(__printf__, 1, 2)))
+#endif
+std::string formatString (char const *fmt, ...);
+
+}
+
+#endif
