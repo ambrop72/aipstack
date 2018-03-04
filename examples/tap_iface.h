@@ -51,19 +51,19 @@ namespace Private {
     };
 }
 
-template <typename StackArg, typename TheEthIpIfaceService>
+template <typename StackArg1, typename TheEthIpIfaceService>
 class TapIface :
     private AIpStack::TapDevice,
     private Private::TapIfaceMacAddr,
-    public AIpStack::EthIpIface<Private::EthIpIfaceArg<StackArg, TheEthIpIfaceService>>
+    public AIpStack::EthIpIface<Private::EthIpIfaceArg<StackArg1, TheEthIpIfaceService>>
 {
     using Platform = AIpStack::PlatformFacade<AIpStack::HostedPlatformImpl>;
 
     using TheEthIpIface =
-        AIpStack::EthIpIface<Private::EthIpIfaceArg<StackArg, TheEthIpIfaceService>>;
+        AIpStack::EthIpIface<Private::EthIpIfaceArg<StackArg1, TheEthIpIfaceService>>;
     
 public:
-    TapIface (Platform platform, AIpStack::IpStack<StackArg> *stack,
+    TapIface (Platform platform, AIpStack::IpStack<StackArg1> *stack,
               std::string const &device_id, AIpStack::MacAddr const &mac_addr)
     :
         AIpStack::TapDevice(platform.ref().platformImpl()->getEventLoop(), device_id),
