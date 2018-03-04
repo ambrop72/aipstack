@@ -31,6 +31,7 @@
 #include <aipstack/misc/Function.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Modulo.h>
+#include <aipstack/event_loop/FormatString.h>
 #include <aipstack/event_loop/platform_specific/SignalWatcherImplWindows.h>
 
 namespace AIpStack {
@@ -61,8 +62,9 @@ SignalCollectorImplWindows::SignalCollectorImplWindows () :
             std::lock_guard<std::mutex> lock(signal_collector_global_mutex);
             signal_collector_instance = nullptr;
         }
-        throw std::runtime_error(
-            "SignalCollector: SetConsoleCtrlHandler failed to add handler.");
+        throw std::runtime_error(formatString(
+            "SignalCollector: SetConsoleCtrlHandler failed to add handler, err=%u.",
+            (unsigned int)::GetLastError()));
     }
 }
 
@@ -71,8 +73,9 @@ SignalCollectorImplWindows::~SignalCollectorImplWindows ()
     if (!::SetConsoleCtrlHandler(
         &SignalCollectorImplWindows::consoleCtrlHandlerTrampoline, false))
     {
-        std::fprintf(stderr, "SignalCollector: SetConsoleCtrlHandler failed to "
-            "remove handler.\n");
+        std::fprintf(stderr,
+            "SignalCollector: SetConsoleCtrlHandler failed to remove handler, err=%u.\n",
+            (unsigned int)::GetLastError());
     }
 
     {

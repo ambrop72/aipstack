@@ -65,7 +65,7 @@ EventProviderWindows::~EventProviderWindows ()
     // run after we close the timer. This function is documented to not only stop the
     // timer but also cancel outstanding APCs.
     if (!::CancelWaitableTimer(*m_timer_handle)) {
-        std::fprintf(stderr, "EventProviderWindows: CancelWaitableTimer failed, err=%u",
+        std::fprintf(stderr, "EventProviderWindows: CancelWaitableTimer failed, err=%u\n",
             (unsigned int)::GetLastError());
     }
 }
@@ -182,7 +182,7 @@ void EventProviderWindows::signalToCheckAsyncSignals ()
         /*lpOverlapped=*/&m_async_signal_overlapped))
     {
         std::fprintf(stderr,
-            "EventProviderWindows: PostQueuedCompletionStatus failed, err=%u",
+            "EventProviderWindows: PostQueuedCompletionStatus failed, err=%u\n",
             (unsigned int)::GetLastError());
     }
 }

@@ -42,6 +42,7 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/Hints.h>
+#include <aipstack/event_loop/FormatString.h>
 #include <aipstack/event_loop/EventLoopCommon.h>
 #include <aipstack/event_loop/platform_specific/EventProviderLinux.h>
 
@@ -89,18 +90,21 @@ EventProviderLinux::EventProviderLinux () :
 {
     m_epoll_fd = FileDescriptorWrapper(::epoll_create1(EPOLL_CLOEXEC));
     if (!m_epoll_fd) {
-        throw std::runtime_error("epoll_create1 failed");
+        throw std::runtime_error(formatString(
+            "EventProviderLinux: epoll_create1 failed, err=%d", errno));
     }
 
     m_timer_fd = FileDescriptorWrapper(
         ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK|TFD_CLOEXEC));
     if (!m_timer_fd) {
-        throw std::runtime_error("timerfd_create failed");
+        throw std::runtime_error(formatString(
+            "EventProviderLinux: timerfd_create failed, err=%d", errno));
     }
 
     m_event_fd = FileDescriptorWrapper(::eventfd(0, EFD_NONBLOCK|EFD_CLOEXEC));
     if (!m_event_fd) {
-        throw std::runtime_error("eventfd failed");
+        throw std::runtime_error(formatString(
+            "EventProviderLinux: eventfd failed, err=%d", errno));
     }
 
     control_epoll(EPOLL_CTL_ADD, *m_timer_fd, EPOLLIN, &m_timer_fd);
@@ -196,7 +200,7 @@ bool EventProviderLinux::dispatchEvents ()
                 int err = errno;
                 if (err != EAGAIN) {
                     std::fprintf(stderr,
-                        "EventProviderLinux: read from eventfd failed, err=%d", err);
+                        "EventProviderLinux: read from eventfd failed, err=%d\n", err);
                 }
             }
 
@@ -234,7 +238,7 @@ void EventProviderLinux::signalToCheckAsyncSignals ()
         int err = errno;
         if (err != EAGAIN) {
             std::fprintf(stderr,
-                "EventProviderLinux: write to eventfd failed, err=%d", err);
+                "EventProviderLinux: write to eventfd failed, err=%d\n", err);
         }
     }
 }
