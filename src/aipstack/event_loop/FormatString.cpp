@@ -30,6 +30,7 @@
 #include <limits>
 #include <type_traits>
 
+#include <aipstack/misc/MinMax.h>
 #include <aipstack/event_loop/FormatString.h>
 
 namespace AIpStack {
@@ -39,7 +40,7 @@ static std::size_t const FormatSizeHint = 25;
 std::string formatString (char const *fmt, ...)
 {
     std::size_t fmt_len = std::strlen(fmt);
-    if (fmt_len > std::numeric_limits<std::size_t>::max() - FormatSizeHint) {
+    if (fmt_len > TypeMax<std::size_t>() - FormatSizeHint) {
         throw std::bad_alloc();
     }
     std::size_t initial_size = fmt_len + FormatSizeHint;
@@ -47,7 +48,7 @@ std::string formatString (char const *fmt, ...)
     std::string str(initial_size, '\0');
 
     while (true) {
-        if (str.size() > std::numeric_limits<int>::max()) {
+        if (str.size() > TypeMax<int>()) {
             throw std::bad_alloc();
         }
 
@@ -67,7 +68,9 @@ std::string formatString (char const *fmt, ...)
             break;
         }
 
-        if (print_bytes > std::numeric_limits<std::size_t>::max() - 1) {
+        // The first check is redundant but may inhibit a warning.
+        std::size_t const Limit = TypeMax<std::size_t>() - 1;
+        if (TypeMax<decltype(print_bytes)>() > Limit && print_bytes > Limit) {
             throw std::bad_alloc();
         }
 
