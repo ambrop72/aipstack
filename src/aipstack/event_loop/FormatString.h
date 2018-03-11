@@ -29,10 +29,17 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup event-loop
+ * @{
+ */
+
 #ifdef __GNUC__
 __attribute__((format(__printf__, 1, 2)))
 #endif
 std::string formatString (char const *fmt, ...);
+
+/** @} */
 
 }
 

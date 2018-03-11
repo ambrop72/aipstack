@@ -33,6 +33,11 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup event-loop
+ * @{
+ */
+
 enum class SignalType {
     None         = 0,
     Interrupt    = 1 << 0,
@@ -48,9 +53,13 @@ enum class SignalType {
     Break        = 1 << 10,
     ExitSignals  = Interrupt|Terminate|Hangup|Quit|Break,
 };
+#ifndef IN_DOXYGEN
 AIPSTACK_ENUM_BITFIELD_OPS(SignalType)
+#endif
 
 char const * nativeNameForSignalType(SignalType signal);
+
+#ifndef IN_DOXYGEN
 
 #if defined(__linux__)
 
@@ -65,6 +74,10 @@ void initSigSetToSignals(::sigset_t &set, SignalType signals);
 SignalType getSignalsFromSigSet(::sigset_t const &set);
 
 #endif
+
+#endif
+
+/** @} */
 
 }
 

@@ -30,21 +30,32 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup event-loop
+ * @{
+ */
+
 struct SignalInfo {
     SignalType type;
 };
 
+#ifndef IN_DOXYGEN
 class SignalCollectorImplBase {
 public:
     inline SignalType baseGetSignals () const;
 };
+#endif
 
+#ifndef IN_DOXYGEN
 class SignalWatcherImplBase {
 public:
     inline EventLoop & getEventLoop () const;
     inline SignalCollectorImplBase & getCollector () const;
     inline void callHandler (SignalInfo signal_info);
 };
+#endif
+
+/** @} */
 
 }
 

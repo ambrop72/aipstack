@@ -1,0 +1,70 @@
+/*
+ * Copyright (c) 2018 Ambroz Bizjak
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+namespace AIpStack {
+
+/**
+ * @defgroup event-loop Event Loop
+ * @brief An event loop implementation for hosted platforms.
+ * 
+ * This module provides an implementation of an event loop that currently supports
+ * Linux and Windows. It is designed to expose specific fundamental event notification
+ * mechanisms for the given platform and as such should allow integrating many
+ * different types of I/O into the event loop.
+ * 
+ * This event loop can be used when one wants to use AIpStack on a hosted platform,
+ * especially for testing purposes. When using AIpStack with this event loop, @ref
+ * AIpStack::HostedPlatformImpl "HostedPlatformImpl" should be used as the platform
+ * implementation (see @ref platform). But in general, most of AIpStack does not
+ * require this event loop but only that a conforming platform implementation is
+ * provided.
+ * 
+ * This event loop can also be used on its own for event-driven applications without
+ * using the AIpStack TCP/IP implementation. However for use in this role it currently
+ * lacks many desirable facilities such as network API abstractions.
+ * 
+ * The @ref EventLoop class represents the event loop itself. The event loop is not
+ * thread-safe; a single @ref EventLoop instance and all objects which use that event loop
+ * may only be used in the context of a single thread except where documented otherwise.
+ * However any number of event loops can co-exist within different threads.
+ * 
+ * The following classes provide notifications in the context of an event loop:
+ * - @ref EventLoopTimer provides time-based notifications based on a specific clock (the
+ *   @ref EventLoopClock.
+ * - @ref EventLoopAsyncSignal invokes a callback in the event loop after a specific
+ *   function is called from an arbitrary thread, enabing polling-free reactions to
+ *   actions performed by other threads.
+ * - @ref EventLoopFdWatcher (Linux only) provides notifications about I/O readiness of a
+ *   file descriptor.
+ * - @ref EventLoopIocpNotifier (Windows only) provides notifications of completed IOCP
+ *   operations.
+ * - @ref SignalWatcher provides notifications of operating system signals received by
+ *   a process.
+ * 
+ * In order to use the event loop, the source file
+ * `src/aipstack/event_loop/EventLoopAmalgamation.cpp` must be compiled and linked to
+ * This file includes all the other cpp files needed for the event loop implementation.
+ */
+
+}

@@ -40,6 +40,11 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup event-loop
+ * @{
+ */
+
 #ifndef IN_DOXYGEN
 class SignalWatcherMembers;
 class SignalWatcher;
@@ -106,6 +111,8 @@ public:
 
     ~SignalWatcher ();
 };
+
+/** @} */
 
 }
 
