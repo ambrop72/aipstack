@@ -190,7 +190,9 @@ public:
     /**
      * Construct the event loop.
      * 
-     * @throw std::runtime_error If an unexpected error occurs.
+     * @throw std::runtime_error If an error occurs in platform-specific initialization of
+     *        event facilities.
+     * @throw std::bad_alloc If a memory allocation error occurs.
      */
     EventLoop ();
 
@@ -220,6 +222,7 @@ public:
      * 
      * @throw std::runtime_error If an unexpected error occurs. It is currently not safe
      *        to call @ref run again after an exception.
+     * @throw any Any exceptions from event handlers are propagated directly.
      */
     void run ();
 
@@ -391,6 +394,8 @@ protected:
      * It is guaranteed that the timer was in running state just before the call and
      * that the scheduled expiration time has been reached. The timer transitions to
      * stopped state just before the call.
+     * 
+     * The callback is always called asynchronously (not from any public member function).
      */
     virtual void handleTimerExpired () = 0;
 
@@ -428,6 +433,8 @@ public:
      * Type of callback function used to report previous @ref signal calls.
      * 
      * See the @ref EventLoopAsyncSignal class description for details.
+     * 
+     * The callback is always called asynchronously (not from any public member function).
      */
     using SignalEventHandler = Function<void()>;
 
@@ -516,6 +523,8 @@ public:
      * may be reported even if they were not requested; see @ref EventLoopFdEvents for
      * details and justifications.
      * 
+     * The callback is always called asynchronously (not from any public member function).
+     * 
      * @param events Set of reported events (guaranteed to be non-empty).
      */
     using FdEventHandler = Function<void(EventLoopFdEvents events)>;
@@ -528,6 +537,9 @@ public:
      * 
      * @param loop Event loop; it must outlive the fd-watcher object.
      * @param handler Callback function (must not be null).
+     * @throw std::runtime_error If an error occurs in platform-specific setup of
+     *        file-descriptor monitoring.
+     * @throw std::bad_alloc If a memory allocation error occurs.
      */
     EventLoopFdWatcher (EventLoop &loop, FdEventHandler handler);
 
@@ -672,6 +684,8 @@ public:
      * 
      * It is guaranteed that the IOCP-notifier object was in Busy state just before the
      * call. The object transitions to Idle state just before the call.
+     * 
+     * The callback is always called asynchronously (not from any public member function).
      */
     using IocpEventHandler = Function<void()>;
 
@@ -707,8 +721,8 @@ public:
      * of memory (while keeping the old one alive) and therefore could throw, which does
      * not seem right.
      * 
-     * @throw std::bad_alloc If allocating memory failed (the object did not transition to
-     *        Idle state).
+     * @throw std::bad_alloc If a memory allocation error occurs. The object did not
+     *        transition to Idle state).
      */
     void prepare ();
 

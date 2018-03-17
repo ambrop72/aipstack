@@ -45,7 +45,7 @@ SignalWatcherMembers::SignalWatcherMembers (
     m_handler(handler)
 {
     if (m_collector.m_collector_watcher != nullptr) {
-        throw std::runtime_error(
+        throw std::logic_error(
             "SignalWatcher: Only one instance may be used with one SignalCollector.");
     }
 

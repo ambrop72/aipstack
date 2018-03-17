@@ -35,7 +35,13 @@ namespace AIpStack {
  * @{
  */
 
+/**
+ * Represents information about a received signal as reported by @ref SignalWatcher.
+ */
 struct SignalInfo {
+    /**
+     * Type of received signal.
+     */
     SignalType type;
 };
 

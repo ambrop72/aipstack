@@ -59,8 +59,8 @@ namespace AIpStack {
  *   file descriptor.
  * - @ref EventLoopIocpNotifier (Windows only) provides notifications of completed IOCP
  *   operations.
- * - @ref SignalWatcher provides notifications of operating system signals received by
- *   a process.
+ * - @ref SignalWatcher (in combination with @ref SignalCollector) provides notifications
+     of operating-system signals received by a process.
  * 
  * In order to use the event loop, the source file
  * `src/aipstack/event_loop/EventLoopAmalgamation.cpp` must be compiled and linked to

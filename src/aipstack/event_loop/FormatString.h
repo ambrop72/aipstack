@@ -34,6 +34,15 @@ namespace AIpStack {
  * @{
  */
 
+/**
+ * Format a string using the `printf`-family format.
+ * 
+ * @param fmt Format string.
+ * @param ... Format arguments (must match format string as required by `printf`).
+ * @return Formatted string.
+ * @throw std::runtime_error If formatting fails for an unknown reason.
+ * @throw std::bad_alloc If a memory allocation error occurs.
+ */
 #ifdef __GNUC__
 __attribute__((format(__printf__, 1, 2)))
 #endif

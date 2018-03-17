@@ -35,8 +35,23 @@
  */
 
 #ifdef IN_DOXYGEN
+
+/**
+ * Specifies whether the event loop supports watching file descriptors via @ref
+ * AIpStack::EventLoopFdWatcher "EventLoopFdWatcher" (0 or 1).
+ * 
+ * Currently this is true for Linux.
+ */
 #define AIPSTACK_EVENT_LOOP_HAS_FD PLATFORM_DEPENDENT
+
+/**
+ * Specifies whether the event loop supports integrating Windows IOCP via @ref
+ * AIpStack::EventLoopIocpNotifier "EventLoopIocpNotifier" (0 or 1).
+ * 
+ * Currently this is true for Windows.
+ */
 #define AIPSTACK_EVENT_LOOP_HAS_IOCP PLATFORM_DEPENDENT
+
 #else
 
 #if defined(__linux__)
@@ -141,26 +156,12 @@ public:
  * Operators provided by @ref AIPSTACK_ENUM_BITFIELD_OPS are available.
  */
 enum class EventLoopFdEvents {
-    /**
-     * Ready for reading.
-     */
-    Read  = 1 << 0,
-    /**
-     * Ready for writing.
-     */
-    Write = 1 << 1,
-    /**
-     * Error occurred.
-     */
-    Error = 1 << 2,
-    /**
-     * Hangup occurred.
-     */
-    Hup   = 1 << 3,
-    /**
-     * Mask of all above event types listed above.
-     */
-    All   = Read|Write|Error|Hup,
+    Zero  = 0, /**< Zero value representing no events. */
+    Read  = 1 << 0, /**< Ready for reading. */
+    Write = 1 << 1, /**< Ready for writing. */
+    Error = 1 << 2, /**< Error occurred. */
+    Hup   = 1 << 3, /**< Hangup occurred. */
+    All   = Read|Write|Error|Hup, /**< Mask of all above event types listed above. */
 };
 #ifndef IN_DOXYGEN
 AIPSTACK_ENUM_BITFIELD_OPS(EventLoopFdEvents)

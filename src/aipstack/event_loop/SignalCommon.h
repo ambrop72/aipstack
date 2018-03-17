@@ -38,25 +38,51 @@ namespace AIpStack {
  * @{
  */
 
+/**
+ * Types of operating system signals, possibly used as a bitmask.
+ * 
+ * The set of signals in this enum does not depend on the platform but actual support for
+ * specific signals in facilities such as @ref SignalCollector and @ref
+ * nativeNameForSignalType does.
+ * 
+ * Operators provided by @ref AIPSTACK_ENUM_BITFIELD_OPS are available.
+ */
 enum class SignalType {
-    None         = 0,
-    Interrupt    = 1 << 0,
-    Terminate    = 1 << 1,
-    Hangup       = 1 << 2,
-    Quit         = 1 << 3,
-    User1        = 1 << 4,
-    User2        = 1 << 5,
-    Child        = 1 << 6,
-    Alarm        = 1 << 7,
-    InputOutput  = 1 << 8,
-    WindowResize = 1 << 9,
-    Break        = 1 << 10,
+    None         = 0, /**< Zero value represening no signals. */
+    Interrupt    = 1 << 0, /**< Interrupt signal (SIGINT in \*nix). */
+    Terminate    = 1 << 1, /**< Terminate signal (SIGTERM in \*nix). */
+    Hangup       = 1 << 2, /**< Hangup signal (SIGHUP in \*nix). */
+    Quit         = 1 << 3, /**< Quit signal (SIGQUIT in \*nix). */
+    User1        = 1 << 4, /**< User-defined signal 1 (SIGUSR1 in \*nix). */
+    User2        = 1 << 5, /**< User-defined signal 2 (SIGUSR2 in \*nix). */
+    Child        = 1 << 6, /**< Child stopped or terminated signal (SIGCHLD in \*nix). */
+    Alarm        = 1 << 7, /**< Alarm signal (SIGALRM in \*nix). */
+    InputOutput  = 1 << 8, /**< Input/output possible signal (SIGIO in \*nix). */
+    WindowResize = 1 << 9, /**< Window resize signal (SIGWINCH in \*nix). */
+    Break        = 1 << 10, /**< Break signal (Window-only). */
+    /**
+     * Mask of signals commonly understood as request for the program to exit.
+     * Currently this includes Interrupt, Terminate, Hangup, Quit and Break.
+     */
     ExitSignals  = Interrupt|Terminate|Hangup|Quit|Break,
 };
 #ifndef IN_DOXYGEN
 AIPSTACK_ENUM_BITFIELD_OPS(SignalType)
 #endif
 
+/**
+ * Get the platform-native name for a signal represented by a @ref SignalType enum.
+ * 
+ * On \*nix, this returns the upper-case SIG\* names such as SIGINT. On Windows it returns
+ * CTRL_C_EVENT, CTRL_BREAK_EVENT or CTRL_CLOSE_EVENT (see @ref SignalCollector for more
+ * information about Windows support).
+ * 
+ * @param signal Signal to get the name of (one signal not mask). This functions tolerates
+ *        any value of this argument.
+ * @return Name of the signal as a null-terminated string, or "unknown" if the signal is
+ *         not one of the signals defined by the @ref SignalType enum or is not supported
+ *         for the platform. The string is in static storage.
+ */
 char const * nativeNameForSignalType(SignalType signal);
 
 #ifndef IN_DOXYGEN
