@@ -85,8 +85,7 @@ struct EventLoopPriv::AsyncSignalNodeAccessor : public MemberAccessor<
 
 EventLoopMembers::EventLoopMembers() :
     m_stop(false),
-    m_event_time(EventLoop::getTime()),
-    m_last_wait_time(EventLoopTime::max())
+    m_event_time(EventLoop::getTime())
 {
     EventLoop::AsyncSignalList::initLonely(m_pending_async_list);
     EventLoop::AsyncSignalList::initLonely(m_dispatch_async_list);    
@@ -140,9 +139,9 @@ void EventLoop::run ()
             return;
         }
 
-        EventLoopWaitTimeoutInfo timeout_info = prepare_timers_for_wait();
+        EventLoopTime wait_time = prepare_timers_for_wait();
 
-        EventProvider::waitForEvents(timeout_info);
+        EventProvider::waitForEvents(wait_time);
     }
 }
 
@@ -184,7 +183,7 @@ bool EventLoop::dispatch_timers ()
     return true;
 }
 
-EventLoopWaitTimeoutInfo EventLoop::prepare_timers_for_wait ()
+EventLoopTime EventLoop::prepare_timers_for_wait ()
 {
     EventLoopTime first_time = EventLoopTime::max();
 
@@ -206,14 +205,7 @@ EventLoopWaitTimeoutInfo EventLoop::prepare_timers_for_wait ()
         }
     }
 
-    return update_last_wait_time(first_time);
-}
-
-EventLoopWaitTimeoutInfo EventLoop::update_last_wait_time (EventLoopTime wait_time)
-{
-    bool time_changed = (wait_time != m_last_wait_time);
-    m_last_wait_time = wait_time;
-    return {wait_time, time_changed};
+    return first_time;
 }
 
 bool EventLoop::dispatch_async_signals ()
@@ -519,10 +511,7 @@ void EventLoop::wait_for_final_iocp_results ()
     bool first_try = true;
     while (m_num_iocp_resources > 0) {
         if (!first_try) {
-            EventLoopWaitTimeoutInfo timeout_info =
-                update_last_wait_time(EventLoopTime::max());
-            
-            EventProvider::waitForEvents(timeout_info);
+            EventProvider::waitForEvents(EventLoopTime::max());
         }
         
         first_try = false;

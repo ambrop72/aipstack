@@ -50,7 +50,7 @@ public:
 
     ~EventProviderLinux ();
 
-    void waitForEvents (EventLoopWaitTimeoutInfo timeout_info);
+    void waitForEvents (EventLoopTime wait_time);
 
     bool dispatchEvents ();
 
@@ -63,6 +63,7 @@ private:
     FileDescriptorWrapper m_epoll_fd;
     FileDescriptorWrapper m_timer_fd;
     FileDescriptorWrapper m_event_fd;
+    EventLoopTime m_timerfd_time;
     bool m_force_timerfd_update;
     int m_cur_epoll_event;
     int m_num_epoll_events;

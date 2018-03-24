@@ -46,7 +46,7 @@ public:
 
     ~EventProviderWindows ();
 
-    void waitForEvents (EventLoopWaitTimeoutInfo timeout_info);
+    void waitForEvents (EventLoopTime wait_time);
 
     bool dispatchEvents ();
 
@@ -63,6 +63,7 @@ private:
     WinHandleWrapper m_timer_handle;
     int m_cur_iocp_event;
     int m_num_iocp_events;
+    EventLoopTime m_timer_time;
     bool m_force_timer_update;
     OVERLAPPED m_async_signal_overlapped;
     OVERLAPPED_ENTRY m_iocp_events[MaxIocpEvents];

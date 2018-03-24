@@ -113,7 +113,6 @@ struct EventLoopMembers {
     StructureRaiiWrapper<EventLoopPriv::TimerHeap> m_timer_heap;
     bool m_stop;
     EventLoopTime m_event_time;
-    EventLoopTime m_last_wait_time;
     std::mutex m_async_signal_mutex;
     EventLoopPriv::AsyncSignalNode m_pending_async_list;
     EventLoopPriv::AsyncSignalNode m_dispatch_async_list;
@@ -285,9 +284,7 @@ private:
 
     bool dispatch_timers ();
 
-    EventLoopWaitTimeoutInfo prepare_timers_for_wait ();
-
-    EventLoopWaitTimeoutInfo update_last_wait_time (EventLoopTime wait_time);
+    EventLoopTime prepare_timers_for_wait ();
 
     bool dispatch_async_signals ();
 

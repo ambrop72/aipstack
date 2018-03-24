@@ -38,6 +38,7 @@ namespace AIpStack {
 EventProviderWindows::EventProviderWindows () :
     m_cur_iocp_event(0),
     m_num_iocp_events(0),
+    m_timer_time(EventLoopTime::max()),
     m_force_timer_update(true),
     m_async_signal_overlapped{}
 {
@@ -70,7 +71,7 @@ EventProviderWindows::~EventProviderWindows ()
     }
 }
 
-void EventProviderWindows::waitForEvents (EventLoopWaitTimeoutInfo timeout_info)
+void EventProviderWindows::waitForEvents (EventLoopTime wait_time)
 {
     AIPSTACK_ASSERT(m_cur_iocp_event == m_num_iocp_events)
 
@@ -88,11 +89,11 @@ void EventProviderWindows::waitForEvents (EventLoopWaitTimeoutInfo timeout_info)
     // obtain time for use with SetWaitableTimer (1601 epoch). The unit is 100us.
     LONGLONG const UnixToFileTimeOffset = 116444736000000000;
 
-    if (timeout_info.time_changed || m_force_timer_update) {
+    if (wait_time != m_timer_time || m_force_timer_update) {
         m_force_timer_update = true;
 
         // Get the tick count from the system_clock-based timeout.
-        auto unix_time = timeout_info.time.time_since_epoch().count();
+        auto unix_time = wait_time.time_since_epoch().count();
 
         // Convert time. The general case is the last one but the first two checks
         // effectively clamp the result to [1, MAX_LONGLONG].
@@ -121,6 +122,7 @@ void EventProviderWindows::waitForEvents (EventLoopWaitTimeoutInfo timeout_info)
                 (unsigned int)::GetLastError()));
         }
 
+        m_timer_time = wait_time;
         m_force_timer_update = false;
     }
 

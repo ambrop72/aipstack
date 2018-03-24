@@ -115,13 +115,6 @@ using EventLoopTime = EventLoopClock::time_point;
 using EventLoopDuration = EventLoopClock::duration;
 
 #ifndef IN_DOXYGEN
-struct EventLoopWaitTimeoutInfo {
-    EventLoopTime time;
-    bool time_changed;
-};
-#endif
-
-#ifndef IN_DOXYGEN
 class EventProviderBase {
 public:
     inline bool getStop () const;
