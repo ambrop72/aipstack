@@ -245,16 +245,20 @@ public:
         ac(ac(e).prev.ref(st)).next = e.link(st);
     }
     
-    static void initReplaceNotLonely (Ref e, Ref other, State st = State())
+    static void moveOtherNodesBefore (Ref e, Ref other, State st = State())
     {
         AIPSTACK_ASSERT(!e.isNull())
         AIPSTACK_ASSERT(!other.isNull())
-        AIPSTACK_ASSERT(!(ac(other).next == other.link(st)))
+        AIPSTACK_ASSERT(!(ac(e).next == other.link(st)))
+
+        ac(ac(other).prev.ref(st)).next = ac(e).next;
+        ac(ac(e).next.ref(st)).prev = ac(other).prev;
         
-        ac(e).prev = ac(other).prev;
-        ac(e).next = ac(other).next;
-        ac(ac(e).prev.ref(st)).next = e.link(st);
-        ac(ac(e).next.ref(st)).prev = e.link(st);
+        ac(ac(e).prev.ref(st)).next = other.link(st);
+        ac(other).prev = ac(e).prev;
+
+        ac(e).prev = e.link(st);
+        ac(e).next = e.link(st);
     }
     
     static void remove (Ref e, State st = State())

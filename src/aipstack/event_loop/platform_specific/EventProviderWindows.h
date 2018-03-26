@@ -52,7 +52,9 @@ public:
 
     void signalToCheckAsyncSignals ();
 
-    inline HANDLE getIocpHandle () const { return *m_iocp_handle; }
+    inline HANDLE getIocpHandle () const {
+        return *m_iocp_handle;
+    }
 
 private:
     static void CALLBACK timerApcCallbackTrampoline(void *arg, DWORD lowVal, DWORD highVal);

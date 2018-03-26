@@ -117,7 +117,6 @@ using EventLoopDuration = EventLoopClock::duration;
 #ifndef IN_DOXYGEN
 class EventProviderBase {
 public:
-    inline bool getStop () const;
     inline bool dispatchAsyncSignals ();
     #if AIPSTACK_EVENT_LOOP_HAS_IOCP
     inline bool handleIocpResult (void *completion_key, OVERLAPPED *overlapped);
@@ -165,8 +164,9 @@ class EventProviderFdBase {
 public:
     inline EventProviderBase & getProvider () const;
     inline void sanityCheck () const;
+    inline int getFd () const;
     inline EventLoopFdEvents getFdEvents () const;
-    inline void callFdEventHandler (EventLoopFdEvents events);
+    inline bool callFdEventHandler (EventLoopFdEvents events);
 };
 #endif
 

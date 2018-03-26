@@ -75,15 +75,11 @@ class EventProviderLinuxFd :
     private NonCopyable<EventProviderLinuxFd>
 {
 public:
-    EventProviderLinuxFd () = default;
-
-    ~EventProviderLinuxFd () = default;
-
     void initFdImpl (int fd, EventLoopFdEvents events);
 
-    void updateEventsImpl (int fd, EventLoopFdEvents events);
+    void updateEventsImpl (EventLoopFdEvents events);
 
-    void resetImpl (int fd);
+    void resetImpl ();
 
 private:
     inline EventProviderLinux & getProvider () const;

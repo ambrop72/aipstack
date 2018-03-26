@@ -34,8 +34,10 @@
 #include <aipstack/event_loop/EventLoop.h>
 
 #if AIPSTACK_EVENT_LOOP_HAS_IOCP
+#include <cstdio>
 #include <utility>
 #include <memory>
+#include <stdexcept>
 #endif
 
 namespace AIpStack {
@@ -52,11 +54,8 @@ struct EventLoopPriv::TimerCompare {
         EventLoopTimer &tim1 = *ref1;
         EventLoopTimer &tim2 = *ref2;
 
-        std::uint8_t order1 = std::uint8_t(tim1.m_state) & EventLoop::TimerStateOrderMask;
-        std::uint8_t order2 = std::uint8_t(tim2.m_state) & EventLoop::TimerStateOrderMask;
-
-        if (order1 != order2) {
-            return (order1 < order2) ? -1 : 1;
+        if (tim1.m_state != tim2.m_state) {
+            return (tim1.m_state < tim2.m_state) ? -1 : 1;
         }
 
         if (tim1.m_time != tim2.m_time) {
@@ -68,9 +67,12 @@ struct EventLoopPriv::TimerCompare {
 
     inline static int compareKeyEntry (State, EventLoopTime time1, Ref ref2)
     {
+        TimerState state1 = TimerState::Pending;
         EventLoopTimer &tim2 = *ref2;
 
-        AIPSTACK_ASSERT(tim2.m_state == TimerState::Pending)
+        if (state1 != tim2.m_state) {
+            return (state1 < tim2.m_state) ? -1 : 1;
+        }
         
         if (time1 != tim2.m_time) {
             return (time1 < tim2.m_time) ? -1 : 1;
@@ -85,15 +87,20 @@ struct EventLoopPriv::AsyncSignalNodeAccessor : public MemberAccessor<
 
 EventLoopMembers::EventLoopMembers() :
     m_stop(false),
-    m_event_time(EventLoop::getTime())
+    m_recheck_async_signals(false),
+    m_event_time(EventLoop::getTime()),
+    m_num_timers(0),
+    m_num_async_signals(0)
+    #if AIPSTACK_EVENT_LOOP_HAS_FD
+    ,m_num_fd_notifiers(0)
+    #endif
+    #if AIPSTACK_EVENT_LOOP_HAS_IOCP
+    ,m_num_iocp_notifiers(0)
+    ,m_num_iocp_resources(0)
+    #endif
 {
     EventLoop::AsyncSignalList::initLonely(m_pending_async_list);
     EventLoop::AsyncSignalList::initLonely(m_dispatch_async_list);    
-
-    #if AIPSTACK_EVENT_LOOP_HAS_IOCP
-    m_num_iocp_notifiers = 0;
-    m_num_iocp_resources = 0;
-    #endif
 }
 
 EventLoop::EventLoop () :
@@ -103,15 +110,26 @@ EventLoop::EventLoop () :
 
 EventLoop::~EventLoop ()
 {
+    AIPSTACK_ASSERT(m_num_timers == 0)
     AIPSTACK_ASSERT(m_timer_heap.isEmpty())
+    AIPSTACK_ASSERT(m_num_async_signals == 0)
     AIPSTACK_ASSERT(AsyncSignalList::isLonely(m_pending_async_list))
     AIPSTACK_ASSERT(AsyncSignalList::isLonely(m_dispatch_async_list))
+    #if AIPSTACK_EVENT_LOOP_HAS_FD
+    AIPSTACK_ASSERT(m_num_fd_notifiers == 0)
+    #endif
     #if AIPSTACK_EVENT_LOOP_HAS_IOCP
     AIPSTACK_ASSERT(m_num_iocp_notifiers == 0)
     #endif
     
     #if AIPSTACK_EVENT_LOOP_HAS_IOCP
-    wait_for_final_iocp_results();
+    try {
+        wait_for_final_iocp_results();
+    } catch (std::runtime_error const &ex) {
+        // Should not happen. Here we leak IocpResource's including user_resource's.
+        std::fprintf(stderr, "EventLoop: exception in wait_for_final_iocp_results "
+            "(memory leaked): %s\n", ex.what());
+    }
     #endif
 }
 
@@ -135,11 +153,17 @@ void EventLoop::run ()
             return;
         }
 
+        if (AIPSTACK_UNLIKELY(m_recheck_async_signals)) {
+            if (!dispatch_async_signals()) {
+                return;
+            }
+        }
+
         if (!EventProvider::dispatchEvents()) {
             return;
         }
 
-        EventLoopTime wait_time = prepare_timers_for_wait();
+        EventLoopTime wait_time = get_timers_wait_time();
 
         EventProvider::waitForEvents(wait_time);
     }
@@ -149,12 +173,22 @@ void EventLoop::prepare_timers_for_dispatch (EventLoopTime now)
 {
     bool changed = false;
 
+    // Find all Pending timers which are expired with respect to 'now' and change their
+    // state to Dispatch.
     m_timer_heap.findAllLesserOrEqual(now, [&](EventLoopTimer *tim) {
-        AIPSTACK_ASSERT(tim->m_state == TimerState::Pending)
+        AIPSTACK_ASSERT(tim->m_state == OneOfHeapTimerStates())
 
-        tim->m_state = TimerState::Dispatch;
-        changed = true;
+        if (tim->m_state == TimerState::Pending) {
+            tim->m_state = TimerState::Dispatch;
+            changed = true;
+        }
     });
+
+    // It is important to understand that the changes performed (taken together) must not
+    // break the structure of the heap. Specifically, given any two timers, their relative
+    // order must remain the same or they become equal. This is satisfied because all
+    // Dispatch state timers compare equal among themselves and less than any Pending
+    // timer.
 
     if (changed) {
         m_timer_heap.assertValidHeap();
@@ -170,8 +204,8 @@ bool EventLoop::dispatch_timers ()
             break;
         }
 
-        tim->m_state = TimerState::TempUnset;
-        m_timer_heap.fixup(*tim);
+        m_timer_heap.remove(*tim);
+        tim->m_state = TimerState::Idle;
 
         tim->handleTimerExpired();
 
@@ -183,75 +217,67 @@ bool EventLoop::dispatch_timers ()
     return true;
 }
 
-EventLoopTime EventLoop::prepare_timers_for_wait ()
+EventLoopTime EventLoop::get_timers_wait_time () const
 {
-    EventLoopTime first_time = EventLoopTime::max();
-
-    while (EventLoopTimer *tim = m_timer_heap.first()) {
-        AIPSTACK_ASSERT(tim->m_state == OneOf(
-            TimerState::TempUnset, TimerState::TempSet, TimerState::Pending))
-        
-        if (tim->m_state == TimerState::TempUnset) {
-            m_timer_heap.remove(*tim);
-            tim->m_state = TimerState::Idle;
-        }
-        else if (tim->m_state == TimerState::TempSet) {
-            tim->m_state = TimerState::Pending;
-            m_timer_heap.fixup(*tim);
-        }
-        else {
-            first_time = tim->m_time;
-            break;
-        }
+    EventLoopTimer *tim = m_timer_heap.first();
+    if (tim == nullptr) {
+        return EventLoopTime::max();
     }
-
-    return first_time;
+    AIPSTACK_ASSERT(tim->m_state == TimerState::Pending)
+    return tim->m_time;
 }
 
 bool EventLoop::dispatch_async_signals ()
 {
-    AIPSTACK_ASSERT(AsyncSignalList::isLonely(m_dispatch_async_list))
+    // This flag is used to prevent the possibility of forgetting to dispatch a pending
+    // signal in case an exception occurs during dispatching below and run() is called
+    // again afterward. If this occurs, any next run() would see this flag to be true and
+    // call this function before waitForEvents.
+    m_recheck_async_signals = true;
 
-    std::unique_lock<std::mutex> lock(m_async_signal_mutex);
+    {
+        std::unique_lock<std::mutex> lock(m_async_signal_mutex);
 
-    if (AsyncSignalList::isLonely(m_pending_async_list)) {
-        return true;
-    }
-
-    AsyncSignalList::initReplaceNotLonely(m_dispatch_async_list, m_pending_async_list);
-    AsyncSignalList::initLonely(m_pending_async_list);
-
-    while (true) {
-        AsyncSignalNode *node = AsyncSignalList::next(m_dispatch_async_list);
-        if (node == &m_dispatch_async_list) {
-            break;
+        // Move any signals in the pending list to the end of the dispatch list.
+        if (!AsyncSignalList::isLonely(m_pending_async_list)) {
+            AsyncSignalList::moveOtherNodesBefore(
+                m_pending_async_list, m_dispatch_async_list);
         }
 
-        EventLoopAsyncSignal &asig = *static_cast<EventLoopAsyncSignal *>(node);
-        AIPSTACK_ASSERT(&asig.m_loop == this)
-        AIPSTACK_ASSERT(!AsyncSignalList::isRemoved(asig))
+        // Dispatch signals in the dispatch list.
+        while (true) {
+            // Get the next signal, if any (note the list is circular).
+            AsyncSignalNode *node = AsyncSignalList::next(m_dispatch_async_list);
+            if (node == &m_dispatch_async_list) {
+                break;
+            }
 
-        AsyncSignalList::remove(asig);
-        AsyncSignalList::markRemoved(asig);
+            EventLoopAsyncSignal &asig = *static_cast<EventLoopAsyncSignal *>(node);
+            AIPSTACK_ASSERT(&asig.m_loop == this)
+            AIPSTACK_ASSERT(!AsyncSignalList::isRemoved(asig))
 
-        lock.unlock();
+            // Remove the signal from the list.
+            AsyncSignalList::remove(asig);
+            AsyncSignalList::markRemoved(asig);
 
-        asig.m_handler();
+            // Unlock the mutex while calling the handler.
+            lock.unlock();
 
-        if (AIPSTACK_UNLIKELY(m_stop)) {
-            return false;
+            asig.m_handler();
+
+            if (AIPSTACK_UNLIKELY(m_stop)) {
+                return false;
+            }
+
+            // Lock mutex again before looking at the dispatch list.
+            lock.lock();
         }
-
-        lock.lock();
     }
+
+    // No exception occurred, clear this flag.
+    m_recheck_async_signals = false;
 
     return true;
-}
-
-bool EventProviderBase::getStop () const
-{
-    auto &event_loop = static_cast<EventLoop const &>(*this);
-    return event_loop.m_stop;
 }
 
 bool EventProviderBase::dispatchAsyncSignals ()
@@ -272,24 +298,25 @@ EventLoopTimer::EventLoopTimer (EventLoop &loop) :
     m_loop(loop),
     m_time(EventLoopTime()),
     m_state(TimerState::Idle)
-{}
+{
+    m_loop.m_num_timers++;
+}
 
 EventLoopTimer::~EventLoopTimer ()
 {
     if (m_state != TimerState::Idle) {
         m_loop.m_timer_heap.remove(*this);
     }
+
+    AIPSTACK_ASSERT(m_loop.m_num_timers > 0)
+    m_loop.m_num_timers--;
 }
 
 void EventLoopTimer::unset ()
 {
-    if (m_state == OneOf(TimerState::TempUnset, TimerState::TempSet)) {
-        m_state = TimerState::TempUnset;
-    } else {
-        if (m_state != TimerState::Idle) {
-            m_loop.m_timer_heap.remove(*this);
-            m_state = TimerState::Idle;
-        }
+    if (m_state != TimerState::Idle) {
+        m_loop.m_timer_heap.remove(*this);
+        m_state = TimerState::Idle;
     }
 }
 
@@ -297,17 +324,13 @@ void EventLoopTimer::setAt (EventLoopTime time)
 {
     m_time = time;
 
-    if (m_state == OneOf(TimerState::TempUnset, TimerState::TempSet)) {
-        m_state = TimerState::TempSet;
-    } else {
-        TimerState old_state = m_state;
-        m_state = TimerState::Pending;
+    TimerState old_state = m_state;
+    m_state = TimerState::Pending;
 
-        if (old_state == TimerState::Idle) {
-            m_loop.m_timer_heap.insert(*this);
-        } else {
-            m_loop.m_timer_heap.fixup(*this);            
-        }
+    if (old_state == TimerState::Idle) {
+        m_loop.m_timer_heap.insert(*this);
+    } else {
+        m_loop.m_timer_heap.fixup(*this);            
     }
 }
 
@@ -326,13 +349,18 @@ EventLoopFdWatcher::EventLoopFdWatcher (EventLoop &loop, FdEventHandler handler)
         /*m_events=*/EventLoopFdEvents()
     },
     EventProviderFd()
-{}
+{
+    m_loop.m_num_fd_notifiers++;
+}
 
 EventLoopFdWatcher::~EventLoopFdWatcher ()
 {
     if (m_watched_fd >= 0) {
-        EventProviderFd::resetImpl(m_watched_fd);
+        EventProviderFd::resetImpl();
     }
+
+    AIPSTACK_ASSERT(m_loop.m_num_fd_notifiers > 0)
+    m_loop.m_num_fd_notifiers--;
 }
 
 void EventLoopFdWatcher::initFd (int fd, EventLoopFdEvents events)
@@ -343,6 +371,7 @@ void EventLoopFdWatcher::initFd (int fd, EventLoopFdEvents events)
 
     EventProviderFd::initFdImpl(fd, events);
 
+    // Update these after initFdImpl so they remain unchanged in case of exception.
     m_watched_fd = fd;
     m_events = events;
 }
@@ -352,17 +381,16 @@ void EventLoopFdWatcher::updateEvents (EventLoopFdEvents events)
     AIPSTACK_ASSERT(m_watched_fd >= 0)
     AIPSTACK_ASSERT((events & ~EventLoopFdEvents::All) == EnumZero)
 
-    if (events != m_events) {
-        EventProviderFd::updateEventsImpl(m_watched_fd, events);
+    EventProviderFd::updateEventsImpl(events);
 
-        m_events = events;
-    }
+    // Update these after updateEventsImpl so they remain unchanged in case of exception.
+    m_events = events;
 }
 
 void EventLoopFdWatcher::reset ()
 {
     if (m_watched_fd >= 0) {
-        EventProviderFd::resetImpl(m_watched_fd);
+        EventProviderFd::resetImpl();
 
         m_watched_fd = -1;
         m_events = EventLoopFdEvents();
@@ -382,16 +410,29 @@ void EventProviderFdBase::sanityCheck () const
     AIPSTACK_ASSERT((fd_watcher.m_events & ~EventLoopFdEvents::All) == EnumZero)    
 }
 
+int EventProviderFdBase::getFd () const
+{
+    auto &fd_watcher = static_cast<EventLoopFdWatcher const &>(*this);
+    return fd_watcher.m_watched_fd;
+}
+
 EventLoopFdEvents EventProviderFdBase::getFdEvents () const
 {
     auto &fd_watcher = static_cast<EventLoopFdWatcher const &>(*this);
     return fd_watcher.m_events;
 }
 
-void EventProviderFdBase::callFdEventHandler (EventLoopFdEvents events)
+bool EventProviderFdBase::callFdEventHandler (EventLoopFdEvents events)
 {
     auto &fd_watcher = static_cast<EventLoopFdWatcher &>(*this);
-    return fd_watcher.m_handler(events);
+
+    fd_watcher.m_handler(events);
+
+    if (AIPSTACK_UNLIKELY(fd_watcher.m_loop.m_stop)) {
+        return false;
+    }
+
+    return true;
 }
 
 #endif
@@ -498,6 +539,7 @@ bool EventLoop::handle_iocp_result (void *completion_key, OVERLAPPED *overlapped
         notifier->m_busy = false;
 
         notifier->m_handler();
+
         if (AIPSTACK_UNLIKELY(m_stop)) {
             return false;
         }
@@ -509,14 +551,23 @@ bool EventLoop::handle_iocp_result (void *completion_key, OVERLAPPED *overlapped
 void EventLoop::wait_for_final_iocp_results ()
 {
     bool first_try = true;
+
     while (m_num_iocp_resources > 0) {
+        // Call waitForEvents only on non-first iterations, after having just called
+        // dispatchEvents. This is because we must not call waitForEvents before all
+        // available events have been dispatched.
         if (!first_try) {
             EventProvider::waitForEvents(EventLoopTime::max());
         }
-        
         first_try = false;
 
-        EventProvider::dispatchEvents();
+        // Call dispatchEvents to wait for IOCP operations to complete.
+        bool dispatch_res = EventProvider::dispatchEvents();
+
+        // dispatchEvents only returns false if it observed m_stop after having called
+        // an event handler. This cannot happen here because there are no event handlers
+        // that could be called.
+        AIPSTACK_ASSERT(dispatch_res)
     }
 }
 
@@ -527,11 +578,16 @@ EventLoopAsyncSignal::EventLoopAsyncSignal (EventLoop &loop, SignalEventHandler 
     m_handler(handler)
 {
     AsyncSignalList::markRemoved(*this);
+
+    m_loop.m_num_async_signals++;
 }
 
 EventLoopAsyncSignal::~EventLoopAsyncSignal ()
 {
     reset();
+
+    AIPSTACK_ASSERT(m_loop.m_num_async_signals > 0)
+    m_loop.m_num_async_signals--;
 }
 
 void EventLoopAsyncSignal::signal ()

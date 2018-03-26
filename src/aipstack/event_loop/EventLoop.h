@@ -64,6 +64,9 @@ struct EventLoopMembers;
 class EventLoop;
 class EventLoopTimer;
 class EventLoopAsyncSignal;
+#if AIPSTACK_EVENT_LOOP_HAS_FD
+class EventLoopFdWatcher;
+#endif
 #if AIPSTACK_EVENT_LOOP_HAS_IOCP
 class EventLoopIocpNotifier;
 #endif
@@ -112,10 +115,16 @@ struct EventLoopMembers {
     
     StructureRaiiWrapper<EventLoopPriv::TimerHeap> m_timer_heap;
     bool m_stop;
+    bool m_recheck_async_signals;
     EventLoopTime m_event_time;
     std::mutex m_async_signal_mutex;
     EventLoopPriv::AsyncSignalNode m_pending_async_list;
     EventLoopPriv::AsyncSignalNode m_dispatch_async_list;
+    std::size_t m_num_timers;
+    std::size_t m_num_async_signals;
+    #if AIPSTACK_EVENT_LOOP_HAS_FD
+    std::size_t m_num_fd_notifiers;
+    #endif
     #if AIPSTACK_EVENT_LOOP_HAS_IOCP
     std::size_t m_num_iocp_notifiers;
     std::size_t m_num_iocp_resources;
@@ -137,9 +146,9 @@ struct EventLoopMembers {
  * (including construct and destruct objects), with the exception that they must not
  * destruct the event loop.
  * 
- * The event loop is not thread-safe; a single @ref EventLoop instance and all objects
- * which use that event loop may only be used in the context of a single thread except
- * where documented otherwise.
+ * @warning The event loop is not thread-safe; a single @ref EventLoop instance and all
+ * objects which use that event loop may only be used in the context of a single thread
+ * except where documented otherwise.
  */
 class EventLoop :
     private NonCopyable<EventLoop>
@@ -154,6 +163,7 @@ class EventLoop :
     friend class EventLoopTimer;
     friend class EventLoopAsyncSignal;
     #if AIPSTACK_EVENT_LOOP_HAS_FD
+    friend class EventLoopFdWatcher;
     friend class EventProviderFdBase;
     #endif
     #if AIPSTACK_EVENT_LOOP_HAS_IOCP
@@ -162,21 +172,14 @@ class EventLoop :
 
     AIPSTACK_USE_TYPES(EventLoopPriv, (TimerHeapNode))
 
-    static int const TimerStateOrderBits = 2;
-    static std::uint8_t const TimerStateOrderMask = (1 << TimerStateOrderBits) - 1;
-
     enum class TimerState : std::uint8_t {
         Idle       = 0,
         Dispatch   = 1,
-        TempUnset  = 2,
-        TempSet    = 2 | (1 << TimerStateOrderBits),
-        Pending    = 3
+        Pending    = 2
     };
 
-    static constexpr auto OneOfHeapTimerStates ()
-    {
-        return OneOf(TimerState::Dispatch, TimerState::TempUnset,
-                     TimerState::TempSet, TimerState::Pending);
+    inline static constexpr auto OneOfHeapTimerStates () {
+        return OneOf(TimerState::Dispatch, TimerState::Pending);
     }
 
     AIPSTACK_USE_TYPES(EventLoopPriv, (AsyncSignalNode, AsyncSignalList))
@@ -198,8 +201,14 @@ public:
     /**
      * Destruct the event loop.
      * 
-     * The event loop must not be destructed from within the @ref run function (that is
-     * from within event handlers).
+     * @warning The event loop must not be destructed from within the @ref run function
+     * (that is from within event handlers) and not while any object exists which uses
+     * this event loop (e.g. @ref EventLoopTimer, @ref EventLoopAsyncSignal, @ref
+     * EventLoopFdWatcher, @ref EventLoopIocpNotifier).
+     * 
+     * @note On Windows, destruction involves waiting for the completion of any pending
+     * asynchronous I/O operations that had been abandoned by @ref EventLoopIocpNotifier
+     * objecs associated with this event loop.
      */
     ~EventLoop ();
 
@@ -207,21 +216,25 @@ public:
      * Stop the event loop by making the @ref run function return at the earliest
      * oppurtunity.
      * 
-     * If stop is called from outside of @ref run, then any subsequent @ref run call will
-     * return immediately without calling any event handlers. If stop is called from within
-     * @ref run, then @ref run will return after the current event handler returns.
+     * If stop is called from within @ref run, then @ref run will return after the current
+     * event handler returns. In any case, any subsequent @ref run call will return
+     * immediately without calling any event handlers. 
      */
     void stop ();
 
     /**
-     * Run the event loop, calling event handlers as events are detected.
+     * Run the event loop, waiting for events and calling event handlers.
      * 
      * Note that after @ref stop was called, further calls of @ref run will simply return
      * immediately.
      * 
-     * @throw std::runtime_error If an unexpected error occurs. It is currently not safe
-     *        to call @ref run again after an exception.
-     * @throw any Any exceptions from event handlers are propagated directly.
+     * Any exception from an event handler is propagated directly. The event loop and
+     * associated facilities (everything in the @ref event-loop group) are exception-safe
+     * in the sense that calling @ref run again after this has occurred is supported.
+     * 
+     * @throw std::runtime_error If an unexpected error occurs with the operation of the
+     *        event loop.
+     * @throw any Any exceptions from event handlers are propagated directly (see above).
      */
     void run ();
 
@@ -232,8 +245,7 @@ public:
      * 
      * @return Current time from @ref EventLoopClock.
      */
-    inline static EventLoopTime getTime ()
-    {
+    inline static EventLoopTime getTime () {
         return EventLoopClock::now();
     }
 
@@ -250,8 +262,7 @@ public:
      * 
      * @return Cached event time.
      */
-    inline EventLoopTime getEventTime () const
-    {
+    inline EventLoopTime getEventTime () const {
         return m_event_time;
     }
 
@@ -263,9 +274,9 @@ public:
      * It is necessary to call this function in order to receive IOCP events from
      * application-managed IOCP-capable handles (combined with the use of @ref
      * EventLoopIocpNotifier). The association is done using an unspecified completion key
-     * determined and used by the event loop implementation.
+     * selected by the event loop implementation.
      * 
-     * Note that after a handle is associated, is is imperative that any asynchronous I/O
+     * @warning After a handle is associated, is is imperative that any asynchronous I/O
      * operations performed with that handle are done with the assistance of @ref
      * EventLoopIocpNotifier as described in the documentation for that class. If this is
      * not respected, assertion errors and/or crashes will result as the event loop would
@@ -284,12 +295,13 @@ private:
 
     bool dispatch_timers ();
 
-    EventLoopTime prepare_timers_for_wait ();
+    EventLoopTime get_timers_wait_time () const;
 
     bool dispatch_async_signals ();
 
     #if AIPSTACK_EVENT_LOOP_HAS_IOCP
     bool handle_iocp_result (void *completion_key, OVERLAPPED *overlapped);
+
     void wait_for_final_iocp_results ();
     #endif
 };
@@ -298,7 +310,8 @@ private:
  * Provides scheduled notifications based on the @ref EventLoopClock.
  * 
  * This class allows requesting notification when a specific clock time is reached
- * by the @ref EventLoopClock (the choice of this clock depends on the platform).
+ * by the @ref EventLoopClock (the choice of which depends on the platform, see the
+ * linked documentation).
  * 
  * A timer object is always in one of two states, running and stopped. The timer is
  * started by calling @ref setAt or @ref setAfter and can be manually stopped by calling
@@ -307,10 +320,14 @@ private:
  * A running timer has an asssociated expiration time (which can be queried using @ref
  * getSetTime). Soon after the expiration time of a running timer is reached, the @ref
  * handleTimerExpired callback will be called, and the timer will transition to stopped
- * state just prior to the call.
+ * state just prior to the call. Periodic operation is intentionally not supported
+ * directly but can be achieved by restarting the timer from the callback.
  * 
  * In order to use the timer, one must define a derived class and override the @ref
  * handleTimerExpired pure virtual function.
+ * 
+ * The @ref EventLoopTimer class does not throw exceptions from any of its public functions
+ * including the constructor.
  */
 class EventLoopTimer :
     private NonCopyable<EventLoopTimer>
@@ -330,6 +347,8 @@ public:
 
     /**
      * Destruct the timer.
+     * 
+     * The callback will not be called after destruction.
      */
     ~EventLoopTimer ();
 
@@ -338,9 +357,8 @@ public:
      * 
      * @return True if the timer is running, false if it is stopped.
      */
-    inline bool isSet () const
-    {
-        return m_state != OneOf(TimerState::Idle, TimerState::TempUnset);
+    inline bool isSet () const {
+        return m_state != TimerState::Idle;
     }
 
     /**
@@ -349,15 +367,14 @@ public:
      * @return If the timer is running, its current expiration time. If the timer is not
      *         running, its last set expiration time or zero if it has never been started.
      */
-    inline EventLoopTime getSetTime () const
-    {
+    inline EventLoopTime getSetTime () const {
         return m_time;
     }
 
     /**
      * Stop the timer.
      * 
-     * The timer enters to stopped state (if that was not the case already) and the @ref
+     * The timer enters stopped state (if that was not the case already) and the @ref
      * handleTimerExpired callback will not be called before the timer is started next.
      */
     void unset ();
@@ -367,14 +384,14 @@ public:
      * 
      * The timer enters running state and its expiration time is set to the given time.
      * Note that it is valid to set an expiration time in the past, which would result in
-     * the callback being Call soon.
+     * the callback being called soon.
      * 
      * @param time Expiration time.
      */
     void setAt (EventLoopTime time);
 
     /**
-     * Start the timer to expire after the given (relative) duration.
+     * Start the timer to expire after the given duration.
      * 
      * This function is equivalent to calling
      * @ref setAt(@ref EventLoop::getEventTime()+duration).
@@ -414,6 +431,9 @@ private:
  * is called, where it specifically allowed to call @ref signal from any thread. No
  * transfer of data is provided and multiple subsequent @ref signal calls may result in
  * only one callback.
+ * 
+ * The @ref EventLoopAsyncSignal class does not throw exceptions from any of its public
+ * functions including the constructor.
  */
 class EventLoopAsyncSignal :
     private NonCopyable<EventLoopAsyncSignal>
@@ -429,7 +449,11 @@ public:
     /**
      * Type of callback function used to report previous @ref signal calls.
      * 
-     * See the @ref EventLoopAsyncSignal class description for details.
+     * See the class description for a general explanation.
+     * 
+     * It is guaranteed that a callback invocation corresponds to at least one @ref signal
+     * invocation. This means for example that the callback will not be called after
+     * construction or @ref reset until @ref signal subsequently has been called.
      * 
      * The callback is always called asynchronously (not from any public member function).
      */
@@ -437,9 +461,6 @@ public:
 
     /**
      * Construct the async-signal object.
-     * 
-     * It is guaranteed that the @ref SignalEventHandler callback will not be called until
-     * the first @ref signal call.
      * 
      * @param loop Event loop; it must outlive the async-signal object.
      * @param handler Callback function (must not be null).
@@ -470,10 +491,12 @@ public:
      * request.
      * 
      * Calling this function guarantees that the @ref SignalEventHandler callback will not
-     * be called until the next @ref signal call. This function should be unnecessary as
-     * long as the implementation of the @ref SignalEventHandler callback by the
-     * application checks that requisite conditions are satisified instead of assuming that
-     * a callback implies a previous call to @ref signal.
+     * be called until the next @ref signal call.
+     * 
+     * Use of this function should be unnecessary as long as the implementation of the @ref
+     * SignalEventHandler callback checks that requisite conditions are satisified instead
+     * of assuming that a callback implies a previous call to @ref signal (which however
+     * it does).
      */
     void reset ();
 
@@ -496,12 +519,14 @@ struct EventLoopFdWatcherMembers {
 /**
  * Provides notifications about I/O readiness of a file descriptor (Linux only).
  * 
- * An fd-watcher provide notifications when an application-specified file descriptor is
- * ready for a certain type of I/O operation.
+ * An fd-watcher object provides notifications when an application-specified file
+ * descriptor is ready for certain types of I/O operation (see @ref EventLoopFdEvents).
  * 
  * In order to monitor a file descriptor, the @ref initFd function should be called
  * after construction to specify the file descritor and types of I/O readiness to
- * monitor for. These types can subsequently be modified using @ref updateEvents.
+ * monitor for. These types can subsequently be modified using @ref updateEvents. The
+ * object can also be reset to the initial state using @ref reset, which allows calling
+ * @ref initFd again.
  */
 class EventLoopFdWatcher :
     private NonCopyable<EventLoopFdWatcher>
@@ -516,9 +541,9 @@ public:
     /**
      * Type of callback used to report file descriptor events.
      * 
-     * Note that the @ref EventLoopFdEvents::Error and @ref EventLoopFdEvents::Hup events
-     * may be reported even if they were not requested; see @ref EventLoopFdEvents for
-     * details and justifications.
+     * Note that the @ref EventLoopFdEvents::Error "Error" and @ref EventLoopFdEvents::Hup
+     * "Hup" events may be reported even if they were not requested; see @ref
+     * EventLoopFdEvents for details and justifications.
      * 
      * The callback is always called asynchronously (not from any public member function).
      * 
@@ -534,9 +559,6 @@ public:
      * 
      * @param loop Event loop; it must outlive the fd-watcher object.
      * @param handler Callback function (must not be null).
-     * @throw std::runtime_error If an error occurs in platform-specific setup of
-     *        file-descriptor monitoring.
-     * @throw std::bad_alloc If a memory allocation error occurs.
      */
     EventLoopFdWatcher (EventLoop &loop, FdEventHandler handler);
 
@@ -544,7 +566,7 @@ public:
      * Destruct the fd-watcher object.
      * 
      * @warning Be careful with the declaration order of members in your classes to ensure
-     * that the an fd-watcher is destructed before its monitored file descriptor is closed
+     * that the fd-watcher is destructed before its monitored file descriptor is closed
      * (e.g. @ref FileDescriptorWrapper should come before @ref EventLoopFdWatcher).
      */
     ~EventLoopFdWatcher ();
@@ -554,59 +576,68 @@ public:
      * 
      * @return True if monitoring a file descriptor, false if not.
      */
-    inline bool hasFd () const
-    {
+    inline bool hasFd () const {
         return m_watched_fd >= 0;
     }
 
     /**
      * Get the monitored file descriptor.
      * 
-     * @return The monitored file descritor, or -1 if not monitoring.
+     * @return The monitored file descritor, or -1 if not monitoring a file descriptor.
      */
-    inline int getFd () const
-    {
+    inline int getFd () const {
         return m_watched_fd;
     }
 
     /**
      * Get the types of I/O readiness being monitored.
      * 
+     * When monitoring a file descriptor, the result is always what the events were last
+     * set to, reflecting the last @ref initFd or @ref updateEvents call.
+     * 
      * @return Types of I/O readiness being monitored, none if not monitoring.
      */
-    inline EventLoopFdEvents getEvents () const
-    {
+    inline EventLoopFdEvents getEvents () const {
         return m_events;
     }
 
     /**
-     * Start monitoring a file descriptor.
+     * Start monitoring a file descriptor for the given types of I/O readiness.
      * 
-     * @note This function must not be called if a file descriptor is already being
-     * monitored. Either first call @ref reset, or use @ref updateEvents if you only need
-     * to change the types of I/O readiness being monitored for.
+     * @note This function may only be called when a file descriptor is not being
+     * monitored. If already monitoring a file descriptor, either first call @ref reset, or
+     * use @ref updateEvents if you only need to change the types of I/O readiness being
+     * monitored for.
      * 
      * @warning Do not close the file descriptor while it is being monitored. Call @ref
-     * reset or destruct the fs-watcher object before closing the file descriptor. See also
+     * reset or destruct the fd-watcher object before closing the file descriptor. See also
      * the related note in the destructor. Violating this requirement might not cause
-     * problems with Linux/epoll but might on other operating systems and event providers
+     * problems on Linux/epoll but might on other operating systems and event providers
      * that may be supported in the future.
      * 
-     * @param fd File descriptor.
+     * @warning Monitoring the same file descriptor in the same event loop using more than
+     * one @ref EventLoopFdWatcher instance at a time is not supported. The manifestations
+     * of doing that are not defined and depend on the platform.
+     * 
+     * @param fd File descriptor (must be an open file descriptor).
      * @param events Mask of I/O readiness types to monitor for, see @ref
      *        EventLoopFdEvents. Only bits which are defined there may be included.
      * @throw std::runtime_error If an error occurs registering the file descriptor with
      *        the event notification system (e.g. epoll).
+     * @throw std::bad_alloc If a memory allocation error occurs.
      */
     void initFd (int fd, EventLoopFdEvents events = {});
 
     /**
      * Set the types of I/O readiness that the file descriptor is being monitored for.
      * 
+     * @note This function must not be called if a file descriptor is not being monitored. 
+     * 
      * @param events Mask of I/O readiness types to monitor for, see @ref
      *        EventLoopFdEvents. Only bits which are defined there may be included.
      * @throw std::runtime_error If an error occurs changing the I/O types for the file
      *        descriptor in the event notification system (e.g. epoll).
+     * @throw std::bad_alloc If a memory allocation error occurs.
      */
     void updateEvents (EventLoopFdEvents events);
 
@@ -636,7 +667,7 @@ public:
  *   Call @ref ioStarted as soon as an operation is started successfully, which will cause
  *   a transition to the Busy state.
  * - Busy. In this state, the object is responsible for an ongoing I/O operation. The
- *   @ref EventLoopIocpNotifier callback will be called when the operation completes.
+ *   @ref IocpEventHandler callback will be called when the operation completes.
  * 
  * Concurrent operations are not allowed with the same object, but mutliple IOCP-notifier
  * instances can be used with the same handle if concurrent operations are needed.
@@ -655,9 +686,9 @@ public:
  * - Start the asynchronous I/O operation using the appropriate Windows API function
  *   while passing the pointer to the same `OVERLAPPED` structure. If that fails do not
  *   proceed since there would be no completion event.
- * - Call @ref ioStarted. This is essential, if you fail to do this the event loop may
- *   receive the completion event when it is not expecting it, and undefined behavior will
- *   occur.
+ * - Call @ref ioStarted. This is essential, if you fail to do this after having started
+ *   the operation, the event loop may receive the completion event when it is not
+ *   expecting it, and undefined behavior will occur.
  * - The @ref IocpEventHandler callback function will be called when the operation has
  *   completed. From this callback you will want to call `GetOverlappedResult` to retrieve
  *   the result of the operation.
@@ -679,8 +710,8 @@ public:
     /**
      * Type of callback used to report completion of an asynchronous I/O operation.
      * 
-     * It is guaranteed that the IOCP-notifier object was in Busy state just before the
-     * call. The object transitions to Idle state just before the call.
+     * It is guaranteed that the IOCP-notifier object was in Busy state and has
+     * transitioned to Idle state just before the call.
      * 
      * The callback is always called asynchronously (not from any public member function).
      */
@@ -701,24 +732,27 @@ public:
      * Destruct the IOCP-notifier object.
      * 
      * See the notes about destruction in Busy state in @ref ioStarted.
+     * 
+     * The @ref IocpEventHandler callback will not be called after destruction.
      */
     ~EventLoopIocpNotifier ();
 
     /**
-     * Allocate resources to allow the IOCP-notifier object to handle an asynchronous
+     * Allocate resources to allow the IOCP-notifier object to supervise an asynchronous
      * I/O operation.
      * 
-     * This may be called only in Unprepared state. On success (no exception), it the
-     * object transitions to Idle state.
+     * @note This function may only be called in Unprepared state.
+     * 
+     * On success (no exception), the object transitions to Idle state.
      * 
      * @note The reason for the existence of the Unprepared state is that a block of
-     * dynamically allocated memory (which includes `OVERLAPPED`) has to be kept alive if
-     * the IOCP-notifier object is destructed or @ref reset in Busy state, until the I/O
-     * operation completes. Without this state, @ref reset may have to allocate a new block
-     * of memory (while keeping the old one alive) and therefore could throw, which does
-     * not seem right.
+     * dynamically allocated memory (which includes the `OVERLAPPED` structure) has to be
+     * kept alive if the IOCP-notifier object is destructed or @ref reset in Busy state,
+     * until the I/O operation completes. Without this state, @ref reset may have to
+     * allocate a new block of memory (while keeping the old one alive) and therefore could
+     * throw, which does not seem right.
      * 
-     * @throw std::bad_alloc If a memory allocation error occurs. The object did not
+     * @throw std::bad_alloc If a memory allocation error occur (the object did not
      *        transition to Idle state).
      */
     void prepare ();
@@ -732,20 +766,22 @@ public:
     void reset ();
 
     /**
-     * Indicate that an asynchronous I/O operation has started and optionally specify a
-     * resource to be kept alive while the operation is running.
+     * Start supervising an asynchronous I/O operation which has just been started.
      * 
-     * This may only be called in Idle state.
+     * @note This function may only be called in Idle state.
+     * 
+     * The @ref IocpEventHandler callback will be called when the asynchronous I/O
+     * operation completes. However, if this object is destructed or @ref reset is called
+     * before the callback, the operation is effectively abandoned and the callback would
+     * not be called.
      * 
      * This function accepts a `shared_ptr` representing an opaque resource to which a
      * reference (`shared_ptr` instance) will be kept for the duration of the I/O
      * operation. If completion of the I/O operation is reported by the @ref
      * IocpEventHandler callback, the reference is released just before the callback. On
-     * the other hand, if the operation is abandoned before the callback (by destructing
-     * this object or calling @ref reset), the reference would be released later. Note that
-     * the @ref EventLoop destructor will wait for any such outstanding operations to
-     * complete, therefore the reference may also be released from there as opposed to from
-     * @ref EventLoop::run.
+     * the other hand, if the operation is abandone, the reference would be released later.
+     * Note that the @ref EventLoop destructor will wait for any such outstanding
+     * operations to complete, therefore the reference may also be released from there.
      * 
      * @param user_resource Shared pointer to an opaque resource to which a reference will
      *        be kept for the duration of the I/O operation (may be null).
@@ -757,19 +793,23 @@ public:
      * 
      * @return True if the object is in Idle or Busy state, false if in Unprepared state.
      */
-    inline bool isPrepared () const { return m_iocp_resource != nullptr; }
+    inline bool isPrepared () const {
+        return m_iocp_resource != nullptr;
+    }
 
     /**
      * Return whether the IOCP-notifier object is in Busy state.
      * 
      * @return The if the object is in Busy state, false if in Unprepared or Idle state.
      */
-    inline bool isBusy () const { return m_busy; }
+    inline bool isBusy () const {
+        return m_busy;
+    }
 
     /**
      * Return a reference to the `OVERLAPPED` structure managed by this object.
      * 
-     * This must not be called in Unprepared state.
+     * @note This function must not be called in Unprepared state.
      * 
      * @return Reference to the `OVERLAPPED` structure.
      */

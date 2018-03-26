@@ -50,7 +50,7 @@ namespace AIpStack {
 
 namespace EventProviderLinuxPriv {
 
-inline std::uint32_t events_to_epoll (EventLoopFdEvents req_ev)
+inline std::uint32_t get_events_to_request (EventLoopFdEvents req_ev)
 {
     std::uint32_t epoll_ev = 0;
     if ((req_ev & EventLoopFdEvents::Read) != EnumZero) {
@@ -122,8 +122,8 @@ void EventProviderLinux::waitForEvents (EventLoopTime wait_time)
     namespace chrono = std::chrono;
     using Period = EventLoopTime::period;
     using Rep = EventLoopTime::rep;
-    using SecType = decltype((itimerspec()).it_value.tv_sec);
-    using NsecType = decltype((itimerspec()).it_value.tv_nsec);
+    using SecType = decltype(itimerspec().it_value.tv_sec);
+    using NsecType = decltype(itimerspec().it_value.tv_nsec);
     using NsecDuration = chrono::duration<NsecType, std::nano>;
 
     static_assert(Period::num == 1, "");
@@ -155,8 +155,10 @@ void EventProviderLinux::waitForEvents (EventLoopTime wait_time)
             itspec.it_value.tv_nsec = 1;
         }
 
-        int res = ::timerfd_settime(m_timer_fd.get(), TFD_TIMER_ABSTIME, &itspec, nullptr);
-        AIPSTACK_ASSERT_FORCE(res == 0)
+        if (::timerfd_settime(*m_timer_fd, TFD_TIMER_ABSTIME, &itspec, nullptr) < 0) {
+            throw std::runtime_error(formatString(
+                "EventProviderLinux: timerfd_settime failed, err=%d", errno));
+        }
 
         m_timerfd_time = wait_time;
         m_force_timerfd_update = false;
@@ -164,15 +166,19 @@ void EventProviderLinux::waitForEvents (EventLoopTime wait_time)
 
     int wait_res;
     while (true) {
-        wait_res = ::epoll_wait(m_epoll_fd.get(), m_epoll_events, MaxEpollEvents, -1);
-        if (wait_res >= 0) {
+        wait_res = ::epoll_wait(*m_epoll_fd, m_epoll_events, MaxEpollEvents, -1);
+        if (AIPSTACK_LIKELY(wait_res >= 0)) {
             break;
         }
+        
         int err = errno;
-        AIPSTACK_ASSERT_FORCE(err == EINTR)
+        if (err != EINTR) {
+            throw std::runtime_error(formatString(
+                "EventProviderLinux: epoll_wait failed, err=%d", err));
+        }
     }
 
-    AIPSTACK_ASSERT_FORCE(wait_res <= MaxEpollEvents)
+    AIPSTACK_ASSERT(wait_res <= MaxEpollEvents)
 
     m_cur_epoll_event = 0;
     m_num_epoll_events = wait_res;
@@ -180,6 +186,8 @@ void EventProviderLinux::waitForEvents (EventLoopTime wait_time)
 
 bool EventProviderLinux::dispatchEvents ()
 {
+    using namespace EventProviderLinuxPriv;
+
     while (m_cur_epoll_event < m_num_epoll_events) {
         struct epoll_event *ev = &m_epoll_events[m_cur_epoll_event++];
         void *data_ptr = ev->data.ptr;
@@ -189,14 +197,12 @@ bool EventProviderLinux::dispatchEvents ()
         }
 
         if (data_ptr == &m_timer_fd) {
-            // Don't read from timer fd since this is relatively expensive, but make sure
+            // Don't read from timerfd since this is relatively expensive, but make sure
             // that we call timerfd_settime before the next epoll_wait, which clears events
             // from the timer.
             m_force_timerfd_update = true;
-            continue;
         }
-
-        if (data_ptr == &m_event_fd) {
+        else if (data_ptr == &m_event_fd) {
             std::uint64_t value;
             auto res = ::read(*m_event_fd, &value, sizeof(value));
             
@@ -211,21 +217,18 @@ bool EventProviderLinux::dispatchEvents ()
             if (!EventProviderBase::dispatchAsyncSignals()) {
                 return false;
             }
-
-            continue;
         }
+        else {
+            auto &fd = *static_cast<EventProviderLinuxFd *>(data_ptr);
+            fd.EventProviderFdBase::sanityCheck();
 
-        auto &fd = *static_cast<EventProviderLinuxFd *>(data_ptr);
-        fd.EventProviderFdBase::sanityCheck();
+            EventLoopFdEvents events =
+                get_events_to_report(ev->events, fd.EventProviderFdBase::getFdEvents());
 
-        EventLoopFdEvents events = EventProviderLinuxPriv::get_events_to_report(
-            ev->events, fd.EventProviderFdBase::getFdEvents());
-
-        if (events != EnumZero) {
-            fd.EventProviderFdBase::callFdEventHandler(events);
-
-            if (AIPSTACK_UNLIKELY(EventProviderBase::getStop())) {
-                return false;
+            if (events != EnumZero) {
+                if (!fd.EventProviderFdBase::callFdEventHandler(events)) {
+                    return false;
+                }
             }
         }
     }
@@ -254,36 +257,59 @@ void EventProviderLinux::control_epoll (
     ev.events = events;
     ev.data.ptr = data_ptr;
     
-    int res = ::epoll_ctl(m_epoll_fd.get(), op, fd, &ev);
-    AIPSTACK_ASSERT_FORCE(res == 0)    
+    if (AIPSTACK_UNLIKELY(::epoll_ctl(*m_epoll_fd, op, fd, &ev) < 0)) {
+        throw std::runtime_error(formatString(
+            "EventProviderLinux: epoll_ctl failed, err=%d", errno));
+    }
 }
 
 void EventProviderLinuxFd::initFdImpl (int fd, EventLoopFdEvents events)
 {
+    using namespace EventProviderLinuxPriv;
+
     EventProviderLinux &prov = getProvider();
 
-    auto epoll_events = EventProviderLinuxPriv::events_to_epoll(events);
-    prov.control_epoll(EPOLL_CTL_ADD, fd, epoll_events, this);
+    prov.control_epoll(EPOLL_CTL_ADD, fd, get_events_to_request(events), this);
 }
 
-void EventProviderLinuxFd::updateEventsImpl (int fd, EventLoopFdEvents events)
+void EventProviderLinuxFd::updateEventsImpl (EventLoopFdEvents events)
+{
+    using namespace EventProviderLinuxPriv;
+
+    EventProviderLinux &prov = getProvider();
+
+    EventLoopFdEvents cur_events = EventProviderFdBase::getFdEvents();
+
+    EventLoopFdEvents mask = EventLoopFdEvents::Read|EventLoopFdEvents::Write;
+
+    if ((events & mask) != (cur_events & mask)) {
+        int fd = EventProviderFdBase::getFd();
+        prov.control_epoll(EPOLL_CTL_MOD, fd, get_events_to_request(events), this);
+    }
+}
+
+void EventProviderLinuxFd::resetImpl ()
 {
     EventProviderLinux &prov = getProvider();
 
-    auto epoll_events = EventProviderLinuxPriv::events_to_epoll(events);
-    prov.control_epoll(EPOLL_CTL_MOD, fd, epoll_events, this);
-}
+    int fd = EventProviderFdBase::getFd();
 
-void EventProviderLinuxFd::resetImpl (int fd)
-{
-    EventProviderLinux &prov = getProvider();
+    try {
+        prov.control_epoll(EPOLL_CTL_DEL, fd, 0, nullptr);
+    } catch (std::runtime_error const &ex) {
+        // This is called from EventLoopFdWatcher destructor and reset() and therefore
+        // must not throw. Let's hope the error is something benign and the file descriptor
+        // is no longer associated, because if it is and it generates an event, undefined
+        // behavior would occur as dispatchEvents() tries to process it.
+        std::fprintf(stderr, "%s\n", ex.what());
+    }
 
-    prov.control_epoll(EPOLL_CTL_DEL, fd, 0, nullptr);
-
+    // Set the data.ptr pointer in any unprocessed events for this file descriptor to
+    // inhibit their processing.
     for (int i = prov.m_cur_epoll_event; i < prov.m_num_epoll_events; i++) {
-        struct epoll_event *ev = &prov.m_epoll_events[i];
-        if (ev->data.ptr == this) {
-            ev->data.ptr = nullptr;
+        struct epoll_event &ev = prov.m_epoll_events[i];
+        if (ev.data.ptr == this) {
+            ev.data.ptr = nullptr;
         }
     }
 }
