@@ -24,6 +24,10 @@
 
 #include <aipstack/event_loop/SignalCommon.h>
 
+#if defined(__linux__)
+#include <signal.h>
+#endif
+
 namespace AIpStack {
 
 #if defined(__linux__)
@@ -81,14 +85,10 @@ SignalType signumToSignalType(int signum)
 
 void addSignalsToSet(SignalType signals, ::sigset_t &set)
 {
-    auto add_if_present = [&](SignalType sig, int signum) {
-        if ((signals & sig) != EnumZero) {
-            ::sigaddset(&set, signum);
-        }
-    };
-
     #define AIPSTACK_ADD_SIGNALS_TO_SET_SIGNAL(sig, signum) \
-    add_if_present(sig, signum);
+    if ((signals & sig) != EnumZero) { \
+        ::sigaddset(&set, signum); \
+    }
 
     AIPSTACK_FOR_ALL_SIGNALS(AIPSTACK_ADD_SIGNALS_TO_SET_SIGNAL)
 

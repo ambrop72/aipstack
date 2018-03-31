@@ -71,17 +71,22 @@ AIPSTACK_ENUM_BITFIELD_OPS(SignalType)
 #endif
 
 /**
- * Get the platform-native name for a signal represented by a @ref SignalType enum.
+ * Get the platform-native name for a signal represented by a @ref SignalType enum value.
  * 
- * On \*nix, this returns the upper-case SIG\* names such as SIGINT. On Windows it returns
- * CTRL_C_EVENT, CTRL_BREAK_EVENT or CTRL_CLOSE_EVENT (see @ref SignalCollector for more
- * information about Windows support).
+ * On \*nix, this returns the upper-case signal names such as "SIGINT".
+ * 
+ * On Windows it returns:
+ * - "CTRL_C_EVENT" for @ref SignalType::Interrupt,
+ * - "CTRL_BREAK_EVENT" for @ref SignalType::Break,
+ * - "CTRL_CLOSE_EVENT" for @ref SignalType::Hangup.
+ * 
+ * If the signal is not one of the signals defined by the @ref SignalType enum or is not
+ * supported for the platform, this function returns "unknown".
  * 
  * @param signal Signal to get the name of (one signal not mask). This functions tolerates
  *        any value of this argument.
- * @return Name of the signal as a null-terminated string, or "unknown" if the signal is
- *         not one of the signals defined by the @ref SignalType enum or is not supported
- *         for the platform. The string is in static storage.
+ * @return Name of the signal as a null-terminated string (or "unknown", see above). The
+ *         string is in static storage.
  */
 char const * nativeNameForSignalType(SignalType signal);
 

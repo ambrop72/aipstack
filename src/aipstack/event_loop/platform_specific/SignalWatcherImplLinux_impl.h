@@ -25,7 +25,6 @@
 #include <cerrno>
 #include <cstdio>
 #include <stdexcept>
-#include <utility>
 
 #include <unistd.h>
 #include <signal.h>
@@ -71,25 +70,21 @@ SignalCollectorImplLinux::~SignalCollectorImplLinux ()
 }
 
 SignalWatcherImplLinux::SignalWatcherImplLinux () :
-    m_watcher(SignalWatcherImplBase::getEventLoop(),
-              AIPSTACK_BIND_MEMBER(&SignalWatcherImplLinux::watcherHandler, this))
+    m_fd_watcher(SignalWatcherImplBase::getEventLoop(),
+                 AIPSTACK_BIND_MEMBER(&SignalWatcherImplLinux::fdWatcherHandler, this))
 {
     SignalType signals = getCollector().SignalCollectorImplBase::baseGetSignals();
 
     ::sigset_t sset;
     initSigSetToSignals(sset, signals);
 
-    FileDescriptorWrapper fd(::signalfd(-1, &sset, SFD_NONBLOCK|SFD_CLOEXEC));
-    if (!fd) {
+    m_signalfd_fd = FileDescriptorWrapper(::signalfd(-1, &sset, SFD_NONBLOCK|SFD_CLOEXEC));
+    if (!m_signalfd_fd) {
         throw std::runtime_error(formatString(
             "SignalWatcher: signalfd failed to create signalfd, err=%d", errno));
     }
 
-    m_watcher.initFd(*fd, EventLoopFdEvents::Read);
-
-    // If we did anything else here that could fail we would need to reset m_watcher!
-
-    m_signalfd_fd = std::move(fd);
+    m_fd_watcher.initFd(*m_signalfd_fd, EventLoopFdEvents::Read);
 }
 
 SignalWatcherImplLinux::~SignalWatcherImplLinux ()
@@ -100,7 +95,7 @@ SignalCollectorImplLinux & SignalWatcherImplLinux::getCollector () const
     return static_cast<SignalCollectorImplLinux &>(SignalWatcherImplBase::getCollector());
 }
 
-void SignalWatcherImplLinux::watcherHandler(EventLoopFdEvents events)
+void SignalWatcherImplLinux::fdWatcherHandler(EventLoopFdEvents events)
 {
     (void)events;
 
@@ -108,12 +103,12 @@ void SignalWatcherImplLinux::watcherHandler(EventLoopFdEvents events)
     auto bytes = ::read(*m_signalfd_fd, &siginfo, sizeof(siginfo));
 
     if (bytes < 0) {
-        int error = errno;
-        if (FileDescriptorWrapper::errIsEAGAINorEWOULDBLOCK(error)) {
+        int err = errno;
+        if (FileDescriptorWrapper::errIsEAGAINorEWOULDBLOCK(err)) {
             return;
         }
 
-        std::fprintf(stderr, "SignalWatcher: read from signalfd failed, err=%d\n", error);
+        std::fprintf(stderr, "SignalWatcher: read from signalfd failed, err=%d\n", err);
         return;
     }
 

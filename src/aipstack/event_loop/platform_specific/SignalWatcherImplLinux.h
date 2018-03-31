@@ -63,12 +63,12 @@ public:
 private:
     inline SignalCollectorImplLinux & getCollector () const;
 
-    void watcherHandler(EventLoopFdEvents events);
+    void fdWatcherHandler(EventLoopFdEvents events);
     
 private:
     // First fd then watcher for proper destruction order.
     FileDescriptorWrapper m_signalfd_fd;
-    EventLoopFdWatcher m_watcher;
+    EventLoopFdWatcher m_fd_watcher;
 };
 
 using SignalCollectorImpl = SignalCollectorImplLinux;

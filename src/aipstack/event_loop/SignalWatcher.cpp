@@ -35,7 +35,9 @@ SignalCollector::SignalCollector (SignalType signals) :
 {}
 
 SignalCollector::~SignalCollector ()
-{}
+{
+    AIPSTACK_ASSERT(m_collector_watcher == nullptr)
+}
 
 SignalWatcherMembers::SignalWatcherMembers (
     EventLoop &loop, SignalCollector &collector, Function<void(SignalInfo)> handler)

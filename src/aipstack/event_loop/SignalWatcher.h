@@ -74,9 +74,10 @@ struct SignalCollectorMembers {
  * 
  * The level of support for concurrent instances of @ref SignalCollector depends on the
  * platform:
- * - On Linux, concurrent instances are allowed if no signal is collected by more than one
- *   @ref SignalCollector. If this is violated there should not be any exceptions but it
- *   will not work properly for signals watched by more than one instance.
+ * - On Linux, concurrent instances are allowed if there is no overlap in the signals
+ *   collected by different @ref SignalCollector instances. If this is violated there
+ *   should not be any exceptions but it will not work properly for signals collected by
+ *   more than one instance.
  * - On Windows, concurrent instances are not allowed at all. Attempting to construct a
  *   @ref SignalWatcher while one already exists will result in an exception.
  */
@@ -105,6 +106,9 @@ public:
 
     /**
      * Destruct the signal collector.
+     * 
+     * \note A @ref SignalCollector must not be destructed while a @ref SignalWatcher
+     * associated with it exists.
      */
     ~SignalCollector ();
 
@@ -146,9 +150,8 @@ class SignalWatcherMembers {
  * SignalCollector. There is a check in place in the constructor to throw an exception if
  * this would be violated, but the check is not thread-safe. If is only safe to use
  * multiple @ref SignalWatcher instances with the same @ref SignalCollector if at most one
- * could exist at a time; and if instances are owned by different threads appropriate
- * synchronization is in place so that construction of another instance happens after
- * destruction of the previous instance.
+ * could exist at a time, which would require appropriate synchronizations if different
+ * threads are involved.
  */
 class SignalWatcher :
     private NonCopyable<SignalWatcher>
@@ -177,7 +180,7 @@ public:
      * 
      * @param loop Event loop; it must outlive the signal-watcher object.
      * @param collector Signal collector; it must outlive the signal-watcher object. See
-     *        also the class restructions for restrictions regarding use of multiple
+     *        also the class description for restrictions regarding use of multiple
      *        instances with the same @ref SignalCollector.
      * @param handler Callback function used to deliver signals (must not be null).
      * @throw std::logic_error If an existing @ref SignalWatcher instance is already
@@ -190,6 +193,8 @@ public:
 
     /**
      * Destruct the signal watcher.
+     * 
+     * The @ref SignalHandler will not be called after destruction.
      */
     ~SignalWatcher ();
 };
