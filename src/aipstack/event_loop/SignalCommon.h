@@ -48,21 +48,33 @@ namespace AIpStack {
  * Operators provided by @ref AIPSTACK_ENUM_BITFIELD_OPS are available.
  */
 enum class SignalType {
-    None         = 0, /**< Zero value represening no signals. */
-    Interrupt    = 1 << 0, /**< Interrupt signal (SIGINT in \*nix). */
-    Terminate    = 1 << 1, /**< Terminate signal (SIGTERM in \*nix). */
-    Hangup       = 1 << 2, /**< Hangup signal (SIGHUP in \*nix). */
-    Quit         = 1 << 3, /**< Quit signal (SIGQUIT in \*nix). */
-    User1        = 1 << 4, /**< User-defined signal 1 (SIGUSR1 in \*nix). */
-    User2        = 1 << 5, /**< User-defined signal 2 (SIGUSR2 in \*nix). */
-    Child        = 1 << 6, /**< Child stopped or terminated signal (SIGCHLD in \*nix). */
-    Alarm        = 1 << 7, /**< Alarm signal (SIGALRM in \*nix). */
-    InputOutput  = 1 << 8, /**< Input/output possible signal (SIGIO in \*nix). */
-    WindowResize = 1 << 9, /**< Window resize signal (SIGWINCH in \*nix). */
-    Break        = 1 << 10, /**< Break signal (Window-only). */
+    /** Zero value represening no signals. */
+    None         = 0,
+    /** Interrupt signal (`SIGINT` on \*nix, `CTRL_C_EVENT` on Windows). */
+    Interrupt    = 1 << 0,
+    /** Terminate signal (`SIGTERM` on \*nix). */
+    Terminate    = 1 << 1,
+    /** Hangup signal (`SIGHUP` on \*nix, `CTRL_CLOSE_EVENT` on Windows). */
+    Hangup       = 1 << 2,
+    /** Quit signal (`SIGQUIT` on \*nix). */
+    Quit         = 1 << 3,
+    /** User-defined signal 1 (`SIGUSR1` on \*nix). */
+    User1        = 1 << 4,
+    /** User-defined signal 2 (`SIGUSR2` on \*nix). */
+    User2        = 1 << 5,
+    /** Child stopped or terminated signal (`SIGCHLD` on \*nix). */
+    Child        = 1 << 6,
+    /** Alarm signal (`SIGALRM` on \*nix). */
+    Alarm        = 1 << 7,
+    /** Input/output possible signal (`SIGIO` on \*nix). */
+    InputOutput  = 1 << 8,
+    /** Window resize signal (`SIGWINCH` on \*nix). */
+    WindowResize = 1 << 9,
+    /** Break signal (`CTRL_BREAK_EVENT` on Windows). */
+    Break        = 1 << 10,
     /**
-     * Mask of signals commonly understood as request for the program to exit.
-     * Currently this includes Interrupt, Terminate, Hangup, Quit and Break.
+     * Mask of signals commonly understood as request for the program to exit
+     * (currently: Interrupt, Terminate, Hangup, Quit, Break).
      */
     ExitSignals  = Interrupt|Terminate|Hangup|Quit|Break,
 };
@@ -73,12 +85,12 @@ AIPSTACK_ENUM_BITFIELD_OPS(SignalType)
 /**
  * Get the platform-native name for a signal represented by a @ref SignalType enum value.
  * 
- * On \*nix, this returns the upper-case signal names such as "SIGINT".
+ * On \*nix, this returns the upper-case signal names such as `SIGINT`.
  * 
  * On Windows it returns:
- * - "CTRL_C_EVENT" for @ref SignalType::Interrupt,
- * - "CTRL_BREAK_EVENT" for @ref SignalType::Break,
- * - "CTRL_CLOSE_EVENT" for @ref SignalType::Hangup.
+ * - `CTRL_C_EVENT` for @ref SignalType::Interrupt,
+ * - `CTRL_BREAK_EVENT` for @ref SignalType::Break,
+ * - `CTRL_CLOSE_EVENT` for @ref SignalType::Hangup.
  * 
  * If the signal is not one of the signals defined by the @ref SignalType enum or is not
  * supported for the platform, this function returns "unknown".
