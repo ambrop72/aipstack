@@ -33,6 +33,7 @@
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/infra/Struct.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Options.h>
@@ -40,7 +41,6 @@
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/platform/TimerWrapper.h>
 
 namespace AIpStack {
 
@@ -53,10 +53,6 @@ namespace AIpStack {
 
 template <typename Arg>
 class IpReassembly;
-
-template <typename Arg>
-AIPSTACK_DECL_TIMERS_CLASS(IpReassemblyTimers, typename Arg::PlatformImpl, IpReassembly<Arg>,
-                           (PurgeTimer))
 
 /**
  * Implements IPv4 datagram reassembly.
@@ -72,9 +68,6 @@ AIPSTACK_DECL_TIMERS_CLASS(IpReassemblyTimers, typename Arg::PlatformImpl, IpRea
 template <typename Arg>
 class IpReassembly :
     private NonCopyable<IpReassembly<Arg>>
-#ifndef IN_DOXYGEN
-    ,private IpReassemblyTimers<Arg>::Timers
-#endif
 {
     AIPSTACK_USE_VALS(Arg::Params, (MaxReassEntrys, MaxReassSize, MaxReassHoles,
                                     MaxReassTimeSeconds))
@@ -82,8 +75,6 @@ class IpReassembly :
     
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
-    
-    AIPSTACK_USE_TIMERS_CLASS(IpReassemblyTimers<Arg>, (PurgeTimer)) 
     
     static_assert(MaxReassEntrys > 0, "");
     static_assert(MaxReassSize >= Ip4RequiredRecvSize, "");
@@ -133,6 +124,7 @@ class IpReassembly :
     };
     
 private:
+    typename Platform::Timer m_timer;
     IpBufNode m_reass_node;
     ReassEntry m_reass_packets[MaxReassEntrys];
     
@@ -143,18 +135,21 @@ public:
      * @param platform_ The platform facade.
      */
     IpReassembly (Platform platform_) :
-        IpReassemblyTimers<Arg>::Timers(platform_)
+        m_timer(platform_, AIPSTACK_BIND_MEMBER_TN(&IpReassembly::timerHandler, this))
     {
         // Start the timer for the first interval.
-        tim(PurgeTimer()).setAfter(PurgeTimerInterval);
+        m_timer.setAfter(PurgeTimerInterval);
         
         // Mark all reassembly entries as unused.
         for (auto &reass : m_reass_packets) {
             reass.first_hole_offset = ReassNullLink;
         }
     }
-    
-    using IpReassemblyTimers<Arg>::Timers::platform;
+
+    inline Platform platform () const
+    {
+        return m_timer.platform();
+    }
     
     /**
      * Process a received packet and possibly return a reassembled datagram.
@@ -466,10 +461,10 @@ private:
         return hole_offset <= MaxReassSize;
     }
     
-    void timerExpired (PurgeTimer)
+    void timerHandler ()
     {
         // Restart the timer.
-        tim(PurgeTimer()).setAfter(PurgeTimerInterval);
+        m_timer.setAfter(PurgeTimerInterval);
         
         // Purge any expired reassembly entries by calling find_reass_entry with
         // dummy IP information.

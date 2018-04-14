@@ -207,7 +207,7 @@ bool EventLoop::dispatch_timers ()
         m_timer_heap.remove(*tim);
         tim->m_state = TimerState::Idle;
 
-        tim->handleTimerExpired();
+        tim->m_handler();
 
         if (AIPSTACK_UNLIKELY(m_stop)) {
             return false;
@@ -294,8 +294,9 @@ bool EventProviderBase::handleIocpResult (void *completion_key, OVERLAPPED *over
 }
 #endif
 
-EventLoopTimer::EventLoopTimer (EventLoop &loop) :
+EventLoopTimer::EventLoopTimer (EventLoop &loop, TimerHandler handler) :
     m_loop(loop),
+    m_handler(handler),
     m_time(EventLoopTime()),
     m_state(TimerState::Idle)
 {

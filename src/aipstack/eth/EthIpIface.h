@@ -36,6 +36,7 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
@@ -55,7 +56,6 @@
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/ip/hw/EthHw.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/platform/TimerWrapper.h>
 
 namespace AIpStack {
 
@@ -84,12 +84,6 @@ struct EthIfaceState {
 
 template <typename Arg>
 class EthIpIface;
-
-#ifndef IN_DOXYGEN
-template <typename Arg>
-AIPSTACK_DECL_TIMERS_CLASS(EthIpIfaceTimers, typename Arg::PlatformImpl,
-                           EthIpIface<Arg>, (ArpTimer))
-#endif
 
 /**
  * Ethernet-based network interface.
@@ -133,7 +127,6 @@ AIPSTACK_DECL_TIMERS_CLASS(EthIpIfaceTimers, typename Arg::PlatformImpl,
 template <typename Arg>
 class EthIpIface :
     public IpIface<typename Arg::StackArg>,
-    private EthIpIfaceTimers<Arg>::Timers,
     private EthHwIface,
     private NonCopyable<EthIpIface<Arg>>
 {
@@ -143,9 +136,6 @@ class EthIpIface :
     
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
-    
-    AIPSTACK_USE_TIMERS_CLASS(EthIpIfaceTimers<Arg>, (ArpTimer))
-    using EthIpIfaceTimers<Arg>::Timers::platform;
     
     using Iface = IpIface<StackArg>;
     
@@ -300,7 +290,7 @@ public:
             /*hw_type=*/ IpHwType::Ethernet,
             /*hw_iface=*/ static_cast<EthHwIface *>(this)
         }),
-        EthIpIfaceTimers<Arg>::Timers(platform_),
+        m_timer(platform_, AIPSTACK_BIND_MEMBER_TN(&EthIpIface::timerHandler, this)),
         m_mac_addr(info.mac_addr)
     {
         AIPSTACK_ASSERT(info.eth_mtu >= EthHeader::Size)
@@ -462,6 +452,11 @@ private: // EthHwIface
     }
     
 private:
+    inline PlatformFacade<PlatformImpl> platform () const
+    {
+        return m_timer.platform();
+    }
+
     void recvArpPacket (IpBufRef pkt)
     {
         // Check that we have the ARP header.
@@ -840,20 +835,20 @@ private:
         }
     }
     
-    // Make sure the ArpTimer is set to expire at the first entry timeout,
+    // Make sure the timer is set to expire at the first entry timeout,
     // or unset it if there is no active entry timeout. This must be called
     // after every insertion/removal of an entry to the timer queue.
     void update_timer ()
     {
         TimeType time;
         if (m_timer_queue.getFirstTime(time, *this)) {
-            tim(ArpTimer()).setAt(time);
+            m_timer.setAt(time);
         } else {
-            tim(ArpTimer()).unset();
+            m_timer.unset();
         }
     }
     
-    void timerExpired (ArpTimer)
+    void timerHandler ()
     {
         // Prepare timer queue for removing expired timers.
         m_timer_queue.prepareForRemovingExpired(platform().getTime(), *this);
@@ -873,7 +868,7 @@ private:
             handle_entry_timeout(entry);
         }
         
-        // Set the ArpTimer for the next expiration or unset.
+        // Set the timer for the next expiration or unset.
         update_timer();
     }
     
@@ -941,6 +936,7 @@ private:
     }
     
 private:
+    typename Platform::Timer m_timer;
     EthArpObservable m_arp_observable;
     MacAddr const *m_mac_addr;
     StructureRaiiWrapper<ArpEntryList> m_used_entries_list;

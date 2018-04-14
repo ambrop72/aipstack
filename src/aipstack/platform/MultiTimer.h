@@ -30,6 +30,7 @@
 #include <aipstack/meta/ListForEach.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {
@@ -122,7 +123,7 @@ public:
     using Timer::platform;
     
     inline MultiTimer (Platform platform_) :
-        Timer(platform_),
+        Timer(platform_, AIPSTACK_BIND_MEMBER_TN(&MultiTimer::timerHandler, this)),
         m_state(0)
     {
     }
@@ -186,7 +187,7 @@ private:
         Timer::setAt(min_time);
     }
     
-    void handleTimerExpired () override final
+    void timerHandler ()
     {
         // Any delayed update must have been applied before returning to event loop.
         AIPSTACK_ASSERT((m_state & DirtyBit) == 0)

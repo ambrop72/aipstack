@@ -32,6 +32,7 @@
 #include <aipstack/meta/BasicMetaUtils.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/Function.h>
 
 namespace AIpStack {
 
@@ -348,19 +349,20 @@ public:
      * 
      * See @ref PlatformImplStub::Timer for details. This is a trivial wrapper
      * around that class.
-     * 
-     * Note that directly using this class can often be problematic due to base
-     * class ambiguity and the need to override virtual functions differently for
-     * different timers in the same class. The class TimerWrapper and its
-     * associated macros can be used to work around such problems.
      */
     class Timer :
-        private NonCopyable<Timer>,
-        private Impl::Timer
+        private NonCopyable<Timer>
     {
         using ImplTimer = typename Impl::Timer;
         
     public:
+        /**
+         * Type of callback used to report the expiration of the timer.
+         * 
+         * See @ref PlatformImplStub::Timer::TimerHandler for details.
+         */
+        using TimerHandler = Function<void()>;
+
         /**
          * Construct the timer.
          * 
@@ -372,9 +374,10 @@ public:
          * to the @ref PlatformImplStub::Timer::Timer constructor.
          * 
          * @param platform The platform facade.
+         * @param handler Callback function (must not be null).
          */
-        inline Timer (PlatformFacade platform) :
-            ImplTimer(platform.ref())
+        inline Timer (PlatformFacade platform, TimerHandler handler) :
+            m_timer(platform.ref(), handler)
         {
         }
         
@@ -389,7 +392,7 @@ public:
          */
         inline PlatformFacade platform () const
         {
-            Ref ref = ImplTimer::ref();
+            Ref ref = m_timer.ref();
             return ref.platform();
         }
         
@@ -404,7 +407,7 @@ public:
          */
         inline ImplTimer & impl ()
         {
-            return static_cast<ImplTimer &>(*this);
+            return m_timer;
         }
         
         /**
@@ -416,7 +419,7 @@ public:
          */
         inline bool isSet () const
         {
-            return callObj<ImplTimer, bool()const>(&ImplTimer::isSet, *this);
+            return callObj<ImplTimer, bool()const>(&ImplTimer::isSet, m_timer);
         }
         
         /**
@@ -428,7 +431,7 @@ public:
          */
         inline TimeType getSetTime () const
         {
-            return callObj<ImplTimer, TimeType()const>(&ImplTimer::getSetTime, *this);
+            return callObj<ImplTimer, TimeType()const>(&ImplTimer::getSetTime, m_timer);
         }
         
         /**
@@ -438,7 +441,7 @@ public:
          */
         inline void unset ()
         {
-            return callObj<ImplTimer, void()>(&ImplTimer::unset, *this);
+            return callObj<ImplTimer, void()>(&ImplTimer::unset, m_timer);
         }
         
         /**
@@ -450,7 +453,7 @@ public:
          */
         inline void setAt (TimeType abs_time)
         {
-            return callObj<ImplTimer, void(TimeType)>(&ImplTimer::setAt, *this, abs_time);
+            return callObj<ImplTimer, void(TimeType)>(&ImplTimer::setAt, m_timer, abs_time);
         }
         
         /**
@@ -477,13 +480,8 @@ public:
             return setAfter(0);
         }
         
-    protected:
-        /**
-         * Callback used to report the expiration of the timer.
-         * 
-         * See @ref PlatformImplStub::Timer::handleTimerExpired for details.
-         */
-        virtual void handleTimerExpired () override = 0;
+    private:
+        ImplTimer m_timer;
     };
     
 private:

@@ -29,6 +29,7 @@
 
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {
@@ -177,9 +178,9 @@ public:
      * A timer conceptually has two main states: not-set and set. The not-set state
      * is the default when the timer is constructed and is an inactive state where
      * the timer does not expire. In the set state, the timer has an associated time
-     * which it is set to expire at. Expiration is reported via the virtual function
-     * @ref handleTimerExpired; the timer automatically changes its state to not-set
-     * just before calling this function.
+     * which it is set to expire at. Expiration is reported via the @ref TimerHandler
+     * callback; the timer automatically changes its state to not-set just before
+     * the call.
      * 
      * The implementation must not place any limit on the number of timers used and
      * functions in this class must never throw exceptions. This can clearly be
@@ -193,11 +194,27 @@ public:
         private ThePlatformRef,
         private NonCopyable<Timer>
     {
-    private:
-        bool m_is_set;
-        TimeType m_set_time;
-        
     public:
+        /**
+         * Type of callback used to report the expiration of the timer.
+         * 
+         * This must be called in set state after the clock reaches the time that
+         * the timer has been set to expire at. The timer must be transitioned to
+         * the not-set state just before this function is called.
+         * 
+         * WARNING: This must not be called when the timer is already in not-set
+         * state and must not be called on behalf of a previously configured expiration
+         * time as opposed to the most recent one. It also must not be called after the
+         * timer has been destructed. One will find timer implementations in various
+         * event loop libraries (such as Boost.Asio) which do not provide these
+         * essential guarantees, and which cannot be used to implement this interface
+         * without safeguards.
+         * 
+         * This type alias is not required but the type of the handler argument in
+         * the constructor must match.
+         */
+        using TimerHandler = Function<void()>;
+
         /**
          * Construct the timer.
          * 
@@ -206,9 +223,11 @@ public:
          * @param ref Platform reference; see @ref ThePlatformRef and @ref ImplIsStatic.
          *        The timer is assumed to store the platform reference and must expose
          *        it using the @ref ref function.
+         * @param handler Callback function (must not be null).
          */
-        Timer (ThePlatformRef ref) :
+        Timer (ThePlatformRef ref, TimerHandler handler) :
             ThePlatformRef(ref),
+            m_handler(handler),
             m_is_set(false)
         {
         }
@@ -218,7 +237,7 @@ public:
          * 
          * A timer may be destructed in any state. There must be no restrictions on
          * the context the timer is destructed from. For example, destructing the timer
-         * from its own @ref handleTimerExpired callback or from the callback of another
+         * from its own @ref TimerHandler callback or from the callback of another
          * timer must be supported by the implementation.
          */
         ~Timer ()
@@ -282,8 +301,8 @@ public:
          * the timer was already set).
          * 
          * Note that setting the timer to expire in the past or at the current time
-         * is normal and must be supported; in this case @ref handleTimerExpired
-         * should be called as soon as possible (but not from this function).
+         * is normal and must be supported; in this case @ref TimerHandler should be
+         * called as soon as possible (but not from this function).
          * 
          * @param abs_time Absolute expiration time. See @ref TimeType for an
          *        explanation of how this is to be interpreted.
@@ -294,23 +313,10 @@ public:
             m_set_time = abs_time;
         }
         
-    protected:
-        /**
-         * Callback used to report the expiration of the timer.
-         * 
-         * This must be called in set state after the clock reaches the time that
-         * the timer has been set to expire at. The timer must be transitioned to
-         * the not-set state just before this function is called.
-         * 
-         * WARNING: This must not be called when the timer is already in not-set
-         * state and must not be called on behalf of a previously configured expiration
-         * time as opposed to the most recent one. It also (obviously) must not be
-         * called after the timer has been destructed. One will find timer
-         * implementations in various event loop libraries (such as Boost.Asio) which
-         * do not provide these essential guarantees, and which cannot be used to
-         * implement this interface without safeguards.
-         */
-        virtual void handleTimerExpired () = 0;
+    private:
+        TimerHandler m_handler;
+        bool m_is_set;
+        TimeType m_set_time;        
     };
 };
 

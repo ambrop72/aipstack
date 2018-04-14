@@ -35,6 +35,7 @@
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/OneOf.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/TxAllocHelper.h>
 #include <aipstack/infra/SendRetry.h>
@@ -51,7 +52,6 @@
 #include <aipstack/ip/IpDhcpOptions.h>
 #include <aipstack/udp/IpUdpProto.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/platform/TimerWrapper.h>
 
 namespace AIpStack {
 
@@ -196,12 +196,6 @@ public:
 template <typename Arg>
 class IpDhcpClient;
 
-#ifndef IN_DOXYGEN
-template <typename Arg>
-AIPSTACK_DECL_TIMERS_CLASS(IpDhcpClientTimers, typename Arg::PlatformImpl,
-                           IpDhcpClient<Arg>, (DhcpTimer))
-#endif
-
 /**
  * DHCP client implementation.
  * 
@@ -217,7 +211,6 @@ class IpDhcpClient :
     private UdpListener<
         typename IpStack<typename Arg::StackArg>::template GetProtoArg<UdpApi>>,
     private IpIfaceStateObserver<typename Arg::StackArg>,
-    private IpDhcpClientTimers<Arg>::Timers,
     private IpSendRetryRequest,
     private EthArpObserver
 #endif
@@ -227,9 +220,6 @@ class IpDhcpClient :
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
 
-    AIPSTACK_USE_TIMERS_CLASS(IpDhcpClientTimers<Arg>, (DhcpTimer)) 
-    using IpDhcpClientTimers<Arg>::Timers::platform;
-    
     using UdpArg = typename IpStack<StackArg>::template GetProtoArg<UdpApi>;
     AIPSTACK_USE_VALS(UdpApi<UdpArg>, (HeaderBeforeUdpData, MaxUdpDataLenIp4))
     
@@ -335,6 +325,7 @@ public:
     };
     
 private:
+    typename Platform::Timer m_timer;
     IpStack<StackArg> *m_ipstack;
     IpIface<StackArg> *m_iface;
     IpDhcpClientCallback *m_callback;
@@ -373,7 +364,7 @@ public:
                   IpIface<StackArg> *iface, IpDhcpClientInitOptions const &opts,
                   IpDhcpClientCallback *callback)
     :
-        IpDhcpClientTimers<Arg>::Timers(platform_),
+        m_timer(platform_, AIPSTACK_BIND_MEMBER_TN(&IpDhcpClient::timerHandler, this)),
         m_ipstack(stack),
         m_iface(iface),
         m_callback(callback),
@@ -445,6 +436,11 @@ public:
     }
     
 private:
+    inline PlatformFacade<PlatformImpl> platform () const
+    {
+        return m_timer.platform();
+    }
+
     inline IpIface<StackArg> * iface () const
     {
         return m_iface;
@@ -484,7 +480,7 @@ private:
     // Shortcut to last timer set time.
     inline TimeType getTimSetTime ()
     {
-        return tim(DhcpTimer()).getSetTime();
+        return m_timer.getSetTime();
     }
     
     // Set m_rtx_timeout to BaseRtxTimeoutSeconds.
@@ -503,7 +499,7 @@ private:
     // Set the timer to expire after m_rtx_timeout.
     void set_timer_for_rtx ()
     {
-        tim(DhcpTimer()).setAfter(SecToTicks(m_rtx_timeout));
+        m_timer.setAfter(SecToTicks(m_rtx_timeout));
     }
     
     // Start discovery process.
@@ -558,7 +554,7 @@ private:
         }
     }
     
-    void timerExpired (DhcpTimer)
+    void timerHandler ()
     {
         switch (m_state) {
             case DhcpState::Resetting:
@@ -643,7 +639,7 @@ private:
             m_request_count++;
             
             // Start the timeout.
-            tim(DhcpTimer()).setAfter(SecToTicks(Params::ArpResponseTimeoutSeconds));
+            m_timer.setAfter(SecToTicks(Params::ArpResponseTimeoutSeconds));
             
             // Send an ARP query.
             ethHw()->sendArpQuery(m_info.ip_address);
@@ -743,7 +739,7 @@ private:
         m_lease_time_passed += timer_rel_sec;
         TimeType timer_time = getTimSetTime() +
             SecToTicksNoAssert(m_lease_time_passed - prev_lease_time_passed);
-        tim(DhcpTimer()).setAt(timer_time);
+        m_timer.setAt(timer_time);
     }
     
     void retrySending () override final
@@ -994,7 +990,7 @@ private:
                 // Reset resources to prevent undesired callbacks.
                 EthArpObserver::reset();
                 IpSendRetryRequest::reset();
-                tim(DhcpTimer()).unset();
+                m_timer.unset();
                 
                 // If we had a lease, unbind and notify user.
                 if (had_lease) {
@@ -1130,7 +1126,7 @@ private:
             m_state = DhcpState::Resetting;
             
             // Set timeout to start discovery.
-            tim(DhcpTimer()).setAfter(SecToTicks(Params::ResetTimeoutSeconds));
+            m_timer.setAfter(SecToTicks(Params::ResetTimeoutSeconds));
         }
         
         // If we had a lease, remove it.
@@ -1153,7 +1149,7 @@ private:
         EthArpObserver::observe(*ethHw());
         
         // Start the timeout.
-        tim(DhcpTimer()).setAfter(SecToTicks(Params::ArpResponseTimeoutSeconds));
+        m_timer.setAfter(SecToTicks(Params::ArpResponseTimeoutSeconds));
         
         // Send an ARP query.
         ethHw()->sendArpQuery(m_info.ip_address);
@@ -1198,7 +1194,7 @@ private:
         m_lease_time_passed += timer_rel_sec;
         TimeType timer_time =
             m_request_send_time + SecToTicksNoAssert(m_lease_time_passed);
-        tim(DhcpTimer()).setAt(timer_time);
+        m_timer.setAt(timer_time);
         
         // Apply IP configuration etc..
         return handle_dhcp_up(had_lease);

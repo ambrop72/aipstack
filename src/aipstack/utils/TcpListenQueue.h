@@ -30,13 +30,13 @@
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/tcp/TcpApi.h>
 #include <aipstack/tcp/TcpConnection.h>
 #include <aipstack/tcp/TcpListener.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/platform/TimerWrapper.h>
 
 namespace AIpStack {
 
@@ -164,23 +164,19 @@ public:
         ListenQueueEntry *queue_entries = nullptr;
     };
     
-private:
-    AIPSTACK_DECL_TIMERS(QueuedListenerTimers, PlatformImpl,
-                         QueuedListener, (DequeueTimer, TimeoutTimer))
-    
 public:
     class QueuedListener :
         private Listener,
-        private QueuedListenerTimers,
         private NonCopyable<QueuedListener>
     {
         friend class ListenQueueEntry;
         
-        AIPSTACK_USE_TIMERS(QueuedListenerTimers)
-        
     public:
         QueuedListener (PlatformFacade<PlatformImpl> platform) :
-            QueuedListenerTimers(platform)
+            m_dequeue_timer(platform,
+                AIPSTACK_BIND_MEMBER(&QueuedListener::dequeueTimerHandler, this)),
+            m_timeout_timer(platform,
+                AIPSTACK_BIND_MEMBER(&QueuedListener::timeoutTimerHandler, this))
         {}
         
         ~QueuedListener ()
@@ -191,8 +187,8 @@ public:
         void reset ()
         {
             deinit_queue();
-            tim(DequeueTimer()).unset();
-            tim(TimeoutTimer()).unset();
+            m_dequeue_timer.unset();
+            m_timeout_timer.unset();
             Listener::reset();
         }
         
@@ -231,7 +227,7 @@ public:
             AIPSTACK_ASSERT(Listener::isListening())
             
             if (m_queue_size > 0) {
-                tim(DequeueTimer()).setNow();
+                m_dequeue_timer.setNow();
             }
         }
         
@@ -296,7 +292,7 @@ public:
             // If the connection was not accepted, it will be aborted.
         }
         
-        void timerExpired (DequeueTimer)
+        void dequeueTimerHandler ()
         {
             dispatch_connections();
         }
@@ -333,13 +329,13 @@ public:
             
             if (entry != nullptr) {
                 TimeType expire_time = entry->m_time + m_queue_timeout;
-                tim(TimeoutTimer()).setAt(expire_time);
+                m_timeout_timer.setAt(expire_time);
             } else {
-                tim(TimeoutTimer()).unset();
+                m_timeout_timer.unset();
             }
         }
         
-        void timerExpired (TimeoutTimer)
+        void timeoutTimerHandler ()
         {
             AIPSTACK_ASSERT(Listener::isListening())
             AIPSTACK_ASSERT(m_queue_size > 0)
@@ -382,6 +378,9 @@ public:
             return oldest_entry;
         }
         
+    private:
+        typename Platform::Timer m_dequeue_timer;
+        typename Platform::Timer m_timeout_timer;
         ListenQueueEntry *m_queue;
         int m_queue_size;
         TimeType m_queue_timeout;

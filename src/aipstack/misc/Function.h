@@ -147,6 +147,10 @@ namespace BindPrivate {
     (decltype(AIpStack::BindPrivate::DeduceImpl(member_func)) \
      ::template Callable<member_func>((container_ptr)))
 
+#define AIPSTACK_BIND_MEMBER_TN(member_func, container_ptr) \
+    (typename decltype(AIpStack::BindPrivate::DeduceImpl(member_func)) \
+     ::template Callable<member_func>((container_ptr)))
+
 }
 
 #endif

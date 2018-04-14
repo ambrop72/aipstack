@@ -28,6 +28,7 @@
 #include <type_traits>
 
 #include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/event_loop/EventLoop.h>
 
@@ -58,11 +59,10 @@ public:
 
     class Timer :
         private NonCopyable<Timer>,
-        private ThePlatformRef,
-        private EventLoopTimer
+        private ThePlatformRef
     {
     public:
-        inline Timer (ThePlatformRef ref);
+        inline Timer (ThePlatformRef ref, Function<void()> handler);
 
         inline ~Timer ();
 
@@ -75,6 +75,9 @@ public:
         inline void unset ();
 
         inline void setAt (TimeType abs_time);
+
+    private:
+        EventLoopTimer m_timer;
     };
 
 private:
@@ -100,9 +103,9 @@ auto HostedPlatformImpl::getEventTime () -> TimeType
     return eventLoopTimeToTimeType(m_loop.getEventTime());
 }
 
-HostedPlatformImpl::Timer::Timer (ThePlatformRef ref) :
+HostedPlatformImpl::Timer::Timer (ThePlatformRef ref, Function<void()> handler) :
     ThePlatformRef(ref),
-    EventLoopTimer(ref.platformImpl()->m_loop)
+    m_timer(ref.platformImpl()->m_loop, handler)
 {}
 
 HostedPlatformImpl::Timer::~Timer ()
@@ -110,22 +113,22 @@ HostedPlatformImpl::Timer::~Timer ()
 
 bool HostedPlatformImpl::Timer::isSet () const
 {
-    return EventLoopTimer::isSet();
+    return m_timer.isSet();
 }
 
 auto HostedPlatformImpl::Timer::getSetTime () const -> TimeType
 {
-    return eventLoopTimeToTimeType(EventLoopTimer::getSetTime());
+    return eventLoopTimeToTimeType(m_timer.getSetTime());
 }
 
 void HostedPlatformImpl::Timer::unset ()
 {
-    return EventLoopTimer::unset();
+    return m_timer.unset();
 }
 
 void HostedPlatformImpl::Timer::setAt (TimeType abs_time)
 {
-    return EventLoopTimer::setAt(timeTypeToEventLoopTime(abs_time));
+    return m_timer.setAt(timeTypeToEventLoopTime(abs_time));
 }
 
 auto HostedPlatformImpl::eventLoopTimeToTimeType (EventLoopTime time) -> TimeType

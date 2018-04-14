@@ -34,6 +34,7 @@
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/OneOf.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/OperatorKeyCompare.h>
@@ -45,7 +46,6 @@
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStackTypes.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/platform/TimerWrapper.h>
 
 namespace AIpStack {
 
@@ -62,10 +62,6 @@ template <typename> class IpIface;
 template <typename Arg>
 class IpPathMtuCache;
 
-template <typename Arg>
-AIPSTACK_DECL_TIMERS_CLASS(IpPathMtuCacheTimers, typename Arg::PlatformImpl,
-                           IpPathMtuCache<Arg>, (MtuTimer))
-
 /**
  * Path MTU cache implementation supporting Path MTU Discovery in @ref IpStack.
  * 
@@ -80,9 +76,6 @@ AIPSTACK_DECL_TIMERS_CLASS(IpPathMtuCacheTimers, typename Arg::PlatformImpl,
 template <typename Arg>
 class IpPathMtuCache :
     private NonCopyable<IpPathMtuCache<Arg>>
-#ifndef IN_DOXYGEN
-    ,private IpPathMtuCacheTimers<Arg>::Timers
-#endif
 {
     AIPSTACK_USE_TYPES(Arg, (Params, PlatformImpl, StackArg))
     AIPSTACK_USE_VALS(Params, (NumMtuEntries, MtuTimeoutMinutes))
@@ -95,8 +88,6 @@ class IpPathMtuCache :
     
     static_assert(NumMtuEntries > 0, "");
     static_assert(MtuTimeoutMinutes > 0, "");
-    
-    AIPSTACK_USE_TIMERS_CLASS(IpPathMtuCacheTimers<Arg>, (MtuTimer))
     
     struct MtuEntry;
     
@@ -192,6 +183,7 @@ private:
     };
     
 private:
+    typename Platform::Timer m_timer;
     IpStack<StackArg> *m_ip_stack;
     StructureRaiiWrapper<typename MtuIndex::Index> m_mtu_index;
     StructureRaiiWrapper<MtuFreeList> m_mtu_free_list;
@@ -205,7 +197,7 @@ private:
 public:
     IpPathMtuCache (PlatformFacade<PlatformImpl> platform, IpStack<StackArg> *ip_stack)
     :
-        IpPathMtuCacheTimers<Arg>::Timers(platform),
+        m_timer(platform, AIPSTACK_BIND_MEMBER_TN(&IpPathMtuCache::timerHandler, this)),
         m_ip_stack(ip_stack)
     {
         // Initialize the MTU entries.
@@ -416,9 +408,9 @@ public:
                 
                 // Make sure the MtuTimer is running, since it would not have been
                 // running if we didn't have any non-Invalid timers before.
-                if (!cache->tim(MtuTimer()).isSet()) {
+                if (!cache->m_timer.isSet()) {
                     mtu_entry.minutes_old = 1; // don't waste a minute
-                    cache->tim(MtuTimer()).setAfter(MtuTimerTicks);
+                    cache->m_timer.setAfter(MtuTimerTicks);
                 }
                 
                 // Clear the next link since we are the first node.
@@ -503,7 +495,7 @@ private:
         (void)mtu_entry;
     }
     
-    void timerExpired (MtuTimer)
+    void timerHandler ()
     {
         // Update non-Invalid MTU entries.
         MtuLinkModelRef mtu_ref = m_mtu_index.first(*this);
@@ -516,7 +508,7 @@ private:
         
         // Restart the timer if there is any non-Invalid entry left.
         if (!m_mtu_index.first(*this).isNull()) {
-            tim(MtuTimer()).setAfter(MtuTimerTicks);
+            m_timer.setAfter(MtuTimerTicks);
         }
     }
     

@@ -319,12 +319,9 @@ private:
  * 
  * A running timer has an asssociated expiration time (which can be queried using @ref
  * getSetTime). Soon after the expiration time of a running timer is reached, the @ref
- * handleTimerExpired callback will be called, and the timer will transition to stopped
+ * TimerHandler callback will be called, and the timer will transition to stopped
  * state just prior to the call. Periodic operation is intentionally not supported
  * directly but can be achieved by restarting the timer from the callback.
- * 
- * In order to use the timer, one must define a derived class and override the @ref
- * handleTimerExpired pure virtual function.
  * 
  * The @ref EventLoopTimer class does not throw exceptions from any of its public functions
  * including the constructor.
@@ -339,11 +336,23 @@ class EventLoopTimer :
 
 public:
     /**
+     * Type of callback function used to report timer expiration.
+     * 
+     * It is guaranteed that the timer was in running state just before the call and
+     * that the scheduled expiration time has been reached. The timer transitions to
+     * stopped state just before the call.
+     * 
+     * The callback is always called asynchronously (not from any public member function).
+     */
+    using TimerHandler = Function<void()>;
+
+    /**
      * Construct the timer; the timer is initially stopped.
      * 
      * @param loop Event loop; it must outlive the timer object.
+     * @param handler Callback function (must not be null).
      */
-    EventLoopTimer (EventLoop &loop);
+    EventLoopTimer (EventLoop &loop, TimerHandler handler);
 
     /**
      * Destruct the timer.
@@ -375,7 +384,7 @@ public:
      * Stop the timer.
      * 
      * The timer enters stopped state (if that was not the case already) and the @ref
-     * handleTimerExpired callback will not be called before the timer is started next.
+     * TimerHandler callback will not be called before the timer is started next.
      */
     void unset ();
 
@@ -401,21 +410,10 @@ public:
      */
     void setAfter (EventLoopDuration duration);
 
-protected:
-    /**
-     * Callback function called after the timer has expired.
-     * 
-     * It is guaranteed that the timer was in running state just before the call and
-     * that the scheduled expiration time has been reached. The timer transitions to
-     * stopped state just before the call.
-     * 
-     * The callback is always called asynchronously (not from any public member function).
-     */
-    virtual void handleTimerExpired () = 0;
-
 private:
     TimerHeapNode m_heap_node;
     EventLoop &m_loop;
+    TimerHandler m_handler;
     EventLoopTime m_time;
     TimerState m_state;
 };

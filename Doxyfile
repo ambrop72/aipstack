@@ -814,7 +814,6 @@ RECURSIVE              = YES
 EXCLUDE                = \
     src/aipstack/ip/IpDhcpOptions.h \
     src/aipstack/platform/MultiTimer.h \
-    src/aipstack/platform/TimerWrapper.h \
     src/aipstack/proto/ArpProto.h \
     src/aipstack/proto/DhcpProto.h \
     src/aipstack/proto/EthernetProto.h \
