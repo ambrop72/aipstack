@@ -72,7 +72,10 @@ void TapDeviceWindows::IoUnit::iocpNotifierHandler ()
     }
 }
 
-TapDeviceWindows::TapDeviceWindows (EventLoop &loop, std::string const &device_id) :
+TapDeviceWindows::TapDeviceWindows (
+    EventLoop &loop, std::string const &device_id, FrameReceivedHandler handler)
+:
+    m_handler(handler),
     m_send_first(0),
     m_send_count(0),
     m_send_units(ResourceArrayInitSame(), std::ref(loop), std::ref(*this)),
@@ -245,7 +248,7 @@ void TapDeviceWindows::recvCompleted (IoUnit &recv_unit)
     
     IpBufNode node{buffer, (std::size_t)bytes, nullptr};
     
-    frameReceived(IpBufRef{&node, 0, (std::size_t)bytes});
+    m_handler(IpBufRef{&node, 0, (std::size_t)bytes});
     
     startRecv();
 }

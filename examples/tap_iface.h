@@ -27,6 +27,7 @@
 
 #include <string>
 
+#include <aipstack/misc/Function.h>
 #include <aipstack/infra/Instance.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Err.h>
@@ -66,7 +67,8 @@ public:
     TapIface (Platform platform, AIpStack::IpStack<StackArg1> *stack,
               std::string const &device_id, AIpStack::MacAddr const &mac_addr)
     :
-        AIpStack::TapDevice(platform.ref().platformImpl()->getEventLoop(), device_id),
+        AIpStack::TapDevice(platform.ref().platformImpl()->getEventLoop(), device_id,
+            AIPSTACK_BIND_MEMBER_TN(&TapIface::frameReceived, this)),
         TapIfaceMacAddr{mac_addr},
         TheEthIpIface(platform, stack, {
             /*eth_mtu=*/ AIpStack::TapDevice::getMtu(),
@@ -75,8 +77,7 @@ public:
     {}
     
 private:
-    // Implement TapDevice::frameReceived
-    void frameReceived (AIpStack::IpBufRef frame) override final
+    void frameReceived (AIpStack::IpBufRef frame)
     {
         return TheEthIpIface::recvFrameFromDriver(frame);
     }

@@ -32,6 +32,7 @@
 #include <functional>
 
 #include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/misc/platform_specific/WinHandleWrapper.h>
 #include <aipstack/misc/ResourceArray.h>
 #include <aipstack/infra/Err.h>
@@ -64,16 +65,11 @@ class TapDeviceWindows :
         std::shared_ptr<IoResource> m_resource;
     };
     
-private:
-    std::shared_ptr<WinHandleWrapper> m_device;
-    std::size_t m_frame_mtu;
-    std::size_t m_send_first;
-    std::size_t m_send_count;
-    ResourceArray<IoUnit, NumSendUnits> m_send_units;
-    IoUnit m_recv_unit;
-    
 public:
-    TapDeviceWindows (EventLoop &loop, std::string const &device_id);
+    using FrameReceivedHandler = Function<void(AIpStack::IpBufRef frame)>;
+    
+    TapDeviceWindows (EventLoop &loop, std::string const &device_id,
+                      FrameReceivedHandler handler);
 
     ~TapDeviceWindows ();
     
@@ -83,13 +79,19 @@ public:
 
     IpErr sendFrame (IpBufRef frame);
     
-protected:
-    virtual void frameReceived (IpBufRef frame) = 0;
-    
 private:
     bool startRecv ();
     void sendCompleted (IoUnit &send_unit);
     void recvCompleted (IoUnit &recv_unit);
+    
+private:
+    FrameReceivedHandler m_handler;
+    std::shared_ptr<WinHandleWrapper> m_device;
+    std::size_t m_frame_mtu;
+    std::size_t m_send_first;
+    std::size_t m_send_count;
+    ResourceArray<IoUnit, NumSendUnits> m_send_units;
+    IoUnit m_recv_unit;    
 };
 
 }

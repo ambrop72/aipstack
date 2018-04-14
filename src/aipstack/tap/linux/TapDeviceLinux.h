@@ -30,6 +30,7 @@
 #include <vector>
 
 #include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/misc/platform_specific/FileDescriptorWrapper.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Buf.h>
@@ -40,26 +41,29 @@ namespace AIpStack {
 class TapDeviceLinux :
     private AIpStack::NonCopyable<TapDeviceLinux>
 {
+public:
+    using FrameReceivedHandler = Function<void(AIpStack::IpBufRef frame)>;
+
+    TapDeviceLinux (AIpStack::EventLoop &loop, std::string const &device_id,
+                    FrameReceivedHandler handler);
+    
+    ~TapDeviceLinux ();
+    
+    std::size_t getMtu () const;
+
+    AIpStack::IpErr sendFrame (AIpStack::IpBufRef frame);
+
 private:
+    void handleFdEvents (AIpStack::EventLoopFdEvents events);
+
+private:
+    FrameReceivedHandler m_handler;
     AIpStack::FileDescriptorWrapper m_fd;
     AIpStack::EventLoopFdWatcher m_fd_watcher;
     std::size_t m_frame_mtu;
     std::vector<char> m_read_buffer;
     std::vector<char> m_write_buffer;
-    bool m_active;
-    
-public:
-    TapDeviceLinux (AIpStack::EventLoop &loop, std::string const &device_id);
-    ~TapDeviceLinux ();
-    
-    std::size_t getMtu () const;
-    AIpStack::IpErr sendFrame (AIpStack::IpBufRef frame);
-
-private:
-    void handleFdEvents (AIpStack::EventLoopFdEvents events);
-    
-protected:
-    virtual void frameReceived (AIpStack::IpBufRef frame) = 0;
+    bool m_active;    
 };
 
 }

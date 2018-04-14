@@ -45,7 +45,10 @@
 
 namespace AIpStack {
 
-TapDeviceLinux::TapDeviceLinux (AIpStack::EventLoop &loop, std::string const &device_id) :
+TapDeviceLinux::TapDeviceLinux (
+    AIpStack::EventLoop &loop, std::string const &device_id, FrameReceivedHandler handler)
+:
+    m_handler(handler),
     m_fd_watcher(loop, AIPSTACK_BIND_MEMBER(&TapDeviceLinux::handleFdEvents, this)),
     m_active(true)
 {
@@ -171,7 +174,7 @@ void TapDeviceLinux::handleFdEvents (AIpStack::EventLoopFdEvents events)
             nullptr
         };
         
-        frameReceived(AIpStack::IpBufRef{&node, 0, std::size_t(read_res)});
+        m_handler(AIpStack::IpBufRef{&node, 0, std::size_t(read_res)});
     } while (false);
     
     return;
