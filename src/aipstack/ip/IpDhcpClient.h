@@ -65,7 +65,7 @@ namespace AIpStack {
  * The DHCP client is started by creating an instance of the @ref IpDhcpClient class.
  * Once created, this objects operates the DHCP protocol and manages applicable
  * configuration of the network interface. It can optionally report significant
- * DHCP events to the user via virtual functions in the @ref IpDhcpClientCallback class.
+ * DHCP events to the user via the @ref IpDhcpClientHandler callback.
  * 
  * The DHCP client currently supports only Ethernet network interfaces; more
  * specifically, the @ref IpHwType::Ethernet hardware-type specific interface
@@ -75,9 +75,8 @@ namespace AIpStack {
  */
 
 /**
- * Type of DHCP client event as reported by
- * @ref AIpStack::IpDhcpClientCallback::dhcpClientEvent
- * "IpDhcpClientCallback::dhcpClientEvent".
+ * Type of DHCP client event as reported by @ref AIpStack::IpDhcpClientHandler
+ * "IpDhcpClientHandler".
  */
 enum class IpDhcpClientEvent {
     /**
@@ -137,20 +136,14 @@ enum class IpDhcpClientEvent {
 };
 
 /**
- * Interface for status callbacks from the DHCP client.
+ * Type of callback used to reports significant DHCP client events.
+ * 
+ * It is not allowed to remove the interface (and therefore also the
+ * DHCP client) from within the callback.
+ * 
+ * @param event_type Type of DHCP event.
  */
-class IpDhcpClientCallback {
-public:
-    /**
-     * DHCP status callback.
-     * 
-     * It is not allowed to remove the interface (and therefore also the
-     * DHCP client) from within the callback.
-     * 
-     * @param event_type Type of DHCP event.
-     */
-    virtual void dhcpClientEvent (IpDhcpClientEvent event_type) = 0;
-};
+using IpDhcpClientHandler = Function<void(IpDhcpClientEvent event_type)>;
 
 /**
  * Initialization options for the DHCP client.
@@ -328,7 +321,7 @@ private:
     typename Platform::Timer m_timer;
     IpStack<StackArg> *m_ipstack;
     IpIface<StackArg> *m_iface;
-    IpDhcpClientCallback *m_callback;
+    IpDhcpClientHandler m_handler;
     MemRef m_client_id;
     MemRef m_vendor_class_id;
     uint32_t m_xid;
@@ -357,17 +350,16 @@ public:
      *              specific interface (see @ref eth-hw).
      * @param opts Initialization options. This structure itself is copied but
      *             any referenced memory is not.
-     * @param callback Object which will receive callbacks about the status
-     *        of the lease, null for none.
+     * @param handler Callback used to report significant events (may be null).
      */
     IpDhcpClient (PlatformFacade<PlatformImpl> platform_, IpStack<StackArg> *stack,
                   IpIface<StackArg> *iface, IpDhcpClientInitOptions const &opts,
-                  IpDhcpClientCallback *callback)
+                  IpDhcpClientHandler handler)
     :
         m_timer(platform_, AIPSTACK_BIND_MEMBER_TN(&IpDhcpClient::timerHandler, this)),
         m_ipstack(stack),
         m_iface(iface),
-        m_callback(callback),
+        m_handler(handler),
         m_client_id(opts.client_id),
         m_vendor_class_id(opts.vendor_class_id)
     {
@@ -1212,10 +1204,10 @@ private:
         iface()->setIp4Gateway(gateway);
         
         // Call the callback if specified.
-        if (m_callback != nullptr) {
+        if (m_handler) {
             auto event_type = renewed ?
                 IpDhcpClientEvent::LeaseRenewed : IpDhcpClientEvent::LeaseObtained;
-            return m_callback->dhcpClientEvent(event_type);
+            return m_handler(event_type);
         }
     }
     
@@ -1228,10 +1220,10 @@ private:
         iface()->setIp4Addr(IpIfaceIp4AddrSetting());
         
         // Call the callback if desired and specified.
-        if (call_callback && m_callback != nullptr) {
+        if (call_callback && m_handler) {
             auto event_type = link_down ?
                 IpDhcpClientEvent::LinkDown : IpDhcpClientEvent::LeaseLost;
-            return m_callback->dhcpClientEvent(event_type);
+            return m_handler(event_type);
         }
     }
     
