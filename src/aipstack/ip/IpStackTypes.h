@@ -382,7 +382,7 @@ struct IpRouteInfoIp4 {
  * Encapsulates information about a received IPv4 datagram.
  * 
  * This is filled in by the stack and passed to the recvIp4Dgram function of
- * protocol handlers and also to @ref IpIfaceListener::recvIp4Dgram.
+ * protocol handlers and also to @ref IpIfaceListener::Ip4DgramHandler.
  * 
  * @tparam Arg Template parameter of @ref IpStack.
  */

@@ -1046,7 +1046,7 @@ private:
              lis != nullptr; lis = ip_info.iface->m_listeners_list.next(*lis))
         {
             if (lis->m_proto == proto) {
-                if (AIPSTACK_UNLIKELY(lis->recvIp4Dgram(ip_info, dgram))) {
+                if (AIPSTACK_UNLIKELY(lis->m_ip4_handler(ip_info, dgram))) {
                     return;
                 }
             }

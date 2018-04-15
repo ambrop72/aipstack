@@ -28,6 +28,7 @@
 #include <stdint.h>
 
 #include <aipstack/misc/NonCopyable.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/ip/IpStackTypes.h>
@@ -48,10 +49,6 @@ template <typename> class IpIface;
  * Allows receiving and intercepting IP datagrams received through a specific
  * interface with a specific IP protocol.
  * 
- * This is a low-level interface designed to be used by the DHCP client
- * implementation. It may be removed at some point if a proper UDP protocol
- * handle is implemented that is usable for DHCP.
- * 
  * @tparam Arg Template parameter of @ref IpStack.
  */
 template <typename Arg>
@@ -62,19 +59,38 @@ class IpIfaceListener :
     
 public:
     /**
-     * Construct the listener object and start listening.
+     * Type of callback called when a matching datagram is received.
      * 
-     * Received datagrams with matching protocol number will be passed to
-     * the @ref recvIp4Dgram callback.
+     * This is called before passing the datagram to any protocol handler. The return value
+     * allows inhibiting further processing of the datagram (by other @ref IpIfaceListener
+     * "IpIfaceListener"s, protocol handlers and built-in protocols such as ICMP).
+     * 
+     * @warning It is not allowed to deinitialize this listener object from this callback
+     * unless true is returned.
+     * 
+     * @warning It is not allowed to remove the interface through which the packet has been
+     * received from this callback.
+     * 
+     * @param ip_info Information about the received datagram.
+     * @param dgram Data of the received datagram.
+     * @return True to inhibit further processing, false to continue.
+     */
+    using Ip4DgramHandler = Function<bool(IpRxInfoIp4<Arg> const &ip_info, IpBufRef dgram)>;
+
+    /**
+     * Construct the listener object and start listening.
      * 
      * @param iface The interface to listen for packets on. It is the
      *        responsibility of the user to ensure that the interface is
      *        not removed while this object is still initialized.
      * @param proto IP protocol number that the user is interested on.
+     * @param ip4_handler Callback function to which matching received datagrams
+     *        will be passed (must not be null).
      */
-    IpIfaceListener (IpIface<Arg> *iface, uint8_t proto) :
+    IpIfaceListener (IpIface<Arg> *iface, uint8_t proto, Ip4DgramHandler ip4_handler) :
         m_iface(iface),
-        m_proto(proto)
+        m_proto(proto),
+        m_ip4_handler(ip4_handler)
     {
         m_iface->m_listeners_list.prepend(*this);
     }
@@ -97,30 +113,11 @@ public:
         return m_iface;
     }
     
-protected:
-    /**
-     * Called when a matching datagram is received.
-     * 
-     * This is called before passing the datagram to any protocol handler. The return value
-     * allows inhibiting further processing of the datagram (by other @ref IpIfaceListener
-     * "IpIfaceListener"s, protocol handlers and built-in protocols such as ICMP).
-     * 
-     * @warning It is not allowed to deinitialize this listener object from this callback
-     * unless true is returned.
-     * 
-     * @warning It is not allowed to remove the interface through which the packet has been
-     * received from this callback.
-     * 
-     * @param ip_info Information about the received datagram.
-     * @param dgram Data of the received datagram.
-     * @return True to inhibit further processing, false to continue.
-     */
-    virtual bool recvIp4Dgram (IpRxInfoIp4<Arg> const &ip_info, IpBufRef dgram) = 0;
-    
 private:
     LinkedListNode<typename IpStack<Arg>::IfaceListenerLinkModel> m_list_node;
     IpIface<Arg> *m_iface;
     uint8_t m_proto;
+    Ip4DgramHandler m_ip4_handler;
 };
 
 /** @} */
