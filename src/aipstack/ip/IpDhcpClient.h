@@ -203,7 +203,6 @@ class IpDhcpClient :
     ,
     private UdpListener<
         typename IpStack<typename Arg::StackArg>::template GetProtoArg<UdpApi>>,
-    private IpIfaceStateObserver<typename Arg::StackArg>,
     private IpSendRetryRequest,
     private EthArpObserver
 #endif
@@ -319,6 +318,7 @@ public:
     
 private:
     typename Platform::Timer m_timer;
+    IpIfaceStateObserver<StackArg> m_iface_observer;
     IpStack<StackArg> *m_ipstack;
     IpIface<StackArg> *m_iface;
     IpDhcpClientHandler m_handler;
@@ -357,6 +357,7 @@ public:
                   IpDhcpClientHandler handler)
     :
         m_timer(platform_, AIPSTACK_BIND_MEMBER_TN(&IpDhcpClient::timerHandler, this)),
+        m_iface_observer(AIPSTACK_BIND_MEMBER_TN(&IpDhcpClient::ifaceStateChanged, this)),
         m_ipstack(stack),
         m_iface(iface),
         m_handler(handler),
@@ -375,7 +376,7 @@ public:
         UdpListener<UdpArg>::startListening(udp(), listen_params);
 
         // Start observing interface state.
-        IpIfaceStateObserver<StackArg>::observe(*iface);
+        m_iface_observer.observe(*iface);
         
         // Remember any requested IP address for Rebooting.
         m_info.ip_address = opts.request_ip_address;
@@ -955,7 +956,7 @@ private:
         }
     }
     
-    void ifaceStateChanged () override final
+    void ifaceStateChanged ()
     {
         IpIfaceDriverState driver_state = iface()->getDriverState();
         

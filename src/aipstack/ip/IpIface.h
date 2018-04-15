@@ -396,7 +396,7 @@ namespace AIpStack {
         {
             m_state_observable.notifyKeepObservers(
             [&](IpIfaceStateObserver<Arg> &observer) {
-                observer.ifaceStateChanged();
+                observer.m_handler();
             });
         }
         

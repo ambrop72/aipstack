@@ -25,6 +25,7 @@
 #ifndef AIPSTACK_IP_IFACE_STATE_OBSERVER_H
 #define AIPSTACK_IP_IFACE_STATE_OBSERVER_H
 
+#include <aipstack/misc/Function.h>
 #include <aipstack/infra/ObserverNotification.h>
 
 namespace AIpStack {
@@ -61,6 +62,31 @@ class IpIfaceStateObserver :
     
 public:
     /**
+     * Type of callback called when the driver-reported state of the interface
+     * may have changed.
+     * 
+     * It is not guaranteed that the state has actually changed, nor is it
+     * guaranteed that the callback will be called immediately for every state
+     * change (there may be just one callback for successive state changes).
+     * 
+     * WARNING: The callback must not do any potentially harmful actions such
+     * as removing the interface. Removing this or other listeners and adding
+     * other listeners is safe. Sending packets should be safe assuming this
+     * is safe in the driver.
+     */
+    using StateChangedHandler = Function<void()>;
+
+    /**
+     * Construct the state observer.
+     * 
+     * @param handler Callback function used to report state changes (must not
+     *        be null).
+     */
+    IpIfaceStateObserver (StateChangedHandler handler) :
+        m_handler(handler)
+    {}
+
+    /**
      * Start observing an interface, making the observer active.
      * 
      * The observer must be inactive when this is called.
@@ -72,20 +98,8 @@ public:
         iface.m_state_observable.addObserver(*this);
     }
     
-protected:
-    /**
-     * Called when the driver-reported state of the interface may have changed.
-     * 
-     * It is not guaranteed that the state has actually changed, nor is it
-     * guaranteed that the callback will be called immediately for every state
-     * change (there may be just one callback for successive state changes).
-     * 
-     * WARNING: The callback must not do any potentially harmful actions such
-     * as removing the interface. Removing this or other listeners and adding
-     * other listeners is safe. Sending packets should be safe assuming this
-     * is safe in the driver.
-     */
-    virtual void ifaceStateChanged () = 0;
+private:
+    StateChangedHandler m_handler;
 };
 
 /** @} */
