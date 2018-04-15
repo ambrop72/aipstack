@@ -200,11 +200,9 @@ template <typename Arg>
 class IpDhcpClient :
     private NonCopyable<IpDhcpClient<Arg>>
 #ifndef IN_DOXYGEN
-    ,
-    private UdpListener<
+    ,private UdpListener<
         typename IpStack<typename Arg::StackArg>::template GetProtoArg<UdpApi>>,
-    private IpSendRetryRequest,
-    private EthArpObserver
+    private IpSendRetryRequest
 #endif
 {
     AIPSTACK_USE_TYPES(Arg, (PlatformImpl, StackArg, Params))
@@ -319,6 +317,7 @@ public:
 private:
     typename Platform::Timer m_timer;
     IpIfaceStateObserver<StackArg> m_iface_observer;
+    EthArpObserver m_arp_observer;
     IpStack<StackArg> *m_ipstack;
     IpIface<StackArg> *m_iface;
     IpDhcpClientHandler m_handler;
@@ -358,6 +357,7 @@ public:
     :
         m_timer(platform_, AIPSTACK_BIND_MEMBER_TN(&IpDhcpClient::timerHandler, this)),
         m_iface_observer(AIPSTACK_BIND_MEMBER_TN(&IpDhcpClient::ifaceStateChanged, this)),
+        m_arp_observer(AIPSTACK_BIND_MEMBER_TN(&IpDhcpClient::arpInfoReceived, this)),
         m_ipstack(stack),
         m_iface(iface),
         m_handler(handler),
@@ -638,7 +638,7 @@ private:
             ethHw()->sendArpQuery(m_info.ip_address);
         } else {
             // Unsubscribe from ARP updates.
-            EthArpObserver::reset();
+            m_arp_observer.reset();
             
             // Bind the lease.
             return go_bound();
@@ -981,7 +981,7 @@ private:
                 m_state = DhcpState::LinkDown;
                 
                 // Reset resources to prevent undesired callbacks.
-                EthArpObserver::reset();
+                m_arp_observer.reset();
                 IpSendRetryRequest::reset();
                 m_timer.unset();
                 
@@ -993,7 +993,7 @@ private:
         }
     }
     
-    void arpInfoReceived (Ip4Addr ip_addr, MacAddr mac_addr) override final
+    void arpInfoReceived (Ip4Addr ip_addr, MacAddr mac_addr)
     {
         AIPSTACK_ASSERT(m_state == DhcpState::Checking)
         (void)mac_addr;
@@ -1004,7 +1004,7 @@ private:
             send_decline();
             
             // Unsubscribe from ARP updates.
-            EthArpObserver::reset();
+            m_arp_observer.reset();
             
             // Restart via Resetting state after a timeout.
             return go_resetting(false);
@@ -1139,7 +1139,7 @@ private:
         // Subscribe to receive ARP updates.
         // NOTE: This must not be called if already registered,
         // so we reset it when we no longer need it.
-        EthArpObserver::observe(*ethHw());
+        m_arp_observer.observe(*ethHw());
         
         // Start the timeout.
         m_timer.setAfter(SecToTicks(Params::ArpResponseTimeoutSeconds));

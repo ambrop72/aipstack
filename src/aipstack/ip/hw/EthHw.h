@@ -27,6 +27,7 @@
 
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/ObserverNotification.h>
 #include <aipstack/proto/EthernetProto.h>
@@ -132,10 +133,29 @@ class EthArpObserver :
 
 public:
     /**
+     * Type of callback used to reports a single ARP update.
+     *
+     * @param ip_addr IP address to which the ARP update applies.
+     * @param mac_addr The MAC address associated with this IP address.
+     */
+    using ArpInfoReceivedHandler = Function<void(Ip4Addr ip_addr, MacAddr mac_addr)>;
+
+    /**
+     * Construct the ARP observer.
+     * 
+     * @param handler Callback function used to report ARP updates (must not
+     *        be null).
+     */
+    inline EthArpObserver (ArpInfoReceivedHandler handler) :
+        m_handler(handler)
+    {}
+
+    /**
      * Subscribe to ARP updates on an Ethernet interface.
      *
-     * Must not be observing already.
-     * Updates will be reported using @ref arpInfoReceived.
+     * @note This may only be called when not already observing.
+     * 
+     * Updates will be reported using the @ref ArpInfoReceivedHandler callback.
      *
      * @param hw The @ref EthHwIface of the network interface.
      */
@@ -144,14 +164,8 @@ public:
         hw.getArpObservable().addObserver(*this);
     }
 
-protected:
-    /**
-     * Reports a single ARP update.
-     *
-     * @param ip_addr IP address to which the ARP update applies.
-     * @param mac_addr The MAC address associated with this IP address.
-     */
-    virtual void arpInfoReceived (Ip4Addr ip_addr, MacAddr mac_addr) = 0;
+private:
+    ArpInfoReceivedHandler m_handler;
 };
 
 void EthHwIface::notifyEthArpObserver (
@@ -159,7 +173,7 @@ void EthHwIface::notifyEthArpObserver (
 {
     AIPSTACK_ASSERT(observer.isActive())
 
-    observer.arpInfoReceived(ip_addr, mac_addr);
+    observer.m_handler(ip_addr, mac_addr);
 }
 
 /** @} */
