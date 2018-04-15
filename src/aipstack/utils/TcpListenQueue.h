@@ -166,13 +166,14 @@ public:
     
 public:
     class QueuedListener :
-        private Listener,
         private NonCopyable<QueuedListener>
     {
         friend class ListenQueueEntry;
         
     public:
         QueuedListener (PlatformFacade<PlatformImpl> platform) :
+            m_listener(
+                AIPSTACK_BIND_MEMBER(&QueuedListener::establishedHandler, this)),
             m_dequeue_timer(platform,
                 AIPSTACK_BIND_MEMBER(&QueuedListener::dequeueTimerHandler, this)),
             m_timeout_timer(platform,
@@ -189,18 +190,18 @@ public:
             deinit_queue();
             m_dequeue_timer.unset();
             m_timeout_timer.unset();
-            Listener::reset();
+            m_listener.reset();
         }
         
         bool startListening (TcpApi<TcpArg> &tcp, TcpListenParams const &params, ListenQueueParams const &q_params)
         {
-            AIPSTACK_ASSERT(!Listener::isListening())
+            AIPSTACK_ASSERT(!m_listener.isListening())
             AIPSTACK_ASSERT(q_params.queue_size >= 0)
             AIPSTACK_ASSERT(q_params.queue_size == 0 || q_params.queue_entries != nullptr)
             AIPSTACK_ASSERT(q_params.queue_size == 0 || q_params.min_rcv_buf_size >= RxBufferSize)
             
             // Start listening.
-            if (!Listener::startListening(tcp, params)) {
+            if (!m_listener.startListening(tcp, params)) {
                 return false;
             }
             
@@ -217,14 +218,14 @@ public:
             
             // Set the initial receive window.
             size_t initial_rx_window = (m_queue_size == 0) ? q_params.min_rcv_buf_size : RxBufferSize;
-            Listener::setInitialReceiveWindow(initial_rx_window);
+            m_listener.setInitialReceiveWindow(initial_rx_window);
             
             return true;
         }
         
         void scheduleDequeue ()
         {
-            AIPSTACK_ASSERT(Listener::isListening())
+            AIPSTACK_ASSERT(m_listener.isListening())
             
             if (m_queue_size > 0) {
                 m_dequeue_timer.setNow();
@@ -244,11 +245,11 @@ public:
         //   dataReceived(0) callback.
         IpErr acceptConnection (TcpConnection<TcpArg> &dst_con, IpBufRef &initial_rx_data)
         {
-            AIPSTACK_ASSERT(Listener::isListening())
+            AIPSTACK_ASSERT(m_listener.isListening())
             AIPSTACK_ASSERT(dst_con.isInit())
             
             if (m_queue_size == 0) {
-                AIPSTACK_ASSERT(Listener::hasAcceptPending())
+                AIPSTACK_ASSERT(m_listener.hasAcceptPending())
                 
                 initial_rx_data = IpBufRef{};
                 return dst_con.acceptConnection(*this);
@@ -270,10 +271,10 @@ public:
         virtual void queuedListenerConnectionEstablished () = 0;
         
     private:
-        void connectionEstablished () override final
+        void establishedHandler ()
         {
-            AIPSTACK_ASSERT(Listener::isListening())
-            AIPSTACK_ASSERT(Listener::hasAcceptPending())
+            AIPSTACK_ASSERT(m_listener.isListening())
+            AIPSTACK_ASSERT(m_listener.hasAcceptPending())
             
             if (m_queue_size == 0) {
                 // Call the accept callback so the user can call acceptConnection.
@@ -299,7 +300,7 @@ public:
         
         void dispatch_connections ()
         {
-            AIPSTACK_ASSERT(Listener::isListening())
+            AIPSTACK_ASSERT(m_listener.isListening())
             AIPSTACK_ASSERT(m_queue_size > 0)
             AIPSTACK_ASSERT(m_queued_to_accept == nullptr)
             
@@ -322,7 +323,7 @@ public:
         
         void update_timeout ()
         {
-            AIPSTACK_ASSERT(Listener::isListening())
+            AIPSTACK_ASSERT(m_listener.isListening())
             AIPSTACK_ASSERT(m_queue_size > 0)
             
             ListenQueueEntry *entry = find_oldest(false);
@@ -337,7 +338,7 @@ public:
         
         void timeoutTimerHandler ()
         {
-            AIPSTACK_ASSERT(Listener::isListening())
+            AIPSTACK_ASSERT(m_listener.isListening())
             AIPSTACK_ASSERT(m_queue_size > 0)
             
             // We must have a non-ready connection since we keep the timeout
@@ -354,7 +355,7 @@ public:
         
         void deinit_queue ()
         {
-            if (Listener::isListening()) {
+            if (m_listener.isListening()) {
                 for (int i = 0; i < m_queue_size; i++) {
                     m_queue[i].deinit();
                 }
@@ -379,6 +380,7 @@ public:
         }
         
     private:
+        Listener m_listener;
         typename Platform::Timer m_dequeue_timer;
         typename Platform::Timer m_timeout_timer;
         ListenQueueEntry *m_queue;

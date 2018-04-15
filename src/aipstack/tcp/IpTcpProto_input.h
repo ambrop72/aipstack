@@ -923,9 +923,9 @@ private:
             // created.
             tcp->m_unrefed_pcbs_list.remove({*pcb, *tcp}, *tcp);
             
-            // Call the connectionEstablished callback of the listener to allow the
+            // Call the EstablishedHandler callback of the listener to allow the
             // application to accept the connection.
-            lis->connectionEstablished();
+            lis->m_established_handler();
             
             // Handle abort of PCB.
             if (AIPSTACK_UNLIKELY(tcp->m_current_pcb == nullptr)) {

@@ -31,6 +31,7 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/Use.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/tcp/TcpUtils.h>
@@ -73,12 +74,30 @@ class TcpListener :
     
 public:
     /**
+     * Type of callback used to report newly established connections.
+     * 
+     * Each call of the callback represents a new connection. To accept the
+     * connection, the user should call TcpConnection::acceptConnection. If the
+     * connection is not accepted by acceptConnection within this callback,
+     * it will be aborted.
+     * 
+     * Note that there are no special restrictions regarding accessing the
+     * connection from within this callback. It is also permissible to
+     * deinit/reset the listener.
+     */
+    using EstablishedHandler = Function<void()>;
+
+    /**
      * Initialize the listener.
      * 
      * Upon init, the listener is in not-listening state, and listenIp4 should
      * be called to start listening.
+     * 
+     * @param established_handler Callback function used to report newly established
+     *        connections.
      */
-    TcpListener () :
+    TcpListener (EstablishedHandler established_handler) :
+        m_established_handler(established_handler),
         m_initial_rcv_wnd(0),
         m_accept_pcb(nullptr),
         m_listening(false)
@@ -184,7 +203,7 @@ public:
      * extendReceiveWindow.
      * 
      * Note that the initial receive window is applied to a new connection when
-     * the SYN is received, not when the connectionEstablished callback is called.
+     * the SYN is received, not when the @ref EstablishedHandler callback is called.
      * Hence the user should generaly use getAnnouncedRcvWnd to determine the
      * initially announced receive window of a new connection. Further, the TCP
      * may still use a smaller initial receive window than configued with this
@@ -195,20 +214,8 @@ public:
         m_initial_rcv_wnd = MinValueU(Constants::MaxWindow, rcv_wnd);
     }
     
-protected:
-    /**
-     * Called when a new connection has been established.
-     * 
-     * To accept the connection, the user should call TcpConnection::acceptConnection.
-     * Note that there are no special restrictions regarding accessing the connection
-     * from within this callback. It is also permissible to deinit/reset the listener.
-     * 
-     * If the connection is not accepted by acceptConnection within this callback,
-     * it will be aborted.
-     */
-    virtual void connectionEstablished () = 0;
-    
 private:
+    EstablishedHandler m_established_handler;
     LinkedListNode<typename TcpProto::ListenerLinkModel> m_listeners_node;
     TcpProto *m_tcp;
     SeqType m_initial_rcv_wnd;

@@ -71,21 +71,6 @@ class ExampleApp :
     using TcpListener = AIpStack::TcpListener<TcpArg>;
     using TcpConnection = AIpStack::TcpConnection<TcpArg>;
 
-    class MyListener : public TcpListener {
-    public:
-        MyListener (ExampleApp *parent) :
-            m_parent(parent)
-        {}
-        
-    private:
-        ExampleApp *m_parent;
-        
-        void connectionEstablished () override final
-        {
-            m_parent->listenerConnectionEstablished(*this);
-        }
-    };
-    
     // Function type used in the BaseClient constructor to initialize the connection
     // (e.g. accept or start connection).
     using ClientSetupFunc = AIpStack::Function<void(TcpConnection &)>;
@@ -95,8 +80,10 @@ class ExampleApp :
 public:
     ExampleApp (IpStack *stack) :
         m_stack(stack),
-        m_listener_echo(this),
-        m_listener_command(this)
+        m_listener_echo(
+            AIPSTACK_BIND_MEMBER_TN(&ExampleApp::connectionEstablishedEcho, this)),
+        m_listener_command(
+            AIPSTACK_BIND_MEMBER_TN(&ExampleApp::connectionEstablishedCommand, this))
     {
         startListening(m_listener_echo, Params::EchoPort, Params::EchoBufferSize);
         startListening(m_listener_command, Params::LineParsingPort,
@@ -109,7 +96,7 @@ private:
         return m_stack->template getProtoApi<AIpStack::TcpApi>();
     }
     
-    void startListening (MyListener &listener, std::uint16_t port, std::size_t buffer_size)
+    void startListening (TcpListener &listener, std::uint16_t port, std::size_t buffer_size)
     {
         if (!listener.startListening(tcp(), {
             /*addr=*/ AIpStack::Ip4Addr::ZeroAddr(),
@@ -121,8 +108,18 @@ private:
         
         listener.setInitialReceiveWindow(buffer_size);
     }
+
+    void connectionEstablishedEcho ()
+    {
+        return connectionEstablishedCommon(m_listener_echo);
+    }
+
+    void connectionEstablishedCommand ()
+    {
+        return connectionEstablishedCommon(m_listener_command);
+    }
     
-    void listenerConnectionEstablished (MyListener &listener)
+    void connectionEstablishedCommon (TcpListener &listener)
     {
         ClientType type = (&listener == &m_listener_echo) ?
             ClientType::Echo : ClientType::Command;
@@ -500,8 +497,8 @@ private:
     
 private:
     IpStack *m_stack;
-    MyListener m_listener_echo;
-    MyListener m_listener_command;
+    TcpListener m_listener_echo;
+    TcpListener m_listener_command;
     std::unordered_map<BaseClient *, std::unique_ptr<BaseClient>> m_clients;
 };
 
