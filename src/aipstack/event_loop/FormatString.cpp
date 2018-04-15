@@ -68,9 +68,11 @@ std::string formatString (char const *fmt, ...)
             break;
         }
 
-        // The first check is redundant but may inhibit a warning.
-        std::size_t const Limit = TypeMax<std::size_t>() - 1;
-        if (TypeMax<decltype(print_bytes)>() > Limit && print_bytes > Limit) {
+        // Get the common type of print_bytes and size_t, to avoid a warning
+        // in the check below.
+        using CT = decltype(false ? print_bytes : std::size_t());
+
+        if (CT(print_bytes) > CT(TypeMax<std::size_t>() - 1)) {
             throw std::bad_alloc();
         }
 
