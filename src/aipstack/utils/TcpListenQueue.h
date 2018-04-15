@@ -171,7 +171,12 @@ public:
         friend class ListenQueueEntry;
         
     public:
-        QueuedListener (PlatformFacade<PlatformImpl> platform) :
+        using EstablishedHandler = Function<void()>;
+
+        QueuedListener (
+            PlatformFacade<PlatformImpl> platform, EstablishedHandler established_handler)
+        :
+            m_established_handler(established_handler),
             m_listener(
                 AIPSTACK_BIND_MEMBER(&QueuedListener::establishedHandler, this)),
             m_dequeue_timer(platform,
@@ -267,9 +272,6 @@ public:
             }
         }
         
-    protected:
-        virtual void queuedListenerConnectionEstablished () = 0;
-        
     private:
         void establishedHandler ()
         {
@@ -278,7 +280,7 @@ public:
             
             if (m_queue_size == 0) {
                 // Call the accept callback so the user can call acceptConnection.
-                queuedListenerConnectionEstablished();
+                m_established_handler();
             } else {
                 // Try to accept the connection into the queue.
                 for (int i = 0; i < m_queue_size; i++) {
@@ -311,7 +313,7 @@ public:
                 
                 // Call the accept handler, while publishing the connection.
                 m_queued_to_accept = entry;
-                queuedListenerConnectionEstablished();
+                m_established_handler();
                 m_queued_to_accept = nullptr;
                 
                 // If the connection was not taken, stop trying.
@@ -380,6 +382,7 @@ public:
         }
         
     private:
+        EstablishedHandler m_established_handler;
         Listener m_listener;
         typename Platform::Timer m_dequeue_timer;
         typename Platform::Timer m_timeout_timer;
