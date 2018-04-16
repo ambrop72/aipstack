@@ -608,9 +608,9 @@ inline void WriteSingleField (char *ptr, StructFieldValType<FieldType> value)
 #else
 #define AIPSTACK_DEFINE_STRUCT(StructName, Fields) \
 struct StructName : public AIpStack::StructBase<StructName> { \
-    AIPSTACK_DEFINE_STRUCT__ADD_END(AIPSTACK_DEFINE_STRUCT__FIELD_1 Fields) \
+    AIPSTACK_DEFINE_STRUCT_ADD_END(AIPSTACK_DEFINE_STRUCT_FIELD_1 Fields) \
     using StructFields = AIpStack::MakeTypeList< \
-        AIPSTACK_DEFINE_STRUCT__ADD_END(AIPSTACK_DEFINE_STRUCT__LIST_0 Fields) \
+        AIPSTACK_DEFINE_STRUCT_ADD_END(AIPSTACK_DEFINE_STRUCT_LIST_0 Fields) \
     >; \
     static size_t const Size = StructName::GetStructSize(); \
 };
@@ -618,26 +618,26 @@ struct StructName : public AIpStack::StructBase<StructName> { \
 
 #ifndef IN_DOXYGEN
 
-#define AIPSTACK_DEFINE_STRUCT__ADD_END(...) AIPSTACK_DEFINE_STRUCT__ADD_END_2(__VA_ARGS__)
-#define AIPSTACK_DEFINE_STRUCT__ADD_END_2(...) __VA_ARGS__ ## _END
+#define AIPSTACK_DEFINE_STRUCT_ADD_END(...) AIPSTACK_DEFINE_STRUCT_ADD_END_2(__VA_ARGS__)
+#define AIPSTACK_DEFINE_STRUCT_ADD_END_2(...) __VA_ARGS__ ## _END
 
-#define AIPSTACK_DEFINE_STRUCT__FIELD_1(FieldName, FieldType) \
+#define AIPSTACK_DEFINE_STRUCT_FIELD_1(FieldName, FieldType) \
 struct FieldName : public AIpStack::StructField<FieldType> {}; \
-AIPSTACK_DEFINE_STRUCT__FIELD_2
+AIPSTACK_DEFINE_STRUCT_FIELD_2
 
-#define AIPSTACK_DEFINE_STRUCT__FIELD_2(FieldName, FieldType) \
+#define AIPSTACK_DEFINE_STRUCT_FIELD_2(FieldName, FieldType) \
 struct FieldName : public AIpStack::StructField<FieldType> {}; \
-AIPSTACK_DEFINE_STRUCT__FIELD_1
+AIPSTACK_DEFINE_STRUCT_FIELD_1
 
-#define AIPSTACK_DEFINE_STRUCT__FIELD_1_END
-#define AIPSTACK_DEFINE_STRUCT__FIELD_2_END
+#define AIPSTACK_DEFINE_STRUCT_FIELD_1_END
+#define AIPSTACK_DEFINE_STRUCT_FIELD_2_END
 
-#define AIPSTACK_DEFINE_STRUCT__LIST_0(FieldName, FieldType) FieldName AIPSTACK_DEFINE_STRUCT__LIST_1
-#define AIPSTACK_DEFINE_STRUCT__LIST_1(FieldName, FieldType) , FieldName AIPSTACK_DEFINE_STRUCT__LIST_2
-#define AIPSTACK_DEFINE_STRUCT__LIST_2(FieldName, FieldType) , FieldName AIPSTACK_DEFINE_STRUCT__LIST_1
+#define AIPSTACK_DEFINE_STRUCT_LIST_0(FieldName, FieldType) FieldName AIPSTACK_DEFINE_STRUCT_LIST_1
+#define AIPSTACK_DEFINE_STRUCT_LIST_1(FieldName, FieldType) , FieldName AIPSTACK_DEFINE_STRUCT_LIST_2
+#define AIPSTACK_DEFINE_STRUCT_LIST_2(FieldName, FieldType) , FieldName AIPSTACK_DEFINE_STRUCT_LIST_1
 
-#define AIPSTACK_DEFINE_STRUCT__LIST_1_END
-#define AIPSTACK_DEFINE_STRUCT__LIST_2_END
+#define AIPSTACK_DEFINE_STRUCT_LIST_1_END
+#define AIPSTACK_DEFINE_STRUCT_LIST_2_END
 
 template <typename Type>
 class StructBinaryTypeHandler {
