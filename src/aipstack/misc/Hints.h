@@ -67,7 +67,7 @@
  * @{
  */
 
-#if defined(IN_DOXYGEN) || !defined(__GNUC__)
+#if defined(IN_DOXYGEN) || !(defined(__GNUC__) || defined(__clang__))
 
 /**
  * Convert to bool and optimize for the true case.

@@ -31,7 +31,6 @@
 #include <type_traits>
 
 #include <aipstack/misc/MinMax.h>
-#include <aipstack/misc/Pragma.h>
 #include <aipstack/event_loop/FormatString.h>
 
 namespace AIpStack {
@@ -56,9 +55,7 @@ std::string formatString (char const *fmt, ...)
         std::va_list args;
         va_start(args, fmt);
 
-        AIPSTACK_GCC_DIAGNOSTIC_START("GCC diagnostic ignored \"-Wformat-nonliteral\"")
         auto print_res = std::vsnprintf(&str[0], str.size(), fmt, args);
-        AIPSTACK_GCC_DIAGNOSTIC_END
         
         va_end(args);
 

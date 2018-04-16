@@ -43,7 +43,7 @@ namespace AIpStack {
  * @throw std::runtime_error If formatting fails for an unknown reason.
  * @throw std::bad_alloc If a memory allocation error occurs.
  */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
 __attribute__((format(__printf__, 1, 2)))
 #endif
 std::string formatString (char const *fmt, ...);
