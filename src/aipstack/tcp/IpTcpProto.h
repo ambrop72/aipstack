@@ -680,7 +680,7 @@ private:
     
     inline SeqType make_iss ()
     {
-        return platform().getTime();
+        return SeqType(platform().getTime());
     }
     
     Listener * find_listener (Ip4Addr addr, PortNum port)

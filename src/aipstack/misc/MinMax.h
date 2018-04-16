@@ -137,11 +137,12 @@ constexpr MinValueURetType<T1, T2> MinValueU (T1 op1, T2 op2)
 {
     static_assert(std::is_unsigned<T1>::value, "Only unsigned allowed");
     static_assert(std::is_unsigned<T2>::value, "Only unsigned allowed");
+    using RetType = MinValueURetType<T1, T2>;
     
     if (op1 < op2) {
-        return op1;
+        return RetType(op1);
     } else {
-        return op2;
+        return RetType(op2);
     }
 }
 

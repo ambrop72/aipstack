@@ -219,7 +219,7 @@ public:
             {
                 goto invalidate_reass;
             }
-            uint16_t fragment_end = fragment_offset + dgram.tot_len;
+            uint16_t fragment_end = uint16_t(fragment_offset + dgram.tot_len);
             
             // Summary of last-fragment related sanity checks:
             // - When we first receive a last fragment, we remember the data size and

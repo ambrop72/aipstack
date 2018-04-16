@@ -129,7 +129,7 @@ inline bool ParseIpAddr (MemRef str, Ip4Addr &out_addr)
             return false;
         }
 
-        bytes[i] = byte_val;
+        bytes[i] = uint8_t(byte_val);
     }
 
     if (ptr != end) {

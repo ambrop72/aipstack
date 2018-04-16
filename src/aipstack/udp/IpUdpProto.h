@@ -160,7 +160,7 @@ public:
         auto udp_header = Udp4Header::MakeRef(dgram.getChunkPtr());
         udp_header.set(Udp4Header::SrcPort(),  udp_info.src_port);
         udp_header.set(Udp4Header::DstPort(),  udp_info.dst_port);
-        udp_header.set(Udp4Header::Length(),   dgram.tot_len);
+        udp_header.set(Udp4Header::Length(),   uint16_t(dgram.tot_len));
         udp_header.set(Udp4Header::Checksum(), 0);
         
         // Calculate UDP checksum.
@@ -168,7 +168,7 @@ public:
         chksum_accum.addWords(&addrs.local_addr.data);
         chksum_accum.addWords(&addrs.remote_addr.data);
         chksum_accum.addWord(WrapType<uint16_t>(), Ip4ProtocolUdp);
-        chksum_accum.addWord(WrapType<uint16_t>(), dgram.tot_len);
+        chksum_accum.addWord(WrapType<uint16_t>(), uint16_t(dgram.tot_len));
         uint16_t checksum = chksum_accum.getChksum(dgram);
         if (checksum == 0) {
             checksum = TypeMax<uint16_t>();
@@ -639,7 +639,7 @@ private:
             chksum_accum.addWords(&ip_info.src_addr.data);
             chksum_accum.addWords(&ip_info.dst_addr.data);
             chksum_accum.addWord(WrapType<uint16_t>(), Ip4ProtocolUdp);
-            chksum_accum.addWord(WrapType<uint16_t>(), dgram.tot_len);
+            chksum_accum.addWord(WrapType<uint16_t>(), uint16_t(dgram.tot_len));
 
             if (chksum_accum.getChksum(dgram) != 0) {
                 return false;

@@ -95,7 +95,7 @@ public:
         chksum_accum.addWords(&ip_info.src_addr.data);
         chksum_accum.addWords(&ip_info.dst_addr.data);
         chksum_accum.addWord(WrapType<uint16_t>(), Ip4ProtocolTcp);
-        chksum_accum.addWord(WrapType<uint16_t>(), dgram.tot_len);
+        chksum_accum.addWord(WrapType<uint16_t>(), uint16_t(dgram.tot_len));
         if (AIPSTACK_UNLIKELY(chksum_accum.getChksum(dgram) != 0)) {
             return;
         }
@@ -266,7 +266,7 @@ public:
         //   receiving ACKs.
         AIPSTACK_ASSERT(hdr_wnd <= TypeMax<uint16_t>())
         
-        return hdr_wnd;
+        return uint16_t(hdr_wnd);
     }
     
     static void pcb_rcv_buf_extended (TcpPcb *pcb)
@@ -642,7 +642,7 @@ private:
                 // is within the receive window. In SYN_RCVD we could be more strict
                 // and not allow data before the SYN, but for performance reasons
                 // we check that later in pcb_input_syn_sent_rcvd_processing.
-                SeqType last_rel_seq = seq_diff(seq_add(eff_rel_seq, seqlen), 1);
+                SeqType last_rel_seq = seq_diff(seq_add(eff_rel_seq, SeqType(seqlen)), 1);
                 bool left_edge_in_window = eff_rel_seq < rcv_wnd;
                 bool right_edge_in_window = last_rel_seq < rcv_wnd;
                 
@@ -742,7 +742,7 @@ private:
                     // SYN without ACK, we do not support this yet, send RST.
                     size_t seqlen = tcplen(tcp_meta.flags, tcp_data.tot_len);
                     Output::send_rst(pcb->tcp, *pcb, 0, true,
-                                     seq_add(tcp_meta.seq_num, seqlen));
+                                     seq_add(tcp_meta.seq_num, SeqType(seqlen)));
                 }
             } else {
                 // Handle SYN as per RFC 5961.

@@ -92,7 +92,7 @@ inline uint16_t IpChksumInverted (char const *data, size_t len)
     sum = (sum & UINT32_C(0xFFFF)) + (sum >> 16);
     sum = (sum & UINT32_C(0xFFFF)) + (sum >> 16);
     
-    return sum;
+    return uint16_t(sum);
 }
 
 #endif
@@ -267,7 +267,7 @@ public:
     {
         foldOnce();
         foldOnce();
-        return ~m_sum;
+        return uint16_t(~m_sum);
     }
     
     /**

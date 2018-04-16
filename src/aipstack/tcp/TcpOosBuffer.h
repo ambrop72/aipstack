@@ -168,7 +168,7 @@ public:
         need_ack = seg_start != rcv_nxt;
         
         // Calculate sequence number for end of data.
-        SeqType seg_end = seq_add(seg_start, seg_datalen);
+        SeqType seg_end = seq_add(seg_start, SeqType(seg_datalen));
         
         // Count the number of valid segments (this may include a FIN segment).
         IndexType num_ooseq = count_ooseq();
@@ -350,7 +350,8 @@ public:
         // Check if we have a FIN with sequence number rcv_nxt+datalen.
         // Note: no need to check !isEnd because isFin implies !isEnd.
         // There is no need to consume the FIN.
-        fin = m_ooseq[0].isFin() && m_ooseq[0].getFinSeq() == seq_add(rcv_nxt, datalen);
+        fin = m_ooseq[0].isFin() &&
+            m_ooseq[0].getFinSeq() == seq_add(rcv_nxt, SeqType(datalen));
     }
     
 private:

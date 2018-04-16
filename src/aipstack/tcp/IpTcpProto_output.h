@@ -93,7 +93,7 @@ public:
         // The SYN and SYN-ACK must always have non-scaled window size.
         // For justification of assert see see create_connection, listen_input.
         AIPSTACK_ASSERT(pcb->rcv_ann_wnd <= TypeMax<uint16_t>())
-        uint16_t window_size = pcb->rcv_ann_wnd;
+        uint16_t window_size = uint16_t(pcb->rcv_ann_wnd);
         
         // Send SYN or SYN-ACK flags depending on the state.
         FlagsType flags = Tcp4FlagSyn |
@@ -297,7 +297,7 @@ public:
             // Calculate the remaining window relative to snd_buf_cur.
             size_t snd_offset = con->m_v.snd_buf.tot_len - snd_buf_cur->tot_len;
             if (AIPSTACK_LIKELY(snd_offset <= full_wnd)) {
-                rem_wnd = full_wnd - snd_offset;
+                rem_wnd = full_wnd - SeqType(snd_offset);
             } else {
                 rem_wnd = 0;
             }
@@ -1012,7 +1012,7 @@ public:
         } else {
             rst_seq_num = 0;
             rst_ack = true;
-            rst_ack_num = tcp_meta.seq_num + tcplen(tcp_meta.flags, tcp_data_len);
+            rst_ack_num = tcp_meta.seq_num + SeqType(tcplen(tcp_meta.flags, tcp_data_len));
         }
         
         PcbKey key{ip_info.dst_addr, ip_info.src_addr,
@@ -1112,7 +1112,7 @@ private:
         }
         
         // Calculate the sequence number.
-        SeqType seq_num = seq_add(pcb->snd_una, offset);
+        SeqType seq_num = seq_add(pcb->snd_una, SeqType(offset));
         
         // Send the segment.
         IpErr err = helper.sendSegment(pcb, seq_num, seg_flags, data);
@@ -1122,7 +1122,7 @@ private:
         
         // Calculate the sequence length of the segment and set
         // the FIN_SENT flag if a FIN was sent.
-        SeqType seg_seqlen = data.tot_len;
+        SeqType seg_seqlen = SeqType(data.tot_len);
         if (AIPSTACK_UNLIKELY((seg_flags & Tcp4FlagFin) != 0)) {
             seg_seqlen++;
             pcb->setFlag(PcbFlags::FIN_SENT);
@@ -1245,7 +1245,7 @@ private:
             chksum.addWord(WrapType<uint16_t>(), offset_flags);
             
             // Add TCP length to checksum.
-            uint16_t tcp_len = Tcp4Header::Size + data.tot_len;
+            uint16_t tcp_len = uint16_t(Tcp4Header::Size + data.tot_len);
             chksum.addWord(WrapType<uint16_t>(), tcp_len);
             
             // Include any data.
@@ -1330,8 +1330,8 @@ private:
             dgram_alloc(Tcp4Header::Size+opts_len);
         
         // Caculate the offset+flags field.
-        FlagsType offset_flags =
-            (FlagsType(5+opts_len/4) << TcpOffsetShift) | flags;
+        FlagsType offset_flags = FlagsType(
+            (FlagsType(5+opts_len/4) << TcpOffsetShift) | flags);
         
         // The header parts of the checksum will be calculated inline.
         IpChksumAccumulator chksum_accum;
@@ -1374,7 +1374,7 @@ private:
         // Add remaining pseudo-header to checksum (protocol was added above).
         chksum_accum.addWords(&key.local_addr.data);
         chksum_accum.addWords(&key.remote_addr.data);
-        chksum_accum.addWord(WrapType<uint16_t>(), dgram.tot_len);
+        chksum_accum.addWord(WrapType<uint16_t>(), uint16_t(dgram.tot_len));
         
         // Complete and write checksum.
         uint16_t calc_chksum = chksum_accum.getChksum(dgram.hideHeader(Tcp4Header::Size));

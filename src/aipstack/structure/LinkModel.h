@@ -27,6 +27,9 @@
 
 #include <stddef.h>
 
+#include <aipstack/misc/Assert.h>
+#include <aipstack/misc/MinMax.h>
+
 namespace AIpStack {
 
 /**
@@ -307,7 +310,14 @@ public:
         
         inline IndexType getIndex (State state) const
         {
-            return isNull() ? NullIndex : state.getEntryIndex(*m_ptr);
+            if (isNull()) {
+                return NullIndex;
+            } else {
+                auto index = state.getEntryIndex(*m_ptr);
+                AIPSTACK_ASSERT(index >= 0)
+                AIPSTACK_ASSERT(index <= TypeMax<IndexType>())
+                return IndexType(index);
+            }
         }
         
     private:

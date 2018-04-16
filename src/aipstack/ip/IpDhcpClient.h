@@ -281,7 +281,7 @@ class IpDhcpClient final :
     // Determines the default rebinding time if the server did not specify it.
     static constexpr uint32_t DefaultRebindingTimeForLeaseTime (uint32_t lease_time_s)
     {
-        return uint64_t(lease_time_s) * 7 / 8;
+        return uint32_t(uint64_t(lease_time_s) * 7 / 8);
     }
     
     // Maximum UDP data size that we could possibly transmit.
@@ -465,9 +465,10 @@ private:
     }
     
     // Convert ticks to seconds, rounding down.
-    inline static TimeType TicksToSec (TimeType ticks)
+    inline static uint32_t TicksToSec (TimeType ticks)
     {
-        return ticks / TimeType(Platform::TimeFreq);
+        TimeType sec_timetype = ticks / TimeType(Platform::TimeFreq);
+        return MinValueU(sec_timetype, TypeMax<uint32_t>());
     }
     
     // Shortcut to last timer set time.
@@ -1196,7 +1197,7 @@ private:
     void handle_dhcp_up (bool renewed)
     {
         // Set IP address with prefix length.
-        uint8_t prefix = m_info.subnet_mask.countLeadingOnes();
+        uint8_t prefix = uint8_t(m_info.subnet_mask.countLeadingOnes());
         iface()->setIp4Addr(IpIfaceIp4AddrSetting(prefix, m_info.ip_address));
         
         // Set gateway (or clear if none).
@@ -1335,7 +1336,7 @@ private:
             Options::writeOptions(opt_startptr, msg_type, iface()->getMtu(), opts);
         
         // Calculate the UDP data length.
-        uint16_t data_len = opt_endptr - dgram_alloc.getPtr();
+        size_t data_len = opt_endptr - dgram_alloc.getPtr();
         AIPSTACK_ASSERT(data_len <= MaxDhcpSendMsgSize)
         
         // Construct the UDP data reference.
@@ -1357,7 +1358,7 @@ private:
     
     void new_xid ()
     {
-        m_xid = platform().getTime();
+        m_xid = uint32_t(platform().getTime());
     }
 };
 

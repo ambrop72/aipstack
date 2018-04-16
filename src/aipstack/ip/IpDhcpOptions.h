@@ -456,9 +456,10 @@ private:
         
         // Write option payload using payload_func and receive its size.
         size_t opt_len = payload_func(opt_writeptr + DhcpOptionHeader::Size);
+        AIPSTACK_ASSERT(opt_len <= TypeMax<uint8_t>())
         
         // Set the payload size in the header.
-        oh.set(DhcpOptionHeader::OptLen(), opt_len);
+        oh.set(DhcpOptionHeader::OptLen(), uint8_t(opt_len));
         
         // Increment the write pointer.
         opt_writeptr += DhcpOptionHeader::Size + opt_len;

@@ -396,7 +396,7 @@ public:
             send_flags |= IpSendFlags(Ip4FlagMF);
         } else {
             // First packet has all the data.
-            pkt_send_len = pkt.tot_len;
+            pkt_send_len = uint16_t(pkt.tot_len);
         }
         
         // Write IP header fields and calculate header checksum inline...
@@ -473,7 +473,7 @@ private:
             // and MoreFragments still set.
             size_t rem_pkt_length = Ip4Header::Size + dgram.tot_len;
             if (rem_pkt_length <= route_info.iface->getMtu()) {
-                pkt_send_len = rem_pkt_length;
+                pkt_send_len = uint16_t(rem_pkt_length);
                 send_flags &= ~IpSendFlags(Ip4FlagMF);
             }
             
@@ -625,8 +625,8 @@ public:
         auto ip4_header = Ip4Header::MakeRef(pkt.getChunkPtr());
         IpChksumAccumulator chksum(prep.partial_chksum_state);
         
-        chksum.addWord(WrapType<uint16_t>(), pkt.tot_len);
-        ip4_header.set(Ip4Header::TotalLen(), pkt.tot_len);
+        chksum.addWord(WrapType<uint16_t>(), uint16_t(pkt.tot_len));
+        ip4_header.set(Ip4Header::TotalLen(), uint16_t(pkt.tot_len));
         
         uint16_t ident = m_next_id++; // generate identification number
         chksum.addWord(WrapType<uint16_t>(), ident);

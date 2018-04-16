@@ -280,7 +280,7 @@ public:
      * @param proto The protocol.
      */
     constexpr inline Ip4TtlProto (uint8_t ttl, uint8_t proto)
-    : value((uint16_t(ttl) << 8) | proto)
+    : value(uint16_t((uint16_t(ttl) << 8) | proto))
     {
     }
     
