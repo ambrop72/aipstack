@@ -53,7 +53,7 @@ namespace Private {
 }
 
 template <typename StackArg1, typename TheEthIpIfaceService>
-class TapIface :
+class TapIface final :
     private AIpStack::TapDevice,
     private Private::TapIfaceMacAddr,
     public AIpStack::EthIpIface<Private::EthIpIfaceArg<StackArg1, TheEthIpIfaceService>>

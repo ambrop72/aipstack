@@ -197,7 +197,7 @@ class IpDhcpClient;
  *         example.
  */
 template <typename Arg>
-class IpDhcpClient :
+class IpDhcpClient final :
     private NonCopyable<IpDhcpClient<Arg>>
 #ifndef IN_DOXYGEN
     ,private UdpListener<

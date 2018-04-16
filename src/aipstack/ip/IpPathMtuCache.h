@@ -265,11 +265,6 @@ public:
             PrevLink::link = nullptr;
         }
         
-        inline ~MtuRef ()
-        {
-            AIPSTACK_ASSERT(PrevLink::link == nullptr)
-        }
-        
         void reset (IpPathMtuCache *cache)
         {
             // If PrevLink is null we are unused (not in a list).
@@ -464,6 +459,11 @@ public:
         }
         
     protected:
+        inline ~MtuRef ()
+        {
+            AIPSTACK_ASSERT(PrevLink::link == nullptr)
+        }
+        
         // This is called when the PMTU changes.
         // It MUST NOT reset/deinit this or any other MtuRef object!
         // This is because the caller is iterating the linked list

@@ -202,7 +202,7 @@ class IpTcpProto :
      * These are maintained internally within the stack and may
      * survive deinit/reset of an associated Connection object.
      */
-    struct TcpPcb :
+    struct TcpPcb final :
         // Send retry request (inherited for efficiency).
         public IpSendRetryRequest,
         // PCB timers.

@@ -311,6 +311,14 @@ public:
     
 protected:
     /**
+     * Protected destructor.
+     * 
+     * This destructor is intentionally not virtual but is protected to prevent
+     * incorrect usage.
+     */
+    ~EthIpIface () = default;
+
+    /**
      * Driver function to send an Ethernet frame through the interface.
      * 
      * This is called whenever an Ethernet frame needs to be sent. The driver should

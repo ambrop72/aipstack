@@ -107,35 +107,6 @@ namespace AIpStack {
         }
         
         /**
-         * Destruct the interface.
-         * 
-         * The interface should be destructed when the interface should stop existing
-         * from the perspective of the IP stack. After this, virtual functions will
-         * not be called any more, nor will any virtual function be called from this
-         * function.
-         * 
-         * The owner must be careful to not perform any action that might result in calls
-         * of virtual functions (such as sending packets to this interface) after
-         * destruction of the derived class has begun or generally after it is no longer
-         * ready to accept these calls.
-         * 
-         * When this is called, there must be no remaining @ref IpIfaceListener
-         * objects listening on this interface or @ref IpIfaceStateObserver objects
-         * observing this interface. Additionally, this must not be called in
-         * potentially hazardous context with respect to IP processing, such as
-         * from withing receive processing of this interface
-         * (@ref recvIp4PacketFromDriver). For maximum safety this should be called
-         * from a top-level event handler.
-         */
-        ~IpIface ()
-        {
-            AIPSTACK_ASSERT(m_listeners_list.isEmpty())
-            
-            // Unregister interface.
-            m_stack->m_iface_list.remove(*this);
-        }
-        
-        /**
          * Set or remove the IP address and subnet prefix length.
          * 
          * @param value New IP address settings. If the "present" field is false
@@ -311,6 +282,38 @@ namespace AIpStack {
         }
         
     protected:
+        /**
+         * Destruct the interface.
+         * 
+         * The interface should be destructed when the interface should stop existing
+         * from the perspective of the IP stack. After this, virtual functions will
+         * not be called any more, nor will any virtual function be called from this
+         * function.
+         * 
+         * The owner must be careful to not perform any action that might result in calls
+         * of virtual functions (such as sending packets to this interface) after
+         * destruction of the derived class has begun or generally after it is no longer
+         * ready to accept these calls.
+         * 
+         * When this is called, there must be no remaining @ref IpIfaceListener
+         * objects listening on this interface or @ref IpIfaceStateObserver objects
+         * observing this interface. Additionally, this must not be called in
+         * potentially hazardous context with respect to IP processing, such as
+         * from withing receive processing of this interface
+         * (@ref recvIp4PacketFromDriver). For maximum safety this should be called
+         * from a top-level event handler.
+         * 
+         * This destructor is intentionally not virtual but is protected to prevent
+         * incorrect usage.
+         */
+        ~IpIface ()
+        {
+            AIPSTACK_ASSERT(m_listeners_list.isEmpty())
+            
+            // Unregister interface.
+            m_stack->m_iface_list.remove(*this);
+        }
+        
         /**
          * Driver function used to send an IPv4 packet through the interface.
          * 

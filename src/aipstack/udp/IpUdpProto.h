@@ -196,11 +196,6 @@ public:
         m_udp(nullptr)
     {}
 
-    ~UdpListener ()
-    {
-        reset();
-    }
-
     void reset ()
     {
         if (m_udp != nullptr) {
@@ -244,6 +239,11 @@ public:
     }
 
 protected:
+    ~UdpListener ()
+    {
+        reset();
+    }
+
     virtual UdpRecvResult recvUdpIp4Packet (
         IpRxInfoIp4<StackArg> const &ip_info, UdpRxInfo<Arg> const &udp_info,
         IpBufRef udp_data) = 0;
@@ -303,11 +303,6 @@ public:
     UdpAssociation () :
         m_udp(nullptr)
     {}
-
-    ~UdpAssociation ()
-    {
-        reset();
-    }
 
     void reset ()
     {
@@ -372,6 +367,11 @@ public:
     }
 
 protected:
+    ~UdpAssociation ()
+    {
+        reset();
+    }
+
     virtual UdpRecvResult recvUdpIp4Packet (
         IpRxInfoIp4<StackArg> const &ip_info, UdpRxInfo<Arg> const &udp_info,
         IpBufRef udp_data) = 0;

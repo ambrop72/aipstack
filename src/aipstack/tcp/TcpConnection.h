@@ -100,17 +100,6 @@ public:
     }
     
     /**
-     * Deinitializes the connection object.
-     * Note that destruction performs a reset with have_unprocessed_data=false. It may
-     * be a good idea to first call reset with the correct have_unprocessed_data value
-     * (see reset documentation).
-     */
-    ~TcpConnection ()
-    {
-        reset();
-    }
-    
-    /**
      * Resets the connection object.
      * This brings the object to INIT state.
      * In CONNECTED state, the `have_unprocessed_data` argument should indicate whether
@@ -618,6 +607,20 @@ public:
     }
     
 protected:
+    /**
+     * Deinitializes the connection object.
+     * Note that destruction performs a reset with have_unprocessed_data=false. It may
+     * be a good idea to first call reset with the correct have_unprocessed_data value
+     * (see reset documentation).
+     * 
+     * This destructor is intentionally not virtual but is protected to prevent
+     * incorrect usage.
+     */
+    ~TcpConnection ()
+    {
+        reset();
+    }
+    
     /**
      * Called when the connection is aborted.
      * This callback corresponds to a transition from CONNECTED

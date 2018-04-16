@@ -87,11 +87,6 @@ public:
     IpSendRetryRequest () = default;
     
     /**
-     * Destruct the request, disassociating it if associated.
-     */
-    ~IpSendRetryRequest () = default;
-    
-    /**
      * Return whether the request is associated.
      * 
      * @return True if associated, false if unassociated.
@@ -108,8 +103,16 @@ public:
     {
         BaseObserver::reset();
     }
-    
+
 protected:
+    /**
+     * Destruct the request, disassociating it if associated.
+     * 
+     * This destructor is intentionally not virtual but is protected to prevent
+     * incorrect usage.
+     */
+    ~IpSendRetryRequest () = default;
+    
     /**
      * Callback called when sending should be retried, from
      * @ref IpSendRetryList::dispatchRequests.

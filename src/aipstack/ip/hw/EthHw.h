@@ -95,6 +95,14 @@ public:
 
 protected:
     /**
+     * Destruct the interface.
+     * 
+     * This destructor is intentionally not virtual but is protected to prevent
+     * incorrect usage.
+     */
+    ~EthHwIface () = default;
+
+    /**
      * Return a reference to an observable which provides notification of
      * received ARP updates.
      *

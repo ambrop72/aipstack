@@ -67,17 +67,6 @@ public:
     IpMtuRef () = default;
     
     /**
-     * Destruct the MTU reference, asserting not-setup state.
-     * 
-     * @warning
-     * It is required to ensure the object is in not-setup state before
-     * destructing it (by calling @ref reset if needed). The destructor
-     * cannot do the reset itself because it does not have the @ref IpStack
-     * pointer available (to avoid using additional memory).
-     */
-    ~IpMtuRef () = default;
-    
-    /**
      * Reset the MTU reference.
      * 
      * This resets the object to the not-setup state.
@@ -147,6 +136,20 @@ public:
     }
     
 protected:
+    /**
+     * Destruct the MTU reference, asserting not-setup state.
+     * 
+     * @warning
+     * It is required to ensure the object is in not-setup state before
+     * destructing it (by calling @ref reset if needed). The destructor
+     * cannot do the reset itself because it does not have the @ref IpStack
+     * pointer available (to avoid using additional memory).
+     * 
+     * This destructor is intentionally not virtual but is protected to prevent
+     * incorrect usage.
+     */
+    ~IpMtuRef () = default;
+    
     /**
      * Callback which reports changes of the PMTU estimate.
      * 
