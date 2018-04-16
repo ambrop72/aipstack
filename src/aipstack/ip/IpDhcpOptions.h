@@ -473,7 +473,7 @@ private:
             ::memcpy(opt_data, val.ptr, eff_len);
             return eff_len;
         });
-    };
+    }
 };
 
 }

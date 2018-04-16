@@ -15,7 +15,7 @@ let
         "-Wshadow" "-Wswitch-default" "-Wreorder" "-Wredundant-decls"
         "-Woverloaded-virtual" "-Wmissing-declarations" "-Wformat=2"
         "-Wdelete-non-virtual-dtor" "-Wformat-signedness" "-Wlogical-op"
-        "-Wold-style-cast" "-Wundef"
+        "-Wold-style-cast" "-Wundef" "-Wextra-semi"
     ];
 
     filterSupportedWarnings =

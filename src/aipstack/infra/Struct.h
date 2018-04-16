@@ -395,7 +395,7 @@ public:
         /**
          * The size of the structure.
          */
-        static constexpr size_t Size () { return GetStructSize(); };
+        static constexpr size_t Size () { return GetStructSize(); }
     };
     
     /**
