@@ -15,12 +15,12 @@ let
         "-Wshadow" "-Wswitch-default" "-Wreorder" "-Wredundant-decls"
         "-Woverloaded-virtual" "-Wmissing-declarations" "-Wformat=2"
         "-Wdelete-non-virtual-dtor" "-Wformat-signedness" "-Wlogical-op"
-        "-Wold-style-cast" "-Wundef" "-Wextra-semi" "-Wnon-virtual-dtor"
-        "-Wreserved-id-macro" "-Wcast-align"
+        "-Wold-style-cast" "-Wundef" "-Wextra-semi" "-Wreserved-id-macro"
+        "-Wcast-align"
     ];
 
     optionalWarningsClang = [
-        "-Wconversion" "-Wno-sign-conversion"
+        "-Wconversion" "-Wno-sign-conversion" "-Wnon-virtual-dtor"
     ];
 
     filterSupportedWarnings =
