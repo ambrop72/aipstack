@@ -16,25 +16,45 @@ let
         "-Woverloaded-virtual" "-Wmissing-declarations" "-Wformat=2"
         "-Wdelete-non-virtual-dtor" "-Wformat-signedness" "-Wlogical-op"
         "-Wold-style-cast" "-Wundef" "-Wextra-semi" "-Wnon-virtual-dtor"
-        "-Wreserved-id-macro" "-Wcast-align" "-Wconversion" "-Wno-sign-conversion"
+        "-Wreserved-id-macro" "-Wcast-align"
+    ];
+
+    optionalWarningsClang = [
+        "-Wconversion" "-Wno-sign-conversion"
     ];
 
     filterSupportedWarnings =
-        { stdenv }:
+        { stdenv, warnings, compilerMatch ? "" }:
         stdenv.mkDerivation rec {
             name = "aipstack_supported_warnings.txt";
             buildCommand = ''
-                touch test.cpp
                 (
+                    ${if compilerMatch == "" then "" else ''
+                        if ! c++ --version | head -n 1 | grep -i "${compilerMatch}" >/dev/null; then
+                            return
+                        fi
+                    ''}
+                    touch test.cpp
                     ${stdenv.lib.concatMapStrings (warning: ''
                         if c++ ${stdFlags} -Werror "${warning}" -c test.cpp \
                                 >/dev/null 2>&1; then
                             echo -n "${warning} "
                         fi
-                    '') optionalWarnings}
+                    '') warnings}
                 ) >"$out"
             '';
         };
+    
+    supportedOptionalWarnings = stdenv: filterSupportedWarnings {
+        inherit stdenv;
+        warnings = optionalWarnings;
+    };
+
+    supportedOptionalWarningsClang = stdenv: filterSupportedWarnings {
+        inherit stdenv;
+        warnings = optionalWarningsClang;
+        compilerMatch = "clang";
+    };
     
     aipstackExampleFunc =
         { stdenv }:
@@ -47,7 +67,8 @@ let
                     set -x
                     c++ ${stdFlags} -I src ${defines} -pthread ${optFlags} \
                         ${stdenv.lib.concatStringsSep " " baseWarnings} \
-                        $(cat ${filterSupportedWarnings {inherit stdenv;}}) \
+                        $(cat ${supportedOptionalWarnings stdenv}) \
+                        $(cat ${supportedOptionalWarningsClang stdenv}) \
                         examples/aipstack_example.cpp \
                         src/aipstack/event_loop/EventLoopAmalgamation.cpp \
                         src/aipstack/tap/TapDeviceAmalgamation.cpp \
