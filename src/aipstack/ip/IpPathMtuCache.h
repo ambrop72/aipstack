@@ -119,7 +119,7 @@ public:
     
 private:
     // Timeout period for the MTU timer (one minute).
-    static TimeType const MtuTimerTicks = 60.0 * (TimeType)Platform::TimeFreq;
+    static TimeType const MtuTimerTicks = 60.0 * TimeType(Platform::TimeFreq);
     
     // MTU entry states.
     enum class EntryState {
@@ -474,7 +474,8 @@ public:
 private:
     inline static MtuEntry & get_entry_from_first (Link *link)
     {
-        return *(MtuEntry *)((char *)link - offsetof(MtuEntry, first_ref));
+        return *reinterpret_cast<MtuEntry *>(
+            reinterpret_cast<char *>(link) - offsetof(MtuEntry, first_ref));
     }
     
     inline static MtuRef & get_ref_from_prev_link (Link *link)

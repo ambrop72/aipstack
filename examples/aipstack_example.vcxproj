@@ -74,6 +74,11 @@
     <CommonDefinitions>NOMINMAX;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS</CommonDefinitions>
     <DebugDefinitions>AIPSTACK_CONFIG_ENABLE_ASSERTIONS</DebugDefinitions>
     <CommonLibraries>kernel32.lib;user32.lib</CommonLibraries>
+    <ClangWarnings>
+      -Wall -Wextra -Wpedantic -Wshadow -Wswitch-default -Wreorder -Wredundant-decls
+      -Woverloaded-virtual -Wmissing-declarations -Wformat=2 -Wdelete-non-virtual-dtor
+      -Wold-style-cast
+    </ClangWarnings>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -102,6 +107,7 @@
       <Verbose>true</Verbose>
       <DisableSpecificWarnings>4244;4267;4146</DisableSpecificWarnings>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalOptions>$(ClangWarnings) %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -120,6 +126,7 @@
       <Verbose>true</Verbose>
       <DisableSpecificWarnings>4244;4267;4146</DisableSpecificWarnings>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalOptions>$(ClangWarnings) %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,6 +146,7 @@
       <LanguageStandard>stdcpp14</LanguageStandard>
       <Verbose>true</Verbose>
       <DisableSpecificWarnings>4244;4267;4146</DisableSpecificWarnings>
+      <AdditionalOptions>$(ClangWarnings) %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -160,6 +168,7 @@
       <LanguageStandard>stdcpp14</LanguageStandard>
       <Verbose>true</Verbose>
       <DisableSpecificWarnings>4244;4267;4146</DisableSpecificWarnings>
+      <AdditionalOptions>$(ClangWarnings) %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

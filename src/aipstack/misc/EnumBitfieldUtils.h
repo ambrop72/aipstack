@@ -60,7 +60,7 @@ constexpr EnumZeroType EnumZero = EnumZeroType();
 #define AIPSTACK_ENUM_UN_OP(EnumType, Op) \
 inline constexpr EnumType operator Op (EnumType arg1) \
 { \
-    return (EnumType)(Op AIpStack::ToUnderlyingType(arg1)); \
+    return EnumType(Op AIpStack::ToUnderlyingType(arg1)); \
 }
 
 /**
@@ -69,7 +69,7 @@ inline constexpr EnumType operator Op (EnumType arg1) \
 #define AIPSTACK_ENUM_BIN_OP(EnumType, Op) \
 inline constexpr EnumType operator Op (EnumType arg1, EnumType arg2) \
 { \
-    return (EnumType)(AIpStack::ToUnderlyingType(arg1) Op AIpStack::ToUnderlyingType(arg2)); \
+    return EnumType(AIpStack::ToUnderlyingType(arg1) Op AIpStack::ToUnderlyingType(arg2)); \
 }
 
 /**
@@ -79,7 +79,7 @@ inline constexpr EnumType operator Op (EnumType arg1, EnumType arg2) \
 #define AIPSTACK_ENUM_COMPOUND_OP(EnumType, Op) \
 inline constexpr EnumType & operator Op##= (EnumType &arg1, EnumType arg2) \
 { \
-    arg1 = (EnumType)(AIpStack::ToUnderlyingType(arg1) Op AIpStack::ToUnderlyingType(arg2)); \
+    arg1 = EnumType(AIpStack::ToUnderlyingType(arg1) Op AIpStack::ToUnderlyingType(arg2)); \
     return arg1; \
 }
 

@@ -47,8 +47,8 @@ AIPSTACK_DEFINE_STRUCT(Ip4Header,
 static int const Ip4VersionShift = 4;
 static uint8_t const Ip4IhlMask = 0xF;
 
-static uint16_t const Ip4FlagDF = (uint16_t)1 << 14;
-static uint16_t const Ip4FlagMF = (uint16_t)1 << 13;
+static uint16_t const Ip4FlagDF = uint16_t(1) << 14;
+static uint16_t const Ip4FlagMF = uint16_t(1) << 13;
 
 static uint16_t const Ip4OffsetMask = UINT16_C(0x1fff);
 

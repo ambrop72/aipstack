@@ -150,6 +150,7 @@ bool ParseInteger (MemRef str, T &out_value)
 {
     AIPSTACK_ASSERT(str.ptr != nullptr)
 
+    using UChar = unsigned char;
     using UT = std::make_unsigned_t<T>;
 
     char const *ptr = str.ptr;
@@ -178,7 +179,7 @@ bool ParseInteger (MemRef str, T &out_value)
     do {
         char ch = *ptr++;
 
-        unsigned char digit_val = (unsigned char)ch - (unsigned char)'0';
+        UChar digit_val = UChar(ch) - UChar('0');
         if (digit_val > 9) {
             return false;
         }

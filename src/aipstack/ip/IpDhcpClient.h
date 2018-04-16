@@ -268,7 +268,7 @@ class IpDhcpClient :
     // are used with keeping track of leftover seconds.
     static uint32_t const MaxTimerSeconds = MinValueU(
         TypeMax<uint32_t>(),
-        Platform::WorkingTimeSpanTicks / (TimeType)Platform::TimeFreq);
+        Platform::WorkingTimeSpanTicks / TimeType(Platform::TimeFreq));
     
     static_assert(MaxTimerSeconds >= 255, "");
     
@@ -281,7 +281,7 @@ class IpDhcpClient :
     // Determines the default rebinding time if the server did not specify it.
     static constexpr uint32_t DefaultRebindingTimeForLeaseTime (uint32_t lease_time_s)
     {
-        return (uint64_t)lease_time_s * 7 / 8;
+        return uint64_t(lease_time_s) * 7 / 8;
     }
     
     // Maximum UDP data size that we could possibly transmit.
@@ -461,13 +461,13 @@ private:
     // Same but without assert that seconds <= MaxTimerSeconds.
     inline static TimeType SecToTicksNoAssert (uint32_t seconds)
     {
-        return seconds * (TimeType)Platform::TimeFreq;
+        return seconds * TimeType(Platform::TimeFreq);
     }
     
     // Convert ticks to seconds, rounding down.
     inline static TimeType TicksToSec (TimeType ticks)
     {
-        return ticks / (TimeType)Platform::TimeFreq;
+        return ticks / TimeType(Platform::TimeFreq);
     }
     
     // Shortcut to last timer set time.
@@ -661,7 +661,7 @@ private:
         
         // Calculate how much time in seconds has passed since the time this timer
         // was set to expire at.
-        uint32_t passed_sec = TicksToSec((TimeType)(now - getTimSetTime()));
+        uint32_t passed_sec = TicksToSec(TimeType(now - getTimSetTime()));
         
         // Has the lease expired?
         if (passed_sec >= m_info.lease_time_s - m_lease_time_passed) {
@@ -708,8 +708,8 @@ private:
             // NOTE: Retransmission may actually be done earlier if this is
             // greater than MaxTimerSeconds, that is all right.
             uint32_t rtx_rel_sec = MaxValue(
-                (uint32_t)Params::MinRenewRtxTimeoutSeconds,
-                (uint32_t)(next_state_rel_sec / 2));
+                uint32_t(Params::MinRenewRtxTimeoutSeconds),
+                uint32_t(next_state_rel_sec / 2));
             
             // Timer should expire at the earlier of the above two.
             timer_rel_sec = MinValue(next_state_rel_sec, rtx_rel_sec);
@@ -1159,7 +1159,7 @@ private:
         // Calculate how much time in seconds has passed since the request was sent
         // and set m_lease_time_passed accordingly. There is no need to limit to this
         // to lease_time_s since we check that just below.
-        m_lease_time_passed = TicksToSec((TimeType)(now - m_request_send_time));
+        m_lease_time_passed = TicksToSec(TimeType(now - m_request_send_time));
         
         // Has the lease expired already?
         if (m_lease_time_passed >= m_info.lease_time_s) {

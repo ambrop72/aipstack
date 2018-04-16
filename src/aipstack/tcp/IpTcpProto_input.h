@@ -310,11 +310,11 @@ public:
         // Make sure it fits in size_t (relevant if size_t is 16-bit),
         // to ensure the invariant that rcv_ann_wnd always fits in size_t.
         if (TypeMax<size_t>() < TypeMax<uint32_t>()) {
-            min_window = MinValueU(min_window, (size_t)TypeMax<size_t>());
+            min_window = MinValueU(min_window, TypeMax<size_t>());
         }
         
         // Round up to the nearest window that can be advertised.
-        SeqType scale_mask = ((SeqType)1 << pcb->rcv_wnd_shift) - 1;
+        SeqType scale_mask = (SeqType(1) << pcb->rcv_wnd_shift) - 1;
         min_window = (min_window + scale_mask) & ~scale_mask;
         
         // Make sure we do not set rcv_ann_wnd to more than can be announced.
@@ -447,7 +447,7 @@ private:
             if ((tcp->m_received_opts.options & OptionFlags::WND_SCALE) != 0) {
                 pcb->setFlag(PcbFlags::WND_SCALE);
                 pcb->snd_wnd_shift =
-                    MinValue((uint8_t)14, tcp->m_received_opts.wnd_scale);
+                    MinValue(uint8_t(14), tcp->m_received_opts.wnd_scale);
                 pcb->rcv_wnd_shift = Constants::RcvWndShift;
             }
             
@@ -868,7 +868,7 @@ private:
                 // pcb_decode_wnd_size while snd_wnd_shift was still zero, which
                 // is correct because the window size in a SYN-ACK is unscaled.
                 pcb->snd_wnd_shift =
-                    MinValue((uint8_t)14, tcp->m_received_opts.wnd_scale);
+                    MinValue(uint8_t(14), tcp->m_received_opts.wnd_scale);
             } else {
                 // Remote did not send the window scale option, which means we
                 // must not use any scaling, so set rcv_wnd_shift back to zero.
@@ -991,7 +991,7 @@ private:
             bool fin_acked = Output::pcb_fin_acked(pcb);
             
             // Calculate the amount of acknowledged data (without ACK of FIN).
-            SeqType data_acked_seq = acked - (SeqType)fin_acked;
+            SeqType data_acked_seq = acked - SeqType(fin_acked);
             AIPSTACK_ASSERT(data_acked_seq <= TypeMax<size_t>())
             size_t data_acked = data_acked_seq;
             
@@ -1249,7 +1249,7 @@ private:
         
         // Compute the amount of processed sequence numbers. Note that rcv_fin
         // is not used from now on, instead rcv_seqlen and rcv_datalen are compared.
-        SeqType rcv_seqlen = (SeqType)rcv_datalen + rcv_fin;
+        SeqType rcv_seqlen = SeqType(rcv_datalen) + rcv_fin;
         
         // Process received data/FIN.
         return pcb_process_received(pcb, rcv_seqlen, rcv_datalen);
@@ -1346,14 +1346,14 @@ private:
     // Apply window scaling to a received window size value.
     inline static SeqType pcb_decode_wnd_size (TcpPcb *pcb, uint16_t rx_wnd_size)
     {
-        return (SeqType)rx_wnd_size << pcb->snd_wnd_shift;
+        return SeqType(rx_wnd_size) << pcb->snd_wnd_shift;
     }
     
     // Return the maximum receive window that can be announced
     // with respect to window scaling.
     static SeqType max_rcv_wnd_ann (TcpPcb *pcb)
     {
-        return (SeqType)TypeMax<uint16_t>() << pcb->rcv_wnd_shift;
+        return SeqType(TypeMax<uint16_t>()) << pcb->rcv_wnd_shift;
     }
     
     // Calculate how much window would be announced if sent an ACK now.

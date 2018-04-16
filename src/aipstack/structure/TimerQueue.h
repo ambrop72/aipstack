@@ -266,8 +266,7 @@ private:
     // if the times span less than half of the TimeType range.
     inline static bool time_less (TimeType time1, TimeType time2)
     {
-        return (TimeType)(time1 - time2) >= TimeMsb;
-        //return ((TimeType)(time1 - time2) & TimeMsb) != 0;
+        return TimeType(time1 - time2) >= TimeMsb;
     }
     
     class KeyFuncs

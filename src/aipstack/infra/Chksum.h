@@ -76,7 +76,7 @@ inline uint16_t IpChksumInverted (char const *data, size_t len)
 {
     using namespace AIpStack;
     
-    char const *even_end = data + (len & (size_t)-2);
+    char const *even_end = data + (len & size_t(-2));
     uint32_t sum = 0;
     
     while (data < even_end) {
@@ -86,7 +86,7 @@ inline uint16_t IpChksumInverted (char const *data, size_t len)
     
     if ((len & 1) != 0) {
         uint8_t byte = ReadBinaryInt<uint8_t, BinaryBigEndian>(data);
-        sum += (uint16_t)byte << 8;
+        sum += uint16_t(byte) << 8;
     }
     
     sum = (sum & UINT32_C(0xFFFF)) + (sum >> 16);
@@ -198,8 +198,8 @@ public:
      */
     inline void addWord (WrapType<uint32_t>, uint32_t word)
     {
-        addWord(WrapType<uint16_t>(), (uint16_t)(word >> 16));
-        addWord(WrapType<uint16_t>(), (uint16_t)word);
+        addWord(WrapType<uint16_t>(), uint16_t(word >> 16));
+        addWord(WrapType<uint16_t>(), uint16_t(word));
     }
     
     /**

@@ -507,7 +507,8 @@ bool EventLoop::addHandleToIocp (HANDLE handle, DWORD &out_error)
 {
     auto iocp_res = ::CreateIoCompletionPort(
         handle, EventProvider::getIocpHandle(),
-        /*CompletionKey=*/(ULONG_PTR)this, /*NumberOfConcurrentThreads=*/0);
+        /*CompletionKey=*/reinterpret_cast<ULONG_PTR>(this),
+        /*NumberOfConcurrentThreads=*/0);
 
     if (iocp_res == nullptr) {
         out_error = ::GetLastError();
@@ -521,7 +522,7 @@ bool EventLoop::handle_iocp_result (void *completion_key, OVERLAPPED *overlapped
 {
     AIPSTACK_ASSERT(completion_key == this)
 
-    IocpResource *iocp_resource = (IocpResource *)overlapped;
+    IocpResource *iocp_resource = reinterpret_cast<IocpResource *>(overlapped);
     AIPSTACK_ASSERT(iocp_resource->loop == this)
 
     iocp_resource->user_resource.reset();

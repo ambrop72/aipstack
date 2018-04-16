@@ -236,7 +236,7 @@ public:
     
 private:
     static constexpr TimeType BaseRelativeTimeLimit =
-        7 * ((TimeType)1 << (TimeBits - 4));
+        7 * (TimeType(1) << (TimeBits - 4));
     
     static constexpr TimeType ImplRelativeTimeLimit = Impl::RelativeTimeLimit;
     static_assert(ImplRelativeTimeLimit > 0, "");
@@ -271,7 +271,7 @@ public:
      * 
      * This may be useful for certain time calculations.
      */
-    static TimeType const TimeMSB = (TimeType)1 << (TimeBits - 1);
+    static TimeType const TimeMSB = TimeType(1) << (TimeBits - 1);
     
     /**
      * Get the current time in ticks.
@@ -309,7 +309,7 @@ public:
      */
     inline static bool timeGreaterOrEqual (TimeType t1, TimeType t2)
     {
-        return (TimeType)(t1 - t2) < TimeMSB;
+        return TimeType(t1 - t2) < TimeMSB;
     }
     
     /**

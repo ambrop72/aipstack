@@ -171,7 +171,7 @@ struct IpBufRef {
         AIPSTACK_ASSERT(node != nullptr)
         AIPSTACK_ASSERT(offset <= node->len)
         
-        return MinValue(tot_len, (size_t)(node->len - offset));
+        return MinValue(tot_len, size_t(node->len - offset));
     }
 
     /**
@@ -189,7 +189,7 @@ struct IpBufRef {
         AIPSTACK_ASSERT(node != nullptr)
         AIPSTACK_ASSERT(offset <= node->len)
         
-        tot_len -= MinValue(tot_len, (size_t)(node->len - offset));
+        tot_len -= MinValue(tot_len, size_t(node->len - offset));
         node = node->next;
         offset = 0;
         
@@ -223,8 +223,8 @@ struct IpBufRef {
         
         *new_ref = IpBufRef {
             node,
-            (size_t)(offset  - amount),
-            (size_t)(tot_len + amount)
+            size_t(offset  - amount),
+            size_t(tot_len + amount)
         };
         return true;
     }
@@ -243,8 +243,8 @@ struct IpBufRef {
         
         return IpBufRef {
             node,
-            (size_t)(offset  - amount),
-            (size_t)(tot_len + amount)
+            size_t(offset  - amount),
+            size_t(tot_len + amount)
         };
     }
     
@@ -281,8 +281,8 @@ struct IpBufRef {
         
         return IpBufRef {
             node,
-            (size_t)(offset  + amount),
-            (size_t)(tot_len - amount)
+            size_t(offset  + amount),
+            size_t(tot_len - amount)
         };
     }
     
@@ -301,7 +301,7 @@ struct IpBufRef {
         
         return IpBufNode {
             node->ptr + offset,
-            (size_t)(node->len - offset),
+            size_t(node->len - offset),
             node->next
         };
     }
@@ -344,7 +344,7 @@ struct IpBufRef {
         AIPSTACK_ASSERT(header_len <= node->len - offset)
         AIPSTACK_ASSERT(total_len >= header_len)
         
-        *out_node = IpBufNode{node->ptr, (size_t)(offset + header_len), cont};
+        *out_node = IpBufNode{node->ptr, size_t(offset + header_len), cont};
         return IpBufRef{out_node, offset, total_len};
     }
     
@@ -480,7 +480,7 @@ struct IpBufRef {
             if (ch == nullptr) {
                 return false;
             } else {
-                len = ((char *)ch - data) + 1;
+                len = (reinterpret_cast<char *>(ch) - data) + 1;
                 return true;
             }
         });

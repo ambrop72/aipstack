@@ -108,10 +108,10 @@ class MultiTimer :
     template <typename TimerId>
     static constexpr StateType TimerBit (TimerId)
     {
-        return (StateType)1 << TimerIndex(TimerId());
+        return StateType(1) << TimerIndex(TimerId());
     }
     
-    static constexpr StateType DirtyBit = (StateType)1 << NumTimers;
+    static constexpr StateType DirtyBit = StateType(1) << NumTimers;
     
 private:
     // UserData would be placed in front of m_state using up
@@ -163,14 +163,14 @@ private:
         }
         
         // This is the value with the most significant bit one and others zero.
-        constexpr TimeType msb = ((TimeType)-1 / 2) + 1;
+        constexpr TimeType msb = (TimeType(-1) / 2) + 1;
         
         // We use this as the base time to compare timers to. We will also
         // be computing the minium time relative to this time for efficiency.
         TimeType ref_time = platform().getEventTime() - msb;
         
         // State for the minimum calculation.
-        TimeType min_time_rel = (TimeType)-1;
+        TimeType min_time_rel = TimeType(-1);
         
         // Go through all timers to find the minimum time.
         ListFor<TimerIdsList>([&] AIPSTACK_TL(TimerId, {

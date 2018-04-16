@@ -90,6 +90,8 @@ inline bool ParseIpAddr (MemRef str, Ip4Addr &out_addr)
 {
     AIPSTACK_ASSERT(str.ptr != nullptr)
 
+    using UChar = unsigned char;
+
     uint8_t bytes[4];
 
     char const *ptr = str.ptr;
@@ -115,7 +117,7 @@ inline bool ParseIpAddr (MemRef str, Ip4Addr &out_addr)
 
             char ch = *ptr++;
 
-            unsigned char digit_val = (unsigned char)ch - (unsigned char)'0';
+            UChar digit_val = UChar(ch) - UChar('0');
             if (digit_val > 9) {
                 return false;
             }

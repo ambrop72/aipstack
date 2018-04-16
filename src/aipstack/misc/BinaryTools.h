@@ -95,10 +95,12 @@ namespace BinaryToolsPrivate {
         AIPSTACK_ALWAYS_INLINE AIPSTACK_UNROLL_LOOPS
         static T readInt (char const *src)
         {
+            using UChar = unsigned char;
+
             T val = 0;
             for (int i = 0; i < Bytes; i++) {
                 int j = BigEndian ? (Bytes - 1 - i) : i;
-                val |= (T)((unsigned char)src[i] & 0xFF) << (8 * j);
+                val |= T(UChar(src[i]) & 0xFF) << (8 * j);
             }
             return val;
         }
@@ -115,7 +117,7 @@ namespace BinaryToolsPrivate {
         {
             for (int i = 0; i < Bytes; i++) {
                 int j = BigEndian ? (Bytes - 1 - i) : i;
-                ((unsigned char *)dst)[i] = (value >> (8 * j)) & 0xFF;
+                reinterpret_cast<unsigned char *>(dst)[i] = (value >> (8 * j)) & 0xFF;
             }
         }
     };

@@ -44,15 +44,15 @@ AIPSTACK_DEFINE_STRUCT(Tcp4Header,
     (UrgentPtr,   uint16_t)
 )
 
-static uint16_t const Tcp4FlagFin = (uint16_t)1 << 0;
-static uint16_t const Tcp4FlagSyn = (uint16_t)1 << 1;
-static uint16_t const Tcp4FlagRst = (uint16_t)1 << 2;
-static uint16_t const Tcp4FlagPsh = (uint16_t)1 << 3;
-static uint16_t const Tcp4FlagAck = (uint16_t)1 << 4;
-static uint16_t const Tcp4FlagUrg = (uint16_t)1 << 5;
-static uint16_t const Tcp4FlagEce = (uint16_t)1 << 6;
-static uint16_t const Tcp4FlagCwr = (uint16_t)1 << 7;
-static uint16_t const Tcp4FlagNs  = (uint16_t)1 << 8;
+static uint16_t const Tcp4FlagFin = uint16_t(1) << 0;
+static uint16_t const Tcp4FlagSyn = uint16_t(1) << 1;
+static uint16_t const Tcp4FlagRst = uint16_t(1) << 2;
+static uint16_t const Tcp4FlagPsh = uint16_t(1) << 3;
+static uint16_t const Tcp4FlagAck = uint16_t(1) << 4;
+static uint16_t const Tcp4FlagUrg = uint16_t(1) << 5;
+static uint16_t const Tcp4FlagEce = uint16_t(1) << 6;
+static uint16_t const Tcp4FlagCwr = uint16_t(1) << 7;
+static uint16_t const Tcp4FlagNs  = uint16_t(1) << 8;
 
 static uint16_t const Tcp4BasicFlags = Tcp4FlagFin|Tcp4FlagSyn|Tcp4FlagRst|Tcp4FlagAck;
 static uint16_t const Tcp4SeqFlags = Tcp4FlagFin|Tcp4FlagSyn;

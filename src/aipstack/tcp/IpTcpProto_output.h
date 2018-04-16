@@ -271,7 +271,7 @@ public:
             
             // Send no more than allowed by the receiver window but at
             // least one count. We can ignore the congestion window.
-            rem_wnd = MaxValue((SeqType)1, con->m_v.snd_wnd);
+            rem_wnd = MaxValue(SeqType(1), con->m_v.snd_wnd);
             
             // Set the data_threshold to zero to not inhibit sending.
             data_threshold = 0;
@@ -307,7 +307,7 @@ public:
             // delay is only allowed if we have less than snd_mss data left and none
             // of this is being pushed via snd_psh_index.
             size_t psh_to_end = con->m_v.snd_buf.tot_len - con->m_v.snd_psh_index;
-            data_threshold = MinValue(psh_to_end, (size_t)(pcb->snd_mss - 1));
+            data_threshold = MinValue(psh_to_end, size_t(pcb->snd_mss - 1));
             
             // Allow sending a FIN if it is queued.
             fin = pcb->hasFlag(PcbFlags::FIN_PENDING);
@@ -714,7 +714,7 @@ public:
                 SeqType flight_size = seq_diff(pcb->snd_nxt, ack_num);
                 AIPSTACK_ASSERT(con->m_v.ssthresh >= pcb->snd_mss)
                 con->m_v.cwnd = MinValue(con->m_v.ssthresh,
-                    seq_add(MaxValue(flight_size, (SeqType)pcb->snd_mss),
+                    seq_add(MaxValue(flight_size, SeqType(pcb->snd_mss)),
                             pcb->snd_mss));
                 
                 // Reset num_dupack to indicate end of fast recovery.
@@ -777,7 +777,7 @@ public:
             pcb_update_ssthresh_for_rtx(pcb);
             
             // Update cwnd.
-            SeqType three_mss = 3 * (SeqType)pcb->snd_mss;
+            SeqType three_mss = 3 * SeqType(pcb->snd_mss);
             con->m_v.cwnd = seq_add_sat(con->m_v.ssthresh, three_mss);
             pcb->clearFlag(PcbFlags::CWND_INIT);
             
@@ -805,7 +805,7 @@ public:
     
     static TimeType pcb_rto_time (TcpPcb *pcb)
     {
-        return (TimeType)pcb->rto << Constants::RttShift;
+        return TimeType(pcb->rto) << Constants::RttShift;
     }
     
     static void pcb_end_rtt_measurement (TcpPcb *pcb)
@@ -829,15 +829,15 @@ public:
             con->m_v.srtt = this_rtt;
         } else {
             RttType rtt_diff = AbsoluteDiff(con->m_v.srtt, this_rtt);
-            con->m_v.rttvar = ((RttNextType)3 * con->m_v.rttvar + rtt_diff) / 4;
-            con->m_v.srtt = ((RttNextType)7 * con->m_v.srtt + this_rtt) / 8;
+            con->m_v.rttvar = (RttNextType(3) * con->m_v.rttvar + rtt_diff) / 4;
+            con->m_v.srtt = (RttNextType(7) * con->m_v.srtt + this_rtt) / 8;
         }
         
         // Update RTO.
         int const k = 4;
         RttType k_rttvar = (con->m_v.rttvar > RttTypeMax / k) ?
             RttTypeMax : (k * con->m_v.rttvar);
-        RttType var_part = MaxValue((RttType)1, k_rttvar);
+        RttType var_part = MaxValue(RttType(1), k_rttvar);
         RttType base_rto = (var_part > RttTypeMax - con->m_v.srtt) ?
             RttTypeMax : (con->m_v.srtt + var_part);
         pcb->rto = MaxValue(Constants::MinRtxTime,
@@ -1178,7 +1178,7 @@ private:
         AIPSTACK_ASSERT(pcb->con != nullptr)
         
         SeqType half_flight_size = seq_diff(pcb->snd_nxt, pcb->snd_una) / 2;
-        SeqType two_smss = 2 * (SeqType)pcb->snd_mss;
+        SeqType two_smss = 2 * SeqType(pcb->snd_mss);
         pcb->con->m_v.ssthresh = MaxValue(half_flight_size, two_smss);
     }
     
@@ -1240,7 +1240,7 @@ private:
             chksum.addWord(WrapType<uint32_t>(), seq_num);
             
             // Offset+flags
-            FlagsType offset_flags = ((FlagsType)5 << TcpOffsetShift) | seg_flags;
+            FlagsType offset_flags = (FlagsType(5) << TcpOffsetShift) | seg_flags;
             tcp_header.set(Tcp4Header::OffsetFlags(), offset_flags);
             chksum.addWord(WrapType<uint16_t>(), offset_flags);
             
@@ -1331,7 +1331,7 @@ private:
         
         // Caculate the offset+flags field.
         FlagsType offset_flags =
-            ((FlagsType)(5+opts_len/4) << TcpOffsetShift) | flags;
+            (FlagsType(5+opts_len/4) << TcpOffsetShift) | flags;
         
         // The header parts of the checksum will be calculated inline.
         IpChksumAccumulator chksum_accum;

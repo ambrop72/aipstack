@@ -50,7 +50,7 @@ public:
     {
         AddrType res_addr = {};
         for (int i = 0; i < Length; i++) {
-            res_addr.data[i] = (ElemType)-1;
+            res_addr.data[i] = ElemType(-1);
         }
         return res_addr;
     }
@@ -64,12 +64,12 @@ public:
         int bits_left = prefix_bits;
         
         while (bits_left >= ElemBits) {
-            res_addr.data[elem_idx++] = (ElemType)-1;
+            res_addr.data[elem_idx++] = ElemType(-1);
             bits_left -= ElemBits;
         }
         
         if (bits_left > 0) {
-            ElemType mask = ~(((ElemType)1 << (ElemBits - bits_left)) - 1);
+            ElemType mask = ~((ElemType(1) << (ElemBits - bits_left)) - 1);
             res_addr.data[elem_idx++] = mask;
         }
         
@@ -90,12 +90,12 @@ public:
         int bits_left = PrefixBits;
         
         while (bits_left >= ElemBits) {
-            res_addr.data[elem_idx++] = (ElemType)-1;
+            res_addr.data[elem_idx++] = ElemType(-1);
             bits_left -= ElemBits;
         }
         
         if (bits_left > 0) {
-            ElemType mask = ~(((ElemType)1 << (ElemBits - bits_left)) - 1);
+            ElemType mask = ~((ElemType(1) << (ElemBits - bits_left)) - 1);
             res_addr.data[elem_idx++] = mask;
         }
         
@@ -113,7 +113,8 @@ public:
         int byte_idx = 0;
         for (int elem_idx = 0; elem_idx < Length; elem_idx++) {
             for (size_t i = 0; i < IpGenericAddr::ElemSize; i++) {
-                addr.data[elem_idx] |= (ElemType)bytes[byte_idx] << (8 * (IpGenericAddr::ElemSize - 1 - i));
+                addr.data[elem_idx] |=
+                    ElemType(bytes[byte_idx]) << (8 * (IpGenericAddr::ElemSize - 1 - i));
                 byte_idx++;
             }
         }
@@ -176,8 +177,8 @@ public:
         int leading_ones = 0;
         for (int elem_idx = 0; elem_idx < Length; elem_idx++) {
             ElemType elem = this->data[elem_idx];
-            for (int bit_idx = ElemBits-1; bit_idx >= 0; bit_idx--) {
-                if ((elem & ((ElemType)1 << bit_idx)) == 0) {
+            for (int bit_idx = ElemBits - 1; bit_idx >= 0; bit_idx--) {
+                if ((elem & (ElemType(1) << bit_idx)) == 0) {
                     return leading_ones;
                 }
                 leading_ones++;

@@ -100,7 +100,7 @@ class IpReassembly :
     
     // Maximum time that a reassembly entry can be valid.
     static TimeType const ReassMaxExpirationTicks =
-        MaxReassTimeSeconds * (TimeType)Platform::TimeFreq;
+        MaxReassTimeSeconds * TimeType(Platform::TimeFreq);
     
     static_assert(ReassMaxExpirationTicks <= Platform::WorkingTimeSpanTicks, "");
     
@@ -395,7 +395,7 @@ private:
             }
             
             // If the entry has expired, mark is as free and ignore.
-            if ((TimeType)(reass.expiration_time - now) > ReassMaxExpirationTicks) {
+            if (TimeType(reass.expiration_time - now) > ReassMaxExpirationTicks) {
                 reass.first_hole_offset = ReassNullLink;
                 continue;
             }
@@ -406,7 +406,7 @@ private:
             if (reass_hdr.get(Ip4Header::Ident())    == ident &&
                 reass_hdr.get(Ip4Header::SrcAddr())  == src_addr &&
                 reass_hdr.get(Ip4Header::DstAddr())  == dst_addr &&
-                (uint8_t)reass_hdr.get(Ip4Header::TtlProto()) == proto)
+                uint8_t(reass_hdr.get(Ip4Header::TtlProto()) == proto))
             {
                 found_entry = &reass;
             }
@@ -430,8 +430,8 @@ private:
             
             // Look for the entry with the least expiration time.
             if (result_reass == nullptr ||
-                (TimeType)(future - reass.expiration_time) >
-                    (TimeType)(future - result_reass->expiration_time))
+                TimeType(future - reass.expiration_time) >
+                    TimeType(future - result_reass->expiration_time))
             {
                 result_reass = &reass;
             }
@@ -439,7 +439,7 @@ private:
         
         // Set the expiration time.
         uint8_t seconds = MinValue(ttl, MaxReassTimeSeconds);
-        result_reass->expiration_time = now + seconds * (TimeType)Platform::TimeFreq;
+        result_reass->expiration_time = now + seconds * TimeType(Platform::TimeFreq);
         
         return result_reass;
     }

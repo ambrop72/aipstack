@@ -206,7 +206,7 @@ struct MemRef {
      */
     bool findChar (char ch, size_t &out_index) const
     {
-        char const *res = (char const *)::memchr(ptr, ch, len);
+        char const *res = reinterpret_cast<char const *>(::memchr(ptr, ch, len));
         if (res == nullptr) {
             return false;
         }

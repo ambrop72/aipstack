@@ -362,7 +362,7 @@ public:
         AIPSTACK_ASSERT(div >= 2)
         
         SeqType max_rx_window = MinValueU(buffer_size, TcpApi<Arg>::MaxRcvWnd);
-        SeqType thres = MaxValue((SeqType)1, (SeqType)(max_rx_window / div));
+        SeqType thres = MaxValue(SeqType(1), SeqType(max_rx_window / div));
         setWindowUpdateThreshold(thres);
     }
     

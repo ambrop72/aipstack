@@ -86,7 +86,7 @@ public:
     {
         m_node.ptr = m_data;
 #if AIPSTACK_ASSERTIONS
-        m_node.len = (size_t)-1;
+        m_node.len = size_t(-1);
 #endif
     }
     
@@ -219,7 +219,7 @@ private:
     inline bool isInitialized () const
     {
         #if AIPSTACK_ASSERTIONS
-        return m_node.len != (size_t)-1;
+        return m_node.len != size_t(-1);
         #else
         return true;
         #endif

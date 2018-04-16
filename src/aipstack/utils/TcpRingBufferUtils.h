@@ -51,7 +51,7 @@ public:
         
         IpBufRef old_send_buf = con.getSendBuf();
 
-        IpBufRef send_buf = IpBufRef{&m_buf_node, (size_t)0, old_send_buf.tot_len};
+        IpBufRef send_buf = IpBufRef{&m_buf_node, size_t(0), old_send_buf.tot_len};
 
         if (old_send_buf.tot_len > 0) {
             IpBufRef tmp_buf = send_buf;
@@ -116,7 +116,7 @@ public:
         
         IpBufRef old_recv_buf = con.getRecvBuf();
 
-        IpBufRef recv_buf = IpBufRef{&m_buf_node, (size_t)0, buf_size};
+        IpBufRef recv_buf = IpBufRef{&m_buf_node, size_t(0), buf_size};
         
         if (initial_rx_data.tot_len > 0) {
             recv_buf.giveBuf(initial_rx_data);

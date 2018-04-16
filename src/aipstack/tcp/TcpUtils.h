@@ -108,16 +108,16 @@ public:
         uint16_t mss;
     };
     
-    static SeqType const SeqMSB = (SeqType)1 << 31;
+    static SeqType const SeqMSB = SeqType(1) << 31;
     
     static inline SeqType seq_add (SeqType op1, SeqType op2)
     {
-        return (SeqType)(op1 + op2);
+        return SeqType(op1 + op2);
     }
     
     static inline SeqType seq_diff (SeqType op1, SeqType op2)
     {
-        return (SeqType)(op1 - op2);
+        return SeqType(op1 - op2);
     }
     
     static inline SeqType seq_add_sat (SeqType op1, SeqType op2)
@@ -307,13 +307,13 @@ public:
     static SeqType calc_initial_cwnd (uint16_t snd_mss)
     {
         if (snd_mss > 2190) {
-            return 2 * (SeqType)snd_mss;
+            return 2 * SeqType(snd_mss);
         }
         else if (snd_mss > 1095) {
-            return 3 * (SeqType)snd_mss;
+            return 3 * SeqType(snd_mss);
         }
         else {
-            return 4 * (SeqType)snd_mss;
+            return 4 * SeqType(snd_mss);
         }
     }
     
@@ -397,7 +397,7 @@ public:
         static_assert(std::numeric_limits<IntType>::is_integer, "");
         static_assert(!std::numeric_limits<IntType>::is_signed, "");
         
-        return (IntType)(x + ~start) < length;
+        return IntType(x + ~start) < length;
     }
 };
 

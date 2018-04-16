@@ -355,7 +355,7 @@ public:
             x /= 2;
             bits++;
         }
-        AIPSTACK_ASSERT_FORCE(m_level_bit == ((SizeType)1 << (bits - 1)))
+        AIPSTACK_ASSERT_FORCE(m_level_bit == (SizeType(1) << (bits - 1)))
     }
     
 private:
@@ -424,7 +424,7 @@ private:
         // - If there was an overflow in the multiplication, then fromlast_cost_bit
         //   is zero, fromlast_cost_bit-1 is the max value and the result is still
         //   correctly true (walk from root).
-        return (SizeType)(fromlast_cost_bit - 1) >= new_level_bit;
+        return SizeType(fromlast_cost_bit - 1) >= new_level_bit;
     }
     
     AIPSTACK_OPTIMIZE_SIZE

@@ -403,7 +403,7 @@ public:
         auto ip4_header = Ip4Header::MakeRef(pkt.getChunkPtr());
         IpChksumAccumulator chksum;
         
-        uint16_t version_ihl_dscp_ecn = (uint16_t)((4 << Ip4VersionShift) | 5) << 8;
+        uint16_t version_ihl_dscp_ecn = uint16_t((4 << Ip4VersionShift) | 5) << 8;
         chksum.addWord(WrapType<uint16_t>(), version_ihl_dscp_ecn);
         ip4_header.set(Ip4Header::VersionIhlDscpEcn(), version_ihl_dscp_ecn);
         
@@ -414,7 +414,7 @@ public:
         chksum.addWord(WrapType<uint16_t>(), ident);
         ip4_header.set(Ip4Header::Ident(), ident);
         
-        uint16_t flags_offset = (uint16_t)send_flags & IpOnlySendFlagsMask;
+        uint16_t flags_offset = uint16_t(send_flags) & IpOnlySendFlagsMask;
         chksum.addWord(WrapType<uint16_t>(), flags_offset);
         ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         
@@ -481,7 +481,7 @@ private:
             
             // Write the fragment-specific IP header fields.
             ip4_header.set(Ip4Header::TotalLen(), pkt_send_len);
-            uint16_t flags_offset = ((uint16_t)send_flags & IpOnlySendFlagsMask) |
+            uint16_t flags_offset = (uint16_t(send_flags) & IpOnlySendFlagsMask) |
                                     (fragment_offset / 8);
             ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
             ip4_header.set(Ip4Header::HeaderChksum(), 0);
@@ -561,11 +561,11 @@ public:
         auto ip4_header = Ip4Header::MakeRef(header_end_ptr - Ip4Header::Size);
         IpChksumAccumulator chksum;
         
-        uint16_t version_ihl_dscp_ecn = (uint16_t)((4 << Ip4VersionShift) | 5) << 8;
+        uint16_t version_ihl_dscp_ecn = uint16_t((4 << Ip4VersionShift) | 5) << 8;
         chksum.addWord(WrapType<uint16_t>(), version_ihl_dscp_ecn);
         ip4_header.set(Ip4Header::VersionIhlDscpEcn(), version_ihl_dscp_ecn);
         
-        uint16_t flags_offset = (uint16_t)send_flags & IpOnlySendFlagsMask;
+        uint16_t flags_offset = uint16_t(send_flags) & IpOnlySendFlagsMask;
         chksum.addWord(WrapType<uint16_t>(), flags_offset);
         ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         

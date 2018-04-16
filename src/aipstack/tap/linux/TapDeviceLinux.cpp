@@ -67,7 +67,7 @@ TapDeviceLinux::TapDeviceLinux (
         ifr.ifr_flags |= IFF_NO_PI|IFF_TAP;
         std::snprintf(ifr.ifr_name, IFNAMSIZ, "%s", device_id.c_str());
         
-        if (::ioctl(*m_fd, TUNSETIFF, (void *)&ifr) < 0) {
+        if (::ioctl(*m_fd, TUNSETIFF, reinterpret_cast<void *>(&ifr)) < 0) {
             throw std::runtime_error("ioctl(TUNSETIFF) failed.");
         }
 
@@ -84,7 +84,7 @@ TapDeviceLinux::TapDeviceLinux (
         std::memset(&ifr, 0, sizeof(ifr));
         std::strcpy(ifr.ifr_name, devname_real.c_str());
         
-        if (::ioctl(*sock, SIOCGIFMTU, (void *)&ifr) < 0) {
+        if (::ioctl(*sock, SIOCGIFMTU, reinterpret_cast<void *>(&ifr)) < 0) {
             throw std::runtime_error("ioctl(SIOCGIFMTU) failed.");
         }
         
@@ -131,7 +131,7 @@ AIpStack::IpErr TapDeviceLinux::sendFrame (AIpStack::IpBufRef frame)
         }
         return AIpStack::IpErr::HW_ERROR;
     }
-    if ((std::size_t)write_res != len) {
+    if (std::size_t(write_res) != len) {
         return AIpStack::IpErr::HW_ERROR;
     }
     

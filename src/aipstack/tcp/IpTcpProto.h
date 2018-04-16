@@ -112,36 +112,36 @@ class IpTcpProto :
     using FlagsType = uint16_t;
     struct PcbFlags { enum : FlagsType {
         // ACK is needed; used in input processing
-        ACK_PENDING = (FlagsType)1 << 0,
+        ACK_PENDING = FlagsType(1) << 0,
         // pcb_output_active/pcb_output_abandoned should be called at the end of
         // input processing. This flag must imply can_output_in_state and
         // pcb_has_snd_outstanding at the point in pcb_input where it is checked.
         // Any change that would break this implication must clear the flag.
-        OUT_PENDING = (FlagsType)1 << 1,
+        OUT_PENDING = FlagsType(1) << 1,
         // A FIN was sent at least once and is included in snd_nxt
-        FIN_SENT    = (FlagsType)1 << 2,
+        FIN_SENT    = FlagsType(1) << 2,
         // A FIN is to queued for sending
-        FIN_PENDING = (FlagsType)1 << 3,
+        FIN_PENDING = FlagsType(1) << 3,
         // Round-trip-time is being measured
-        RTT_PENDING = (FlagsType)1 << 4,
+        RTT_PENDING = FlagsType(1) << 4,
         // Round-trip-time is not in initial state
-        RTT_VALID   = (FlagsType)1 << 5,
+        RTT_VALID   = FlagsType(1) << 5,
         // cwnd has been increaded by snd_mss this round-trip
-        CWND_INCRD  = (FlagsType)1 << 6,
+        CWND_INCRD  = FlagsType(1) << 6,
         // A segment has been retransmitted and not yet acked
-        RTX_ACTIVE  = (FlagsType)1 << 7,
+        RTX_ACTIVE  = FlagsType(1) << 7,
         // The recover variable valid (and >=snd_una)
-        RECOVER     = (FlagsType)1 << 8,
+        RECOVER     = FlagsType(1) << 8,
         // If rtx_timer is running it is for idle timeout
-        IDLE_TIMER  = (FlagsType)1 << 9,
+        IDLE_TIMER  = FlagsType(1) << 9,
         // Window scaling is used
-        WND_SCALE   = (FlagsType)1 << 10,
+        WND_SCALE   = FlagsType(1) << 10,
         // Current cwnd is the initial cwnd
-        CWND_INIT   = (FlagsType)1 << 11,
+        CWND_INIT   = FlagsType(1) << 11,
         // If OutputTimer is set it is for OutputRetry*Ticks
-        OUT_RETRY   = (FlagsType)1 << 12,
+        OUT_RETRY   = FlagsType(1) << 12,
         // rcv_ann_wnd needs update before sending a segment, implies con != nullptr
-        RCV_WND_UPD = (FlagsType)1 << 13,
+        RCV_WND_UPD = FlagsType(1) << 13,
         // NOTE: Currently no more bits are available, see TcpPcb::flags.
     }; };
     
@@ -753,7 +753,7 @@ private:
         // at most 16-bit wide since SYN segments have unscaled window.
         // NOTE: rcv_ann_wnd after SYN-ACKSYN reception (-1) fits into size_t
         // as required since user_rcv_wnd is size_t.
-        SeqType rcv_wnd = 1 + MinValueU((uint16_t)(TypeMax<uint16_t>() - 1), user_rcv_wnd);
+        SeqType rcv_wnd = 1 + MinValueU(uint16_t(TypeMax<uint16_t>() - 1), user_rcv_wnd);
         
         // Initialize most of the PCB.
         pcb->state = TcpState::SYN_SENT;

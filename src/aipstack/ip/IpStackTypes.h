@@ -197,7 +197,7 @@ enum class IpSendFlags : uint16_t {
      * This flag is required in order to send to a local broadcast or all-ones address.
      * If it is set then sending to non-broadcast addresses is still allowed.
      */
-    AllowBroadcastFlag = (uint16_t)1 << 0,
+    AllowBroadcastFlag = uint16_t(1) << 0,
 
     /**
      * Allow sending from from a non-local address.
@@ -205,7 +205,7 @@ enum class IpSendFlags : uint16_t {
      * This flag is required in order to send using a source address that is not the
      * address of the outgoing network interface.
      */
-    AllowNonLocalSrc = (uint16_t)1 << 1,
+    AllowNonLocalSrc = uint16_t(1) << 1,
 
     /**
      * Do-not-fragment flag.
@@ -280,7 +280,7 @@ public:
      * @param proto The protocol.
      */
     constexpr inline Ip4TtlProto (uint8_t ttl, uint8_t proto)
-    : value(((uint16_t)ttl << 8) | proto)
+    : value((uint16_t(ttl) << 8) | proto)
     {
     }
     

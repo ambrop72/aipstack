@@ -286,7 +286,7 @@ public:
                 InitInfo const &info)
     :
         Iface(stack, {
-            /*ip_mtu=*/ (size_t)(info.eth_mtu - EthHeader::Size),
+            /*ip_mtu=*/ size_t(info.eth_mtu - EthHeader::Size),
             /*hw_type=*/ IpHwType::Ethernet,
             /*hw_iface=*/ static_cast<EthHwIface *>(this)
         }),
