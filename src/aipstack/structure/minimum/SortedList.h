@@ -31,7 +31,9 @@
 
 namespace AIpStack {
 
-//#define AIPSTACK_SORTED_LIST_VERIFY 1
+#ifndef AIPSTACK_SORTED_LIST_VERIFY
+#define AIPSTACK_SORTED_LIST_VERIFY 0
+#endif
 
 template <typename, typename, typename>
 class SortedList;

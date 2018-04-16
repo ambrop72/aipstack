@@ -33,7 +33,9 @@
 
 namespace AIpStack {
 
-//#define AIPSTACK_AVL_TREE_VERIFY 1
+#ifndef AIPSTACK_AVL_TREE_VERIFY
+#define AIPSTACK_AVL_TREE_VERIFY 0
+#endif
 
 template<typename, typename, typename>
 class AvlTree;

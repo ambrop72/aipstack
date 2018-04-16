@@ -44,7 +44,7 @@
  * function, for which an optimized implementation can be provided.
  */
 
-#if AIPSTACK_EXTERNAL_CHKSUM
+#if defined(AIPSTACK_EXTERNAL_CHKSUM)
 extern "C" uint16_t IpChksumInverted (char const *data, size_t len);
 #else
 

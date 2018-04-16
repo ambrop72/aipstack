@@ -123,7 +123,8 @@ namespace BinaryToolsPrivate {
     };
     
 #if defined(__GNUC__) && defined(__BYTE_ORDER__) && \
-    (__ARM_ARCH >= 7 && __ARM_FEATURE_UNALIGNED)
+    defined(__ARM_ARCH) && __ARM_ARCH >= 7 && \
+    defined(__ARM_FEATURE_UNALIGNED) && __ARM_FEATURE_UNALIGNED
     
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define AIPSTACK_BINARYTOOLS_BIG_ENDIAN 0
