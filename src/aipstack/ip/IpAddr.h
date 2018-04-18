@@ -112,7 +112,6 @@ public:
     
     static constexpr AddrType FromBytes (uint8_t const bytes[IpGenericAddr::Size])
     {
-        static_assert(IpGenericAddr::Size == 4, "");
         AddrType addr = {};
         size_t byte_idx = 0;
         for (size_t elem_idx = 0; elem_idx < Length; elem_idx++) {
