@@ -23,6 +23,7 @@
  */
 
 #include <cstdio>
+#include <cstring>
 #include <memory>
 #include <string>
 #include <stdexcept>
@@ -45,6 +46,7 @@
 #include <aipstack/tcp/IpTcpProto.h>
 #include <aipstack/udp/IpUdpProto.h>
 #include <aipstack/eth/EthIpIface.h>
+#include <aipstack/utils/IpAddrFormat.h>
 
 #include "tap_iface.h"
 #include "example_app.h"
@@ -147,12 +149,18 @@ class MyExampleAppArg : public MyExampleAppService::template Compose<IpStackArg>
 using MyExampleApp = AIpStackExamples::ExampleApp<MyExampleAppArg>;
 
 // Callback function for printing DHCP client events
-static void dhcpClientCallback (AIpStack::IpDhcpClientEvent event_type)
+static void dhcpClientCallback (
+    std::unique_ptr<MyDhcpClient> const &dhcp, AIpStack::IpDhcpClientEvent event_type)
 {
+    char buf[30 + AIpStack::MaxIp4AddrPrintLen];
     char const *event_str = nullptr;
+
     switch (event_type) {
         case AIpStack::IpDhcpClientEvent::LeaseObtained:
-            event_str = "Lease obtained";
+            std::strcpy(buf, "Lease obtained: ");
+            AIpStack::FormatIpAddr(buf + std::strlen(buf),
+                dhcp->getLeaseInfoMustHaveLease().ip_address);
+            event_str = buf;
             break;
         case AIpStack::IpDhcpClientEvent::LeaseRenewed:
             event_str = "Lease renewed";
@@ -218,7 +226,10 @@ int main (int argc, char *argv[])
         // Construct the DHCP client.
         AIpStack::IpDhcpClientInitOptions dhcp_opts;
         dhcp_client = std::make_unique<MyDhcpClient>(
-            platform, &*stack, &*iface, dhcp_opts, dhcpClientCallback);
+            platform, &*stack, &*iface, dhcp_opts,
+            [&dhcp_client](AIpStack::IpDhcpClientEvent event_type) {
+                dhcpClientCallback(dhcp_client, event_type);
+            });
     } else {
         // Assign static IP configuration.
         iface->setIp4Addr(
