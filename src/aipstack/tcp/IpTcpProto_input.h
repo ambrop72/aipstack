@@ -747,7 +747,7 @@ private:
             } else {
                 // Handle SYN as per RFC 5961.
                 if (pcb->state == TcpState::SYN_RCVD &&
-                    tcp_meta.seq_num == seq_add(pcb->rcv_nxt, -1))
+                    tcp_meta.seq_num == seq_diff(pcb->rcv_nxt, 1))
                 {
                     // This seems to be a retransmission of the SYN, retransmit our
                     // SYN+ACK and bump the abort timeout.

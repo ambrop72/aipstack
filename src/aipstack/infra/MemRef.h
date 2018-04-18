@@ -210,7 +210,7 @@ struct MemRef {
         if (res == nullptr) {
             return false;
         }
-        out_index = res - ptr;
+        out_index = size_t(res - ptr);
         return true;
     }
 };

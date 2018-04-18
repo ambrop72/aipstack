@@ -20,7 +20,7 @@ let
     ];
 
     optionalWarningsClang = [
-        "-Wconversion" "-Wno-sign-conversion" "-Wnon-virtual-dtor"
+        "-Wconversion" "-Wnon-virtual-dtor"
     ];
 
     filterSupportedWarnings =

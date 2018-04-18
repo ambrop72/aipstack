@@ -86,7 +86,7 @@ inline uint16_t IpChksumInverted (char const *data, size_t len)
     
     if ((len & 1) != 0) {
         uint8_t byte = ReadBinaryInt<uint8_t, BinaryBigEndian>(data);
-        sum += uint16_t(byte) << 8;
+        sum += uint32_t(uint16_t(byte) << 8);
     }
     
     sum = (sum & UINT32_C(0xFFFF)) + (sum >> 16);

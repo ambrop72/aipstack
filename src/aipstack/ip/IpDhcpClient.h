@@ -1336,7 +1336,7 @@ private:
             Options::writeOptions(opt_startptr, msg_type, iface()->getMtu(), opts);
         
         // Calculate the UDP data length.
-        size_t data_len = opt_endptr - dgram_alloc.getPtr();
+        size_t data_len = size_t(opt_endptr - dgram_alloc.getPtr());
         AIPSTACK_ASSERT(data_len <= MaxDhcpSendMsgSize)
         
         // Construct the UDP data reference.

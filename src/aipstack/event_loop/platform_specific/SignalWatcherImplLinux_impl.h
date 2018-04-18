@@ -119,7 +119,7 @@ void SignalWatcherImplLinux::fdWatcherHandler(EventLoopFdEvents events)
             "SignalWatcher: read signal number is out of range for int.\n");
         return;
     }
-    int signum = siginfo.ssi_signo;
+    int signum = int(siginfo.ssi_signo);
 
     SignalType sig = signumToSignalType(signum);
     if (sig == SignalType::None) {

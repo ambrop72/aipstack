@@ -187,7 +187,7 @@ public:
                 if (data.tot_len == 0) {
                     return false;
                 }
-                uint8_t opt_len = data.takeByte();
+                uint8_t opt_len = uint8_t(data.takeByte());
                 
                 // Check that the remainder of the option is available.
                 if (opt_len > data.tot_len) {

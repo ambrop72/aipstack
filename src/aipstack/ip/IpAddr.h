@@ -28,17 +28,21 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <type_traits>
+
 #include <aipstack/misc/Assert.h>
 #include <aipstack/infra/Struct.h>
 
 namespace AIpStack {
 
-template <typename AddrType, typename ElemType, int Length>
+template <typename AddrType, typename ElemType, size_t Length>
 class IpGenericAddr : public StructIntArray<ElemType, Length>
 {
+    static_assert(std::is_unsigned<ElemType>::value, "");
+    
 public:
-    static int const Bits      = 8 * IpGenericAddr::Size;
-    static int const ElemBits  = 8 * IpGenericAddr::ElemSize;
+    static size_t const Bits      = 8 * IpGenericAddr::Size;
+    static size_t const ElemBits  = 8 * IpGenericAddr::ElemSize;
     
 public:
     static inline constexpr AddrType ZeroAddr ()
@@ -49,19 +53,19 @@ public:
     static inline constexpr AddrType AllOnesAddr ()
     {
         AddrType res_addr = {};
-        for (int i = 0; i < Length; i++) {
+        for (size_t i = 0; i < Length; i++) {
             res_addr.data[i] = ElemType(-1);
         }
         return res_addr;
     }
     
-    static AddrType PrefixMask (int prefix_bits)
+    static AddrType PrefixMask (size_t prefix_bits)
     {
         AIPSTACK_ASSERT(prefix_bits <= Bits)
         
         AddrType res_addr;
-        int elem_idx = 0;
-        int bits_left = prefix_bits;
+        size_t elem_idx = 0;
+        size_t bits_left = prefix_bits;
         
         while (bits_left >= ElemBits) {
             res_addr.data[elem_idx++] = ElemType(-1);
@@ -80,14 +84,14 @@ public:
         return res_addr;
     }
     
-    template <int PrefixBits>
+    template <size_t PrefixBits>
     static constexpr AddrType PrefixMask ()
     {
         static_assert(PrefixBits <= Bits, "");
         
         AddrType res_addr = {};
-        int elem_idx = 0;
-        int bits_left = PrefixBits;
+        size_t elem_idx = 0;
+        size_t bits_left = PrefixBits;
         
         while (bits_left >= ElemBits) {
             res_addr.data[elem_idx++] = ElemType(-1);
@@ -110,8 +114,8 @@ public:
     {
         static_assert(IpGenericAddr::Size == 4, "");
         AddrType addr = {};
-        int byte_idx = 0;
-        for (int elem_idx = 0; elem_idx < Length; elem_idx++) {
+        size_t byte_idx = 0;
+        for (size_t elem_idx = 0; elem_idx < Length; elem_idx++) {
             for (size_t i = 0; i < IpGenericAddr::ElemSize; i++) {
                 addr.data[elem_idx] |=
                     ElemType(bytes[byte_idx]) << (8 * (IpGenericAddr::ElemSize - 1 - i));
@@ -141,7 +145,7 @@ public:
     constexpr AddrType bitwiseOp (IpGenericAddr const &other, Func func) const
     {
         AddrType res = {};
-        for (int i = 0; i < Length; i++) {
+        for (size_t i = 0; i < Length; i++) {
             res.data[i] = func(this->data[i], other.data[i]);
         }
         return res;
@@ -151,7 +155,7 @@ public:
     constexpr AddrType bitwiseOp (Func func) const
     {
         AddrType res = {};
-        for (int i = 0; i < Length; i++) {
+        for (size_t i = 0; i < Length; i++) {
             res.data[i] = func(this->data[i]);
         }
         return res;
@@ -172,12 +176,12 @@ public:
         return bitwiseOp([](ElemType x) { return ~x; });
     }
     
-    constexpr int countLeadingOnes () const
+    constexpr size_t countLeadingOnes () const
     {
-        int leading_ones = 0;
-        for (int elem_idx = 0; elem_idx < Length; elem_idx++) {
+        size_t leading_ones = 0;
+        for (size_t elem_idx = 0; elem_idx < Length; elem_idx++) {
             ElemType elem = this->data[elem_idx];
-            for (int bit_idx = ElemBits - 1; bit_idx >= 0; bit_idx--) {
+            for (size_t bit_idx = ElemBits - 1; bit_idx != size_t(-1); bit_idx--) {
                 if ((elem & (ElemType(1) << bit_idx)) == 0) {
                     return leading_ones;
                 }
@@ -187,14 +191,13 @@ public:
         return leading_ones;
     }
 
-    template <int ByteIndex>
+    template <size_t ByteIndex>
     constexpr uint8_t getByte () const
     {
-        static_assert(ByteIndex >= 0, "");
         static_assert(ByteIndex < IpGenericAddr::Size, "");
 
-        int elem_idx = ByteIndex / IpGenericAddr::ElemSize;
-        int elem_byte_idx = ByteIndex % IpGenericAddr::ElemSize;
+        size_t elem_idx = ByteIndex / IpGenericAddr::ElemSize;
+        size_t elem_byte_idx = ByteIndex % IpGenericAddr::ElemSize;
 
         ElemType elem = this->data[elem_idx];
         return (elem >> (8 * (IpGenericAddr::ElemSize - 1 - elem_byte_idx))) & 0xFF;
@@ -214,7 +217,8 @@ public:
 
     bool isMulticast() const
     {
-        return (*this & Ip4Addr::FromBytes(0xF0, 0, 0, 0)) == Ip4Addr::FromBytes(0xE0, 0, 0, 0);
+        return (*this & Ip4Addr::FromBytes(0xF0, 0, 0, 0))
+            == Ip4Addr::FromBytes(0xE0, 0, 0, 0);
     }
     
     bool isAllOnesOrMulticast () const

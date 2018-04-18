@@ -190,7 +190,7 @@ public:
     
     inline size_t getEntryIndex (Entry &entry)
     {
-        return &entry - m_array;
+        return size_t(&entry - m_array);
     }
     
 private:

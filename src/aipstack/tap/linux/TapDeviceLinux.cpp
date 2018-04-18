@@ -88,7 +88,7 @@ TapDeviceLinux::TapDeviceLinux (
             throw std::runtime_error("ioctl(SIOCGIFMTU) failed.");
         }
         
-        m_frame_mtu = ifr.ifr_mtu + AIpStack::EthHeader::Size;
+        m_frame_mtu = std::size_t(ifr.ifr_mtu) + AIpStack::EthHeader::Size;
     }
     
     m_read_buffer.resize(m_frame_mtu);

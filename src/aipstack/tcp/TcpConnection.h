@@ -349,9 +349,10 @@ public:
     void setProportionalWindowUpdateThreshold (size_t buffer_size, int div)
     {
         AIPSTACK_ASSERT(div >= 2)
+        using UInt = unsigned int;
         
         SeqType max_rx_window = MinValueU(buffer_size, TcpApi<Arg>::MaxRcvWnd);
-        SeqType thres = MaxValue(SeqType(1), SeqType(max_rx_window / div));
+        SeqType thres = MaxValue(SeqType(1), SeqType(max_rx_window / UInt(div)));
         setWindowUpdateThreshold(thres);
     }
     

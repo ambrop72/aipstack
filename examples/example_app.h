@@ -200,7 +200,7 @@ private:
             pos = AIpStack::FormatInteger(pos, m_remote_port);
             *pos++ = ')';
             *pos++ = ' ';
-            pos += std::snprintf(pos, end - pos, "%s", msg);
+            pos += std::snprintf(pos, std::size_t(end - pos), "%s", msg);
             *pos = '\0';
 
             std::fprintf(stderr, "%s\n", buf);

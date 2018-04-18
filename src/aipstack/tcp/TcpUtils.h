@@ -189,7 +189,7 @@ public:
         
         while (buf.tot_len > 0) {
             // Read the option kind.
-            uint8_t kind = buf.takeByte();
+            uint8_t kind = uint8_t(buf.takeByte());
             
             // Hanlde end option and nop option.
             if (kind == TcpOptionEnd) {
@@ -203,7 +203,7 @@ public:
             if (buf.tot_len == 0) {
                 break;
             }
-            uint8_t length = buf.takeByte();
+            uint8_t length = uint8_t(buf.takeByte());
             
             // Check the option length.
             if (length < 2) {
@@ -233,7 +233,7 @@ public:
                     if (opt_data_len != 1) {
                         goto skip_option;
                     }
-                    uint8_t value = buf.takeByte();
+                    uint8_t value = uint8_t(buf.takeByte());
                     out_opts->options |= OptionFlags::WND_SCALE;
                     out_opts->wnd_scale = value;
                 } break;

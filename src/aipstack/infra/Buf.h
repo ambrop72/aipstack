@@ -480,7 +480,7 @@ struct IpBufRef {
             if (ch == nullptr) {
                 return false;
             } else {
-                len = (reinterpret_cast<char *>(ch) - data) + 1;
+                len = size_t((reinterpret_cast<char *>(ch) - data) + 1);
                 return true;
             }
         });
