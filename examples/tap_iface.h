@@ -40,61 +40,53 @@
 namespace AIpStackExamples {
 
 template <typename StackArg, typename TheEthIpIfaceService>
-class TapIface;
-
-namespace Private {
-    template <typename StackArg, typename TheEthIpIfaceService>
-    class EthIpIfaceArg : public TheEthIpIfaceService::template Compose<
-        AIpStack::HostedPlatformImpl, StackArg> {};
-    
-    struct TapIfaceMacAddr {
-        AIpStack::MacAddr m_mac_addr;
-    };
-}
-
-template <typename StackArg1, typename TheEthIpIfaceService>
-class TapIface final :
-    private AIpStack::TapDevice,
-    private Private::TapIfaceMacAddr,
-    public AIpStack::EthIpIface<Private::EthIpIfaceArg<StackArg1, TheEthIpIfaceService>>
-{
+class TapIface {
     using Platform = AIpStack::PlatformFacade<AIpStack::HostedPlatformImpl>;
 
-    using TheEthIpIface =
-        AIpStack::EthIpIface<Private::EthIpIfaceArg<StackArg1, TheEthIpIfaceService>>;
-    
+    AIPSTACK_MAKE_INSTANCE(TheEthIpIface, (TheEthIpIfaceService::template Compose<
+        AIpStack::HostedPlatformImpl, StackArg>))
+
 public:
-    TapIface (Platform platform, AIpStack::IpStack<StackArg1> *stack,
+    TapIface (Platform platform, AIpStack::IpStack<StackArg> *stack,
               std::string const &device_id, AIpStack::MacAddr const &mac_addr)
     :
-        AIpStack::TapDevice(platform.ref().platformImpl()->getEventLoop(), device_id,
+        m_tap_device(platform.ref().platformImpl()->getEventLoop(), device_id,
             AIPSTACK_BIND_MEMBER_TN(&TapIface::frameReceived, this)),
-        TapIfaceMacAddr{mac_addr},
-        TheEthIpIface(platform, stack, {
-            /*eth_mtu=*/ AIpStack::TapDevice::getMtu(),
-            /*mac_addr=*/ &this->TapIfaceMacAddr::m_mac_addr
+        m_mac_addr(mac_addr),
+        m_eth_iface(platform, stack, AIpStack::EthIfaceDriverParams{
+            /*eth_mtu=*/ m_tap_device.getMtu(),
+            /*mac_addr=*/ &m_mac_addr,
+            AIPSTACK_BIND_MEMBER_TN(&TapIface::driverSendFrame, this),
+            AIPSTACK_BIND_MEMBER_TN(&TapIface::driverGetEthState, this)
         })
     {}
+
+    inline AIpStack::IpIface<StackArg> & iface () {
+        return m_eth_iface.iface();
+    }
     
 private:
     void frameReceived (AIpStack::IpBufRef frame)
     {
-        return TheEthIpIface::recvFrameFromDriver(frame);
+        return m_eth_iface.recvFrame(frame);
     }
     
-    // Implement TheEthIpIface::driverSendFrame
-    AIpStack::IpErr driverSendFrame (AIpStack::IpBufRef frame) override final
+    AIpStack::IpErr driverSendFrame (AIpStack::IpBufRef frame)
     {
-        return AIpStack::TapDevice::sendFrame(frame);
+        return m_tap_device.sendFrame(frame);
     }
     
-    // Implement TheEthIpIface::driverGetEthState
-    AIpStack::EthIfaceState driverGetEthState () override final
+    AIpStack::EthIfaceState driverGetEthState ()
     {
         AIpStack::EthIfaceState state = {};
         state.link_up = true;
         return state;
     }
+
+private:
+    AIpStack::TapDevice m_tap_device;
+    AIpStack::MacAddr m_mac_addr;
+    TheEthIpIface m_eth_iface;
 };
 
 }

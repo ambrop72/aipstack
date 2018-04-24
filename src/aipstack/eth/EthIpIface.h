@@ -73,7 +73,7 @@ namespace AIpStack {
 /**
  * Encapsulates state information provided by Ethernet network interface drivers.
  * 
- * Structures of this type are returned by @ref EthIpIface::driverGetEthState.
+ * Structures of this type are returned by @ref EthIfaceDriverParams::get_eth_state.
  */
 struct EthIfaceState {
     /**
@@ -82,53 +82,99 @@ struct EthIfaceState {
     bool link_up;
 };
 
-template <typename Arg>
-class EthIpIface;
+/**
+ * Encapsulates interface parameters passed to the @ref EthIpIface constructor.
+ */
+struct EthIfaceDriverParams {
+    /**
+     * Maximum frame size including the 14-byte Ethernet header.
+     * 
+     * The resulting IP MTU (14 bytes less) must be at least @ref IpStack::MinMTU.
+     */
+    size_t eth_mtu = 0;
+    
+    /**
+     * Pointer to the MAC address of the network interface.
+     * 
+     * This must point to a MAC address whose lifetime exceeds that of the
+     * @ref EthIpIface and which does not change in that time.
+     */
+    MacAddr const *mac_addr = nullptr;
+
+    /**
+     * Driver function to send an Ethernet frame through the interface.
+     * 
+     * @note This function must be provided.
+     * 
+     * This is called whenever an Ethernet frame needs to be sent. The driver should
+     * copy the frame as needed because it must not access the referenced buffers
+     * outside this function.
+     * 
+     * @param frame Frame to send, this includes the Ethernet header. It is guaranteed
+     *        that its size does not exceed the @ref eth_mtu specified at construction.
+     *        Frames originating from @ref EthIpIface itself will always have at least
+     *        @ref EthIpIfaceOptions::HeaderBeforeEth bytes available before the Ethernet
+     *        header for any lower-layer headers, but for frames with IP payload it is up
+     *        to the application to include that in @ref IpStackOptions::HeaderBeforeIp.
+     * @return Success or error code. The @ref EthIpIface does not itself check for any
+     *         specific error code but the error code may be propagated to the IP layer
+     *         (@ref IpStack) which may do so.
+     */
+    Function<IpErr(IpBufRef frame)> send_frame = nullptr;
+    
+    /**
+     * Driver function to get the drived-provided interface state.
+     * 
+     * @note This function must be provided.
+     * 
+     * The driver should call @ref EthIpIface::ethStateChanged whenever the state that
+     * would be returned here has changed.
+     * 
+     * @return Driver-provided-state (currently just the link-up flag).
+     */
+    Function<EthIfaceState()> get_eth_state = nullptr;
+};
 
 /**
  * Ethernet-based network interface.
  * 
  * This class is an abstract IP-layer network interface driver for Ethernet-based
- * interfaces. It inherits @ref IpIface and interacts with the IP layer
- * (@ref IpStack) using the protected @ref IpIface API, while defining a protected
- * API of its for interaction with the Ethernet-layer driver. It also implements the
- * @ref EthHwIface hardware-type-specific interface (see the @ref eth-hw module).
- * 
- * This class maintains the principle that %AIpStack does not itself manage network
- * interfaces, and as such @ref EthIpIface does not distinguish between the
- * "Ethernet-layer driver" (which implements sending and receiving frames) and the part of
- * the application that defines the IP configuration.
+ * interfaces. It internally uses @ref IpDriverIface to interact with the IP layer
+ * (@ref IpStack), while defining an API of its for interaction with the Ethernet-layer
+ * driver. It also implements the @ref EthHwIface hardware-type-specific interface (see
+ * the @ref eth-hw module).
  * 
  * This class is used as follows:
- * - The application defines a class derived from @ref EthIpIface and constructs an instance
- *   when initializing an interface (multiple instances can be constructed of course).
- * - The derived class implements the virtual functions @ref driverSendFrame (which sends a
- *   frame) and @ref driverGetEthState (which returns the interface state).
- * - The application calls the functions @ref recvFrameFromDriver (when a frame is received)
- *   and @ref ethStateChangedFromDriver (when the state may have changed).
- * - The application uses the inherited public API of @ref IpIface to configure and
- *   control the interface on the IP layer.
- * 
- * The protected API of @ref IpIface that is inherited by @ref EthIpIface should not
- * be used by the application, as it is used internally by @ref EthIpIface to the extent
- * required.
+ * - The Ethernet-layer driver constructs and takes ownership of an @ref EthIpIface
+ *   instance when initializing a network interface (multiple instances can be
+ *   constructed of course).
+ * - The driver implements the driver functions passed via @ref
+ *   EthIfaceDriverParams::send_frame (which sends a frame) and @ref
+ *   EthIfaceDriverParams::get_eth_state (which returns the interface state).
+ * - The driver calls the functions @ref recvFrame (when a frame is received) and
+ *   @ref ethStateChanged (when the state may have changed).
+ * - The driver exposes the @ref IpIface to to the application and the application
+ *   uses that to configure and control the interface on the IP layer (the driver can
+ *   get the @ref IpIface by calling @ref iface()).
  * 
  * This class internally maintains an ARP cache, which is interface-specific. Note that if
  * there is no useful ARP cache entry for an outgoing IP packet, this class will (typically)
- * return the @ref IpErr::ARP_QUERY error code from @ref IpIface::driverSendIp4Packet
- * and start an ARP resolution process. It makes an effort to inform the caller when the
- * resolution is successful through the @ref send-retry "send-retry" mechanism so that it
- * can retry sending, but such notification is not guaranteed.
+ * return the @ref IpErr::ARP_QUERY error code from @ref
+ * IpIfaceDriverParams::send_ip4_packet and start an ARP resolution process. It makes an
+ * effort to inform the caller when the resolution is successful through the @ref
+ * send-retry "send-retry" mechanism so that it can retry sending, but such notification
+ * is not guaranteed.
  * 
  * @tparam Arg An instantiation of the @ref EthIpIfaceService::Compose template
  *         or a dummy class derived from such; see @ref EthIpIfaceService for an
  *         example.
  */
 template <typename Arg>
-class EthIpIface :
-    public IpIface<typename Arg::StackArg>,
-    private EthHwIface,
+class EthIpIface final :
     private NonCopyable<EthIpIface<Arg>>
+#ifndef IN_DOXYGEN
+    ,private EthHwIface
+#endif
 {
     AIPSTACK_USE_VALS(Arg::Params, (NumArpEntries, ArpProtectCount, HeaderBeforeEth))
     AIPSTACK_USE_TYPES(Arg::Params, (TimersStructureService))
@@ -136,8 +182,6 @@ class EthIpIface :
     
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
-    
-    using Iface = IpIface<StackArg>;
     
     static size_t const EthArpPktSize = EthHeader::Size + ArpIp4Header::Size;
     
@@ -251,50 +295,33 @@ class EthIpIface :
     
 public:
     /**
-     * Encapsulates interface information passed to the @ref EthIpIface() "EthIpIface()"
-     * constructor.
-     */
-    struct InitInfo {
-        /**
-         * Maximum frame size including the 14-byte Ethernet header.
-         * 
-         * The resulting IP MTU (14 bytes less) must be at least @ref IpStack::MinMTU.
-         */
-        size_t eth_mtu = 0;
-        
-        /**
-         * Pointer to the MAC address of the network interface.
-         * 
-         * This must point to a MAC address whose lifetime exceeds that of the
-         * @ref EthIpIface and which does not change in that time.
-         */
-        MacAddr const *mac_addr = nullptr;
-    };
-    
-    /**
      * Construct the interface.
      * 
-     * The owner must be careful to not perform any action that might result in calls
-     * of virtual functions (such as sending frames to this interface) until the
-     * derived class is constructed and ready to accept these calls.
+     * The driver must be careful to not perform any action that might result in calls
+     * of driver functions (such as sending frames to this interface) until the driver
+     * is able to handle these calls.
      * 
      * @param platform_ The platform facade (the same one that `stack` uses).
      * @param stack Pointer to the IP stack (must outlive this interface).
-     * @param info Interface information, see @ref InitInfo.
+     * @param params Interface parameters, see @ref EthIfaceDriverParams.
      */
     EthIpIface (PlatformFacade<PlatformImpl> platform_, IpStack<StackArg> *stack,
-                InitInfo const &info)
+                EthIfaceDriverParams const &params)
     :
-        Iface(stack, {
-            /*ip_mtu=*/ size_t(info.eth_mtu - EthHeader::Size),
+        m_params(params),
+        m_driver_iface(stack, IpIfaceDriverParams{
+            /*ip_mtu=*/ size_t(params.eth_mtu - EthHeader::Size),
             /*hw_type=*/ IpHwType::Ethernet,
-            /*hw_iface=*/ static_cast<EthHwIface *>(this)
+            /*hw_iface=*/ static_cast<EthHwIface *>(this),
+            AIPSTACK_BIND_MEMBER_TN(&EthIpIface::driverSendIp4Packet, this),
+            AIPSTACK_BIND_MEMBER_TN(&EthIpIface::driverGetState, this)
         }),
-        m_timer(platform_, AIPSTACK_BIND_MEMBER_TN(&EthIpIface::timerHandler, this)),
-        m_mac_addr(info.mac_addr)
+        m_timer(platform_, AIPSTACK_BIND_MEMBER_TN(&EthIpIface::timerHandler, this))
     {
-        AIPSTACK_ASSERT(info.eth_mtu >= EthHeader::Size)
-        AIPSTACK_ASSERT(info.mac_addr != nullptr)
+        AIPSTACK_ASSERT(params.eth_mtu >= EthHeader::Size)
+        AIPSTACK_ASSERT(params.mac_addr != nullptr)
+        AIPSTACK_ASSERT(params.send_frame)
+        AIPSTACK_ASSERT(params.get_eth_state)
         
         // Initialize ARP entries...
         for (auto &e : m_arp_entries) {
@@ -308,58 +335,40 @@ public:
             m_free_entries_list.append({e, *this}, *this);
         }
     }
-    
-protected:
+
     /**
-     * Protected destructor.
+     * Destruct the interface.
      * 
-     * This destructor is intentionally not virtual but is protected to prevent
-     * incorrect usage.
+     * @note There are restrictions regarding the context from which an interface
+     * may be destructed; refer to @ref IpDriverIface destructor.
+     * 
+     * The driver must be careful to not perform any action that might result in calls
+     * of driver functions (such as sending frames to this interface) after it is
+     * no longer ready to handle these calls.
      */
     ~EthIpIface () = default;
 
     /**
-     * Driver function to send an Ethernet frame through the interface.
+     * Get the @ref IpIface representing this network interface.
      * 
-     * This is called whenever an Ethernet frame needs to be sent. The driver should
-     * copy the frame as needed because it must not access the referenced buffers
-     * outside this function.
-     * 
-     * @param frame Frame to send, this includes the Ethernet header. It is guaranteed
-     *        that its size does not exceed the @ref InitInfo::eth_mtu specified at
-     *        construction. Frames originating from @ref EthIpIface itself will always
-     *        have at least @ref EthIpIfaceOptions::HeaderBeforeEth bytes available before
-     *        the Ethernet header for any lower-layer headers, but for frames with IP
-     *        payload it is up to the application to include that in
-     *        @ref IpStackOptions::HeaderBeforeIp.
-     * @return Success or error code. The @ref EthIpIface does not itself check for any
-     *         specific error code but the error code may be propagated to the IP layer
-     *         (@ref IpStack) which may do so.
+     * @return Reference to the @ref IpIface.
      */
-    virtual IpErr driverSendFrame (IpBufRef frame) = 0;
-    
-    /**
-     * Driver function to get the drived-provided interface state.
-     * 
-     * The driver should call @ref ethStateChangedFromDriver whenever the state that would
-     * be returned here has changed.
-     * 
-     * @return Driver-provided-state (currently just the link-up flag).
-     */
-    virtual EthIfaceState driverGetEthState () = 0;
+    inline IpIface<StackArg> & iface () {
+        return m_driver_iface.iface();
+    }
     
     /**
      * Process a received Ethernet frame.
      * 
      * This function should be called by the driver when an Ethernet frame is received.
      * 
-     * The driver must support various driver functions being called from within this,\
-     * especially @ref driverSendFrame.
+     * @note The driver must support various driver functions being called from within
+     * this, especially @ref EthIfaceDriverParams::send_frame.
      * 
      * @param frame Received frame, presumably starting with the Ethernet header. The
      *              referenced buffers will only be read from within this function call.
      */
-    void recvFrameFromDriver (IpBufRef frame)
+    void recvFrame (IpBufRef frame)
     {
         // Check that we have an Ethernet header.
         if (AIPSTACK_UNLIKELY(!frame.hasHeader(EthHeader::Size))) {
@@ -377,7 +386,7 @@ protected:
         
         // Handle based on the EtherType.
         if (AIPSTACK_LIKELY(ethtype == EthTypeIpv4)) {
-            Iface::recvIp4PacketFromDriver(pkt);
+            m_driver_iface.recvIp4Packet(pkt);
         }
         else if (ethtype == EthTypeArp) {
             recvArpPacket(pkt);
@@ -387,22 +396,23 @@ protected:
     /**
      * Notify that the driver-provided state may have changed.
      * 
-     * This should be called by the driver after the values that would be
-     * returned by @ref driverGetEthState have changed. It does not strictly have to be
-     * called immediately after every change but it should be called soon after a change.
+     * This should be called by the driver after any value that would be returned by
+     * @ref EthIfaceDriverParams::get_eth_state has changed. It does not strictly have
+     * to be called immediately after every change but it should be called soon after
+     * a change.
      * 
-     * The driver must support various driver functions being called from within this,\
-     * especially @ref driverSendFrame.
+     * @note The driver must support various driver functions being called from within
+     * this, especially @ref EthIfaceDriverParams::send_frame.
      */
-    inline void ethStateChangedFromDriver ()
+    inline void ethStateChanged ()
     {
         // Forward notification to IP stack.
-        Iface::stateChangedFromDriver();
+        m_driver_iface.stateChanged();
     }
     
 private:
     IpErr driverSendIp4Packet (IpBufRef pkt, Ip4Addr ip_addr,
-                               IpSendRetryRequest *retryReq) override final
+                               IpSendRetryRequest *retryReq)
     {
         // Try to resolve the MAC address.
         MacAddr dst_mac;
@@ -420,17 +430,17 @@ private:
         // Write the Ethernet header.
         auto eth_header = EthHeader::MakeRef(frame.getChunkPtr());
         eth_header.set(EthHeader::DstMac(),  dst_mac);
-        eth_header.set(EthHeader::SrcMac(),  *m_mac_addr);
+        eth_header.set(EthHeader::SrcMac(),  *m_params.mac_addr);
         eth_header.set(EthHeader::EthType(), EthTypeIpv4);
         
         // Send the frame via the lower-layer driver.
-        return driverSendFrame(frame);
+        return m_params.send_frame(frame);
     }
     
-    IpIfaceDriverState driverGetState () override final
+    IpIfaceDriverState driverGetState ()
     {
         // Get the state from the lower-layer driver.
-        EthIfaceState eth_state = driverGetEthState();
+        EthIfaceState eth_state = m_params.get_eth_state();
         
         // Return the state based on that: copy link_up.
         IpIfaceDriverState state = {};
@@ -441,7 +451,7 @@ private:
 private: // EthHwIface
     MacAddr getMacAddr () override final
     {
-        return *m_mac_addr;
+        return *m_params.mac_addr;
     }
     
     EthHeader::Ref getRxEthHeader () override final
@@ -492,7 +502,7 @@ private:
         
         // If this is an ARP request for our IP address, send a response.
         if (op_type == ArpOpTypeRequest) {
-            IpIfaceIp4Addrs const *ifaddr = Iface::getIp4AddrsFromDriver();
+            IpIfaceIp4Addrs const *ifaddr = m_driver_iface.getIp4Addrs();
             if (ifaddr != nullptr &&
                 arp_header.get(ArpIp4Header::DstProtoAddr()) == ifaddr->addr)
             {
@@ -676,7 +686,7 @@ private:
             }
             
             // Check if the interface has an IP address assigned.
-            IpIfaceIp4Addrs const *ifaddr = Iface::getIp4AddrsFromDriver();
+            IpIfaceIp4Addrs const *ifaddr = m_driver_iface.getIp4Addrs();
             if (ifaddr == nullptr) {
                 return GetArpEntryRes::InvalidAddr;
             }
@@ -773,11 +783,11 @@ private:
         // Write the Ethernet header.
         auto eth_header = EthHeader::MakeRef(frame_alloc.getPtr());
         eth_header.set(EthHeader::DstMac(), dst_mac);
-        eth_header.set(EthHeader::SrcMac(), *m_mac_addr);
+        eth_header.set(EthHeader::SrcMac(), *m_params.mac_addr);
         eth_header.set(EthHeader::EthType(), EthTypeArp);
         
         // Determine the source IP address.
-        IpIfaceIp4Addrs const *ifaddr = Iface::getIp4AddrsFromDriver();
+        IpIfaceIp4Addrs const *ifaddr = m_driver_iface.getIp4Addrs();
         Ip4Addr src_addr = (ifaddr != nullptr) ? ifaddr->addr : Ip4Addr::ZeroAddr();
         
         // Write the ARP header.
@@ -787,13 +797,13 @@ private:
         arp_header.set(ArpIp4Header::HwAddrLen(),    MacAddr::Size);
         arp_header.set(ArpIp4Header::ProtoAddrLen(), Ip4Addr::Size);
         arp_header.set(ArpIp4Header::OpType(),       op_type);
-        arp_header.set(ArpIp4Header::SrcHwAddr(),    *m_mac_addr);
+        arp_header.set(ArpIp4Header::SrcHwAddr(),    *m_params.mac_addr);
         arp_header.set(ArpIp4Header::SrcProtoAddr(), src_addr);
         arp_header.set(ArpIp4Header::DstHwAddr(),    dst_mac);
         arp_header.set(ArpIp4Header::DstProtoAddr(), dst_ipaddr);
         
         // Send the frame via the lower-layer driver.
-        return driverSendFrame(frame_alloc.getBufRef());
+        return m_params.send_frame(frame_alloc.getBufRef());
     }
     
     // Set tne ARP entry timeout based on the entry state and attempts_left.
@@ -887,7 +897,7 @@ private:
         
         // Check if the IP address is still consistent with the interface
         // address settings. If not, reset the ARP entry.
-        IpIfaceIp4Addrs const *ifaddr = Iface::getIp4AddrsFromDriver();        
+        IpIfaceIp4Addrs const *ifaddr = m_driver_iface.getIp4Addrs();        
         if (ifaddr == nullptr ||
             (entry.ip_addr & ifaddr->netmask) != ifaddr->netaddr ||
             entry.ip_addr == ifaddr->bcastaddr)
@@ -944,9 +954,10 @@ private:
     }
     
 private:
+    EthIfaceDriverParams m_params;
+    IpDriverIface<StackArg> m_driver_iface;
     typename Platform::Timer m_timer;
     EthArpObservable m_arp_observable;
-    MacAddr const *m_mac_addr;
     StructureRaiiWrapper<ArpEntryList> m_used_entries_list;
     StructureRaiiWrapper<ArpEntryList> m_free_entries_list;
     StructureRaiiWrapper<ArpEntryTimerQueue> m_timer_queue;
@@ -989,7 +1000,7 @@ struct EthIpIfaceOptions {
      * If no additional headers will be added below the Ethernet header (the most likely
      * case), this should be 0.
      * 
-     * See @ref EthIpIface::driverSendFrame for details.
+     * See @ref EthIfaceDriverParams::send_frame for details.
      */
     AIPSTACK_OPTION_DECL_VALUE(HeaderBeforeEth, size_t, 0)
     

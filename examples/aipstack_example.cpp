@@ -226,15 +226,16 @@ int main (int argc, char *argv[])
         // Construct the DHCP client.
         AIpStack::IpDhcpClientInitOptions dhcp_opts;
         dhcp_client = std::make_unique<MyDhcpClient>(
-            platform, &*stack, &*iface, dhcp_opts,
+            platform, &*stack, &iface->iface(), dhcp_opts,
             [&dhcp_client](AIpStack::IpDhcpClientEvent event_type) {
                 dhcpClientCallback(dhcp_client, event_type);
             });
     } else {
         // Assign static IP configuration.
-        iface->setIp4Addr(
+        iface->iface().setIp4Addr(
             AIpStack::IpIfaceIp4AddrSetting(DevicePrefixLength, DeviceIpAddr));
-        iface->setIp4Gateway(AIpStack::IpIfaceIp4GatewaySetting(DeviceGatewayAddr));
+        iface->iface().setIp4Gateway(
+            AIpStack::IpIfaceIp4GatewaySetting(DeviceGatewayAddr));
     }
     
     // Construct the example application.

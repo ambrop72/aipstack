@@ -59,6 +59,7 @@
 #include <aipstack/ip/IpIface.h>
 #include <aipstack/ip/IpIfaceListener.h>
 #include <aipstack/ip/IpIfaceStateObserver.h>
+#include <aipstack/ip/IpDriverIface.h>
 #include <aipstack/ip/IpMtuRef.h>
 #include <aipstack/platform/PlatformFacade.h>
 
@@ -81,9 +82,22 @@ namespace AIpStack {
  * protocor-handler services to @ref IpStackService::Compose. The required API for
  * protocol handlers is documented as part of the @ref IpProtocolHandlerStub class.
  * 
- * Network interfaces are added by constructing instances of classes derived from
- * @ref IpIface. The @ref IpStack maintains a list of network interfaces
- * in order to implement IP functionality, but does not otherwise manage them.
+ * The @ref IpDriverIface class represents a logical network interface from the
+ * perspective of an IP-level interface driver and acts as a gateway for communication
+ * between the driver and the stack. Network interfaces are added/removed by
+ * constructing/destructing instances of @ref IpDriverIface.
+ * 
+ * The @ref IpIface class represents a network interface in a more general context,
+ * especially for the purpose of address configuration. An @ref IpIface instance
+ * always exists as part of an @ref IpDriverIface instance; @ref IpDriverIface::iface
+ * is used to retrieve the @ref IpIface. Interface drivers are expected to hide the
+ * @ref IpDriverIface while exposing the @ref IpIface to allow the interface to be
+ * configured externally.
+ * 
+ * The @ref IpStack maintains a list of network interfaces in order to implement IP
+ * functionality, but does not otherwise manage them. Currently, there is no
+ * facility for the stack to notify the application of interface addition, removal
+ * or configuration changes, but it may be added in the future.
  * 
  * Application code which uses different transport-layer protocols (such as TCP) is
  * expected to go through @ref IpStack to gain access to the appropriate protocol
@@ -98,10 +112,13 @@ namespace AIpStack {
  * This class provides basic IPv4 services. It communicates with interface
  * drivers on one end and with protocol handlers on the other.
  * 
- * Applications should configure and initialize this class and manage network
- * interfaces using the @ref IpIface class. Actual network access should be done
- * using the APIs provided by specific protocol handlers, which are exposed
- * via @ref GetProtoArg and @ref getProtoApi.
+ * Applications should configure and initialize this class in order to use any
+ * IP services. Network interfaces are managed via @ref IpDriverIface and respective
+ * @ref IpIface instances (see the @ref ip-stack module description for details).
+ * 
+ * Actual network access should be done using the APIs provided by specific protocol
+ * handlers, which are exposed via @ref GetProtoArg and @ref getProtoApi; consult
+ * the documentation of specific protocol implementations.
  * 
  * @tparam Arg An instantiation of the @ref IpStackService::Compose template or a
  *         dummy class derived from such; see @ref IpStackService for an example.
@@ -112,6 +129,7 @@ class IpStack :
 {
     template <typename> friend class IpIface;
     template <typename> friend class IpIfaceListener;
+    template <typename> friend class IpDriverIface;
     template <typename> friend class IpMtuRef;
     
     AIPSTACK_USE_TYPES(Arg, (Params, ProtocolServicesList))
@@ -254,7 +272,7 @@ public:
     /**
      * Destruct the IP stack.
      * 
-     * There must be no remaining interfaces associated with this stack
+     * There must be no remaining network interfaces associated with this stack
      * when the IP stack is destructed. Additionally, specific protocol
      * handlers may have their own destruction preconditions.
      */
@@ -433,7 +451,8 @@ public:
         // Send the packet to the driver.
         // Fast path is no fragmentation, this permits tail call optimization.
         if (AIPSTACK_LIKELY((send_flags & IpSendFlags(Ip4FlagMF)) == EnumZero)) {
-            return route_info.iface->driverSendIp4Packet(pkt, route_info.addr, retryReq);
+            return route_info.iface->m_params.send_ip4_packet(
+                pkt, route_info.addr, retryReq);
         }
         
         // Slow path...
@@ -449,7 +468,7 @@ private:
             Ip4RoundFragLen(Ip4Header::Size, route_info.iface->getMtu());
         
         // Send the first fragment.
-        IpErr err = route_info.iface->driverSendIp4Packet(
+        IpErr err = route_info.iface->m_params.send_ip4_packet(
             pkt.subTo(pkt_send_len), route_info.addr, retryReq);
         if (AIPSTACK_UNLIKELY(err != IpErr::SUCCESS)) {
             return err;
@@ -498,7 +517,7 @@ private:
                 Ip4Header::Size, &data_node, pkt_send_len, &header_node);
             
             // Send the packet to the driver.
-            err = route_info.iface->driverSendIp4Packet(
+            err = route_info.iface->m_params.send_ip4_packet(
                 frag_pkt, route_info.addr, retryReq);
             
             // If this was the last fragment or there was an error, return.
@@ -636,7 +655,7 @@ public:
         ip4_header.set(Ip4Header::HeaderChksum(), chksum.getChksum());
         
         // Send the packet to the driver.
-        return prep.route_info.iface->driverSendIp4Packet(
+        return prep.route_info.iface->m_params.send_ip4_packet(
             pkt, prep.route_info.addr, retryReq);
     }
 

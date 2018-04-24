@@ -32,20 +32,18 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
-#include <aipstack/infra/Err.h>
-#include <aipstack/infra/Buf.h>
-#include <aipstack/infra/SendRetry.h>
 #include <aipstack/infra/ObserverNotification.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStackTypes.h>
+#include <aipstack/ip/IpIfaceDriverParams.h>
 #include <aipstack/ip/hw/IpHwCommon.h>
 
 namespace AIpStack {
-    
 #ifndef IN_DOXYGEN
     template <typename> class IpStack;
     template <typename> class IpIfaceListener;
     template <typename> class IpIfaceStateObserver;
+    template <typename> class IpDriverIface;
 #endif
     
     /**
@@ -54,14 +52,16 @@ namespace AIpStack {
      */
     
     /**
-     * A network interface.
+     * A logical network interface in general context.
      * 
-     * This class is generally designed to be inherited and owned by the IP driver.
-     * Virtual functions are used by the IP stack to request actions or information
-     * from the driver (such as @ref driverSendIp4Packet to send a packet), while
-     * protected non-virtual functions are to be used by the driver to request
-     * service from the IP stack (such as @ref recvIp4PacketFromDriver to process
-     * received packets).
+     * Instances of this class cannot be constructed stand-alone but are always
+     * constructed implicitly as part of @ref IpDriverIface; the @ref IpIface for a
+     * given @ref IpDriverIface can be retrieved using @ref IpDriverIface::iface.
+     * 
+     * @warning It is generally unsafe to store pointers to @ref IpIface, because
+     * they would be invalidated when the driver removes the network interface by
+     * destructing the associated @ref IpDriverIface object. There is currently no
+     * mechanism to detect when a network interface has been removed.
      * 
      * The IP stack does not provide or impose any model for management of interfaces
      * and interface drivers. Such a system could be build on top if it is needed.
@@ -75,37 +75,38 @@ namespace AIpStack {
         template <typename> friend class IpStack;
         template <typename> friend class IpIfaceListener;
         template <typename> friend class IpIfaceStateObserver;
+        template <typename> friend class IpDriverIface;
 
-    public:
-        /**
-         * Construct the interface.
-         * 
-         * This should be used by the driver when the interface should start existing
-         * from the perspective of the IP stack. After this, the various virtual
-         * functions may be called.
-         * 
-         * The owner must be careful to not perform any action that might result in calls
-         * of virtual functions (such as sending packets to this interface) until the
-         * derived class is constructed and ready to accept these calls.
-         * 
-         * @param stack Pointer to the IP stack.
-         * @param info Interface information, see @ref IpIfaceInitInfo.
-         */
-        IpIface (IpStack<Arg> *stack, IpIfaceInitInfo const &info) :
+    private:
+        IpIface (IpStack<Arg> *stack, IpIfaceDriverParams const &params) :
             m_stack(stack),
-            m_hw_iface(info.hw_iface),
-            m_ip_mtu(MinValueU(TypeMax<uint16_t>(), info.ip_mtu)),
-            m_hw_type(info.hw_type),
+            m_params(params),
+            m_ip_mtu(MinValueU(TypeMax<uint16_t>(), params.ip_mtu)),
             m_have_addr(false),
             m_have_gateway(false)
         {
             AIPSTACK_ASSERT(stack != nullptr)
             AIPSTACK_ASSERT(m_ip_mtu >= IpStack<Arg>::MinMTU)
+            AIPSTACK_ASSERT(params.send_ip4_packet)
+            AIPSTACK_ASSERT(params.get_state)
             
-            // Register interface.
+            // Add the interface to the list of interfaces.
             m_stack->m_iface_list.prepend(*this);
         }
-        
+
+        ~IpIface ()
+        {
+            AIPSTACK_ASSERT(m_listeners_list.isEmpty())
+            
+            // Remove the interface from the list of interfaces.
+            m_stack->m_iface_list.remove(*this);
+        }
+
+        inline IpDriverIface<Arg> & driver () {
+            return static_cast<IpDriverIface<Arg> &>(*this);
+        }
+
+    public:
         /**
          * Set or remove the IP address and subnet prefix length.
          * 
@@ -120,6 +121,7 @@ namespace AIpStack {
             AIPSTACK_ASSERT(!value.present || value.prefix <= Ip4Addr::Bits)
             
             m_have_addr = value.present;
+
             if (value.present) {
                 m_addr.addr = value.addr;
                 m_addr.netmask = Ip4Addr::PrefixMask(value.prefix);
@@ -139,7 +141,7 @@ namespace AIpStack {
          *         "prefix" fields contain the assigned address and subnet prefix
          *         length.
          */
-        IpIfaceIp4AddrSetting getIp4Addr ()
+        IpIfaceIp4AddrSetting getIp4Addr () const
         {
             return m_have_addr ?
                 IpIfaceIp4AddrSetting(m_addr.prefix, m_addr.addr) :
@@ -157,6 +159,7 @@ namespace AIpStack {
         void setIp4Gateway (IpIfaceIp4GatewaySetting value)
         {
             m_have_gateway = value.present;
+
             if (value.present) {
                 m_gateway = value.addr;
             }
@@ -170,7 +173,7 @@ namespace AIpStack {
          *         zero. If the "present" field is true then the "addr" field contains
          *         the assigned gateway address.
          */
-        IpIfaceIp4GatewaySetting getIp4Gateway ()
+        IpIfaceIp4GatewaySetting getIp4Gateway () const
         {
             return m_have_gateway ?
                 IpIfaceIp4GatewaySetting(m_gateway) : IpIfaceIp4GatewaySetting();
@@ -184,17 +187,16 @@ namespace AIpStack {
          * @ref IpHwType::Ethernet, then an interface of type @ref EthHwIface
          * is available.
          * 
-         * This function will return whatever was passed as @ref IpIfaceInitInfo::hw_type
-         * when the interface was constructed.
+         * This function will return whatever was passed as @ref
+         * IpIfaceDriverParams::hw_type when the interface was added.
          * 
          * This mechanism was created to support the DHCP client which requires
          * access to certain Ethernet/ARP-level functionality.
          * 
          * @return Type of hardware-type-specific interface.
          */
-        inline IpHwType getHwType ()
-        {
-            return m_hw_type;
+        inline IpHwType getHwType () const {
+            return m_params.hw_type;
         }
         
         /**
@@ -204,19 +206,17 @@ namespace AIpStack {
          * If that value is @ref IpHwType::Undefined, then this function should not
          * be called at all.
          * 
-         * This function will return whatever was passed as @ref IpIfaceInitInfo::hw_iface
-         * when the interface was constructed.
+         * This function will return whatever was passed as @ref
+         * IpIfaceDriverParams::hw_iface when the interface was added.
          * 
          * @tparam HwIface Type of hardware-type-specific interface.
          * @return Pointer to hardware-type-specific interface.
          */
         template <typename HwIface>
-        inline HwIface * getHwIface ()
-        {
-            return static_cast<HwIface *>(m_hw_iface);
+        inline HwIface * getHwIface () {
+            return static_cast<HwIface *>(m_params.hw_iface);
         }
         
-    public:
         /**
          * Check if an address belongs to the subnet of the interface.
          * 
@@ -224,8 +224,7 @@ namespace AIpStack {
          * @return True if the interface has an IP address assigned and the
          *         given address belongs to the associated subnet, false otherwise.
          */
-        inline bool ip4AddrIsLocal (Ip4Addr addr)
-        {
+        inline bool ip4AddrIsLocal (Ip4Addr addr) const {
             return m_have_addr && (addr & m_addr.netmask) == m_addr.netaddr;
         }
         
@@ -237,8 +236,7 @@ namespace AIpStack {
          *         given address is the associated local broadcast address,
          *         false otherwise.
          */
-        inline bool ip4AddrIsLocalBcast (Ip4Addr addr)
-        {
+        inline bool ip4AddrIsLocalBcast (Ip4Addr addr) const {
             return m_have_addr && addr == m_addr.bcastaddr;
         }
         
@@ -249,8 +247,7 @@ namespace AIpStack {
          * @return True if the interface has an IP address assigned and the
          *         assigned address is the given address, false otherwise.
          */
-        inline bool ip4AddrIsLocalAddr (Ip4Addr addr)
-        {
+        inline bool ip4AddrIsLocalAddr (Ip4Addr addr) const {
             return m_have_addr && addr == m_addr.addr;
         }
         
@@ -260,8 +257,7 @@ namespace AIpStack {
          * @return MTU in bytes including the IP header. It will be at least
          *         @ref IpStack::MinMTU.
          */
-        inline uint16_t getMtu ()
-        {
+        inline uint16_t getMtu () const {
             return m_ip_mtu;
         }
         
@@ -269,150 +265,26 @@ namespace AIpStack {
          * Return the driver-provided interface state.
          * 
          * This directly queries the driver for the current state by calling the
-         * virtual function @ref driverGetState. Use @ref IpIfaceStateObserver if
-         * you need to be notified of changes of this state.
+         * driver function @ref IpIfaceDriverParams::get_state. Use @ref
+         * IpIfaceStateObserver if you need to be notified of changes of this state.
          * 
          * Currently, the driver-provided state indicates whether the link is up.
          * 
          * @return Driver-provided state.
          */
-        inline IpIfaceDriverState getDriverState ()
-        {
-            return driverGetState();
+        inline IpIfaceDriverState getDriverState () const {
+            return m_params.get_state();
         }
-        
-    protected:
-        /**
-         * Destruct the interface.
-         * 
-         * The interface should be destructed when the interface should stop existing
-         * from the perspective of the IP stack. After this, virtual functions will
-         * not be called any more, nor will any virtual function be called from this
-         * function.
-         * 
-         * The owner must be careful to not perform any action that might result in calls
-         * of virtual functions (such as sending packets to this interface) after
-         * destruction of the derived class has begun or generally after it is no longer
-         * ready to accept these calls.
-         * 
-         * When this is called, there must be no remaining @ref IpIfaceListener
-         * objects listening on this interface or @ref IpIfaceStateObserver objects
-         * observing this interface. Additionally, this must not be called in
-         * potentially hazardous context with respect to IP processing, such as
-         * from withing receive processing of this interface
-         * (@ref recvIp4PacketFromDriver). For maximum safety this should be called
-         * from a top-level event handler.
-         * 
-         * This destructor is intentionally not virtual but is protected to prevent
-         * incorrect usage.
-         */
-        ~IpIface ()
-        {
-            AIPSTACK_ASSERT(m_listeners_list.isEmpty())
-            
-            // Unregister interface.
-            m_stack->m_iface_list.remove(*this);
-        }
-        
-        /**
-         * Driver function used to send an IPv4 packet through the interface.
-         * 
-         * This is called whenever an IPv4 packet needs to be sent. The driver should
-         * copy the packet as needed because it must not access the referenced buffers
-         * outside this function.
-         * 
-         * @param pkt Packet to send, this includes the IP header. It is guaranteed
-         *        that its size does not exceed the MTU reported by the driver. The
-         *        packet is expected to have HeaderBeforeIp bytes available before
-         *        the IP header for link-layer protocol headers, but needed header
-         *        space should still be checked since higher-layer prococols are
-         *        responsible for allocating the buffers of packets they send.
-         * @param ip_addr Next hop address.
-         * @param sendRetryReq If sending fails and this is not null, the driver
-         *        may use this to notify the requestor when sending should be retried.
-         *        For example if the issue was that there is no ARP cache entry
-         *        or similar entry for the given address, the notification should
-         *        be done when the associated ARP query is successful.
-         * @return Success or error code.
-         */
-        virtual IpErr driverSendIp4Packet (IpBufRef pkt, Ip4Addr ip_addr,
-                                           IpSendRetryRequest *sendRetryReq) = 0;
-        
-        /**
-         * Driver function to get the driver-provided interface state.
-         * 
-         * The driver should call @ref stateChangedFromDriver whenever the state
-         * that would be returned here has changed.
-         * 
-         * @return Driver-provided-state (currently just the link-up flag).
-         */
-        virtual IpIfaceDriverState driverGetState () = 0;
-        
-        /**
-         * Process a received IPv4 packet.
-         * 
-         * This function should be called by the driver when an IPv4 packet is
-         * received (or what appears to be one at least).
-         * 
-         * The driver must support various driver functions being called from
-         * within this, especially @ref driverSendIp4Packet.
-         * 
-         * @param pkt Received packet, presumably starting with the IP header.
-         *            The referenced buffers will only be read from within this
-         *            function call.
-         */
-        inline void recvIp4PacketFromDriver (IpBufRef pkt)
-        {
-            IpStack<Arg>::processRecvedIp4Packet(this, pkt);
-        }
-        
-        /**
-         * Return information about current IPv4 address assignment.
-         * 
-         * This can be used by the driver if it needs information about the
-         * IPv4 address assigned to the interface, or other places where the
-         * information is useful.
-         * 
-         * @return If no IPv4 address is assigned, then null. If an address is
-         *         assigned, then a pointer to a structure providing information
-         *         about the assignment (assigned address, network mask, network
-         *         address, broadcast address, subnet prefix length). The pointer
-         *         is only valid temporarily (it should not be cached).
-         */
-        inline IpIfaceIp4Addrs const * getIp4AddrsFromDriver ()
-        {
-            return m_have_addr ? &m_addr : nullptr;
-        }
-        
-        /**
-         * Notify that the driver-provided state may have changed.
-         * 
-         * This should be called by the driver after the values that would be
-         * returned by @ref driverGetState have changed. It does not strictly have
-         * to be called immediately after every change but it should be called
-         * soon after a change.
-         * 
-         * The driver must support various driver functions being called from
-         * within this, especially @ref driverSendIp4Packet.
-         */
-        void stateChangedFromDriver ()
-        {
-            m_state_observable.notifyKeepObservers(
-            [&](IpIfaceStateObserver<Arg> &observer) {
-                observer.m_handler();
-            });
-        }
-        
+
     private:
         LinkedListNode<typename IpStack<Arg>::IfaceLinkModel> m_iface_list_node;
         StructureRaiiWrapper<typename IpStack<Arg>::IfaceListenerList> m_listeners_list;
         Observable<IpIfaceStateObserver<Arg>> m_state_observable;
         IpStack<Arg> *m_stack;
-        void *m_hw_iface;
+        IpIfaceDriverParams m_params;
         uint16_t m_ip_mtu;
         IpIfaceIp4Addrs m_addr;
         Ip4Addr m_gateway;
-        IpHwType m_hw_type;
         bool m_have_addr;
         bool m_have_gateway;
     };

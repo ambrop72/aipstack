@@ -26,14 +26,12 @@
 #define AIPSTACK_IPSTACK_TYPES_H
 
 #include <stdint.h>
-#include <stddef.h>
 
 #include <aipstack/misc/EnumBitfieldUtils.h>
 #include <aipstack/infra/Chksum.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Icmp4Proto.h>
 #include <aipstack/ip/IpAddr.h>
-#include <aipstack/ip/hw/IpHwCommon.h>
 #include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {
@@ -138,7 +136,7 @@ struct IpIfaceIp4GatewaySetting {
  * network interface.
  * 
  * A pointer to a structure of this type can be obtained using
- * @ref IpIface::getIp4AddrsFromDriver. In addition to the IP address
+ * @ref IpDriverIface::getIp4Addrs. In addition to the IP address
  * and subnet prefix length, this structure contains the network mask,
  * network address and local broadcast address.
  */
@@ -173,7 +171,7 @@ struct IpIfaceIp4Addrs {
  * Contains state reported by IP interface drivers to the IP stack.
  * 
  * Structures of this type are returned by @ref IpIface::getDriverState,
- * as well as by @ref IpIface::driverGetState as part of the driver
+ * as well as by @ref IpIfaceDriverParams::get_state as part of the driver
  * interface.
  */
 struct IpIfaceDriverState {
@@ -303,36 +301,6 @@ public:
     {
         return uint8_t(value);
     }
-};
-
-/**
- * Encapsulates interface information passed to the @ref IpIface constructor.
- */
-struct IpIfaceInitInfo {
-    /**
-     * The Maximum Transmission Unit (MTU), including the IP header.
-     * 
-     * It must be at least @ref IpStack::MinMTU (this is an assert).
-     */
-    size_t ip_mtu = 0;
-    
-    /**
-     * The type of the hardware-type-specific interface.
-     * 
-     * See @ref IpIface::getHwType for an explanation of the
-     * hardware-type-specific interface mechanism. If no hardware-type-specific
-     * interface is available, use @ref IpHwType::Undefined.
-     */
-    IpHwType hw_type = IpHwType::Undefined;
-    
-    /**
-     * Pointer to the hardware-type-specific interface.
-     * 
-     * If @ref hw_type is @ref IpHwType::Undefined, use null. Otherwise this must
-     * point to an instance of the hardware-type-specific interface class
-     * corresponding to @ref hw_type.
-     */
-    void *hw_iface = nullptr;
 };
 
 /**
