@@ -200,9 +200,7 @@ template <typename Arg>
 class IpDhcpClient final :
     private NonCopyable<IpDhcpClient<Arg>>
 #ifndef IN_DOXYGEN
-    ,private UdpListener<
-        typename IpStack<typename Arg::StackArg>::template GetProtoArg<UdpApi>>,
-    private IpSendRetryRequest
+    ,private IpSendRetryRequest
 #endif
 {
     AIPSTACK_USE_TYPES(Arg, (PlatformImpl, StackArg, Params))
@@ -318,6 +316,7 @@ private:
     typename Platform::Timer m_timer;
     IpIfaceStateObserver<StackArg> m_iface_observer;
     EthArpObserver m_arp_observer;
+    UdpListener<UdpArg> m_udp_listener;
     IpStack<StackArg> *m_ipstack;
     IpIface<StackArg> *m_iface;
     IpDhcpClientHandler m_handler;
@@ -358,6 +357,7 @@ public:
         m_timer(platform_, AIPSTACK_BIND_MEMBER_TN(&IpDhcpClient::timerHandler, this)),
         m_iface_observer(AIPSTACK_BIND_MEMBER_TN(&IpDhcpClient::ifaceStateChanged, this)),
         m_arp_observer(AIPSTACK_BIND_MEMBER_TN(&IpDhcpClient::arpInfoReceived, this)),
+        m_udp_listener(AIPSTACK_BIND_MEMBER_TN(&IpDhcpClient::udpIp4PacketReceived, this)),
         m_ipstack(stack),
         m_iface(iface),
         m_handler(handler),
@@ -373,7 +373,7 @@ public:
         listen_params.accept_broadcast = true;
         listen_params.accept_nonlocal_dst = true;
         listen_params.iface = iface;
-        UdpListener<UdpArg>::startListening(udp(), listen_params);
+        m_udp_listener.startListening(udp(), listen_params);
 
         // Start observing interface state.
         m_iface_observer.observe(*iface);
@@ -755,9 +755,9 @@ private:
         }
     }
     
-    UdpRecvResult recvUdpIp4Packet (
+    UdpRecvResult udpIp4PacketReceived (
         IpRxInfoIp4<StackArg> const &ip_info, UdpRxInfo<UdpArg> const &udp_info,
-        IpBufRef udp_data) override final
+        IpBufRef udp_data)
     {
         // Check for expected source port.
         if (AIPSTACK_UNLIKELY(udp_info.src_port != DhcpServerPort)) {

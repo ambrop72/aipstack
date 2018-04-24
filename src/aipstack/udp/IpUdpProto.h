@@ -35,6 +35,7 @@
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/LoopUtils.h>
+#include <aipstack/misc/Function.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
@@ -192,9 +193,19 @@ class UdpListener :
 public:
     using StackArg = typename Arg::StackArg;
 
-    UdpListener () :
+    using UdpIp4PacketHandler = Function<UdpRecvResult(
+        IpRxInfoIp4<StackArg> const &ip_info,
+        UdpRxInfo<Arg> const &udp_info, IpBufRef udp_data)>;
+
+    UdpListener (UdpIp4PacketHandler handler) :
+        m_handler(handler),
         m_udp(nullptr)
     {}
+
+    ~UdpListener ()
+    {
+        reset();
+    }
 
     void reset ()
     {
@@ -238,16 +249,6 @@ public:
         return IpErr::SUCCESS;
     }
 
-protected:
-    ~UdpListener ()
-    {
-        reset();
-    }
-
-    virtual UdpRecvResult recvUdpIp4Packet (
-        IpRxInfoIp4<StackArg> const &ip_info, UdpRxInfo<Arg> const &udp_info,
-        IpBufRef udp_data) = 0;
-
 private:
     bool incomingPacketMatches (
         IpRxInfoIp4<StackArg> const &ip_info, UdpRxInfo<Arg> const &udp_info,
@@ -286,6 +287,7 @@ private:
     }
 
 private:
+    UdpIp4PacketHandler m_handler;
     LinkedListNode<ListenersLinkModel> m_list_node;
     IpUdpProto<Arg> *m_udp;
     UdpListenParams<Arg> m_params;
@@ -300,9 +302,19 @@ class UdpAssociation :
 public:
     using StackArg = typename Arg::StackArg;
 
-    UdpAssociation () :
+    using UdpIp4PacketHandler = Function<UdpRecvResult(
+        IpRxInfoIp4<StackArg> const &ip_info,
+        UdpRxInfo<Arg> const &udp_info, IpBufRef udp_data)>;
+    
+    UdpAssociation (UdpIp4PacketHandler handler) :
+        m_handler(handler),
         m_udp(nullptr)
     {}
+
+    ~UdpAssociation ()
+    {
+        reset();
+    }
 
     void reset ()
     {
@@ -366,17 +378,8 @@ public:
         return IpErr::SUCCESS;
     }
 
-protected:
-    ~UdpAssociation ()
-    {
-        reset();
-    }
-
-    virtual UdpRecvResult recvUdpIp4Packet (
-        IpRxInfoIp4<StackArg> const &ip_info, UdpRxInfo<Arg> const &udp_info,
-        IpBufRef udp_data) = 0;
-    
 private:
+    UdpIp4PacketHandler m_handler;
     typename IpUdpProto<Arg>::AssociationIndex::Node m_index_node;
     IpUdpProto<Arg> *m_udp;
     UdpAssociationParams<Arg> m_params;
@@ -537,8 +540,7 @@ public:
 
             // Pass the packet to the association.
             IpBufRef udp_data = dgram.hideHeader(Udp4Header::Size);
-            UdpRecvResult recv_result =
-                assoc->recvUdpIp4Packet(ip_info, udp_info, udp_data);
+            UdpRecvResult recv_result = assoc->m_handler(ip_info, udp_info, udp_data);
             
             // If the association wants that we don't pass the packet to any listener, then
             // return here.
@@ -580,8 +582,7 @@ public:
 
             // Pass the packet to the listener.
             IpBufRef udp_data = dgram.hideHeader(Udp4Header::Size);
-            UdpRecvResult recv_result =
-                lis->recvUdpIp4Packet(ip_info, udp_info, udp_data);
+            UdpRecvResult recv_result = lis->m_handler(ip_info, udp_info, udp_data);
 
             // Update `lis` to the next listener (if any) and clear m_next_listener.
             lis = m_next_listener;
