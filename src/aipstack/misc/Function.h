@@ -53,6 +53,10 @@ public:
         m_func_ptr(nullptr)
     {}
 
+    inline Function (std::nullptr_t) noexcept :
+        Function()
+    {}
+
     template <typename Callable>
     Function (Callable callable) noexcept
     {
