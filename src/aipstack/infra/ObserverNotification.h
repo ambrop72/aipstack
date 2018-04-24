@@ -254,9 +254,13 @@ class Observable;
  * from the observable to its observers. Instead, the @ref Observable::notifyKeepObservers
  * and @ref Observable::notifyRemoveObservers functions accept a callback function which is
  * called for each observer to notify it. This allows using an appropriate notification
- * mechanism for each use case. A common approach for polymorphic notification is to define
- * a class derived from @ref Observer with a pure virtual function and call that pure
- * virtual function in the aforementioned callback.
+ * mechanism for each use case.
+ * 
+ * One will generally define a class derived from @ref Observer when applying this
+ * mechanism to a specific use case. Given this, possible approaches for polymorphic
+ * notification are:
+ * - Using a pure virtual function defined in the derived class.
+ * - Using a @ref Function passed to the constructor of the derived class.
  * 
  * The @ref Observer class must always be used as a base class. This is typically desired
  * anyway, and making the @ref Observer and @ref Observable aware of the derived observer
