@@ -76,7 +76,7 @@ class IpSendRetryRequest
     :private Observer<IpSendRetryRequest>
 #endif
 {
-    using BaseObserver = Observer<IpSendRetryRequest>;
+    using SendRetryBaseObserver = Observer<IpSendRetryRequest>;
     friend class IpSendRetryList;
     friend Observable<IpSendRetryRequest>;
     
@@ -93,7 +93,7 @@ public:
      */
     inline bool isActive () const
     {
-        return BaseObserver::isActive();
+        return SendRetryBaseObserver::isActive();
     }
     
     /**
@@ -101,7 +101,7 @@ public:
      */
     inline void reset ()
     {
-        BaseObserver::reset();
+        SendRetryBaseObserver::reset();
     }
 
 protected:
@@ -185,7 +185,7 @@ public:
     void addRequest (IpSendRetryRequest *req)
     {
         if (req != nullptr) {
-            req->BaseObserver::reset();
+            req->SendRetryBaseObserver::reset();
             BaseObservable::addObserver(*req);
         }
     }

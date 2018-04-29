@@ -60,7 +60,6 @@ class IpTcpProto_output
                                   RtxTimer, StackArg, Connection, PcbKey))
     AIPSTACK_USE_TYPES(Constants, (RttType, RttNextType))
     AIPSTACK_USE_VALS(IpStack<StackArg>, (HeaderBeforeIp4Dgram))
-    using MtuRef = IpMtuRef<StackArg>;
 
     static RttType const RttTypeMax = TypeMax<RttType>();
     
@@ -890,7 +889,7 @@ public:
         AIPSTACK_ASSERT(pcb->state != OneOf(TcpState::CLOSED,
                                          TcpState::SYN_RCVD, TcpState::TIME_WAIT))
         AIPSTACK_ASSERT(pcb->con != nullptr)
-        AIPSTACK_ASSERT(pcb->con->MtuRef::isSetup())
+        AIPSTACK_ASSERT(pcb->con->mtu_ref().isSetup())
         
         // In SYN_SENT, just update the PMTU temporarily stuffed in snd_mss.
         if (pcb->state == TcpState::SYN_SENT) {

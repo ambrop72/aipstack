@@ -83,8 +83,6 @@ class IpTcpProto :
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPE(Platform, TimeType)
     
-    using MtuRef = IpMtuRef<StackArg>;
-    
     static_assert(NumTcpPcbs > 0, "");
     static_assert(NumOosSegs > 0 && NumOosSegs < 16, "");
     static_assert(EphemeralPortFirst > 0, "");
@@ -547,7 +545,7 @@ private:
         
         // Reset the MTU reference.
         if (pcb->con != nullptr) {
-            pcb->con->MtuRef::reset(pcb->tcp->m_stack);
+            pcb->con->mtu_ref().reset(pcb->tcp->m_stack);
         }
     }
     
@@ -710,7 +708,7 @@ private:
                              uint16_t pmtu, TcpPcb **out_pcb)
     {
         AIPSTACK_ASSERT(con != nullptr)
-        AIPSTACK_ASSERT(con->MtuRef::isSetup())
+        AIPSTACK_ASSERT(con->mtu_ref().isSetup())
         AIPSTACK_ASSERT(out_pcb != nullptr)
 
         Ip4Addr remote_addr = args.addr;

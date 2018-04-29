@@ -31,7 +31,6 @@
 
 #include <type_traits>
 
-#include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/NonCopyable.h>
@@ -72,22 +71,24 @@ struct TcpStartConnectionArgs {
  */
 template <typename Arg>
 class TcpConnection :
-    private NonCopyable<TcpConnection<Arg>>,
-    // MTU reference.
-    private IpMtuRef<typename Arg::StackArg>
+    private NonCopyable<TcpConnection<Arg>>
+#ifndef IN_DOXYGEN
+    ,private IpMtuRef<typename Arg::StackArg>
+#endif
 {
     template <typename> friend class IpTcpProto;
     template <typename> friend class IpTcpProto_input;
     template <typename> friend class IpTcpProto_output;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (TcpState, SeqType))
-    AIPSTACK_USE_VALS(TcpUtils, (state_is_active, snd_open_in_state))
-
-    using TcpProto = IpTcpProto<Arg>;
-    AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Input, Output, Constants, OosBuffer, StackArg))
-    AIPSTACK_USE_TYPES(Constants, (RttType))
-    using MtuRef = IpMtuRef<StackArg>;
+    using TcpConStackArg = typename Arg::StackArg;
     
+    using TcpConProto = IpTcpProto<Arg>;
+    using TcpConPcb = typename TcpConProto::TcpPcb;
+    using TcpConInput = typename TcpConProto::Input;
+    using TcpConOutput = typename TcpConProto::Output;
+    using TcpConConstants = typename TcpConProto::Constants;
+    using TcpConOosBuffer = typename TcpConProto::OosBuffer;
+
 public:
     /**
      * Initializes the connection object.
@@ -112,10 +113,10 @@ public:
         if (m_v.pcb != nullptr) {
             assert_started();
             
-            TcpPcb *pcb = m_v.pcb;
+            TcpConPcb *pcb = m_v.pcb;
             
             // Reset the MtuRef.
-            MtuRef::reset(pcb->tcp->m_stack);
+            mtu_ref().reset(pcb->tcp->m_stack);
             
             // Disassociate with the PCB.
             pcb->con = nullptr;
@@ -123,7 +124,7 @@ public:
             
             // Handle abandonment of connection.
             bool rst_needed = m_v.snd_buf.tot_len > 0 || have_unprocessed_data;
-            TcpProto::pcb_abandoned(pcb, rst_needed, m_v.rcv_ann_thres);
+            TcpConProto::pcb_abandoned(pcb, rst_needed, m_v.rcv_ann_thres);
         }
         
         reset_flags();
@@ -139,15 +140,15 @@ public:
     {
         assert_init();
         AIPSTACK_ASSERT(lis.m_accept_pcb != nullptr)
-        AIPSTACK_ASSERT(lis.m_accept_pcb->state == TcpState::SYN_RCVD)
+        AIPSTACK_ASSERT(lis.m_accept_pcb->state == TcpUtils::TcpState::SYN_RCVD)
         AIPSTACK_ASSERT(lis.m_accept_pcb->lis == &lis)
         
-        TcpPcb *pcb = lis.m_accept_pcb;
-        TcpProto *tcp = pcb->tcp;
+        TcpConPcb *pcb = lis.m_accept_pcb;
+        TcpConProto *tcp = pcb->tcp;
         
         // Setup the MTU reference.
         uint16_t pmtu;
-        if (!MtuRef::setup(tcp->m_stack, pcb->remote_addr, nullptr, pmtu)) {
+        if (!mtu_ref().setup(tcp->m_stack, pcb->remote_addr, nullptr, pmtu)) {
             return IpErr::NO_IPMTU_AVAIL;
         }
         
@@ -162,7 +163,7 @@ public:
         // unreferenced PCBs, so we must not try to remove it here.
         
         // Set the PCB state to ESTABLISHED.
-        pcb->state = TcpState::ESTABLISHED;
+        pcb->state = TcpUtils::TcpState::ESTABLISHED;
         
         // Associate with the PCB.
         m_v.pcb = pcb;
@@ -172,7 +173,7 @@ public:
         setup_common_started();
         
         // Initialize certain sender variables.
-        Input::pcb_complete_established_transition(pcb, pmtu);
+        TcpConInput::pcb_complete_established_transition(pcb, pmtu);
         
         return IpErr::SUCCESS;
     }
@@ -192,19 +193,19 @@ public:
     {
         assert_init();
 
-        TcpProto &tcp = api.proto();
+        TcpConProto &tcp = api.proto();
         
         // Setup the MTU reference.
         uint16_t pmtu;
-        if (!MtuRef::setup(tcp.m_stack, args.addr, nullptr, pmtu)) {
+        if (!mtu_ref().setup(tcp.m_stack, args.addr, nullptr, pmtu)) {
             return IpErr::NO_IPMTU_AVAIL;
         }
         
         // Create the PCB for the connection.
-        TcpPcb *pcb = nullptr;
+        TcpConPcb *pcb = nullptr;
         IpErr err = tcp.create_connection(this, args, pmtu, &pcb);
         if (err != IpErr::SUCCESS) {
-            MtuRef::reset(tcp.m_stack);
+            mtu_ref().reset(tcp.m_stack);
             return err;
         }
         
@@ -230,7 +231,7 @@ public:
         assert_init();
         src_con->assert_connected();
         
-        static_assert(std::is_trivially_copy_constructible<OosBuffer>::value, "");
+        static_assert(std::is_trivially_copy_constructible<TcpConOosBuffer>::value, "");
         
         // Byte-copy the whole m_v.
         ::memcpy(&m_v, &src_con->m_v, sizeof(m_v));
@@ -239,7 +240,7 @@ public:
         m_v.pcb->con = this;
         
         // Move the MtuRef setup.
-        MtuRef::moveFrom(*src_con);
+        mtu_ref().moveFrom(*src_con);
         
         // Reset the source.
         src_con->m_v.pcb = nullptr;
@@ -330,11 +331,11 @@ public:
      * May only be called in CONNECTED or CLOSED state.
      * The threshold value must be positive and not exceed MaxRcvWnd.
      */
-    void setWindowUpdateThreshold (SeqType rcv_ann_thres)
+    void setWindowUpdateThreshold (TcpUtils::SeqType rcv_ann_thres)
     {
         assert_started();
         AIPSTACK_ASSERT(rcv_ann_thres > 0)
-        AIPSTACK_ASSERT(rcv_ann_thres <= Constants::MaxWindow)
+        AIPSTACK_ASSERT(rcv_ann_thres <= TcpConConstants::MaxWindow)
         
         m_v.rcv_ann_thres = rcv_ann_thres;
     }
@@ -350,6 +351,7 @@ public:
     {
         AIPSTACK_ASSERT(div >= 2)
         using UInt = unsigned int;
+        using SeqType = TcpUtils::SeqType;
         
         SeqType max_rx_window = MinValueU(buffer_size, TcpApi<Arg>::MaxRcvWnd);
         SeqType thres = MaxValue(SeqType(1), SeqType(max_rx_window / UInt(div)));
@@ -366,11 +368,11 @@ public:
     {
         assert_connected();
         
-        SeqType ann_wnd = m_v.pcb->rcv_ann_wnd;
+        TcpUtils::SeqType ann_wnd = m_v.pcb->rcv_ann_wnd;
         
         // In SYN_SENT we subtract one because one was added
         // by create_connection for receiving the SYN.
-        if (m_v.pcb->state == TcpState::SYN_SENT) {
+        if (m_v.pcb->state == TcpUtils::TcpState::SYN_SENT) {
             AIPSTACK_ASSERT(ann_wnd > 0)
             ann_wnd--;
         }
@@ -399,7 +401,7 @@ public:
         
         if (m_v.pcb != nullptr) {
             // Inform the input code, so it can send a window update.
-            Input::pcb_rcv_buf_extended(m_v.pcb);
+            TcpConInput::pcb_rcv_buf_extended(m_v.pcb);
         }
     }
     
@@ -417,7 +419,7 @@ public:
         
         if (m_v.pcb != nullptr) {
             // Inform the input code, so it can send a window update.
-            Input::pcb_rcv_buf_extended(m_v.pcb);
+            TcpConInput::pcb_rcv_buf_extended(m_v.pcb);
         }
     }
     
@@ -495,7 +497,7 @@ public:
         
         if (AIPSTACK_LIKELY(m_v.pcb != nullptr && extended)) {
             // Inform the output code, so it may send the data.
-            Output::pcb_snd_buf_extended(m_v.pcb);
+            TcpConOutput::pcb_snd_buf_extended(m_v.pcb);
         }
     }
     
@@ -518,7 +520,7 @@ public:
     
         if (AIPSTACK_LIKELY(m_v.pcb != nullptr && amount > 0)) {
             // Inform the output code, so it may send the data.
-            Output::pcb_snd_buf_extended(m_v.pcb);
+            TcpConOutput::pcb_snd_buf_extended(m_v.pcb);
         }
     }
     
@@ -556,8 +558,8 @@ public:
         // Inform the output code, e.g. to adjust the PCB state
         // and send a FIN. But not in SYN_SENT, in that case the
         // input code will take care of it when the SYN is received.
-        if (m_v.pcb != nullptr && m_v.pcb->state != TcpState::SYN_SENT) {
-            Output::pcb_end_sending(m_v.pcb);
+        if (m_v.pcb != nullptr && m_v.pcb->state != TcpUtils::TcpState::SYN_SENT) {
+            TcpConOutput::pcb_end_sending(m_v.pcb);
         }
     }
     
@@ -600,10 +602,10 @@ public:
         m_v.snd_psh_index = m_v.snd_buf.tot_len;
         
         // Tell the output code to push, if necessary.
-        if (m_v.pcb != nullptr && snd_open_in_state(m_v.pcb->state) &&
+        if (m_v.pcb != nullptr && TcpUtils::snd_open_in_state(m_v.pcb->state) &&
             m_v.snd_buf.tot_len > 0)
         {
-            Output::pcb_push_output(m_v.pcb);
+            TcpConOutput::pcb_push_output(m_v.pcb);
         }
     }
     
@@ -653,6 +655,10 @@ protected:
     virtual void dataSent (size_t amount) = 0;
     
 private:
+    inline IpMtuRef<TcpConStackArg> & mtu_ref () {
+        return *this;
+    }
+
     void assert_init () const
     {
         AIPSTACK_ASSERT(!m_v.started && !m_v.snd_closed &&
@@ -663,11 +669,13 @@ private:
     void assert_started () const
     {
         AIPSTACK_ASSERT(m_v.started)
-        AIPSTACK_ASSERT(m_v.pcb == nullptr || m_v.pcb->state == TcpState::SYN_SENT ||
-                        state_is_active(m_v.pcb->state))
+        AIPSTACK_ASSERT(m_v.pcb == nullptr ||
+                        m_v.pcb->state == TcpUtils::TcpState::SYN_SENT ||
+                        TcpUtils::state_is_active(m_v.pcb->state))
         AIPSTACK_ASSERT(m_v.pcb == nullptr || m_v.pcb->con == this)
-        AIPSTACK_ASSERT(m_v.pcb == nullptr || m_v.pcb->state == TcpState::SYN_SENT ||
-                        snd_open_in_state(m_v.pcb->state) == !m_v.snd_closed)
+        AIPSTACK_ASSERT(m_v.pcb == nullptr ||
+                        m_v.pcb->state == TcpUtils::TcpState::SYN_SENT ||
+                        TcpUtils::snd_open_in_state(m_v.pcb->state) == !m_v.snd_closed)
     }
     
     void assert_connected () const
@@ -691,7 +699,7 @@ private:
         m_v.snd_psh_index = 0;
         
         // Initialize rcv_ann_thres.
-        m_v.rcv_ann_thres = Constants::DefaultWndAnnThreshold;
+        m_v.rcv_ann_thres = TcpConConstants::DefaultWndAnnThreshold;
         
         // Initialize the out-of-sequence information.
         m_v.ooseq.init();
@@ -711,10 +719,10 @@ private:
     {
         assert_connected();
         
-        TcpPcb *pcb = m_v.pcb;
+        TcpConPcb *pcb = m_v.pcb;
         
         // Reset the MtuRef.
-        MtuRef::reset(pcb->tcp->m_stack);
+        mtu_ref().reset(pcb->tcp->m_stack);
         
         // Disassociate with the PCB.
         pcb->con = nullptr;
@@ -782,7 +790,7 @@ private:
     {
         assert_connected();
         
-        Output::pcb_pmtu_changed(m_v.pcb, pmtu);
+        TcpConOutput::pcb_pmtu_changed(m_v.pcb, pmtu);
     }
     
     void reset_flags ()
@@ -794,29 +802,29 @@ private:
     }
     
 private:
-    struct Vars {
-        TcpPcb *pcb;
+    struct TcpConVars {
+        TcpConPcb *pcb;
         IpBufRef snd_buf;
         IpBufRef rcv_buf;
         IpBufRef snd_buf_cur;
-        SeqType snd_wnd : 30;
-        SeqType started : 1;
-        SeqType snd_closed : 1;
-        SeqType cwnd;
-        SeqType ssthresh;
-        SeqType cwnd_acked;
-        SeqType recover;
-        SeqType rcv_ann_thres : 30;
-        SeqType end_sent : 1;
-        SeqType end_received : 1;
-        SeqType rtt_test_seq;
-        RttType rttvar;
-        RttType srtt;
-        OosBuffer ooseq;
+        TcpUtils::SeqType snd_wnd : 30;
+        TcpUtils::SeqType started : 1;
+        TcpUtils::SeqType snd_closed : 1;
+        TcpUtils::SeqType cwnd;
+        TcpUtils::SeqType ssthresh;
+        TcpUtils::SeqType cwnd_acked;
+        TcpUtils::SeqType recover;
+        TcpUtils::SeqType rcv_ann_thres : 30;
+        TcpUtils::SeqType end_sent : 1;
+        TcpUtils::SeqType end_received : 1;
+        TcpUtils::SeqType rtt_test_seq;
+        typename TcpConConstants::RttType rttvar;
+        typename TcpConConstants::RttType srtt;
+        TcpConOosBuffer ooseq;
         size_t snd_psh_index;
     };
     
-    Vars m_v;
+    TcpConVars m_v;
 };
 
 }

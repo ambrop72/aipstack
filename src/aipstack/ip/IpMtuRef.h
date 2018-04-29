@@ -53,7 +53,8 @@ class IpMtuRef
     : private IpStack<Arg>::BaseMtuRef
 #endif
 {
-    AIPSTACK_USE_TYPES(IpStack<Arg>, (BaseMtuRef, PathMtuCache))
+    using MtuRefBaseMtuRef = typename IpStack<Arg>::BaseMtuRef;
+    using MtuRefPathMtuCache = typename IpStack<Arg>::PathMtuCache;
 
 public:
     /**
@@ -79,7 +80,7 @@ public:
      */
     inline void reset (IpStack<Arg> *stack)
     {
-        return BaseMtuRef::reset(mtu_cache(stack));
+        return MtuRefBaseMtuRef::reset(mtu_cache(stack));
     }
     
     /**
@@ -89,7 +90,7 @@ public:
      */
     inline bool isSetup () const
     {
-        return BaseMtuRef::isSetup();
+        return MtuRefBaseMtuRef::isSetup();
     }
     
     /**
@@ -117,7 +118,7 @@ public:
     inline bool setup (IpStack<Arg> *stack, Ip4Addr remote_addr, IpIface<Arg> *iface,
                        uint16_t &out_pmtu)
     {
-        return BaseMtuRef::setup(mtu_cache(stack), remote_addr, iface, out_pmtu);
+        return MtuRefBaseMtuRef::setup(mtu_cache(stack), remote_addr, iface, out_pmtu);
     }
 
     /**
@@ -132,7 +133,7 @@ public:
      */
     inline void moveFrom (IpMtuRef &src)
     {
-        return BaseMtuRef::moveFrom(src);
+        return MtuRefBaseMtuRef::moveFrom(src);
     }
     
 protected:
@@ -167,7 +168,7 @@ protected:
     virtual void pmtuChanged (uint16_t pmtu) = 0;
     
 private:
-    inline static PathMtuCache * mtu_cache (IpStack<Arg> *stack)
+    inline static MtuRefPathMtuCache * mtu_cache (IpStack<Arg> *stack)
     {
         return &stack->m_path_mtu_cache;
     }
