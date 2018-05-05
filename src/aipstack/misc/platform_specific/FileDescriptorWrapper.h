@@ -38,6 +38,24 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup misc
+ * @{
+ */
+
+/**
+ * Wraps a file descriptor, closing it automatically in the destructor.
+ * 
+ * This class is only available on \*nix platforms.
+ * 
+ * A file descriptor object internally stores an `int` value; the object is
+ * considered to have a file descriptor when the stored value is non-negative
+ * and is otherwise considered to be empty.
+ * 
+ * An empty file descriptor object typically has the value -1, but other
+ * negative values could be introduced via the @ref FileDescriptorWrapper(int)
+ * constructor.
+ */
 class FileDescriptorWrapper :
     private AIpStack::NonCopyable<FileDescriptorWrapper>
 {
@@ -45,25 +63,67 @@ private:
     int m_fd;
     
 public:
+    /**
+     * Default constructor, constructs an empty file descriptor object.
+     * 
+     * The new object gets the value -1.
+     */
     FileDescriptorWrapper () :
         m_fd(-1)
     {}
     
+    /**
+     * Move constructor, takes ownership of any file descriptor from the other
+     * object.
+     * 
+     * The new object gets the value of the other object and the other object
+     * gets the value -1.
+     * 
+     * @param other Object to move from.
+     */
     FileDescriptorWrapper (FileDescriptorWrapper &&other) :
         m_fd(other.m_fd)
     {
         other.m_fd = -1;
     }
     
+    /**
+     * Constructor from an integer value, possibly takes ownership of a file
+     * descriptor.
+     * 
+     * The new object gets the specified value.
+     * 
+     * @param fd Value which the new object gets. A non-negative value is assumed
+     *        to be a file descriptor (which would be closed in the destructor)
+     *        while a negative value results in an empty object.
+     */
     explicit FileDescriptorWrapper (int fd) :
         m_fd(fd)
     {}
     
+    /**
+     * Destructor, closes the file descriptor if there is any.
+     * 
+     * This closes the file descriptor if there is one (the value is non-negative).
+     * If closing fails, an error message is printed to standard error.
+     */
     ~FileDescriptorWrapper ()
     {
         close_it();
     }
     
+    /**
+     * Move-assignment operator.
+     * 
+     * If the other object is this object then does nothing, otherwise:
+     * - Closes the current file descriptor in this object if there is one. If
+     *   closing fails, an error message is printed to standard error.
+     * - This object gets the value of the other object (possibly taking ownership
+     *   of a file descriptor) and the other object gets the value -1.
+     * 
+     * @param other Object to move from.
+     * @return \*this
+     */
     FileDescriptorWrapper & operator= (FileDescriptorWrapper &&other)
     {
         if (&other != this) {
@@ -74,24 +134,56 @@ public:
         return *this;
     }
     
+    /**
+     * Get the value stored in this object.
+     * 
+     * @return The value in the object; negative means that there is no file
+     *         descriptor.
+     */
     inline int get () const
     {
         return m_fd;
     }
 
+    /**
+     * Get the file descriptor number.
+     * 
+     * @note Behavior is undefined if this object does not have a file descriptor.
+     * 
+     * This asserts that the object has a file descriptor (the value is
+     * non-negative). It should be used when it is logically expected that
+     * a file descriptor is present.
+     * 
+     * @return The value in the object, that is the file descriptor number.
+     */
     inline int operator* () const
     {
         AIPSTACK_ASSERT(m_fd >= 0)
         return m_fd;
     }
 
+    /**
+     * Check whether this object has a file descriptor.
+     * 
+     * @return True if the stored value is non-negative, false otherwise.
+     */
     inline explicit operator bool () const
     {
         return m_fd >= 0;
     }
     
+    /**
+     * Set the `O_NONBLOCK` flag on the file descriptor.
+     * 
+     * @note Behavior is undefined if this object does not have a file descriptor.
+     * 
+     * This first gets the current flags using `fcntl`/`F_GETFL` and then sets new
+     * flags using `fcntl`/`F_SETFL` with `O_NONBLOCK` OR-ed in.
+     */
     void setNonblocking ()
     {
+        AIPSTACK_ASSERT(m_fd >= 0)
+
         int flags = ::fcntl(m_fd, F_GETFL, 0);
         if (flags < 0) {
             throw std::runtime_error("fcntl(F_GETFL) failed.");
@@ -103,6 +195,17 @@ public:
         }
     }
 
+    /**
+     * Utility function to check if an error code is `EAGAIN` or `EWOULDBLOCK`.
+     * 
+     * This seems trivial but it solves the problem that an expression such as
+     * `err == EAGAIN || err == EWOULDBLOCK` can result in a compiler warning
+     * when the values `EAGAIN` of `EWOULDBLOCK` are the same, as they are on
+     * Linux.
+     * 
+     * @param err Error code value to test.
+     * @return True if the value is `EAGAIN` or `EWOULDBLOCK`, false otherwise.
+     */
     static bool errIsEAGAINorEWOULDBLOCK (int err)
     {
         if (err == EAGAIN) {
@@ -129,6 +232,8 @@ private:
         }
     }
 };
+
+/** @} */
 
 }
 
