@@ -37,6 +37,13 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup structure
+ * @{
+ */
+
+#ifndef IN_DOXYGEN
+
 #ifndef AIPSTACK_LINKED_HEAP_VERIFY
 #define AIPSTACK_LINKED_HEAP_VERIFY 0
 #endif
@@ -658,13 +665,29 @@ private:
     }
 };
 
-struct LinkedHeapService {
+#endif
+
+/**
+ * A "minimum" family data structure implementation based on a binary heap using
+ * explicit links/pointers.
+ * 
+ * Consult the @ref structure module for general information regarding
+ * configuration of data structures.
+ */
+class LinkedHeapService {
+public:
+    #ifndef IN_DOXYGEN
+
     template <typename LinkModel>
     using Node = LinkedHeapNode<LinkModel>;
     
     template <typename Accessor, typename Compare, typename LinkModel>
     using Structure = LinkedHeap<Accessor, Compare, LinkModel>;
+
+    #endif
 };
+
+/** @} */
 
 }
 

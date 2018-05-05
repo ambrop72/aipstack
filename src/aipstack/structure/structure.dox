@@ -1,0 +1,56 @@
+/*
+ * Copyright (c) 2018 Ambroz Bizjak
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * @defgroup structure Data Structures
+ * @brief Intrusive data structure implementations
+ * 
+ * %AIpStack includes intrusive implementations of certain data structures, but
+ * these are not currently documented. If you are interested in these data
+ * structures, please consult the source code (src/aipstack/structure).
+ *
+ * The only things documented here are the interfaces used to select a specific
+ * data structure in situations where the choice of data structure is left to the
+ * application. Some examples where this is the case are @ref IpPathMtuCacheOptions,
+ * @ref EthIpIfaceOptions, @ref IpTcpProtoOptions and @ref IpUdpProtoOptions.
+ * 
+ * There are different "families" of data structures corresponding to general use
+ * cases. Wherever the choice of data structure is configurable, any data structure
+ * from a specific family could be used. Each data structure implementation defines
+ * a specific "service" class which is used to select that data structure.
+ * 
+ * Below is the list of data structure families and available data structures in
+ * each family.
+ * 
+ * - "Index" family: These data structures provide access to objects based on a
+ *   specific key attribute.
+ *   - @ref AvlTreeIndexService : AVL tree, a type of self-balancing binary search
+ *     tree.
+ *   - @ref MruListIndexService : Doubly-linked-list where more recently used objects
+ *     are kept closer to the front.
+ * - "Minimum" family: These data structures provide access to or more objects
+ *   considered to be minimal according to some order.
+ *   - @ref LinkedHeapService : Binary heap using explicit links/pointers.
+ *   - @ref SortedListService : Sorted doubly-linked-list.
+ */

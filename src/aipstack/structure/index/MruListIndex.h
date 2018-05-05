@@ -34,6 +34,13 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup structure
+ * @{
+ */
+
+#ifndef IN_DOXYGEN
+
 template <typename Arg>
 class MruListIndex {
     AIPSTACK_USE_TYPES(Arg, (HookAccessor, LookupKeyArg, KeyFuncs, LinkModel))
@@ -131,7 +138,18 @@ public:
     };
 };
 
-struct MruListIndexService {
+#endif
+
+/**
+ * An "index" family data structure implementation based on a doubly-linked-list
+ * where more recently used objects are kept closer to the front.
+ * 
+ * Consult the @ref structure module for general information regarding
+ * configuration of data structures.
+ */
+class MruListIndexService {
+public:
+    #ifndef IN_DOXYGEN
     template <typename HookAccessor_, typename LookupKeyArg_,
               typename KeyFuncs_, typename LinkModel_, bool Duplicates_>
     struct Index {
@@ -142,7 +160,10 @@ struct MruListIndexService {
         static bool const Duplicates = Duplicates_;
         AIPSTACK_DEF_INSTANCE(Index, MruListIndex)
     };
+    #endif
 };
+
+/** @} */
 
 }
 

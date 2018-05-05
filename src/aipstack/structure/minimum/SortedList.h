@@ -31,6 +31,13 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup structure
+ * @{
+ */
+
+#ifndef IN_DOXYGEN
+
 #ifndef AIPSTACK_SORTED_LIST_VERIFY
 #define AIPSTACK_SORTED_LIST_VERIFY 0
 #endif
@@ -221,13 +228,29 @@ private:
     }
 };
 
-struct SortedListService {
+#endif
+
+/**
+ * A "minimum" family data structure implementation based on a sorted
+ * doubly-linked-list.
+ * 
+ * Consult the @ref structure module for general information regarding
+ * configuration of data structures.
+ */
+class SortedListService {
+public:
+    #ifndef IN_DOXYGEN
+
     template <typename LinkModel>
     using Node = SortedListNode<LinkModel>;
     
     template <typename Accessor, typename Compare, typename LinkModel>
     using Structure = SortedList<Accessor, Compare, LinkModel>;
+
+    #endif
 };
+
+/** @} */
 
 }
 

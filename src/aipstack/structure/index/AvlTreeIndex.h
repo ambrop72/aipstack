@@ -37,6 +37,13 @@
 
 namespace AIpStack {
 
+/**
+ * @addtogroup structure
+ * @{
+ */
+
+#ifndef IN_DOXYGEN
+
 template <typename Arg>
 class AvlTreeIndex {
     AIPSTACK_USE_TYPES(Arg, (HookAccessor, LookupKeyArg, KeyFuncs, LinkModel))
@@ -212,7 +219,17 @@ public:
     };
 };
 
-struct AvlTreeIndexService {
+#endif
+
+/**
+ * An "index" family data structure implementation based on an AVL tree.
+ * 
+ * Consult the @ref structure module for general information regarding
+ * configuration of data structures.
+ */
+class AvlTreeIndexService {
+public:
+    #ifndef IN_DOXYGEN
     template <typename HookAccessor_, typename LookupKeyArg_,
               typename KeyFuncs_, typename LinkModel_, bool Duplicates_>
     struct Index {
@@ -223,7 +240,10 @@ struct AvlTreeIndexService {
         static bool const Duplicates = Duplicates_;
         AIPSTACK_DEF_INSTANCE(Index, AvlTreeIndex)
     };
+    #endif
 };
+
+/** @} */
 
 }
 

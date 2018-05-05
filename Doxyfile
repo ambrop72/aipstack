@@ -815,6 +815,15 @@ EXCLUDE                = \
     src/aipstack/ip/IpDhcpOptions.h \
     src/aipstack/platform/MultiTimer.h \
     src/aipstack/proto \
+    src/aipstack/structure/Accessor.h \
+    src/aipstack/structure/AvlTree.h \
+    src/aipstack/structure/LexiKeyCompare.h \
+    src/aipstack/structure/LinkedList.h \
+    src/aipstack/structure/LinkModel.h \
+    src/aipstack/structure/OperatorKeyCompare.h \
+    src/aipstack/structure/StructureRaiiWrapper.h \
+    src/aipstack/structure/TimerQueue.h \
+    src/aipstack/structure/TreeCompare.h \
     src/aipstack/tcp/IpTcpProto_constants.h \
     src/aipstack/tcp/IpTcpProto_input.h \
     src/aipstack/tcp/IpTcpProto_output.h \
