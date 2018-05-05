@@ -230,7 +230,7 @@ struct Ip4DestUnreachMeta {
     /**
      * The ICMP code.
      * 
-     * For example, @ref Icmp4CodeDestUnreachFragNeeded may be of interest.
+     * For example, `Icmp4CodeDestUnreachFragNeeded` may be of interest.
      */
     uint8_t icmp_code = 0;
     

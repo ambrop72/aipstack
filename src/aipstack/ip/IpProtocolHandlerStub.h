@@ -211,7 +211,7 @@ public:
      * 
      * This function can be used to support the Path MTU Discovery process.
      * In this case, if the ICMP code (du_meta.icmp_code) is
-     * @ref Icmp4CodeDestUnreachFragNeeded, the protocol handler should perform
+     * `Icmp4CodeDestUnreachFragNeeded`, the protocol handler should perform
      * protocol-specific sanity checks (e.g. TCP could check that the message is
      * for an active connection) then call @ref IpStack::handleIcmpPacketTooBig
      * if the checks pass. The latter may result in @ref IpMtuRef::pmtuChanged
