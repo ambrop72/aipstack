@@ -825,6 +825,8 @@ EXCLUDE                = \
     src/aipstack/structure/StructureRaiiWrapper.h \
     src/aipstack/structure/TimerQueue.h \
     src/aipstack/structure/TreeCompare.h \
+    src/aipstack/tap/linux \
+    src/aipstack/tap/windows \
     src/aipstack/tcp/IpTcpProto_constants.h \
     src/aipstack/tcp/IpTcpProto_input.h \
     src/aipstack/tcp/IpTcpProto_output.h \
