@@ -260,7 +260,8 @@ class Observable;
  * mechanism to a specific use case. Given this, possible approaches for polymorphic
  * notification are:
  * - Using a pure virtual function defined in the derived class.
- * - Using a @ref Function passed to the constructor of the derived class.
+ * - Using a @ref Function<Ret(Args...)> "Function" object passed to the constructor of
+ *   the derived class.
  * 
  * The @ref Observer class must always be used as a base class. This is typically desired
  * anyway, and making the @ref Observer and @ref Observable aware of the derived observer

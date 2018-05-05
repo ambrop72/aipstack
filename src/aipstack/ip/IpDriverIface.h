@@ -65,9 +65,10 @@ namespace AIpStack {
      * - Calls from the driver to the stack are based on simple functions in @ref
      *   IpDriverIface (such as @ref recvIp4Packet to process received packets).
      * - Calls from the stack to the driver are based on polymorphic calls using
-     *   @ref Function objects as provided by the driver ("driver functions") within
-     *   the @ref IpIfaceDriverParams structure passed to the constructor (such as
-     *   @ref IpIfaceDriverParams::send_ip4_packet to send a packet).
+     *   @ref Function<Ret(Args...)> "Function" objects as provided by the driver
+     *   ("driver functions") within the @ref IpIfaceDriverParams structure passed
+     *   to the constructor (such as @ref IpIfaceDriverParams::send_ip4_packet to
+     *   send a packet).
      * 
      * @tparam Arg Template parameter of @ref IpStack.
      */
