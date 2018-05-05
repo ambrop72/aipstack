@@ -812,6 +812,7 @@ RECURSIVE              = YES
 # run.
 
 EXCLUDE                = \
+    src/aipstack/event_loop/platform_specific \
     src/aipstack/ip/IpDhcpOptions.h \
     src/aipstack/platform/MultiTimer.h \
     src/aipstack/proto \
