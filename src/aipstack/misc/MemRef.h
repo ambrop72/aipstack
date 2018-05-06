@@ -215,23 +215,33 @@ struct MemRef {
     }
 };
 
-inline namespace Literals {
-inline namespace MemRefLiterals {
-    /**
-     * User-defined literal operator for @ref MemRef.
-     * 
-     * @param ptr Pointer to start of character array.
-     * @param len Length of the character array.
-     * @return @ref MemRef(`ptr`, `len`).
-     */
-    inline MemRef operator""_mr (char const *ptr, size_t len) noexcept
-    {
-        return MemRef(ptr, len);
-    }
-}
-}
-
 /** @} */
+
+inline namespace Literals {
+    /**
+     * @addtogroup misc
+     * @{
+     */
+
+    /**
+     * User-defined literals operators for @ref MemRef.
+     */
+    inline namespace MemRefLiterals {
+        /**
+         * User-defined literal operator for @ref MemRef.
+         * 
+         * @param ptr Pointer to start of character array.
+         * @param len Length of the character array.
+         * @return @ref MemRef(`ptr`, `len`).
+         */
+        inline MemRef operator""_mr (char const *ptr, size_t len) noexcept
+        {
+            return MemRef(ptr, len);
+        }
+    }
+
+    /** @} */
+}
 
 }
 

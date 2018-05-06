@@ -3,4 +3,9 @@
  * Namespace for all %AIpStack definitions.
  */
 namespace AIpStack {
+    /**
+     * Namespace for user-defined literal operators.
+     */
+    namespace Literals {
+    }
 }
