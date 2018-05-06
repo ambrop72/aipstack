@@ -32,8 +32,8 @@
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/Modulo.h>
 #include <aipstack/misc/Hints.h>
+#include <aipstack/misc/MemRef.h>
 #include <aipstack/infra/Buf.h>
-#include <aipstack/infra/MemRef.h>
 #include <aipstack/tcp/TcpConnection.h>
 
 namespace AIpStack {

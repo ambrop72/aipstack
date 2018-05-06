@@ -34,9 +34,9 @@
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/OneOf.h>
+#include <aipstack/misc/MemRef.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Struct.h>
-#include <aipstack/infra/MemRef.h>
 #include <aipstack/proto/DhcpProto.h>
 #include <aipstack/ip/IpAddr.h>
 

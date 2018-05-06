@@ -33,7 +33,7 @@
 namespace AIpStack {
 
 /**
- * @addtogroup infra
+ * @addtogroup misc
  * @{
  */
 

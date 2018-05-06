@@ -33,7 +33,7 @@
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/Assert.h>
-#include <aipstack/infra/MemRef.h>
+#include <aipstack/misc/MemRef.h>
 
 namespace AIpStack {
 

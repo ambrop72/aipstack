@@ -36,11 +36,11 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/misc/Function.h>
+#include <aipstack/misc/MemRef.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/TxAllocHelper.h>
 #include <aipstack/infra/SendRetry.h>
 #include <aipstack/infra/Options.h>
-#include <aipstack/infra/MemRef.h>
 #include <aipstack/infra/Instance.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/DhcpProto.h>

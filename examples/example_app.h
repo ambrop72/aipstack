@@ -40,11 +40,11 @@
 #include <aipstack/misc/Modulo.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/Function.h>
+#include <aipstack/misc/MemRef.h>
 #include <aipstack/infra/Options.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Instance.h>
-#include <aipstack/infra/MemRef.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/ip/IpAddr.h>
