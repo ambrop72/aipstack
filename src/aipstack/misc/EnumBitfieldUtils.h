@@ -34,18 +34,18 @@ namespace AIpStack {
 /**
  * @ingroup misc
  * @defgroup enum-bitfield Enum Bitfield Utilities
- * @brief Bitwise operations for enum types
+ * @brief Bitwise and other operators for enum types
  * 
- * The @ref AIPSTACK_ENUM_BITFIELD_OPS macro defines different operators for the specified
- * enum type. It is intended to be used with enum types that represent bitfields.
+ * This module provides implementations of various operators for enum types with
+ * bitfield semantics; see @ref AIPSTACK_ENUM_BITFIELD_OPS.
  * @{
  */
 
 /**
  * Dummy type used with `==` and `!=` operators for checking if a bitfield enum is zero.
  * 
- * See @ref AIPSTACK_ENUM_BITFIELD_OPS. The intent is to use the @ref EnumZero constant not
- * this type directly.
+ * Use the @ref EnumZero constant instead of constructing your own value.
+ * See @ref AIPSTACK_ENUM_BITFIELD_OPS for details.
  */
 class EnumZeroType {};
 
@@ -54,73 +54,117 @@ class EnumZeroType {};
  */
 constexpr EnumZeroType EnumZero = EnumZeroType();
 
-/**
- * Define an unary operator for an enum type (use via @ref AIPSTACK_ENUM_BITFIELD_OPS).
- */
-#define AIPSTACK_ENUM_UN_OP(EnumType, Op) \
-inline constexpr EnumType operator Op (EnumType arg1) \
-{ \
-    return EnumType(Op AIpStack::ToUnderlyingType(arg1)); \
-}
+#ifndef IN_DOXYGEN
+template <typename EnumType>
+class EnableEnumBitfield;
+#endif
 
 /**
- * Define a binary operator for an enum type (use via @ref AIPSTACK_ENUM_BITFIELD_OPS).
- */
-#define AIPSTACK_ENUM_BIN_OP(EnumType, Op) \
-inline constexpr EnumType operator Op (EnumType arg1, EnumType arg2) \
-{ \
-    return EnumType(AIpStack::ToUnderlyingType(arg1) Op AIpStack::ToUnderlyingType(arg2)); \
-}
-
-/**
- * Define a compound assignment operator for an enum type (use via
- * @ref AIPSTACK_ENUM_BITFIELD_OPS).
- */
-#define AIPSTACK_ENUM_COMPOUND_OP(EnumType, Op) \
-inline constexpr EnumType & operator Op##= (EnumType &arg1, EnumType arg2) \
-{ \
-    arg1 = EnumType(AIpStack::ToUnderlyingType(arg1) Op AIpStack::ToUnderlyingType(arg2)); \
-    return arg1; \
-}
-
-/**
- * Define equality and inequality operators for an enum type with
- * @ref AIpStack::EnumZeroType "EnumZeroType" as the second operand.
- */
-#define AIPSTACK_ENUM_ZERO_OPS(EnumType) \
-inline constexpr bool operator== (EnumType arg1, AIpStack::EnumZeroType) \
-{ \
-    return AIpStack::ToUnderlyingType(arg1) == 0; \
-} \
-inline constexpr bool operator!= (EnumType arg1, AIpStack::EnumZeroType) \
-{ \
-    return AIpStack::ToUnderlyingType(arg1) != 0; \
-}
-
-/**
- * Macro which defines various operators intended for a bitfield-like enum type.
+ * Enables various operators for an enum type with bitfield semantics.
  * 
- * The `EnumType` must be an enum type (preferably enum class).
+ * This macro may only be used in namespace context, without any semicolon
+ * afterward.
  * 
- * The operators `~`, `|`, `&`, `^`, `|=`, `&=`, `^=` will be defined to do the
- * corresponding bitwise operation on the underlying type.
+ * It is suggested to invoke this macro right after the definition of the
+ * enum, for example:
  * 
- * Operators `==` and `!=` will be defined for @ref AIpStack::EnumZeroType "EnumZeroType"
- * as the second operand which check if the first operand (`EnumType`) is or is not zero
- * respectively. These are intended to be used with @ref AIpStack::EnumZero "EnumZero" as
- * follows: `e == EnumZero`, `e != EnumZero`.
+ * ```
+ * enum class MyBitfield {
+ *     Field1 = 1 << 0,
+ *     Field2 = 1 << 1,
+ *     Field3 = 1 << 2,
+ * };
+ * AIPSTACK_ENUM_BITFIELD_OPS(MyBitfield)
+ * ```
+ * 
+ * After this macro is invoked, the following bitwise operators will be available for
+ * `EnumType`, performing the corresponding operation on the underlying type:
+ * `~`, `|`, `&`, `^`, `|=`, `&=`, `^=`.
+ * 
+ * Operators `==` and `!=` will be available for `EnumType` as the first and @ref
+ * AIpStack::EnumZeroType "EnumZeroType" as the second operand. These will check if
+ * the enum value is or is not zero respectively, and should be used with the @ref
+ * AIpStack::EnumZero "EnumZero" constant.
  * 
  * @param EnumType Enum type to define operators for.
  */
+#ifdef IN_DOXYGEN
+#define AIPSTACK_ENUM_BITFIELD_OPS(EnumType) implementation_hidden
+#else
 #define AIPSTACK_ENUM_BITFIELD_OPS(EnumType) \
-AIPSTACK_ENUM_UN_OP(EnumType, ~) \
-AIPSTACK_ENUM_BIN_OP(EnumType, |) \
-AIPSTACK_ENUM_BIN_OP(EnumType, &) \
-AIPSTACK_ENUM_BIN_OP(EnumType, ^) \
-AIPSTACK_ENUM_COMPOUND_OP(EnumType, |) \
-AIPSTACK_ENUM_COMPOUND_OP(EnumType, &) \
-AIPSTACK_ENUM_COMPOUND_OP(EnumType, ^) \
-AIPSTACK_ENUM_ZERO_OPS(EnumType)
+static_assert(std::is_enum<EnumType>::value, "AIPSTACK_ENUM_BITFIELD_OPS: not an enum"); \
+template <> \
+class ::AIpStack::EnableEnumBitfield<EnumType> { \
+public: \
+    using Enabled = void; \
+};
+#endif
+
+#ifndef IN_DOXYGEN
+
+#define AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType) \
+    typename = typename EnableEnumBitfield<EnumType>::Enabled
+
+template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
+inline constexpr EnumType operator~ (EnumType arg)
+{
+    return EnumType(~ToUnderlyingType(arg));
+}
+
+template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
+inline constexpr EnumType operator| (EnumType arg1, EnumType arg2)
+{
+    return EnumType(ToUnderlyingType(arg1) | ToUnderlyingType(arg2));
+}
+
+template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
+inline constexpr EnumType operator& (EnumType arg1, EnumType arg2)
+{
+    return EnumType(ToUnderlyingType(arg1) & ToUnderlyingType(arg2));
+}
+
+template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
+inline constexpr EnumType operator^ (EnumType arg1, EnumType arg2)
+{
+    return EnumType(ToUnderlyingType(arg1) ^ ToUnderlyingType(arg2));
+}
+
+template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
+inline constexpr EnumType & operator|= (EnumType &arg1, EnumType arg2)
+{
+    arg1 = EnumType(ToUnderlyingType(arg1) | ToUnderlyingType(arg2));
+    return arg1;
+}
+
+template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
+inline constexpr EnumType & operator&= (EnumType &arg1, EnumType arg2)
+{
+    arg1 = EnumType(ToUnderlyingType(arg1) & ToUnderlyingType(arg2));
+    return arg1;
+}
+
+template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
+inline constexpr EnumType & operator^= (EnumType &arg1, EnumType arg2)
+{
+    arg1 = EnumType(ToUnderlyingType(arg1) ^ ToUnderlyingType(arg2));
+    return arg1;
+}
+
+template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
+inline constexpr bool operator== (EnumType arg, EnumZeroType)
+{
+    return ToUnderlyingType(arg) == 0;
+}
+
+template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
+inline constexpr bool operator!= (EnumType arg, EnumZeroType)
+{
+    return ToUnderlyingType(arg) != 0;
+}
+
+#undef AIPSTACK_ENABLE_IF_ENUM_BITFIELD
+
+#endif
 
 /** @} */
 
