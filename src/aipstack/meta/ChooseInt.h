@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_CHOOSE_INT_H
 #define AIPSTACK_CHOOSE_INT_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <type_traits>
 
@@ -48,14 +48,14 @@ public:
     static_assert((!!Signed || NumBits <= 64), "Too many bits (unsigned).");
     
     using Result =
-        std::conditional_t<(Signed && NumBits < 8), int8_t,
-        std::conditional_t<(Signed && NumBits < 16), int16_t,
-        std::conditional_t<(Signed && NumBits < 32), int32_t,
-        std::conditional_t<(Signed && NumBits < 64), int64_t,
-        std::conditional_t<(!Signed && NumBits <= 8), uint8_t,
-        std::conditional_t<(!Signed && NumBits <= 16), uint16_t,
-        std::conditional_t<(!Signed && NumBits <= 32), uint32_t,
-        std::conditional_t<(!Signed && NumBits <= 64), uint64_t,
+        std::conditional_t<(Signed && NumBits < 8), std::int8_t,
+        std::conditional_t<(Signed && NumBits < 16), std::int16_t,
+        std::conditional_t<(Signed && NumBits < 32), std::int32_t,
+        std::conditional_t<(Signed && NumBits < 64), std::int64_t,
+        std::conditional_t<(!Signed && NumBits <= 8), std::uint8_t,
+        std::conditional_t<(!Signed && NumBits <= 16), std::uint16_t,
+        std::conditional_t<(!Signed && NumBits <= 32), std::uint32_t,
+        std::conditional_t<(!Signed && NumBits <= 64), std::uint64_t,
         void>>>>>>>>;
 };
 
@@ -69,7 +69,7 @@ implementation_hidden;
 typename ChooseIntHelper<NumBits, Signed>::Result;
 #endif
 
-template <uintmax_t N, bool Signed = false>
+template <std::uintmax_t N, bool Signed = false>
 using ChooseIntForMax = ChooseInt<BitsInInt<N>::Value, Signed>;
 
 /** @} */

@@ -25,8 +25,8 @@
 #ifndef AIPSTACK_CHKSUM_H
 #define AIPSTACK_CHKSUM_H
 
-#include <stdint.h>
-#include <stddef.h>
+#include <cstdint>
+#include <cstddef>
 
 #include <aipstack/meta/BasicMetaUtils.h>
 #include <aipstack/misc/Assert.h>
@@ -45,7 +45,7 @@
  */
 
 #if defined(AIPSTACK_EXTERNAL_CHKSUM)
-extern "C" uint16_t IpChksumInverted (char const *data, size_t len);
+extern "C" std::uint16_t IpChksumInverted (char const *data, std::size_t len);
 #else
 
 /**
@@ -72,27 +72,27 @@ extern "C" uint16_t IpChksumInverted (char const *data, size_t len);
  * @return Inverted IP checksum (ones-complement sum of 16-bit words).
  */
 AIPSTACK_NO_INLINE
-inline uint16_t IpChksumInverted (char const *data, size_t len)
+inline std::uint16_t IpChksumInverted (char const *data, std::size_t len)
 {
     using namespace AIpStack;
     
-    char const *even_end = data + (len & size_t(-2));
-    uint32_t sum = 0;
+    char const *even_end = data + (len & std::size_t(-2));
+    std::uint32_t sum = 0;
     
     while (data < even_end) {
-        sum += ReadBinaryInt<uint16_t, BinaryBigEndian>(data);
+        sum += ReadBinaryInt<std::uint16_t, BinaryBigEndian>(data);
         data += 2;
     }
     
     if ((len & 1) != 0) {
-        uint8_t byte = ReadBinaryInt<uint8_t, BinaryBigEndian>(data);
-        sum += uint32_t(uint16_t(byte) << 8);
+        std::uint8_t byte = ReadBinaryInt<std::uint8_t, BinaryBigEndian>(data);
+        sum += std::uint32_t(std::uint16_t(byte) << 8);
     }
     
     sum = (sum & UINT32_C(0xFFFF)) + (sum >> 16);
     sum = (sum & UINT32_C(0xFFFF)) + (sum >> 16);
     
-    return uint16_t(sum);
+    return std::uint16_t(sum);
 }
 
 #endif
@@ -116,7 +116,7 @@ namespace AIpStack {
  * @param len Number of bytes (may be zero). It must not exceed 65535.
  * @return IP checksum.
  */
-inline uint16_t IpChksum (char const *data, size_t len)
+inline std::uint16_t IpChksum (char const *data, std::size_t len)
 {
     return ~IpChksumInverted(data, len);
 }
@@ -127,8 +127,8 @@ inline uint16_t IpChksum (char const *data, size_t len)
  * This class must be used according to the following pattern:
  * 1. Construct a new instance using the default constructor \ref IpChksumAccumulator().
  * 2. Call the following functions as needed to add the header to the running checksum:
- *    @ref addWord(WrapType<uint16_t>, uint16_t),
- *    @ref addWord(WrapType<uint32_t>, uint32_t),
+ *    @ref addWord(WrapType<std::uint16_t>, std::uint16_t),
+ *    @ref addWord(WrapType<std::uint32_t>, std::uint32_t),
  *    @ref addWords(WordType const *), @ref addWords(WordType const (*)[NumWords]),
  *    @ref addEvenBytes. The order of these calls with respect to each another does
  *    not matter due to commutativity of the IP checksum.
@@ -145,13 +145,13 @@ inline uint16_t IpChksum (char const *data, size_t len)
  */
 class IpChksumAccumulator {
 private:
-    uint32_t m_sum;
+    std::uint32_t m_sum;
     
 public:
     /**
      * Data type representing the exported state of a checksum calculation.
      */
-    enum State : uint32_t {};
+    enum State : std::uint32_t {};
     
     /**
      * Construct the object to start a new checksum calculation.
@@ -186,7 +186,7 @@ public:
      * 
      * @param word The word to add.
      */
-    inline void addWord (WrapType<uint16_t>, uint16_t word)
+    inline void addWord (WrapType<std::uint16_t>, std::uint16_t word)
     {
         m_sum += word;
     }
@@ -196,10 +196,10 @@ public:
      * 
      * @param word The word to add.
      */
-    inline void addWord (WrapType<uint32_t>, uint32_t word)
+    inline void addWord (WrapType<std::uint32_t>, std::uint32_t word)
     {
-        addWord(WrapType<uint16_t>(), uint16_t(word >> 16));
-        addWord(WrapType<uint16_t>(), uint16_t(word));
+        addWord(WrapType<std::uint16_t>(), std::uint16_t(word >> 16));
+        addWord(WrapType<std::uint16_t>(), std::uint16_t(word));
     }
     
     /**
@@ -243,15 +243,15 @@ public:
      * @param ptr Pointer to data (must not be null).
      * @param num_bytes Number of bytes (must be even, may be zero).
      */
-    inline void addEvenBytes (char const *ptr, size_t num_bytes)
+    inline void addEvenBytes (char const *ptr, std::size_t num_bytes)
     {
         AIPSTACK_ASSERT(num_bytes % 2 == 0)
         
         char const *endptr = ptr + num_bytes;
         while (ptr < endptr) {
-            uint16_t word = ReadBinaryInt<uint16_t, BinaryBigEndian>(ptr);
+            std::uint16_t word = ReadBinaryInt<std::uint16_t, BinaryBigEndian>(ptr);
             ptr += 2;
-            addWord(WrapType<uint16_t>(), word);
+            addWord(WrapType<std::uint16_t>(), word);
         }
     }
     
@@ -263,11 +263,11 @@ public:
      * 
      * @return The calculated checksum.
      */
-    inline uint16_t getChksum ()
+    inline std::uint16_t getChksum ()
     {
         foldOnce();
         foldOnce();
-        return uint16_t(~m_sum);
+        return std::uint16_t(~m_sum);
     }
     
     /**
@@ -281,7 +281,7 @@ public:
      *        zero (if zero, then `buf.node` is not examined and may be null).
      * @return The calculated checksum.
      */
-    inline uint16_t getChksum (IpBufRef buf)
+    inline std::uint16_t getChksum (IpBufRef buf)
     {
         if (buf.tot_len > 0) {
             addIpBuf(buf);
@@ -292,10 +292,10 @@ public:
 private:
     inline void foldOnce ()
     {
-        m_sum = (m_sum & TypeMax<uint16_t>()) + (m_sum >> 16);
+        m_sum = (m_sum & TypeMax<std::uint16_t>()) + (m_sum >> 16);
     }
     
-    inline static uint32_t swapBytes (uint32_t x)
+    inline static std::uint32_t swapBytes (std::uint32_t x)
     {
         return ((x >> 8) & UINT32_C(0x00FF00FF)) | ((x << 8) & UINT32_C(0xFF00FF00));
     }
@@ -305,13 +305,13 @@ private:
         bool swapped = false;
         
         do {
-            size_t len = buf.getChunkLength();
+            std::size_t len = buf.getChunkLength();
             
             // Calculate sum of buffer.
-            uint16_t buf_sum = IpChksumInverted(buf.getChunkPtr(), len);
+            std::uint16_t buf_sum = IpChksumInverted(buf.getChunkPtr(), len);
             
             // Add the buffer sum to our sum.
-            uint32_t old_sum = m_sum;
+            std::uint32_t old_sum = m_sum;
             m_sum += buf_sum;
             
             // Fold back any overflow.
@@ -338,8 +338,8 @@ private:
  * 
  * This function calculates the IP checksum of a possibly discontiguous sequence
  * of bytes. It is functionally equivalent to
- * @ref IpChksum(char const *, size_t) except that the sequence of bytes is specified
- * using @ref IpBufRef.
+ * @ref IpChksum(char const *, std::size_t) except that the sequence of bytes is
+ * specified using @ref IpBufRef.
  * 
  * This function is implemented by default-constructing an @ref IpChksumAccumulator
  * then calling @ref IpChksumAccumulator::getChksum(IpBufRef).
@@ -347,7 +347,7 @@ private:
  * @param buf Reference to the sequence of bytes.
  * @return IP checksum.
  */
-inline uint16_t IpChksum (IpBufRef buf)
+inline std::uint16_t IpChksum (IpBufRef buf)
 {
     IpChksumAccumulator accum;
     return accum.getChksum(buf);

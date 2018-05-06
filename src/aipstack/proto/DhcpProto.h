@@ -25,35 +25,35 @@
 #ifndef AIPSTACK_DHCP_PROTO_H
 #define AIPSTACK_DHCP_PROTO_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <aipstack/infra/Struct.h>
 #include <aipstack/ip/IpAddr.h>
 
 namespace AIpStack {
 
-enum class DhcpOp : uint8_t {
+enum class DhcpOp : std::uint8_t {
     BootRequest = 1,
     BootReply = 2,
 };
 
-enum class DhcpHwAddrType : uint8_t {
+enum class DhcpHwAddrType : std::uint8_t {
     Ethernet = 1,
 };
 
-enum class DhcpOptionOverload : uint8_t {
+enum class DhcpOptionOverload : std::uint8_t {
     None = 0, // used internally only
     FileOptions = 1,
     SnameOptions = 2,
     FileSnameOptions = 3,
 };
 
-static uint32_t const DhcpMagicNumber = UINT32_C(0x63825363);
+static std::uint32_t const DhcpMagicNumber = UINT32_C(0x63825363);
 
-static uint16_t const DhcpServerPort = 67;
-static uint16_t const DhcpClientPort = 68;
+static std::uint16_t const DhcpServerPort = 67;
+static std::uint16_t const DhcpClientPort = 68;
 
-enum class DhcpOptionType : uint8_t {
+enum class DhcpOptionType : std::uint8_t {
     Pad = 0,
     End = 255,
     SubnetMask = 1,
@@ -74,7 +74,7 @@ enum class DhcpOptionType : uint8_t {
     ClientIdentifier = 61,
 };
 
-enum class DhcpMessageType : uint8_t {
+enum class DhcpMessageType : std::uint8_t {
     Discover = 1,
     Offer = 2,
     Request = 3,
@@ -87,11 +87,11 @@ enum class DhcpMessageType : uint8_t {
 AIPSTACK_DEFINE_STRUCT(DhcpHeader1,
     (DhcpOp,      AIpStack::DhcpOp)
     (DhcpHtype,   DhcpHwAddrType)
-    (DhcpHlen,    uint8_t)
-    (DhcpHops,    uint8_t)
-    (DhcpXid,     uint32_t)
-    (DhcpSecs,    uint16_t)
-    (DhcpFlags,   uint16_t)
+    (DhcpHlen,    std::uint8_t)
+    (DhcpHops,    std::uint8_t)
+    (DhcpXid,     std::uint32_t)
+    (DhcpSecs,    std::uint16_t)
+    (DhcpFlags,   std::uint16_t)
     (DhcpCiaddr,  Ip4Addr)
     (DhcpYiaddr,  Ip4Addr)
     (DhcpSiaddr,  Ip4Addr)
@@ -105,14 +105,14 @@ AIPSTACK_DEFINE_STRUCT(DhcpHeader2,
 )
 
 AIPSTACK_DEFINE_STRUCT(DhcpHeader3,
-    (DhcpMagic,   uint32_t)
+    (DhcpMagic,   std::uint32_t)
 )
 
-static size_t const DhcpHeaderSize = DhcpHeader1::Size + DhcpHeader2::Size + DhcpHeader3::Size;
+static std::size_t const DhcpHeaderSize = DhcpHeader1::Size + DhcpHeader2::Size + DhcpHeader3::Size;
 
 AIPSTACK_DEFINE_STRUCT(DhcpOptionHeader,
     (OptType,     DhcpOptionType)
-    (OptLen,      uint8_t)
+    (OptLen,      std::uint8_t)
 )
 
 AIPSTACK_DEFINE_STRUCT(DhcpOptMsgType,
@@ -120,15 +120,15 @@ AIPSTACK_DEFINE_STRUCT(DhcpOptMsgType,
 )
 
 AIPSTACK_DEFINE_STRUCT(DhcpOptMaxMsgSize,
-    (MaxMsgSize,  uint16_t)
+    (MaxMsgSize,  std::uint16_t)
 )
 
 AIPSTACK_DEFINE_STRUCT(DhcpOptServerId,
-    (ServerId,    uint32_t)
+    (ServerId,    std::uint32_t)
 )
 
 AIPSTACK_DEFINE_STRUCT(DhcpOptTime,
-    (Time,        uint32_t)
+    (Time,        std::uint32_t)
 )
 
 AIPSTACK_DEFINE_STRUCT(DhcpOptAddr,

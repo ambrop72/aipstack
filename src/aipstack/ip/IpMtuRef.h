@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_IP_MTU_REF_H
 #define AIPSTACK_IP_MTU_REF_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <aipstack/misc/Use.h>
 #include <aipstack/ip/IpAddr.h>
@@ -107,7 +107,7 @@ public:
      * 
      * @param stack The IP stack.
      * @param remote_addr The remote address to observe the PMTU for.
-     * @param iface NULL or the interface though which remote_addr would be
+     * @param iface null or the interface though which remote_addr would be
      *        routed, as an optimization.
      * @param out_pmtu On success, will be set to the current PMTU estimate
      *        (guaranteed to be at least MinMTU). On failure it will not be
@@ -116,7 +116,7 @@ public:
      *         (object remains in not-setup state).
      */
     inline bool setup (IpStack<Arg> *stack, Ip4Addr remote_addr, IpIface<Arg> *iface,
-                       uint16_t &out_pmtu)
+                       std::uint16_t &out_pmtu)
     {
         return MtuRefBaseMtuRef::setup(mtu_cache(stack), remote_addr, iface, out_pmtu);
     }
@@ -165,7 +165,7 @@ protected:
      * 
      * @param pmtu The new PMTU estimate (guaranteed to be at least MinMTU).
      */
-    virtual void pmtuChanged (uint16_t pmtu) = 0;
+    virtual void pmtuChanged (std::uint16_t pmtu) = 0;
     
 private:
     inline static MtuRefPathMtuCache * mtu_cache (IpStack<Arg> *stack)

@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_MODULO_H
 #define AIPSTACK_MODULO_H
 
-#include <stddef.h>
+#include <cstddef>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
@@ -43,7 +43,7 @@ namespace AIpStack {
 class Modulo
 {
 private:
-    size_t const m_modulus;
+    std::size_t const m_modulus;
     
 public:
     /**
@@ -51,7 +51,7 @@ public:
      * 
      * @param modulus The modulus to use (must be greater than zero).
      */
-    inline constexpr Modulo (size_t modulus) :
+    inline constexpr Modulo (std::size_t modulus) :
         m_modulus(modulus)
     {}
     
@@ -60,7 +60,7 @@ public:
      * 
      * @return The modulus.
      */
-    inline constexpr size_t modulus () const
+    inline constexpr std::size_t modulus () const
     {
         return m_modulus;
     }
@@ -76,7 +76,7 @@ public:
      * @param b Second operand.
      * @return (a + b) mod modulus, assuming the preconditions are satisifed.
      */
-    inline constexpr size_t add (size_t a, size_t b) const
+    inline constexpr std::size_t add (std::size_t a, std::size_t b) const
     {
         return (b < m_modulus - a) ? (a + b) : (b - (m_modulus - a));
     }
@@ -92,7 +92,7 @@ public:
      * @param b Second operand.
      * @return (a - b) mod modulus, assuming the preconditions are satisifed.
      */
-    inline constexpr size_t sub (size_t a, size_t b) const
+    inline constexpr std::size_t sub (std::size_t a, std::size_t b) const
     {
         return (b <= a) ? (a - b) : (m_modulus - (b - a));
     }
@@ -106,9 +106,9 @@ public:
      * @param a Operand.
      * @return (a + 1) mod modulus, assuming the preconditions are satisifed.
      */
-    inline constexpr size_t inc (size_t a) const
+    inline constexpr std::size_t inc (std::size_t a) const
     {
-        size_t r = a + 1;
+        std::size_t r = a + 1;
         if (r == m_modulus) {
             r = 0;
         }
@@ -132,7 +132,7 @@ public:
      * @param a Operand.
      * @return (modulus - a), assuming the preconditions are satisifed.
      */
-    inline constexpr size_t modulusComplement (size_t a) const
+    inline constexpr std::size_t modulusComplement (std::size_t a) const
     {
         return m_modulus - a;
     }

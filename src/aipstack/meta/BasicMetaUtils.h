@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_BASIC_META_UTILS_H
 #define AIPSTACK_BASIC_META_UTILS_H
 
-#include <stddef.h>
+#include <cstddef>
 
 namespace AIpStack {
 
@@ -56,8 +56,8 @@ using WrapBool = WrapValue<bool, Value>;
 template <int Value>
 using WrapInt = WrapValue<int, Value>;
 
-template <size_t Value>
-using WrapSize = WrapValue<size_t, Value>;
+template <std::size_t Value>
+using WrapSize = WrapValue<std::size_t, Value>;
 
 // GetReturnType
 

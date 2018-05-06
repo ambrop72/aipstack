@@ -1,5 +1,5 @@
 
-#include <stddef.h>
+#include <cstddef>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Modulo.h>
@@ -9,10 +9,10 @@ using namespace AIpStack;
 
 static constexpr Modulo Mod = Modulo(10);
 
-void test_with_offset(size_t off)
+void test_with_offset(std::size_t off)
 {
     char buffer[Mod.modulus()];
-    for (size_t i = 0; i < Mod.modulus(); i++) {
+    for (std::size_t i = 0; i < Mod.modulus(); i++) {
         buffer[Mod.add(off, i)] = '0' + i;
     }
 
@@ -83,7 +83,7 @@ void test_with_offset(size_t off)
 
 int main (int argc, char *argv[])
 {
-    for (size_t i = 0; i < Mod.modulus(); i++) {
+    for (std::size_t i = 0; i < Mod.modulus(); i++) {
         test_with_offset(i);
     }
     return 0;

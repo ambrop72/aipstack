@@ -25,9 +25,8 @@
 #ifndef AIPSTACK_IP_ADDR_H
 #define AIPSTACK_IP_ADDR_H
 
-#include <stdint.h>
-#include <stddef.h>
-
+#include <cstdint>
+#include <cstddef>
 #include <type_traits>
 
 #include <aipstack/misc/Assert.h>
@@ -35,14 +34,14 @@
 
 namespace AIpStack {
 
-template <typename AddrType, typename ElemType, size_t Length>
+template <typename AddrType, typename ElemType, std::size_t Length>
 class IpGenericAddr : public StructIntArray<ElemType, Length>
 {
     static_assert(std::is_unsigned<ElemType>::value, "");
     
 public:
-    static size_t const Bits      = 8 * IpGenericAddr::Size;
-    static size_t const ElemBits  = 8 * IpGenericAddr::ElemSize;
+    static std::size_t const Bits      = 8 * IpGenericAddr::Size;
+    static std::size_t const ElemBits  = 8 * IpGenericAddr::ElemSize;
     
 public:
     static inline constexpr AddrType ZeroAddr ()
@@ -53,19 +52,19 @@ public:
     static inline constexpr AddrType AllOnesAddr ()
     {
         AddrType res_addr = {};
-        for (size_t i = 0; i < Length; i++) {
+        for (std::size_t i = 0; i < Length; i++) {
             res_addr.data[i] = ElemType(-1);
         }
         return res_addr;
     }
     
-    static AddrType PrefixMask (size_t prefix_bits)
+    static AddrType PrefixMask (std::size_t prefix_bits)
     {
         AIPSTACK_ASSERT(prefix_bits <= Bits)
         
         AddrType res_addr;
-        size_t elem_idx = 0;
-        size_t bits_left = prefix_bits;
+        std::size_t elem_idx = 0;
+        std::size_t bits_left = prefix_bits;
         
         while (bits_left >= ElemBits) {
             res_addr.data[elem_idx++] = ElemType(-1);
@@ -84,14 +83,14 @@ public:
         return res_addr;
     }
     
-    template <size_t PrefixBits>
+    template <std::size_t PrefixBits>
     static constexpr AddrType PrefixMask ()
     {
         static_assert(PrefixBits <= Bits, "");
         
         AddrType res_addr = {};
-        size_t elem_idx = 0;
-        size_t bits_left = PrefixBits;
+        std::size_t elem_idx = 0;
+        std::size_t bits_left = PrefixBits;
         
         while (bits_left >= ElemBits) {
             res_addr.data[elem_idx++] = ElemType(-1);
@@ -110,12 +109,12 @@ public:
         return res_addr;
     }
     
-    static constexpr AddrType FromBytes (uint8_t const bytes[IpGenericAddr::Size])
+    static constexpr AddrType FromBytes (std::uint8_t const bytes[IpGenericAddr::Size])
     {
         AddrType addr = {};
-        size_t byte_idx = 0;
-        for (size_t elem_idx = 0; elem_idx < Length; elem_idx++) {
-            for (size_t i = 0; i < IpGenericAddr::ElemSize; i++) {
+        std::size_t byte_idx = 0;
+        for (std::size_t elem_idx = 0; elem_idx < Length; elem_idx++) {
+            for (std::size_t i = 0; i < IpGenericAddr::ElemSize; i++) {
                 addr.data[elem_idx] |=
                     ElemType(bytes[byte_idx]) << (8 * (IpGenericAddr::ElemSize - 1 - i));
                 byte_idx++;
@@ -144,7 +143,7 @@ public:
     constexpr AddrType bitwiseOp (IpGenericAddr const &other, Func func) const
     {
         AddrType res = {};
-        for (size_t i = 0; i < Length; i++) {
+        for (std::size_t i = 0; i < Length; i++) {
             res.data[i] = func(this->data[i], other.data[i]);
         }
         return res;
@@ -154,7 +153,7 @@ public:
     constexpr AddrType bitwiseOp (Func func) const
     {
         AddrType res = {};
-        for (size_t i = 0; i < Length; i++) {
+        for (std::size_t i = 0; i < Length; i++) {
             res.data[i] = func(this->data[i]);
         }
         return res;
@@ -175,12 +174,14 @@ public:
         return bitwiseOp([](ElemType x) { return ~x; });
     }
     
-    constexpr size_t countLeadingOnes () const
+    constexpr std::size_t countLeadingOnes () const
     {
-        size_t leading_ones = 0;
-        for (size_t elem_idx = 0; elem_idx < Length; elem_idx++) {
+        std::size_t leading_ones = 0;
+        for (std::size_t elem_idx = 0; elem_idx < Length; elem_idx++) {
             ElemType elem = this->data[elem_idx];
-            for (size_t bit_idx = ElemBits - 1; bit_idx != size_t(-1); bit_idx--) {
+            for (std::size_t bit_idx = ElemBits - 1;
+                 bit_idx != std::size_t(-1); bit_idx--)
+            {
                 if ((elem & (ElemType(1) << bit_idx)) == 0) {
                     return leading_ones;
                 }
@@ -190,27 +191,28 @@ public:
         return leading_ones;
     }
 
-    template <size_t ByteIndex>
-    constexpr uint8_t getByte () const
+    template <std::size_t ByteIndex>
+    constexpr std::uint8_t getByte () const
     {
         static_assert(ByteIndex < IpGenericAddr::Size, "");
 
-        size_t elem_idx = ByteIndex / IpGenericAddr::ElemSize;
-        size_t elem_byte_idx = ByteIndex % IpGenericAddr::ElemSize;
+        std::size_t elem_idx = ByteIndex / IpGenericAddr::ElemSize;
+        std::size_t elem_byte_idx = ByteIndex % IpGenericAddr::ElemSize;
 
         ElemType elem = this->data[elem_idx];
         return (elem >> (8 * (IpGenericAddr::ElemSize - 1 - elem_byte_idx))) & 0xFF;
     }
 };
 
-class Ip4Addr : public IpGenericAddr<Ip4Addr, uint32_t, 1>
+class Ip4Addr : public IpGenericAddr<Ip4Addr, std::uint32_t, 1>
 {
 public:
     using IpGenericAddr::FromBytes;
     
-    static constexpr Ip4Addr FromBytes (uint8_t n1, uint8_t n2, uint8_t n3, uint8_t n4)
+    static constexpr Ip4Addr FromBytes (
+        std::uint8_t n1, std::uint8_t n2, std::uint8_t n3, std::uint8_t n4)
     {
-        uint8_t bytes[] = {n1, n2, n3, n4};
+        std::uint8_t bytes[] = {n1, n2, n3, n4};
         return IpGenericAddr::FromBytes(bytes);
     }
 
@@ -243,7 +245,7 @@ struct Ip4Addrs {
 /**
  * Unsigned 16-bit integer type used for port numbers.
  */
-using PortNum = uint16_t;
+using PortNum = std::uint16_t;
 
 }
 

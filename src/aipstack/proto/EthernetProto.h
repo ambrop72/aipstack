@@ -25,8 +25,8 @@
 #ifndef AIPSTACK_ETHERNET_PROTO_H
 #define AIPSTACK_ETHERNET_PROTO_H
 
-#include <stdint.h>
-#include <stddef.h>
+#include <cstdint>
+#include <cstddef>
 
 #include <aipstack/infra/Struct.h>
 
@@ -43,14 +43,14 @@ public:
     static inline constexpr MacAddr BroadcastAddr ()
     {
         MacAddr result = {};
-        for (size_t i = 0; i < MacAddr::Size; i++) {
+        for (std::size_t i = 0; i < MacAddr::Size; i++) {
             result.data[i] = 0xFF;
         }
         return result;
     }
     
-    static inline constexpr MacAddr Make (uint8_t b1, uint8_t b2, uint8_t b3,
-                                          uint8_t b4, uint8_t b5, uint8_t b6)
+    static inline constexpr MacAddr Make (std::uint8_t b1, std::uint8_t b2, std::uint8_t b3,
+                                          std::uint8_t b4, std::uint8_t b5, std::uint8_t b6)
     {
         MacAddr result = {};
         result.data[0] = b1;
@@ -71,11 +71,11 @@ public:
 AIPSTACK_DEFINE_STRUCT(EthHeader,
     (DstMac,  MacAddr)
     (SrcMac,  MacAddr)
-    (EthType, uint16_t)
+    (EthType, std::uint16_t)
 )
 
-static uint16_t const EthTypeIpv4 = UINT16_C(0x0800);
-static uint16_t const EthTypeArp  = UINT16_C(0x0806);
+static std::uint16_t const EthTypeIpv4 = UINT16_C(0x0800);
+static std::uint16_t const EthTypeArp  = UINT16_C(0x0806);
 
 }
 

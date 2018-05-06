@@ -25,9 +25,9 @@
 #ifndef AIPSTACK_STRUCT_H
 #define AIPSTACK_STRUCT_H
 
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 
 #include <type_traits>
 
@@ -57,8 +57,8 @@ namespace AIpStack {
  * 
  * ```
  * AIPSTACK_DEFINE_STRUCT(MyHeader,
- *     (FieldA, uint32_t)
- *     (FieldB, uint64_t)
+ *     (FieldA, std::uint32_t)
+ *     (FieldB, std::uint64_t)
  * )
  * ```
  * 
@@ -66,10 +66,10 @@ namespace AIpStack {
  * 
  * ```
  * struct MyHeader : public AIpStack::StructBase<MyHeader> {
- *      struct FieldA : public AIpStack::StructField<uint32_t> {};
- *      struct FieldB : public AIpStack::StructField<uint64_t> {};
+ *      struct FieldA : public AIpStack::StructField<std::uint32_t> {};
+ *      struct FieldB : public AIpStack::StructField<std::uint64_t> {};
  *      using StructFields = AIpStack::MakeTypeList<FieldA, FieldB>;
- *      static size_t const Size = MyHeader::GetStructSize();
+ *      static std::size_t const Size = MyHeader::GetStructSize();
  * };
  * ```
  * 
@@ -97,8 +97,8 @@ namespace AIpStack {
  * {
  *     MyHeader::Ref ref = MyHeader::MakeRef(data);
  *     // Each get call directly reads from 'data'.
- *     uint32_t a = ref.get(MyHeader::FieldA());
- *     uint64_t b = ref.get(MyHeader::FieldB());
+ *     std::uint32_t a = ref.get(MyHeader::FieldA());
+ *     std::uint64_t b = ref.get(MyHeader::FieldB());
  * }
  * ```
  * 
@@ -125,9 +125,9 @@ namespace AIpStack {
  *   @ref StructIntArray\<T, Length\>. Big-endian byte order is used. The `get` and `set`
  *   operations use this @ref StructIntArray type, which contains the
  *   @ref StructIntArray::data array. The `ref` operation is not available, except when
- *   T is `uint8_t` (see below).
+ *   T is `std::uint8_t` (see below).
  * - Fixed-length byte arrays, using field type @ref StructByteArray\<Length\>. This is
- *   actually a type alias for @ref StructIntArray\<uint8_t, Length\>, but the `ref`
+ *   actually a type alias for @ref StructIntArray\<std::uint8_t, Length\>, but the `ref`
  *   operation is also available, which returns a `char *` pointing to the field contents.
  * - Any trivial type T (as defined by `std::is_trivial<T>`) using its native
  *   representation, when using field type @ref StructRawField\<T\>. The `get` and `set`
@@ -151,7 +151,7 @@ namespace AIpStack {
  * defines the handler class for the field type(s).
  * 
  * The handler class must have the following definitions:
- * - `static size_t const FieldSize`: Number of bytes in the byte representation.
+ * - `static std::size_t const FieldSize`: Number of bytes in the byte representation.
  * - `using ValType`: Type alias defining the value type for the `get` and `set` operations.
  * - `static ValType get (char const *data)`: Function which decodes a byte representation
  *   into a value.
@@ -241,7 +241,7 @@ class StructBase {
     
     template <typename Dummy>
     struct FieldInfo<-1, Dummy> {
-        static size_t const PartialStructSize = 0;
+        static std::size_t const PartialStructSize = 0;
     };
     
     template <int FieldIndex, typename Dummy>
@@ -251,8 +251,8 @@ class StructBase {
         
         using Handler = StructFieldHandler<typename Field::StructFieldType>;
         using ValType = typename Handler::ValType;
-        static size_t const FieldOffset = PrevFieldInfo::PartialStructSize;
-        static size_t const PartialStructSize = FieldOffset + Handler::FieldSize;
+        static std::size_t const FieldOffset = PrevFieldInfo::PartialStructSize;
+        static std::size_t const PartialStructSize = FieldOffset + Handler::FieldSize;
     };
     
     template <typename Field, typename This=StructBase>
@@ -292,7 +292,7 @@ public:
      * 
      * @return Structure size.
      */
-    inline static constexpr size_t GetStructSize () 
+    inline static constexpr std::size_t GetStructSize () 
     {
         return LastFieldInfo<>::PartialStructSize;
     }
@@ -304,7 +304,7 @@ public:
      * @return Field offset from the start of the structure in bytes.
      */
     template <typename Field>
-    inline static size_t getOffset (Field)
+    inline static std::size_t getOffset (Field)
     {
         using Info = GetFieldInfo<Field>;
         return Info::FieldOffset;
@@ -375,7 +375,7 @@ public:
     inline static Val MakeVal (char const *data)
     {
         Val val;
-        memcpy(val.data, data, GetStructSize());
+        std::memcpy(val.data, data, GetStructSize());
         return val;
     }
     
@@ -395,7 +395,7 @@ public:
         /**
          * The size of the structure.
          */
-        static constexpr size_t Size () { return GetStructSize(); }
+        static constexpr std::size_t Size () { return GetStructSize(); }
     };
     
     /**
@@ -554,7 +554,7 @@ public:
          */
         inline void load (Ref src) const
         {
-            memcpy(data, src.data, GetStructSize());
+            std::memcpy(data, src.data, GetStructSize());
         }
         
     public:
@@ -612,7 +612,7 @@ struct StructName : public AIpStack::StructBase<StructName> { \
     using StructFields = AIpStack::MakeTypeList< \
         AIPSTACK_DEFINE_STRUCT_ADD_END(AIPSTACK_DEFINE_STRUCT_LIST_0 Fields) \
     >; \
-    static size_t const Size = StructName::GetStructSize(); \
+    static std::size_t const Size = StructName::GetStructSize(); \
 };
 #endif
 
@@ -645,7 +645,7 @@ class StructBinaryTypeHandler {
     using Endian = BinaryBigEndian;
     
 public:
-    static size_t const FieldSize = sizeof(IntType);
+    static std::size_t const FieldSize = sizeof(IntType);
     
     using ValType = Type;
     
@@ -666,19 +666,19 @@ struct StructTypeHandler<Type, std::enable_if_t<AIpStack::IsSameOrEnumWithBaseTy
     using Handler = AIpStack::StructBinaryTypeHandler<Type>; \
 };
 
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(uint8_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(uint16_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(uint32_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(uint64_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(int8_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(int16_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(int32_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(int64_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::uint8_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::uint16_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::uint32_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::uint64_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::int8_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::int16_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::int32_t)
+AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::int64_t)
 
 template <typename StructType>
 class StructNestedTypeHandler {
 public:
-    static size_t const FieldSize = StructType::GetStructSize();
+    static std::size_t const FieldSize = StructType::GetStructSize();
     
     using ValType = typename StructType::Val;
     using RefType = typename StructType::Ref;
@@ -690,7 +690,7 @@ public:
     
     inline static void set (char *data, ValType value)
     {
-        memcpy(data, value.data, sizeof(value.data));
+        std::memcpy(data, value.data, sizeof(value.data));
     }
     
     inline static RefType ref (char *data)
@@ -716,7 +716,7 @@ struct StructTypeHandler<Type, std::enable_if_t<std::is_base_of<StructBase<Type>
  *         @ref WriteBinaryInt.
  * @tparam Length_ Number of elements in the array.
  */
-template <typename ElemType_, size_t Length_>
+template <typename ElemType_, std::size_t Length_>
 class StructIntArray {
 public:
     /**
@@ -727,17 +727,17 @@ public:
     /**
      * Size of an encoded element in bytes.
      */
-    static size_t const ElemSize = sizeof(ElemType);
+    static std::size_t const ElemSize = sizeof(ElemType);
     
     /**
      * Number of elements in the array.
      */
-    static size_t const Length = Length_;
+    static std::size_t const Length = Length_;
     
     /**
      * Size of an encoded array in bytes.
      */
-    static size_t const Size = Length * ElemSize;
+    static std::size_t const Size = Length * ElemSize;
     
     /**
      * Decode a sequence of bytes into a @ref AIpStack::StructIntArray "StructIntArray" or
@@ -758,7 +758,7 @@ public:
         static_assert(std::is_base_of<StructIntArray, ResType>::value, "");
         
         ResType result;
-        for (size_t i = 0; i < Length; i++) {
+        for (std::size_t i = 0; i < Length; i++) {
             result.StructIntArray::data[i] = ReadBinaryInt<ElemType, BinaryBigEndian>(bytes + i * ElemSize);
         }
         return result;
@@ -788,7 +788,7 @@ public:
      */
     inline void encode (char *bytes) const
     {
-        for (size_t i = 0; i < Length; i++) {
+        for (std::size_t i = 0; i < Length; i++) {
             WriteBinaryInt<ElemType, BinaryBigEndian>(data[i], bytes + i * ElemSize);
         }
     }
@@ -801,7 +801,7 @@ public:
      */
     inline constexpr bool operator== (StructIntArray const &other) const
     {
-        for (size_t i = 0; i < Length; i++) {
+        for (std::size_t i = 0; i < Length; i++) {
             if (data[i] != other.data[i]) {
                 return false;
             }
@@ -828,7 +828,7 @@ public:
      */
     inline constexpr bool operator< (StructIntArray const &other) const
     {
-        for (size_t i = 0; i < Length; i++) {
+        for (std::size_t i = 0; i < Length; i++) {
             if (data[i] < other.data[i]) {
                 return true;
             }
@@ -880,19 +880,19 @@ public:
 };
 
 /**
- * A type containing an array of bytes (uint8_t).
+ * A type containing an array of bytes (std::uint8_t).
  * 
- * This is just an alias for @ref StructIntArray\<uint8_t, Length\>;
+ * This is just an alias for @ref StructIntArray\<std::uint8_t, Length\>;
  */
-template <size_t Length>
-using StructByteArray = StructIntArray<uint8_t, Length>;
+template <std::size_t Length>
+using StructByteArray = StructIntArray<std::uint8_t, Length>;
 
 #ifndef IN_DOXYGEN
 
 template <typename TValType>
 class StructIntArrayTypeHandler {
 public:
-    static size_t const FieldSize = TValType::Size;
+    static std::size_t const FieldSize = TValType::Size;
     
     using ValType = TValType;
     
@@ -910,7 +910,7 @@ public:
 template <typename TValType>
 class StructByteArrayTypeHandler {
 public:
-    static size_t const FieldSize = TValType::Size;
+    static std::size_t const FieldSize = TValType::Size;
     
     using ValType = TValType;
     using RefType = char *;
@@ -918,13 +918,13 @@ public:
     inline static ValType get (char const *data)
     {
         ValType value;
-        memcpy(value.data, data, ValType::Size);
+        std::memcpy(value.data, data, ValType::Size);
         return value;
     }
     
     inline static void set (char *data, ValType value)
     {
-        memcpy(data, value.data, ValType::Size);
+        std::memcpy(data, value.data, ValType::Size);
     }
     
     inline static RefType ref (char *data)
@@ -947,20 +947,20 @@ class StructRawTypeHandler {
 public:
     static_assert(std::is_trivial<Type>::value, "");
     
-    static size_t const FieldSize = sizeof(Type);
+    static std::size_t const FieldSize = sizeof(Type);
     
     using ValType = Type;
     
     inline static ValType get (char const *data)
     {
         Type value;
-        ::memcpy(&value, data, sizeof(value));
+        std::memcpy(&value, data, sizeof(value));
         return value;
     }
     
     inline static void set (char *data, ValType value)
     {
-        ::memcpy(data, &value, sizeof(value));
+        std::memcpy(data, &value, sizeof(value));
     }
 };
 

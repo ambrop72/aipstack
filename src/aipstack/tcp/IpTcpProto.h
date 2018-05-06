@@ -25,10 +25,8 @@
 #ifndef AIPSTACK_IP_TCP_PROTO_H
 #define AIPSTACK_IP_TCP_PROTO_H
 
-#include <stddef.h>
-#include <stdint.h>
-#include <limits.h>
-
+#include <cstddef>
+#include <cstdint>
 #include <type_traits>
 
 #include <aipstack/infra/Instance.h>
@@ -107,7 +105,7 @@ class IpTcpProto :
     struct TcpPcb;
     
     // PCB flags, see flags in TcpPcb.
-    using FlagsType = uint16_t;
+    using FlagsType = std::uint16_t;
     struct PcbFlags { enum : FlagsType {
         // ACK is needed; used in input processing
         ACK_PENDING = FlagsType(1) << 0,
@@ -180,7 +178,7 @@ class IpTcpProto :
         // MTU and the MTU option provided by the peer.
         // In the SYN_SENT state this is set based on the interface MTU and
         // the calculation is completed at the transition to ESTABLISHED.
-        uint16_t base_snd_mss;
+        std::uint16_t base_snd_mss;
     };
     
     /**
@@ -269,24 +267,24 @@ class IpTcpProto :
         // Due to invariants and other requirements associated with snd_mss,
         // fixups must be performed when snd_mss is changed, specifically of
         // ssthresh, cwnd and rtx_timer (see pcb_pmtu_changed).
-        uint16_t snd_mss;
+        std::uint16_t snd_mss;
         
         // NOTE: The following 5 fields are uint32_t to encourage compilers
         // to pack them into a single 32-bit word, if they were narrower
         // they may be packed less efficiently.
         
         // Flags (see comments in PcbFlags).
-        uint32_t flags : 14;
+        std::uint32_t flags : 14;
         
         // PCB state.
-        uint32_t state : TcpUtils::TcpStateBits;
+        std::uint32_t state : TcpUtils::TcpStateBits;
         
         // Number of duplicate ACKs (>=FastRtxDupAcks means we're in fast recovery).
-        uint32_t num_dupack : Constants::DupAckBits;
+        std::uint32_t num_dupack : Constants::DupAckBits;
         
         // Window shift values.
-        uint32_t snd_wnd_shift : 4;
-        uint32_t rcv_wnd_shift : 4;
+        std::uint32_t snd_wnd_shift : 4;
+        std::uint32_t rcv_wnd_shift : 4;
         
         // Convenience functions for flags.
         inline bool hasFlag (FlagsType flag) { return (flags & flag) != 0; }
@@ -705,7 +703,7 @@ private:
     }
     
     IpErr create_connection (Connection *con, TcpStartConnectionArgs<Arg> const &args,
-                             uint16_t pmtu, TcpPcb **out_pcb)
+                             std::uint16_t pmtu, TcpPcb **out_pcb)
     {
         AIPSTACK_ASSERT(con != nullptr)
         AIPSTACK_ASSERT(con->mtu_ref().isSetup())
@@ -713,7 +711,7 @@ private:
 
         Ip4Addr remote_addr = args.addr;
         PortNum remote_port = args.port;
-        size_t user_rcv_wnd = args.rcv_wnd;
+        std::size_t user_rcv_wnd = args.rcv_wnd;
         
         // Determine the interface and local IP address.
         IpIface<StackArg> *iface;
@@ -730,7 +728,7 @@ private:
         }
         
         // Calculate the MSS based on the interface MTU.
-        uint16_t iface_mss = iface->getMtu() - Ip4TcpHeaderSize;
+        std::uint16_t iface_mss = iface->getMtu() - Ip4TcpHeaderSize;
         
         // Allocate the PCB.
         TcpPcb *pcb = allocate_pcb();
@@ -751,7 +749,7 @@ private:
         // at most 16-bit wide since SYN segments have unscaled window.
         // NOTE: rcv_ann_wnd after SYN-ACKSYN reception (-1) fits into size_t
         // as required since user_rcv_wnd is size_t.
-        SeqType rcv_wnd = 1 + MinValueU(uint16_t(TypeMax<uint16_t>() - 1), user_rcv_wnd);
+        SeqType rcv_wnd = 1 + MinValueU(std::uint16_t(TypeMax<std::uint16_t>() - 1), user_rcv_wnd);
         
         // Initialize most of the PCB.
         pcb->state = TcpState::SYN_SENT;
@@ -906,11 +904,11 @@ private:
 };
 
 struct IpTcpProtoOptions {
-    AIPSTACK_OPTION_DECL_VALUE(TcpTTL, uint8_t, 64)
+    AIPSTACK_OPTION_DECL_VALUE(TcpTTL, std::uint8_t, 64)
     AIPSTACK_OPTION_DECL_VALUE(NumTcpPcbs, int, 32)
-    AIPSTACK_OPTION_DECL_VALUE(NumOosSegs, uint8_t, 4)
-    AIPSTACK_OPTION_DECL_VALUE(EphemeralPortFirst, uint16_t, 49152)
-    AIPSTACK_OPTION_DECL_VALUE(EphemeralPortLast, uint16_t, 65535)
+    AIPSTACK_OPTION_DECL_VALUE(NumOosSegs, std::uint8_t, 4)
+    AIPSTACK_OPTION_DECL_VALUE(EphemeralPortFirst, std::uint16_t, 49152)
+    AIPSTACK_OPTION_DECL_VALUE(EphemeralPortLast, std::uint16_t, 65535)
     AIPSTACK_OPTION_DECL_TYPE(PcbIndexService, void)
     AIPSTACK_OPTION_DECL_VALUE(LinkWithArrayIndices, bool, true)
 };
@@ -930,7 +928,7 @@ class IpTcpProtoService {
     
 public:
     // This tells IpStack which IP protocol we receive packets for.
-    using IpProtocolNumber = WrapValue<uint8_t, Ip4ProtocolTcp>;
+    using IpProtocolNumber = WrapValue<std::uint8_t, Ip4ProtocolTcp>;
     
 #ifndef IN_DOXYGEN
     template <typename PlatformImpl_, typename StackArg_>

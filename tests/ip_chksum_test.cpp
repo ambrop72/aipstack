@@ -1,10 +1,9 @@
 
-#include <stddef.h>
-#include <limits.h>
-#include <stdio.h>
-#include <inttypes.h>
-#include <string.h>
-
+#include <cstddef>
+#include <cstring>
+#include <cstdio>
+#include <cinttypes>
+#include <limits>
 #include <random>
 #include <algorithm>
 #include <functional>
@@ -15,9 +14,9 @@
 using namespace AIpStack;
 
 using random_bytes_engine = std::independent_bits_engine<
-    std::mt19937, CHAR_BIT, unsigned char>;
+    std::mt19937, std::numeric_limits<unsigned char>::digits, unsigned char>;
 
-static size_t const BufSize = 101;
+static std::size_t const BufSize = 101;
 static int const Iterations = 10000000;
 
 int main ()
@@ -39,19 +38,19 @@ int main ()
     //    folded into the sum, to become 0x000000ff.
     {
         char data[1023];
-        ::memset(data, 0xFF, sizeof(data));
+        std::memset(data, 0xFF, sizeof(data));
         
         int const NumNodes = 512;
         IpBufNode node[NumNodes];
         for (int i = 0; i < NumNodes; i++) {
-            size_t buf_size = (i == 255) ? 1: 2;
+            std::size_t buf_size = (i == 255) ? 1: 2;
             IpBufNode *next = (i == NumNodes - 1) ? nullptr : &node[i + 1];
             node[i] = {data, buf_size, next};
         }
         
-        uint16_t chksum = IpChksum(IpBufRef{&node[0], 0, 1023});
+        std::uint16_t chksum = IpChksum(IpBufRef{&node[0], 0, 1023});
         
-        uint16_t good_chksum = IpChksum(data, 1023);
+        std::uint16_t good_chksum = IpChksum(data, 1023);
         AIPSTACK_ASSERT_FORCE(chksum == good_chksum)
         AIPSTACK_ASSERT_FORCE(chksum == 0xFF)
     }
@@ -60,40 +59,40 @@ int main ()
     
     for (int iter = 0; iter < Iterations; iter++) {
         std::generate(buf, buf+BufSize, std::ref(rbe));
-        uint16_t good_chksum = IpChksum(buf, BufSize);
+        std::uint16_t good_chksum = IpChksum(buf, BufSize);
         
-        size_t break_poss[] = {BufSize/3, BufSize/3+1, BufSize/2, BufSize/2+1};
+        std::size_t break_poss[] = {BufSize/3, BufSize/3+1, BufSize/2, BufSize/2+1};
         int const num_break_pos = 4;
         
         IpBufNode node[4];
         
         for (int break1 = 0; break1 < num_break_pos; break1++) {
-            size_t break1_pos = break_poss[break1];
+            std::size_t break1_pos = break_poss[break1];
             
             node[0] = {buf, break1_pos, &node[1]};
             node[1] = {buf+break1_pos, BufSize-break1_pos, nullptr};
-            uint16_t chksum = IpChksum(IpBufRef{&node[0], 0, BufSize});
+            std::uint16_t chksum = IpChksum(IpBufRef{&node[0], 0, BufSize});
             AIPSTACK_ASSERT_FORCE(chksum == good_chksum)
             
             for (int break2 = break1+1; break2 < num_break_pos; break2++) {
-                size_t break2_pos = break_poss[break2];
+                std::size_t break2_pos = break_poss[break2];
                 AIPSTACK_ASSERT_FORCE(break2_pos > break1_pos)
                 
                 node[0] = {buf, break1_pos, &node[1]};
                 node[1] = {buf+break1_pos, break2_pos-break1_pos, &node[2]};
                 node[2] = {buf+break2_pos, BufSize-break2_pos, nullptr};
-                uint16_t chksum = IpChksum(IpBufRef{&node[0], 0, BufSize});
+                std::uint16_t chksum = IpChksum(IpBufRef{&node[0], 0, BufSize});
                 AIPSTACK_ASSERT_FORCE(chksum == good_chksum)
                 
                 for (int break3 = break2+1; break3 < num_break_pos; break3++) {
-                    size_t break3_pos = break_poss[break3];
+                    std::size_t break3_pos = break_poss[break3];
                     AIPSTACK_ASSERT_FORCE(break3_pos > break2_pos)
                     
                     node[0] = {buf, break1_pos, &node[1]};
                     node[1] = {buf+break1_pos, break2_pos-break1_pos, &node[2]};
                     node[2] = {buf+break2_pos, break3_pos-break2_pos, &node[3]};
                     node[3] = {buf+break3_pos, BufSize-break3_pos, nullptr};
-                    uint16_t chksum = IpChksum(IpBufRef{&node[0], 0, BufSize});
+                    std::uint16_t chksum = IpChksum(IpBufRef{&node[0], 0, BufSize});
                     AIPSTACK_ASSERT_FORCE(chksum == good_chksum)
                 }
             }

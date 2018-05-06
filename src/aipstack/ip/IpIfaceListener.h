@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_IP_IFACE_LISTENER_H
 #define AIPSTACK_IP_IFACE_LISTENER_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/Function.h>
@@ -87,7 +87,7 @@ public:
      * @param ip4_handler Callback function to which matching received datagrams
      *        will be passed (must not be null).
      */
-    IpIfaceListener (IpIface<Arg> *iface, uint8_t proto, Ip4DgramHandler ip4_handler) :
+    IpIfaceListener (IpIface<Arg> *iface, std::uint8_t proto, Ip4DgramHandler ip4_handler) :
         m_iface(iface),
         m_proto(proto),
         m_ip4_handler(ip4_handler)
@@ -116,7 +116,7 @@ public:
 private:
     LinkedListNode<typename IpStack<Arg>::IfaceListenerLinkModel> m_list_node;
     IpIface<Arg> *m_iface;
-    uint8_t m_proto;
+    std::uint8_t m_proto;
     Ip4DgramHandler m_ip4_handler;
 };
 

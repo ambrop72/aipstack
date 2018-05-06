@@ -25,9 +25,9 @@
 #ifndef AIPSTACK_IP_DHCP_CLIENT_H
 #define AIPSTACK_IP_DHCP_CLIENT_H
 
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
@@ -230,7 +230,7 @@ class IpDhcpClient final :
     // Message text to include in the DECLINE response if the address
     // was not used due to an ARP response (defined outside of class).
     static constexpr char const DeclineMessageArpResponse[] = "ArpResponse";
-    static uint8_t const MaxMessageSize = sizeof(DeclineMessageArpResponse) - 1;
+    static std::uint8_t const MaxMessageSize = sizeof(DeclineMessageArpResponse) - 1;
     
     // Instatiate the options class with needed configuration.
     using Options = IpDhcpOptions<
@@ -264,26 +264,28 @@ class IpDhcpClient final :
     // due to limited span of TimeType. For possibly longer periods
     // (start of renewal, lease timeout), multiple timer expirations
     // are used with keeping track of leftover seconds.
-    static uint32_t const MaxTimerSeconds = MinValueU(
-        TypeMax<uint32_t>(),
+    static std::uint32_t const MaxTimerSeconds = MinValueU(
+        TypeMax<std::uint32_t>(),
         Platform::WorkingTimeSpanTicks / TimeType(Platform::TimeFreq));
     
     static_assert(MaxTimerSeconds >= 255, "");
     
     // Determines the default renewal time if the server did not specify it.
-    static constexpr uint32_t DefaultRenewTimeForLeaseTime (uint32_t lease_time_s)
+    static constexpr std::uint32_t DefaultRenewTimeForLeaseTime (std::uint32_t lease_time_s)
     {
         return lease_time_s / 2;
     }
     
     // Determines the default rebinding time if the server did not specify it.
-    static constexpr uint32_t DefaultRebindingTimeForLeaseTime (uint32_t lease_time_s)
+    static constexpr std::uint32_t DefaultRebindingTimeForLeaseTime (
+        std::uint32_t lease_time_s)
     {
-        return uint32_t(uint64_t(lease_time_s) * 7 / 8);
+        return std::uint32_t(std::uint64_t(lease_time_s) * 7 / 8);
     }
     
     // Maximum UDP data size that we could possibly transmit.
-    static size_t const MaxDhcpSendMsgSize = DhcpHeaderSize + Options::MaxOptionsSendSize;
+    static std::size_t const MaxDhcpSendMsgSize =
+        DhcpHeaderSize + Options::MaxOptionsSendSize;
 
     static_assert(MaxDhcpSendMsgSize <= MaxUdpDataLenIp4, "");
     
@@ -297,17 +299,17 @@ public:
     struct LeaseInfo {
         // These two are set already when the offer is received.
         Ip4Addr ip_address; // in LinkDown defines the address to reboot with or none
-        uint32_t dhcp_server_identifier;
+        std::uint32_t dhcp_server_identifier;
         
         // The rest are set when the ack is received.
         Ip4Addr dhcp_server_addr;
-        uint32_t lease_time_s;
-        uint32_t renewal_time_s;
-        uint32_t rebinding_time_s;
+        std::uint32_t lease_time_s;
+        std::uint32_t renewal_time_s;
+        std::uint32_t rebinding_time_s;
         Ip4Addr subnet_mask;
         MacAddr server_mac;
         bool have_router;
-        uint8_t domain_name_servers_count;
+        std::uint8_t domain_name_servers_count;
         Ip4Addr router;
         Ip4Addr domain_name_servers[Params::MaxDnsServers];
     };
@@ -322,13 +324,13 @@ private:
     IpDhcpClientHandler m_handler;
     MemRef m_client_id;
     MemRef m_vendor_class_id;
-    uint32_t m_xid;
-    uint8_t m_rtx_timeout;
+    std::uint32_t m_xid;
+    std::uint8_t m_rtx_timeout;
     DhcpState m_state;
-    uint8_t m_request_count;
-    uint32_t m_lease_time_passed;
+    std::uint8_t m_request_count;
+    std::uint32_t m_lease_time_passed;
     TimeType m_request_send_time;
-    uint32_t m_request_send_time_passed;
+    std::uint32_t m_request_send_time_passed;
     LeaseInfo m_info;
     
 public:
@@ -452,23 +454,23 @@ private:
     }
     
     // Convert seconds to ticks, requires seconds <= MaxTimerSeconds.
-    inline static TimeType SecToTicks (uint32_t seconds)
+    inline static TimeType SecToTicks (std::uint32_t seconds)
     {
         AIPSTACK_ASSERT(seconds <= MaxTimerSeconds)
         return SecToTicksNoAssert(seconds);
     }
     
     // Same but without assert that seconds <= MaxTimerSeconds.
-    inline static TimeType SecToTicksNoAssert (uint32_t seconds)
+    inline static TimeType SecToTicksNoAssert (std::uint32_t seconds)
     {
         return seconds * TimeType(Platform::TimeFreq);
     }
     
     // Convert ticks to seconds, rounding down.
-    inline static uint32_t TicksToSec (TimeType ticks)
+    inline static std::uint32_t TicksToSec (TimeType ticks)
     {
         TimeType sec_timetype = ticks / TimeType(Platform::TimeFreq);
-        return MinValueU(sec_timetype, TypeMax<uint32_t>());
+        return MinValueU(sec_timetype, TypeMax<std::uint32_t>());
     }
     
     // Shortcut to last timer set time.
@@ -662,7 +664,7 @@ private:
         
         // Calculate how much time in seconds has passed since the time this timer
         // was set to expire at.
-        uint32_t passed_sec = TicksToSec(TimeType(now - getTimSetTime()));
+        std::uint32_t passed_sec = TicksToSec(TimeType(now - getTimSetTime()));
         
         // Has the lease expired?
         if (passed_sec >= m_info.lease_time_s - m_lease_time_passed) {
@@ -670,7 +672,7 @@ private:
         }
         
         // Remember m_lease_time_passed (needed for seting the next timer).
-        uint32_t prev_lease_time_passed = m_lease_time_passed;
+        std::uint32_t prev_lease_time_passed = m_lease_time_passed;
         
         // Update m_lease_time_passed according to time passed so far.
         m_lease_time_passed += passed_sec;
@@ -694,23 +696,23 @@ private:
         
         // We will choose after how many seconds the timer should next
         // expire, relative to the current m_lease_time_passed.
-        uint32_t timer_rel_sec;
+        std::uint32_t timer_rel_sec;
         
         if (m_state == DhcpState::Bound) {
             // Timer should expire at the renewal time.
             timer_rel_sec = m_info.renewal_time_s - m_lease_time_passed;
         } else {
             // Time to next state transition (Rebinding or lease timeout).
-            uint32_t next_state_sec = (m_state == DhcpState::Renewing) ?
+            std::uint32_t next_state_sec = (m_state == DhcpState::Renewing) ?
                 m_info.rebinding_time_s : m_info.lease_time_s;
-            uint32_t next_state_rel_sec = next_state_sec - m_lease_time_passed;
+            std::uint32_t next_state_rel_sec = next_state_sec - m_lease_time_passed;
             
             // Time to next retransmission.
             // NOTE: Retransmission may actually be done earlier if this is
             // greater than MaxTimerSeconds, that is all right.
-            uint32_t rtx_rel_sec = MaxValue(
-                uint32_t(Params::MinRenewRtxTimeoutSeconds),
-                uint32_t(next_state_rel_sec / 2));
+            std::uint32_t rtx_rel_sec = MaxValue(
+                std::uint32_t(Params::MinRenewRtxTimeoutSeconds),
+                std::uint32_t(next_state_rel_sec / 2));
             
             // Timer should expire at the earlier of the above two.
             timer_rel_sec = MinValue(next_state_rel_sec, rtx_rel_sec);
@@ -943,7 +945,7 @@ private:
             m_info.have_router = opts.have.router;
             m_info.router = opts.have.router ? opts.router : Ip4Addr::ZeroAddr();
             m_info.domain_name_servers_count = opts.have.dns_servers;
-            ::memcpy(m_info.domain_name_servers, opts.dns_servers,
+            std::memcpy(m_info.domain_name_servers, opts.dns_servers,
                      opts.have.dns_servers * sizeof(Ip4Addr));
             m_info.server_mac = ethHw()->getRxEthHeader().get(EthHeader::SrcMac());
             
@@ -1173,7 +1175,7 @@ private:
         m_state = DhcpState::Bound;
         
         // Timer should expire at the renewal time.
-        uint32_t timer_rel_sec;
+        std::uint32_t timer_rel_sec;
         if (m_lease_time_passed <= m_info.renewal_time_s) {
             timer_rel_sec = m_info.renewal_time_s - m_lease_time_passed;
         } else {
@@ -1197,7 +1199,7 @@ private:
     void handle_dhcp_up (bool renewed)
     {
         // Set IP address with prefix length.
-        uint8_t prefix = uint8_t(m_info.subnet_mask.countLeadingOnes());
+        std::uint8_t prefix = std::uint8_t(m_info.subnet_mask.countLeadingOnes());
         iface()->setIp4Addr(IpIfaceIp4AddrSetting(prefix, m_info.ip_address));
         
         // Set gateway (or clear if none).
@@ -1319,7 +1321,7 @@ private:
         
         // Write the DHCP header.
         auto dhcp_header1 = DhcpHeader1::MakeRef(dgram_alloc.getPtr());
-        ::memset(dhcp_header1.data, 0, DhcpHeaderSize); // zero entire DHCP header
+        std::memset(dhcp_header1.data, 0, DhcpHeaderSize); // zero entire DHCP header
         dhcp_header1.set(DhcpHeader1::DhcpOp(),     DhcpOp::BootRequest);
         dhcp_header1.set(DhcpHeader1::DhcpHtype(),  DhcpHwAddrType::Ethernet);
         dhcp_header1.set(DhcpHeader1::DhcpHlen(),   MacAddr::Size);
@@ -1336,7 +1338,7 @@ private:
             Options::writeOptions(opt_startptr, msg_type, iface()->getMtu(), opts);
         
         // Calculate the UDP data length.
-        size_t data_len = size_t(opt_endptr - dgram_alloc.getPtr());
+        std::size_t data_len = std::size_t(opt_endptr - dgram_alloc.getPtr());
         AIPSTACK_ASSERT(data_len <= MaxDhcpSendMsgSize)
         
         // Construct the UDP data reference.
@@ -1358,7 +1360,7 @@ private:
     
     void new_xid ()
     {
-        m_xid = uint32_t(platform().getTime());
+        m_xid = std::uint32_t(platform().getTime());
     }
 };
 
@@ -1374,47 +1376,47 @@ struct IpDhcpClientOptions {
     /**
      * TTL of outgoing DHCP datagrams.
      */
-    AIPSTACK_OPTION_DECL_VALUE(DhcpTTL, uint8_t, 64)
+    AIPSTACK_OPTION_DECL_VALUE(DhcpTTL, std::uint8_t, 64)
     
     /**
      * Maximum number of DNS servers that can be stored.
      */
-    AIPSTACK_OPTION_DECL_VALUE(MaxDnsServers, uint8_t, 2)
+    AIPSTACK_OPTION_DECL_VALUE(MaxDnsServers, std::uint8_t, 2)
     
     /**
      * Maximum size of client identifier that can be sent.
      */
-    AIPSTACK_OPTION_DECL_VALUE(MaxClientIdSize, uint8_t, 16)
+    AIPSTACK_OPTION_DECL_VALUE(MaxClientIdSize, std::uint8_t, 16)
     
     /**
      * Maximum size of vendor class ID that can be sent.
      */
-    AIPSTACK_OPTION_DECL_VALUE(MaxVendorClassIdSize, uint8_t, 16)
+    AIPSTACK_OPTION_DECL_VALUE(MaxVendorClassIdSize, std::uint8_t, 16)
     
     /**
      * Maximum times that an XID will be reused.
      */
-    AIPSTACK_OPTION_DECL_VALUE(XidReuseMax, uint8_t, 3)
+    AIPSTACK_OPTION_DECL_VALUE(XidReuseMax, std::uint8_t, 3)
     
     /**
      * Maximum times to send a request after an offer before reverting to discovery.
      */
-    AIPSTACK_OPTION_DECL_VALUE(MaxRequests, uint8_t, 3)
+    AIPSTACK_OPTION_DECL_VALUE(MaxRequests, std::uint8_t, 3)
     
     /**
      * Maximum times to send a request in REBOOTING state before revering to discovery.
      */
-    AIPSTACK_OPTION_DECL_VALUE(MaxRebootRequests, uint8_t, 2)
+    AIPSTACK_OPTION_DECL_VALUE(MaxRebootRequests, std::uint8_t, 2)
     
     /**
      * Base retransmission time in seconds, before any backoff.
      */
-    AIPSTACK_OPTION_DECL_VALUE(BaseRtxTimeoutSeconds, uint8_t, 3)
+    AIPSTACK_OPTION_DECL_VALUE(BaseRtxTimeoutSeconds, std::uint8_t, 3)
     
     /**
      * Maximum retransmission timeout (except in RENEWING or REBINDING states).
      */
-    AIPSTACK_OPTION_DECL_VALUE(MaxRtxTimeoutSeconds, uint8_t, 64)
+    AIPSTACK_OPTION_DECL_VALUE(MaxRtxTimeoutSeconds, std::uint8_t, 64)
     
     /**
      * Delay before sending a discover in certain error scenarios.
@@ -1423,18 +1425,18 @@ struct IpDhcpClientOptions {
      * - after receing a NAK in response to a request following an offer,
      * - after receiving an ARP response while checking the offered address.
      */
-    AIPSTACK_OPTION_DECL_VALUE(ResetTimeoutSeconds, uint8_t, 3)
+    AIPSTACK_OPTION_DECL_VALUE(ResetTimeoutSeconds, std::uint8_t, 3)
     
     /**
      * Minimum request retransmission time when renewing a lease (in RENEWING or
      * REBINDING states).
      */
-    AIPSTACK_OPTION_DECL_VALUE(MinRenewRtxTimeoutSeconds, uint8_t, 60)
+    AIPSTACK_OPTION_DECL_VALUE(MinRenewRtxTimeoutSeconds, std::uint8_t, 60)
     
     /**
      * How long to wait for a response to each ARP query when checking the address.
      */
-    AIPSTACK_OPTION_DECL_VALUE(ArpResponseTimeoutSeconds, uint8_t, 1)
+    AIPSTACK_OPTION_DECL_VALUE(ArpResponseTimeoutSeconds, std::uint8_t, 1)
     
     /**
      * Number of ARP queries to send before proceeding with address assignment if no
@@ -1443,7 +1445,7 @@ struct IpDhcpClientOptions {
      * Normally when there is no response, ArpResponseTimeoutSeconds*NumArpQueries
      * will be spent for checking the address using ARP.
      */
-    AIPSTACK_OPTION_DECL_VALUE(NumArpQueries, uint8_t, 2)
+    AIPSTACK_OPTION_DECL_VALUE(NumArpQueries, std::uint8_t, 2)
 };
 
 /**

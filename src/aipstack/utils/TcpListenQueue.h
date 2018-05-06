@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_TCP_LISTEN_QUEUE_H
 #define AIPSTACK_TCP_LISTEN_QUEUE_H
 
-#include <stddef.h>
+#include <cstddef>
 
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
@@ -43,7 +43,7 @@ namespace AIpStack {
 template <
     typename PlatformImpl,
     typename TcpArg,
-    size_t RxBufferSize
+    std::size_t RxBufferSize
 >
 class TcpListenQueue {
     using Platform = PlatformFacade<PlatformImpl>;
@@ -108,9 +108,9 @@ public:
         {
             AIPSTACK_ASSERT(!Connection::isInit())
             
-            size_t rx_buf_len = Connection::getRecvBuf().tot_len;
+            std::size_t rx_buf_len = Connection::getRecvBuf().tot_len;
             AIPSTACK_ASSERT(rx_buf_len <= RxBufferSize)
-            size_t rx_len = RxBufferSize - rx_buf_len;
+            std::size_t rx_len = RxBufferSize - rx_buf_len;
             return IpBufRef{&m_rx_buf_node, 0, rx_len};
         }
         
@@ -122,7 +122,7 @@ public:
             reset_connection();
         }
         
-        void dataReceived (size_t amount) override final
+        void dataReceived (std::size_t amount) override final
         {
             AIPSTACK_ASSERT(!Connection::isInit())
             
@@ -144,7 +144,7 @@ public:
             }
         }
         
-        void dataSent (size_t) override final
+        void dataSent (std::size_t) override final
         {
             AIPSTACK_ASSERT(false) // nothing was sent so this cannot be called
         }
@@ -158,7 +158,7 @@ public:
     };
     
     struct ListenQueueParams {
-        size_t min_rcv_buf_size = 0;
+        std::size_t min_rcv_buf_size = 0;
         int queue_size = 0;
         TimeType queue_timeout = 0;
         ListenQueueEntry *queue_entries = nullptr;
@@ -222,7 +222,7 @@ public:
             }
             
             // Set the initial receive window.
-            size_t initial_rx_window = (m_queue_size == 0) ? q_params.min_rcv_buf_size : RxBufferSize;
+            std::size_t initial_rx_window = (m_queue_size == 0) ? q_params.min_rcv_buf_size : RxBufferSize;
             m_listener.setInitialReceiveWindow(initial_rx_window);
             
             return true;

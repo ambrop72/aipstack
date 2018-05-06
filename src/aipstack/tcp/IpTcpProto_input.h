@@ -25,10 +25,9 @@
 #ifndef AIPSTACK_IP_TCP_PROTO_INPUT_H
 #define AIPSTACK_IP_TCP_PROTO_INPUT_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <string.h>
-#include <limits.h>
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
 
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
@@ -94,8 +93,8 @@ public:
         IpChksumAccumulator chksum_accum;
         chksum_accum.addWords(&ip_info.src_addr.data);
         chksum_accum.addWords(&ip_info.dst_addr.data);
-        chksum_accum.addWord(WrapType<uint16_t>(), Ip4ProtocolTcp);
-        chksum_accum.addWord(WrapType<uint16_t>(), uint16_t(dgram.tot_len));
+        chksum_accum.addWord(WrapType<std::uint16_t>(), Ip4ProtocolTcp);
+        chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
         if (AIPSTACK_UNLIKELY(chksum_accum.getChksum(dgram) != 0)) {
             return;
         }
@@ -106,8 +105,8 @@ public:
         // Get the data offset and calculate many bytes of options there options are.
         // Note that if data_offset is less than Tcp4Header::Size, the difference
         // will wrap around which the next check relies on.
-        size_t data_offset = (tcp_meta.flags >> TcpOffsetShift) * 4;
-        size_t opts_len = data_offset - Tcp4Header::Size;
+        std::size_t data_offset = (tcp_meta.flags >> TcpOffsetShift) * 4;
+        std::size_t opts_len = data_offset - Tcp4Header::Size;
 
         // Check that data offset is within [Tcp4Header::Size, dgram.tot_len].
         // The former bound is checked indirectly since opts_len would have
@@ -197,7 +196,7 @@ public:
         
         // Read the field of the ICMP message where the next-hop MTU
         // is supposed to be.
-        uint16_t mtu_info = Icmp4GetMtuFromRest(du_meta.icmp_rest);
+        std::uint16_t mtu_info = Icmp4GetMtuFromRest(du_meta.icmp_rest);
         
         // Update the PMTU information.
         if (!pcb->tcp->m_stack->handleIcmpPacketTooBig(pcb->remote_addr, mtu_info)) {
@@ -226,7 +225,7 @@ public:
     }
     
     // Get a scaled window size value to be put into the segment being sent.
-    static uint16_t pcb_ann_wnd (TcpPcb *pcb)
+    static std::uint16_t pcb_ann_wnd (TcpPcb *pcb)
     {
         // Note that empty ACK segments sent in SYN_SENT state will
         // contain a scaled window value. This is how it should be
@@ -255,18 +254,18 @@ public:
         
         // Calculate the window value by right-shifting rcv_ann_thres
         // according to the receive window scaling.
-        uint32_t hdr_wnd = pcb->rcv_ann_wnd >> pcb->rcv_wnd_shift;
+        std::uint32_t hdr_wnd = pcb->rcv_ann_wnd >> pcb->rcv_wnd_shift;
         
         // This must fit into 16-bits because: invariant
-        // - In SYN_SENT/SYN_RCVD, rcv_ann_wnd will itself fit into uint16_t,
+        // - In SYN_SENT/SYN_RCVD, rcv_ann_wnd will itself fit into std::uint16_t,
         //   so it will also not after right-shifting.
         // - In other states, rcv_ann_wnd would never be set to more
         //   than the maximum window that can be advertised (see
         //   max_rcv_wnd_ann), and could only be decreased upon
         //   receiving ACKs.
-        AIPSTACK_ASSERT(hdr_wnd <= TypeMax<uint16_t>())
+        AIPSTACK_ASSERT(hdr_wnd <= TypeMax<std::uint16_t>())
         
-        return uint16_t(hdr_wnd);
+        return std::uint16_t(hdr_wnd);
     }
     
     static void pcb_rcv_buf_extended (TcpPcb *pcb)
@@ -307,10 +306,10 @@ public:
         SeqType min_window =
             MaxValue(rcv_ann_thres, Constants::MinAbandonRcvWndIncr);
         
-        // Make sure it fits in size_t (relevant if size_t is 16-bit),
-        // to ensure the invariant that rcv_ann_wnd always fits in size_t.
-        if (TypeMax<size_t>() < TypeMax<uint32_t>()) {
-            min_window = MinValueU(min_window, TypeMax<size_t>());
+        // Make sure it fits in std::size_t (relevant if std::size_t is 16-bit),
+        // to ensure the invariant that rcv_ann_wnd always fits in std::size_t.
+        if (TypeMax<std::size_t>() < TypeMax<std::uint32_t>()) {
+            min_window = MinValueU(min_window, TypeMax<std::size_t>());
         }
         
         // Round up to the nearest window that can be advertised.
@@ -330,7 +329,7 @@ public:
     // This is called at transition to ESTABLISHED in order to initialize
     // certain variables which can only be initialized once these is an
     // associated Connection object.
-    static void pcb_complete_established_transition (TcpPcb *pcb, uint16_t pmtu)
+    static void pcb_complete_established_transition (TcpPcb *pcb, std::uint16_t pmtu)
     {
         AIPSTACK_ASSERT(pcb->state == TcpState::ESTABLISHED)
         AIPSTACK_ASSERT(pcb->con != nullptr)
@@ -369,7 +368,7 @@ public:
     
 private:
     static void listen_input (Listener *lis, IpRxInfoIp4<StackArg> const &ip_info,
-                              TcpSegMeta const &tcp_meta, size_t tcp_data_len)
+                              TcpSegMeta const &tcp_meta, std::size_t tcp_data_len)
     {
         do {
             // For a new connection we expect SYN flag and no FIN, RST, ACK.
@@ -389,7 +388,7 @@ private:
             }
             
             // Calculate the MSS based on the interface MTU.
-            uint16_t iface_mss = ip_info.iface->getMtu() - Ip4TcpHeaderSize;
+            std::uint16_t iface_mss = ip_info.iface->getMtu() - Ip4TcpHeaderSize;
             
             TcpProto *tcp = lis->m_tcp;
             
@@ -397,7 +396,7 @@ private:
             parse_received_opts(tcp);
             
             // Calculate the base_snd_mss.
-            uint16_t base_snd_mss;
+            std::uint16_t base_snd_mss;
             if (!TcpUtils::calc_snd_mss<Constants::MinAllowedMss>(
                     iface_mss, tcp->m_received_opts, &base_snd_mss))
             {
@@ -417,8 +416,8 @@ private:
             // SYN-ACK segments have unscaled window.
             // NOTE: rcv_ann_wnd fits into size_t as required since m_initial_rcv_wnd
             // also does (Listener::setInitialReceiveWindow).
-            AIPSTACK_ASSERT(lis->m_initial_rcv_wnd <= TypeMax<size_t>())
-            SeqType rcv_wnd = MinValueU(TypeMax<uint16_t>(), lis->m_initial_rcv_wnd);
+            AIPSTACK_ASSERT(lis->m_initial_rcv_wnd <= TypeMax<std::size_t>())
+            SeqType rcv_wnd = MinValueU(TypeMax<std::uint16_t>(), lis->m_initial_rcv_wnd);
             
             // Initialize most of the PCB.
             pcb->state = TcpState::SYN_RCVD;
@@ -447,7 +446,7 @@ private:
             if ((tcp->m_received_opts.options & OptionFlags::WND_SCALE) != 0) {
                 pcb->setFlag(PcbFlags::WND_SCALE);
                 pcb->snd_wnd_shift =
-                    MinValue(uint8_t(14), tcp->m_received_opts.wnd_scale);
+                    MinValue(std::uint8_t(14), tcp->m_received_opts.wnd_scale);
                 pcb->rcv_wnd_shift = Constants::RcvWndShift;
             }
             
@@ -508,7 +507,7 @@ private:
         AIPSTACK_ASSERT(pcb->tcp->m_current_pcb == pcb)
         
         // Remember original data length.
-        size_t orig_data_len = tcp_data.tot_len;
+        std::size_t orig_data_len = tcp_data.tot_len;
         
         // Do basic processing, e.g.:
         // - Handle RST and SYN.
@@ -606,7 +605,7 @@ private:
             // Calculate the right edge of the receive window.
             SeqType rcv_wnd = pcb->rcv_ann_wnd;
             if (AIPSTACK_LIKELY(pcb->state != TcpState::SYN_RCVD && pcb->con != nullptr)) {
-                size_t rcv_buf_len = pcb->con->m_v.rcv_buf.tot_len;
+                std::size_t rcv_buf_len = pcb->con->m_v.rcv_buf.tot_len;
                 SeqType avail_wnd = MinValueU(rcv_buf_len, Constants::MaxWindow);
                 rcv_wnd = MaxValue(rcv_wnd, avail_wnd);
             }
@@ -621,7 +620,7 @@ private:
             // Sequence length of segment (data+FIN). Note that we cannot have
             // a SYN here, we would have bailed out at the top, except in SYN_SENT
             // state which is handled just above.
-            size_t seqlen = tcp_data.tot_len + seg_fin;
+            std::size_t seqlen = tcp_data.tot_len + seg_fin;
             
             if (seqlen == 0) {
                 // Empty segment is acceptable if the sequence number is within or at
@@ -740,7 +739,7 @@ private:
                     continue_processing = true;
                 } else {
                     // SYN without ACK, we do not support this yet, send RST.
-                    size_t seqlen = tcplen(tcp_meta.flags, tcp_data.tot_len);
+                    std::size_t seqlen = tcplen(tcp_meta.flags, tcp_data.tot_len);
                     Output::send_rst(pcb->tcp, *pcb, 0, true,
                                      seq_add(tcp_meta.seq_num, SeqType(seqlen)));
                 }
@@ -868,7 +867,7 @@ private:
                 // pcb_decode_wnd_size while snd_wnd_shift was still zero, which
                 // is correct because the window size in a SYN-ACK is unscaled.
                 pcb->snd_wnd_shift =
-                    MinValue(uint8_t(14), tcp->m_received_opts.wnd_scale);
+                    MinValue(std::uint8_t(14), tcp->m_received_opts.wnd_scale);
             } else {
                 // Remote did not send the window scale option, which means we
                 // must not use any scaling, so set rcv_wnd_shift back to zero.
@@ -876,7 +875,7 @@ private:
             }
             
             // Initialize certain sender variables.
-            uint16_t pmtu = pcb->snd_mss; // pmtu was stored to snd_mss temporarily
+            std::uint16_t pmtu = pcb->snd_mss; // pmtu was stored to snd_mss temporarily
             pcb_complete_established_transition(pcb, pmtu);
             
             // Make sure the ACK to the SYN-ACK is sent.
@@ -958,7 +957,7 @@ private:
     }
     
     static bool pcb_input_ack_wnd_processing (TcpPcb *pcb, TcpSegMeta const &tcp_meta,
-                                              SeqType acked, size_t orig_data_len)
+                                              SeqType acked, std::size_t orig_data_len)
     {
         AIPSTACK_ASSERT(pcb->state != OneOf(TcpState::CLOSED,
                                          TcpState::SYN_SENT, TcpState::SYN_RCVD))
@@ -992,8 +991,8 @@ private:
             
             // Calculate the amount of acknowledged data (without ACK of FIN).
             SeqType data_acked_seq = acked - SeqType(fin_acked);
-            AIPSTACK_ASSERT(data_acked_seq <= TypeMax<size_t>())
-            size_t data_acked = data_acked_seq;
+            AIPSTACK_ASSERT(data_acked_seq <= TypeMax<std::size_t>())
+            std::size_t data_acked = data_acked_seq;
             
             if (AIPSTACK_LIKELY(data_acked > 0)) {
                 // We necessarily still have a Connection, if the connection was
@@ -1013,7 +1012,7 @@ private:
                 }
                 
                 // Advance the send buffer.
-                size_t cur_offset = con->m_v.snd_buf.tot_len - con->m_v.snd_buf_cur.tot_len;
+                std::size_t cur_offset = con->m_v.snd_buf.tot_len - con->m_v.snd_buf_cur.tot_len;
                 if (data_acked >= cur_offset) {
                     con->m_v.snd_buf_cur.skipBytes(data_acked - cur_offset);
                     con->m_v.snd_buf = con->m_v.snd_buf_cur;
@@ -1154,16 +1153,16 @@ private:
         
         // We only get here if the segment fits into the receive window, this is assured
         // by pcb_input_basic_processing. It is also ensured that pcb->rcv_ann_wnd fits
-        // into size_t and we need this to avoid oveflows in buffer space checks below.
-        if (TypeMax<size_t>() < TypeMax<uint32_t>()) {
-            AIPSTACK_ASSERT(eff_rel_seq <= TypeMax<size_t>())
-            AIPSTACK_ASSERT(tcp_data.tot_len <= TypeMax<size_t>() - eff_rel_seq)
+        // into std::size_t and we need this to avoid oveflows in buffer space checks below.
+        if (TypeMax<std::size_t>() < TypeMax<std::uint32_t>()) {
+            AIPSTACK_ASSERT(eff_rel_seq <= TypeMax<std::size_t>())
+            AIPSTACK_ASSERT(tcp_data.tot_len <= TypeMax<std::size_t>() - eff_rel_seq)
         }
         
         Connection *con = pcb->con;
         
         // This will be the in-sequence data or FIN that we will process.
-        size_t rcv_datalen;
+        std::size_t rcv_datalen;
         bool rcv_fin;
         
         // Handling for abandoned connection
@@ -1257,7 +1256,7 @@ private:
     
     // Update state due to any received data (e.g. rcv_nxt), make state transitions
     // due to any received FIN, and call associated application callbacks.
-    static bool pcb_process_received (TcpPcb *pcb, SeqType rcv_seqlen, size_t rcv_datalen)
+    static bool pcb_process_received (TcpPcb *pcb, SeqType rcv_seqlen, std::size_t rcv_datalen)
     {
         // If nothing was received we have nothing to do.
         if (rcv_seqlen == 0) {
@@ -1344,7 +1343,7 @@ private:
     }
     
     // Apply window scaling to a received window size value.
-    inline static SeqType pcb_decode_wnd_size (TcpPcb *pcb, uint16_t rx_wnd_size)
+    inline static SeqType pcb_decode_wnd_size (TcpPcb *pcb, std::uint16_t rx_wnd_size)
     {
         return SeqType(rx_wnd_size) << pcb->snd_wnd_shift;
     }
@@ -1353,7 +1352,7 @@ private:
     // with respect to window scaling.
     static SeqType max_rcv_wnd_ann (TcpPcb *pcb)
     {
-        return SeqType(TypeMax<uint16_t>()) << pcb->rcv_wnd_shift;
+        return SeqType(TypeMax<std::uint16_t>()) << pcb->rcv_wnd_shift;
     }
     
     // Calculate how much window would be announced if sent an ACK now.

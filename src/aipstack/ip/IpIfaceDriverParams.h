@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_IP_IFACE_DRIVER_PARAMS_H
 #define AIPSTACK_IP_IFACE_DRIVER_PARAMS_H
 
-#include <stddef.h>
+#include <cstddef>
 
 #include <aipstack/misc/Function.h>
 #include <aipstack/infra/Err.h>
@@ -50,7 +50,7 @@ namespace AIpStack {
          * 
          * It must be at least @ref IpStack::MinMTU (this is an assert).
          */
-        size_t ip_mtu = 0;
+        std::size_t ip_mtu = 0;
         
         /**
          * The type of the hardware-type-specific interface.

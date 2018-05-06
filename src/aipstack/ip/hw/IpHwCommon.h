@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_IP_HW_COMMON_H
 #define AIPSTACK_IP_HW_COMMON_H
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace AIpStack {
 
@@ -40,7 +40,7 @@ namespace AIpStack {
  * 
  * See @ref IpIface::getHwType and @ref IpIface::getHwIface.
  */
-enum class IpHwType : uint8_t {
+enum class IpHwType : std::uint8_t {
     /**
      * No hardware-type-specific interface is available for the network interface.
      */

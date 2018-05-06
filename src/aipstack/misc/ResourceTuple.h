@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_RESOURCE_TUPLE_H
 #define AIPSTACK_RESOURCE_TUPLE_H
 
-#include <stddef.h>
+#include <cstddef>
 
 #include <type_traits>
 #include <utility>
@@ -48,7 +48,7 @@ struct ResourceTupleInitSame {};
 #ifndef IN_DOXYGEN
 
 namespace ResourceTuplePrivate {
-    template <typename Elem, size_t Index>
+    template <typename Elem, std::size_t Index>
     class InheritElemHelper
     {
     public:
@@ -67,7 +67,7 @@ namespace ResourceTuplePrivate {
     template <typename ElemsSequence, typename IndicesSequence>
     class InheritAllHelper;
     
-    template <typename... Elems, size_t... Indices>
+    template <typename... Elems, std::size_t... Indices>
     class InheritAllHelper<std::tuple<Elems...>, std::index_sequence<Indices...>> :
         public InheritElemHelper<Elems, Indices>...
     {
@@ -111,11 +111,11 @@ public:
      * 
      * @tparam Index Element index. Must be less than `sizeof...(Elems)`.
      */
-    template <size_t Index>
+    template <std::size_t Index>
     using ElemType = std::tuple_element_t<Index, std::tuple<Elems...>>;
     
 private:
-    template <size_t Index>
+    template <std::size_t Index>
     using ElemHelperType = ResourceTuplePrivate::InheritElemHelper<ElemType<Index>, Index>;
     
 public:
@@ -144,7 +144,7 @@ public:
      * @tparam Index Element index. Must be less than `sizeof...(Elems)`.
      * @return Reference to the element at index `Index`.
      */
-    template <size_t Index>
+    template <std::size_t Index>
     ElemType<Index> & get (WrapSize<Index> = WrapSize<Index>())
     {
         return static_cast<ElemHelperType<Index> &>(*this).m_elem;
@@ -156,7 +156,7 @@ public:
      * @tparam Index Element index. Must be less than `sizeof...(Elems)`.
      * @return Reference to the element at index `Index`.
      */
-    template <size_t Index>
+    template <std::size_t Index>
     ElemType<Index> const & get (WrapSize<Index> = WrapSize<Index>()) const
     {
         return static_cast<ElemHelperType<Index> const &>(*this).m_elem;

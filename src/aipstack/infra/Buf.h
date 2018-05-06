@@ -25,8 +25,8 @@
 #ifndef AIPSTACK_BUF_H
 #define AIPSTACK_BUF_H
 
-#include <stddef.h>
-#include <string.h>
+#include <cstddef>
+#include <cstring>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Hints.h>
@@ -78,7 +78,7 @@ struct IpBufNode {
     /**
      * Length of the buffer.
      */
-    size_t len = 0;
+    std::size_t len = 0;
     
     /**
      * Pointer to the next buffer node, or null if this is the end of the chain.
@@ -128,12 +128,12 @@ struct IpBufRef {
     /**
      * Byte offset in the first buffer.
      */
-    size_t offset = 0;
+    std::size_t offset = 0;
     
     /**
      * The total length of the data range.
      */
-    size_t tot_len = 0;
+    std::size_t tot_len = 0;
     
     /**
      * Return the length of this memory range (@ref tot_len).
@@ -143,7 +143,7 @@ struct IpBufRef {
      * 
      * @return @ref tot_len
      */
-    inline size_t getTotalLength () const
+    inline std::size_t getTotalLength () const
     {
         return tot_len;
     }
@@ -166,12 +166,12 @@ struct IpBufRef {
      * 
      * @return `min(tot_len, node->len - offset)`
      */
-    inline size_t getChunkLength () const
+    inline std::size_t getChunkLength () const
     {
         AIPSTACK_ASSERT(node != nullptr)
         AIPSTACK_ASSERT(offset <= node->len)
         
-        return MinValue(tot_len, size_t(node->len - offset));
+        return MinValue(tot_len, std::size_t(node->len - offset));
     }
 
     /**
@@ -189,7 +189,7 @@ struct IpBufRef {
         AIPSTACK_ASSERT(node != nullptr)
         AIPSTACK_ASSERT(offset <= node->len)
         
-        tot_len -= MinValue(tot_len, size_t(node->len - offset));
+        tot_len -= MinValue(tot_len, std::size_t(node->len - offset));
         node = node->next;
         offset = 0;
         
@@ -215,7 +215,7 @@ struct IpBufRef {
      * @return True on success (enough space was available, `*new_ref` was
      *         set), false on failure (`*new_ref` was not changed).
      */
-    inline bool revealHeader (size_t amount, IpBufRef *new_ref) const
+    inline bool revealHeader (std::size_t amount, IpBufRef *new_ref) const
     {
         if (amount > offset) {
             return false;
@@ -223,8 +223,8 @@ struct IpBufRef {
         
         *new_ref = IpBufRef {
             node,
-            size_t(offset  - amount),
-            size_t(tot_len + amount)
+            std::size_t(offset  - amount),
+            std::size_t(tot_len + amount)
         };
         return true;
     }
@@ -237,14 +237,14 @@ struct IpBufRef {
      *        to @ref offset.
      * @return The adjusted memory range.
      */
-    inline IpBufRef revealHeaderMust (size_t amount) const
+    inline IpBufRef revealHeaderMust (std::size_t amount) const
     {
         AIPSTACK_ASSERT(amount <= offset)
         
         return IpBufRef {
             node,
-            size_t(offset  - amount),
-            size_t(tot_len + amount)
+            std::size_t(offset  - amount),
+            std::size_t(tot_len + amount)
         };
     }
     
@@ -255,7 +255,7 @@ struct IpBufRef {
      * @param amount Number of bytes to check for.
      * @return `getChunkLength() >= amount`.
      */
-    inline bool hasHeader (size_t amount) const
+    inline bool hasHeader (std::size_t amount) const
     {
         AIPSTACK_ASSERT(node != nullptr)
         AIPSTACK_ASSERT(offset <= node->len)
@@ -272,7 +272,7 @@ struct IpBufRef {
      * @return A reference with the same @ref node, @ref offset incremented
      *         by `amount` and @ref tot_len decremented by `amount`.
      */
-    inline IpBufRef hideHeader (size_t amount) const
+    inline IpBufRef hideHeader (std::size_t amount) const
     {
         AIPSTACK_ASSERT(node != nullptr)
         AIPSTACK_ASSERT(offset <= node->len)
@@ -281,8 +281,8 @@ struct IpBufRef {
         
         return IpBufRef {
             node,
-            size_t(offset  + amount),
-            size_t(tot_len - amount)
+            std::size_t(offset  + amount),
+            std::size_t(tot_len - amount)
         };
     }
     
@@ -301,7 +301,7 @@ struct IpBufRef {
         
         return IpBufNode {
             node->ptr + offset,
-            size_t(node->len - offset),
+            std::size_t(node->len - offset),
             node->next
         };
     }
@@ -336,15 +336,15 @@ struct IpBufRef {
      *        initial portion will be written (must not be null).
      * @return An @ref IpBufRef referencing the constructed memory range.
      */
-    IpBufRef subHeaderToContinuedBy (size_t header_len, IpBufNode const *cont,
-                                     size_t total_len, IpBufNode *out_node) const
+    IpBufRef subHeaderToContinuedBy (std::size_t header_len, IpBufNode const *cont,
+                                     std::size_t total_len, IpBufNode *out_node) const
     {
         AIPSTACK_ASSERT(node != nullptr)
         AIPSTACK_ASSERT(offset <= node->len)
         AIPSTACK_ASSERT(header_len <= node->len - offset)
         AIPSTACK_ASSERT(total_len >= header_len)
         
-        *out_node = IpBufNode{node->ptr, size_t(offset + header_len), cont};
+        *out_node = IpBufNode{node->ptr, std::size_t(offset + header_len), cont};
         return IpBufRef{out_node, offset, total_len};
     }
     
@@ -356,9 +356,9 @@ struct IpBufRef {
      * @param amount Number of bytes to consume. Must be less than or equal
      *        to @ref tot_len.
      */
-    void skipBytes (size_t amount)
+    void skipBytes (std::size_t amount)
     {
-        processBytes(amount, [](char *, size_t) {});
+        processBytes(amount, [](char *, std::size_t) {});
     }
     
     /**
@@ -372,10 +372,10 @@ struct IpBufRef {
      *        or equal to @ref tot_len.
      * @param dst Location to copy to. May be null only if `amount` is zero.
      */
-    void takeBytes (size_t amount, char *dst)
+    void takeBytes (std::size_t amount, char *dst)
     {
-        processBytes(amount, [&](char *data, size_t len) {
-            ::memcpy(dst, data, len);
+        processBytes(amount, [&](char *data, std::size_t len) {
+            std::memcpy(dst, data, len);
             dst += len;
         });
     }
@@ -392,8 +392,8 @@ struct IpBufRef {
     void giveBytes (MemRef data)
     {
         char const *src = data.ptr;
-        processBytes(data.len, [&](char *cdata, size_t clen) {
-            ::memcpy(cdata, src, clen);
+        processBytes(data.len, [&](char *cdata, std::size_t clen) {
+            std::memcpy(cdata, src, clen);
             src += clen;
         });
     }
@@ -414,7 +414,7 @@ struct IpBufRef {
      */
     void giveBuf (IpBufRef src)
     {
-        processBytes(src.tot_len, [&](char *data, size_t len) {
+        processBytes(src.tot_len, [&](char *data, std::size_t len) {
             src.takeBytes(len, data);
         });
     }
@@ -434,7 +434,7 @@ struct IpBufRef {
         AIPSTACK_ASSERT(tot_len > 0)
         
         char ch = 0;
-        processBytes(1, [&](char *data, size_t len) {
+        processBytes(1, [&](char *data, std::size_t len) {
             (void)len;
             ch = *data;
         });
@@ -451,10 +451,10 @@ struct IpBufRef {
      * @param amount Number of bytes to set and consume. Must be less than or equal to
      *        @ref tot_len.
      */
-    void giveSameBytes (char byte, size_t amount)
+    void giveSameBytes (char byte, std::size_t amount)
     {
-        processBytes(amount, [&](char *data, size_t len) {
-            ::memset(data, byte, len);
+        processBytes(amount, [&](char *data, std::size_t len) {
+            std::memset(data, byte, len);
         });
     }
 
@@ -473,14 +473,14 @@ struct IpBufRef {
      * @param amount Maximum number of bytes to process and consume. In any case no more
      *        than @ref tot_len bytes will be processed.
      */
-    bool findByte (char byte, size_t amount = size_t(-1))
+    bool findByte (char byte, std::size_t amount = std::size_t(-1))
     {
-        return processBytesInterruptible(amount, [&](char *data, size_t &len) {
-            void *ch = ::memchr(data, byte, len);
+        return processBytesInterruptible(amount, [&](char *data, std::size_t &len) {
+            void *ch = std::memchr(data, byte, len);
             if (ch == nullptr) {
                 return false;
             } else {
-                len = size_t((reinterpret_cast<char *>(ch) - data) + 1);
+                len = std::size_t((reinterpret_cast<char *>(ch) - data) + 1);
                 return true;
             }
         });
@@ -509,11 +509,11 @@ struct IpBufRef {
         }
 
         IpBufRef copy_ref = *this;
-        size_t position = 0;
+        std::size_t position = 0;
 
         bool mismatch = copy_ref.processBytesInterruptible(prefix.len,
-        [&](char *data, size_t &len) {
-            if (::memcmp(data, prefix.ptr + position, len) != 0) {
+        [&](char *data, std::size_t &len) {
+            if (std::memcmp(data, prefix.ptr + position, len) != 0) {
                 return true;
             }
             position += len;
@@ -557,23 +557,23 @@ struct IpBufRef {
      *        this object at the time of invocation is unspecified.
      */
     template <typename Func>
-    void processBytes (size_t amount, Func func)
+    void processBytes (std::size_t amount, Func func)
     {
         AIPSTACK_ASSERT(node != nullptr)
         AIPSTACK_ASSERT(amount <= tot_len)
         
         while (true) {
             AIPSTACK_ASSERT(offset <= node->len)
-            size_t rem_in_buf = node->len - offset;
+            std::size_t rem_in_buf = node->len - offset;
             
             if (rem_in_buf > 0) {
                 if (amount == 0) {
                     return;
                 }
                 
-                size_t take = MinValue(rem_in_buf, amount);
+                std::size_t take = MinValue(rem_in_buf, amount);
 
-                func(node->ptr + offset, size_t(take));
+                func(node->ptr + offset, std::size_t(take));
                 
                 tot_len -= take;
                 
@@ -637,27 +637,27 @@ struct IpBufRef {
      *         may have been processed).
      */
     template <typename Func>
-    bool processBytesInterruptible (size_t max_amount, Func func)
+    bool processBytesInterruptible (std::size_t max_amount, Func func)
     {
         AIPSTACK_ASSERT(node != nullptr)
         
-        size_t amount = MinValue(max_amount, tot_len);
+        std::size_t amount = MinValue(max_amount, tot_len);
         
         bool interrupted = false;
 
         while (true) {
             AIPSTACK_ASSERT(offset <= node->len)
-            size_t rem_in_buf = node->len - offset;
+            std::size_t rem_in_buf = node->len - offset;
             
             if (rem_in_buf > 0) {
                 if (amount == 0) {
                     break;
                 }
                 
-                size_t max_take = MinValue(rem_in_buf, amount);
+                std::size_t max_take = MinValue(rem_in_buf, amount);
 
-                size_t take = max_take;
-                interrupted = func(node->ptr + offset, static_cast<size_t &>(take));
+                std::size_t take = max_take;
+                interrupted = func(node->ptr + offset, static_cast<std::size_t &>(take));
                 AIPSTACK_ASSERT(take <= max_take)
 
                 tot_len -= take;
@@ -697,7 +697,7 @@ struct IpBufRef {
      *        or equal to @ref tot_len.
      * @return The prefix range whose length is `new_tot_len`.
      */
-    inline IpBufRef subTo (size_t new_tot_len) const
+    inline IpBufRef subTo (std::size_t new_tot_len) const
     {
         AIPSTACK_ASSERT(new_tot_len <= tot_len)
         
@@ -721,7 +721,7 @@ struct IpBufRef {
      *        - `offset_`.
      * @return The sub-range starting at `offset_` whose length is `len`.
      */
-    inline IpBufRef subFromTo (size_t offset_, size_t len) const
+    inline IpBufRef subFromTo (std::size_t offset_, std::size_t len) const
     {
         IpBufRef buf = *this;
         buf.skipBytes(offset_);

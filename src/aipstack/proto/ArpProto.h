@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_ARP_PROTO_H
 #define AIPSTACK_ARP_PROTO_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <aipstack/infra/Struct.h>
 #include <aipstack/proto/EthernetProto.h>
@@ -34,21 +34,21 @@
 namespace AIpStack {
 
 AIPSTACK_DEFINE_STRUCT(ArpIp4Header,
-    (HwType,       uint16_t)
-    (ProtoType,    uint16_t)
-    (HwAddrLen,    uint8_t)
-    (ProtoAddrLen, uint8_t)
-    (OpType,       uint16_t)
+    (HwType,       std::uint16_t)
+    (ProtoType,    std::uint16_t)
+    (HwAddrLen,    std::uint8_t)
+    (ProtoAddrLen, std::uint8_t)
+    (OpType,       std::uint16_t)
     (SrcHwAddr,    MacAddr)
     (SrcProtoAddr, Ip4Addr)
     (DstHwAddr,    MacAddr)
     (DstProtoAddr, Ip4Addr)
 )
 
-static uint16_t const ArpHwTypeEth = 1;
+static std::uint16_t const ArpHwTypeEth = 1;
 
-static uint16_t const ArpOpTypeRequest = 1;
-static uint16_t const ArpOpTypeReply   = 2;
+static std::uint16_t const ArpOpTypeRequest = 1;
+static std::uint16_t const ArpOpTypeReply   = 2;
 
 }
 

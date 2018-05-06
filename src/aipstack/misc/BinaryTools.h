@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_BINARY_TOOLS_H
 #define AIPSTACK_BINARY_TOOLS_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <type_traits>
 #include <limits>
@@ -68,10 +68,10 @@ namespace BinaryToolsPrivate {
         using Type = repr_type; \
     };
 
-    AIPSTACK_DEFINE_REPRESENTATIVE(8,  uint8_t)
-    AIPSTACK_DEFINE_REPRESENTATIVE(16, uint16_t)
-    AIPSTACK_DEFINE_REPRESENTATIVE(32, uint32_t)
-    AIPSTACK_DEFINE_REPRESENTATIVE(64, uint64_t)
+    AIPSTACK_DEFINE_REPRESENTATIVE(8,  std::uint8_t)
+    AIPSTACK_DEFINE_REPRESENTATIVE(16, std::uint16_t)
+    AIPSTACK_DEFINE_REPRESENTATIVE(32, std::uint32_t)
+    AIPSTACK_DEFINE_REPRESENTATIVE(64, std::uint64_t)
 
     #undef AIPSTACK_DEFINE_REPRESENTATIVE
     
@@ -148,43 +148,43 @@ namespace BinaryToolsPrivate {
      */
     
     template <bool BigEndian>
-    struct ReadUnsigned<uint32_t, BigEndian> {
+    struct ReadUnsigned<std::uint32_t, BigEndian> {
         AIPSTACK_ALWAYS_INLINE
-        static uint32_t readInt (char const *src)
+        static std::uint32_t readInt (char const *src)
         {
-            uint32_t w;
+            std::uint32_t w;
             __builtin_memcpy(&w, src, sizeof(w));
             return BigEndian != AIPSTACK_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap32(w) : w;
         }
     };
     
     template <bool BigEndian>
-    struct WriteUnsigned<uint32_t, BigEndian> {
+    struct WriteUnsigned<std::uint32_t, BigEndian> {
         AIPSTACK_ALWAYS_INLINE
-        static void writeInt (uint32_t value, char *dst)
+        static void writeInt (std::uint32_t value, char *dst)
         {
-            uint32_t w = BigEndian != AIPSTACK_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap32(value) : value;
+            std::uint32_t w = BigEndian != AIPSTACK_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap32(value) : value;
             __builtin_memcpy(dst, &w, sizeof(w));
         }
     };
     
     template <bool BigEndian>
-    struct ReadUnsigned<uint16_t, BigEndian> {
+    struct ReadUnsigned<std::uint16_t, BigEndian> {
         AIPSTACK_ALWAYS_INLINE
-        static uint16_t readInt (char const *src)
+        static std::uint16_t readInt (char const *src)
         {
-            uint16_t w;
+            std::uint16_t w;
             __builtin_memcpy(&w, src, sizeof(w));
             return BigEndian != AIPSTACK_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap16(w) : w;
         }
     };
     
     template <bool BigEndian>
-    struct WriteUnsigned<uint16_t, BigEndian> {
+    struct WriteUnsigned<std::uint16_t, BigEndian> {
         AIPSTACK_ALWAYS_INLINE
-        static void writeInt (uint16_t value, char *dst)
+        static void writeInt (std::uint16_t value, char *dst)
         {
-            uint16_t w = BigEndian != AIPSTACK_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap16(value) : value;
+            std::uint16_t w = BigEndian != AIPSTACK_BINARYTOOLS_BIG_ENDIAN ? __builtin_bswap16(value) : value;
             __builtin_memcpy(dst, &w, sizeof(w));
         }
     };

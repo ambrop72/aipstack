@@ -159,8 +159,15 @@
 #ifndef IN_DOXYGEN
 #if !AIPSTACK_HAS_EXTERNAL_ASSERT_HANDLER
 
+#ifdef __cplusplus
+#include <cstdio>
+#include <cstdlib>
+#define AIPSTACK_ASSERT_STD std::
+#else
 #include <stdio.h>
 #include <stdlib.h>
+#define AIPSTACK_ASSERT_STD
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -168,9 +175,12 @@ extern "C"
 AIPSTACK_NO_INLINE AIPSTACK_NO_RETURN
 inline void AIpStack_AssertAbort (char const *file, unsigned int line, char const *msg)
 {
-    fprintf(stderr, "AIpStack %s:%u: Assertion `%s' failed.\n", file, line, msg);
-    abort();
+    AIPSTACK_ASSERT_STD fprintf(stderr,
+        "AIpStack %s:%u: Assertion `%s' failed.\n", file, line, msg);
+    AIPSTACK_ASSERT_STD abort();
 }
+
+#undef AIPSTACK_ASSERT_STD
 
 #endif
 #endif

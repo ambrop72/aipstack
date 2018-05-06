@@ -25,8 +25,6 @@
 #ifndef AIPSTACK_SIGNAL_WATCHER_IMPL_LINUX_H
 #define AIPSTACK_SIGNAL_WATCHER_IMPL_LINUX_H
 
-#include <signal.h>
-
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/platform_specific/FileDescriptorWrapper.h>
 #include <aipstack/event_loop/EventLoop.h>

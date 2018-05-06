@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_IP_PROTOCOL_HANDLER_STUB_H
 #define AIPSTACK_IP_PROTOCOL_HANDLER_STUB_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <aipstack/meta/BasicMetaUtils.h>
 #include <aipstack/misc/NonCopyable.h>
@@ -277,7 +277,7 @@ struct IpProtocolHandlerStubService {
      * number the handler is responsible for. The type alias should be for a
      * @ref WrapValue type using uint8_t as the value type.
      */
-    using IpProtocolNumber = WrapValue<uint8_t, 99>;
+    using IpProtocolNumber = WrapValue<std::uint8_t, 99>;
     
     /**
      * Template through which the @ref IpStack instantiates the service.

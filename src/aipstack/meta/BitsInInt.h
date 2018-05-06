@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_BITS_IN_INT_H
 #define AIPSTACK_BITS_IN_INT_H
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace AIpStack {
 
@@ -36,7 +36,7 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <int Base, uintmax_t N>
+template <int Base, std::uintmax_t N>
 struct DigitsInInt {
     static const int Value = 1 + DigitsInInt<Base, N / Base>::Value;
 };
@@ -48,7 +48,7 @@ struct DigitsInInt<Base, 0> {
 
 #endif
 
-template <uintmax_t N>
+template <std::uintmax_t N>
 using BitsInInt =
 #ifdef IN_DOXYGEN
 implementation_hidden;
@@ -56,7 +56,7 @@ implementation_hidden;
 DigitsInInt<2, N>;
 #endif
 
-template <uintmax_t N>
+template <std::uintmax_t N>
 using HexDigitsInInt =
 #ifdef IN_DOXYGEN
 implementation_hidden;

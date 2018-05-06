@@ -25,8 +25,7 @@
 #ifndef AIPSTACK_INT_FORMAT_H
 #define AIPSTACK_INT_FORMAT_H
 
-#include <stddef.h>
-
+#include <cstddef>
 #include <type_traits>
 #include <algorithm>
 
@@ -56,11 +55,11 @@ constexpr bool IsInteger = std::is_integral<T>::value && !std::is_same<T, bool>:
 #ifndef IN_DOXYGEN
 namespace Private {
     template <typename T>
-    constexpr size_t IntegerFormatLenUnsigned (T value)
+    constexpr std::size_t IntegerFormatLenUnsigned (T value)
     {
         static_assert(std::is_unsigned<T>::value, "");
 
-        size_t len = 0;
+        std::size_t len = 0;
         do {
             value /= 10;
             len++;
@@ -70,7 +69,7 @@ namespace Private {
     }
 
     template <typename T>
-    constexpr size_t MaxIntegerFormatLenBase ()
+    constexpr std::size_t MaxIntegerFormatLenBase ()
     {
         if (std::is_signed<T>::value) {
             using UT = std::make_unsigned_t<T>;
@@ -89,7 +88,7 @@ namespace Private {
  * @tparam T Integer type (excluding bool), see @ref IsInteger.
  */
 template <typename T, typename = std::enable_if_t<IsInteger<T>>>
-constexpr size_t MaxIntegerFormatLen = Private::MaxIntegerFormatLenBase<T>() + 1;
+constexpr std::size_t MaxIntegerFormatLen = Private::MaxIntegerFormatLenBase<T>() + 1;
 
 /**
  * Format an integer to decimal representation.

@@ -25,8 +25,8 @@
 #ifndef AIPSTACK_IPSTACK_H
 #define AIPSTACK_IPSTACK_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 
 #include <aipstack/meta/ListForEach.h>
 #include <aipstack/meta/TypeListUtils.h>
@@ -239,7 +239,7 @@ public:
      * implementation to write the IP header and by lower-level protocol
      * implementations such as Ethernet for their own headers.
      */
-    static size_t const HeaderBeforeIp4Dgram = HeaderBeforeIp + Ip4Header::Size;
+    static std::size_t const HeaderBeforeIp4Dgram = HeaderBeforeIp + Ip4Header::Size;
     
     /**
      * Minimum permitted MTU and PMTU.
@@ -250,7 +250,7 @@ public:
      * need to be fragmented and the DF flag never needs to be turned off. Note that
      * Linux enforces a minimum of 552, this must be perfectly okay in practice.
      */
-    static uint16_t const MinMTU = 256;
+    static std::uint16_t const MinMTU = 256;
     
     /**
      * Construct the IP stack.
@@ -373,7 +373,7 @@ public:
                         IpIface<Arg> *iface, IpSendRetryRequest *retryReq,
                         IpSendFlags send_flags)
     {
-        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<uint16_t>())
+        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>())
         AIPSTACK_ASSERT(dgram.offset >= Ip4Header::Size)
         AIPSTACK_ASSERT((send_flags & ~IpSendFlags::AllFlags) == EnumZero)
         
@@ -399,7 +399,7 @@ public:
         }
 
         // Check if fragmentation is needed...
-        uint16_t pkt_send_len;
+        std::uint16_t pkt_send_len;
         
         if (AIPSTACK_UNLIKELY(pkt.tot_len > route_info.iface->getMtu())) {
             // Reject fragmentation?
@@ -414,29 +414,29 @@ public:
             send_flags |= IpSendFlags(Ip4FlagMF);
         } else {
             // First packet has all the data.
-            pkt_send_len = uint16_t(pkt.tot_len);
+            pkt_send_len = std::uint16_t(pkt.tot_len);
         }
         
         // Write IP header fields and calculate header checksum inline...
         auto ip4_header = Ip4Header::MakeRef(pkt.getChunkPtr());
         IpChksumAccumulator chksum;
         
-        uint16_t version_ihl_dscp_ecn = uint16_t((4 << Ip4VersionShift) | 5) << 8;
-        chksum.addWord(WrapType<uint16_t>(), version_ihl_dscp_ecn);
+        std::uint16_t version_ihl_dscp_ecn = std::uint16_t((4 << Ip4VersionShift) | 5) << 8;
+        chksum.addWord(WrapType<std::uint16_t>(), version_ihl_dscp_ecn);
         ip4_header.set(Ip4Header::VersionIhlDscpEcn(), version_ihl_dscp_ecn);
         
-        chksum.addWord(WrapType<uint16_t>(), pkt_send_len);
+        chksum.addWord(WrapType<std::uint16_t>(), pkt_send_len);
         ip4_header.set(Ip4Header::TotalLen(), pkt_send_len);
         
-        uint16_t ident = m_next_id++; // generate identification number
-        chksum.addWord(WrapType<uint16_t>(), ident);
+        std::uint16_t ident = m_next_id++; // generate identification number
+        chksum.addWord(WrapType<std::uint16_t>(), ident);
         ip4_header.set(Ip4Header::Ident(), ident);
         
-        uint16_t flags_offset = uint16_t(send_flags) & IpOnlySendFlagsMask;
-        chksum.addWord(WrapType<uint16_t>(), flags_offset);
+        std::uint16_t flags_offset = std::uint16_t(send_flags) & IpOnlySendFlagsMask;
+        chksum.addWord(WrapType<std::uint16_t>(), flags_offset);
         ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         
-        chksum.addWord(WrapType<uint16_t>(), ttl_proto.value);
+        chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value);
         ip4_header.set(Ip4Header::TtlProto(), ttl_proto.value);
         
         chksum.addWords(&addrs.local_addr.data);
@@ -464,7 +464,7 @@ private:
                            IpSendFlags send_flags, IpSendRetryRequest *retryReq)
     {
         // Recalculate pkt_send_len (not passed for optimization).
-        uint16_t pkt_send_len =
+        std::uint16_t pkt_send_len =
             Ip4RoundFragLen(Ip4Header::Size, route_info.iface->getMtu());
         
         // Send the first fragment.
@@ -478,7 +478,7 @@ private:
         IpBufRef dgram = pkt.hideHeader(Ip4Header::Size);
         
         // Calculate the next fragment offset and skip the sent data.
-        uint16_t fragment_offset = pkt_send_len - Ip4Header::Size;
+        std::uint16_t fragment_offset = pkt_send_len - Ip4Header::Size;
         dgram.skipBytes(fragment_offset);
         
         // Send remaining fragments.
@@ -490,9 +490,9 @@ private:
             // If this is the last fragment, calculate its length and clear
             // the MoreFragments flag. Otherwise pkt_send_len is still correct
             // and MoreFragments still set.
-            size_t rem_pkt_length = Ip4Header::Size + dgram.tot_len;
+            std::size_t rem_pkt_length = Ip4Header::Size + dgram.tot_len;
             if (rem_pkt_length <= route_info.iface->getMtu()) {
-                pkt_send_len = uint16_t(rem_pkt_length);
+                pkt_send_len = std::uint16_t(rem_pkt_length);
                 send_flags &= ~IpSendFlags(Ip4FlagMF);
             }
             
@@ -500,14 +500,14 @@ private:
             
             // Write the fragment-specific IP header fields.
             ip4_header.set(Ip4Header::TotalLen(), pkt_send_len);
-            uint16_t flags_offset = (uint16_t(send_flags) & IpOnlySendFlagsMask) |
+            std::uint16_t flags_offset = (std::uint16_t(send_flags) & IpOnlySendFlagsMask) |
                                     (fragment_offset / 8);
             ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
             ip4_header.set(Ip4Header::HeaderChksum(), 0);
             
             // Calculate the IP header checksum.
             // Not inline since fragmentation is uncommon, better save program space.
-            uint16_t calc_chksum = IpChksum(ip4_header.data, Ip4Header::Size);
+            std::uint16_t calc_chksum = IpChksum(ip4_header.data, Ip4Header::Size);
             ip4_header.set(Ip4Header::HeaderChksum(), calc_chksum);
             
             // Construct a packet with header and partial data.
@@ -528,7 +528,7 @@ private:
             }
             
             // Update the fragment offset and skip the sent data.
-            uint16_t data_sent = pkt_send_len - Ip4Header::Size;
+            std::uint16_t data_sent = pkt_send_len - Ip4Header::Size;
             fragment_offset += data_sent;
             dgram.skipBytes(data_sent);
         }
@@ -580,15 +580,15 @@ public:
         auto ip4_header = Ip4Header::MakeRef(header_end_ptr - Ip4Header::Size);
         IpChksumAccumulator chksum;
         
-        uint16_t version_ihl_dscp_ecn = uint16_t((4 << Ip4VersionShift) | 5) << 8;
-        chksum.addWord(WrapType<uint16_t>(), version_ihl_dscp_ecn);
+        std::uint16_t version_ihl_dscp_ecn = std::uint16_t((4 << Ip4VersionShift) | 5) << 8;
+        chksum.addWord(WrapType<std::uint16_t>(), version_ihl_dscp_ecn);
         ip4_header.set(Ip4Header::VersionIhlDscpEcn(), version_ihl_dscp_ecn);
         
-        uint16_t flags_offset = uint16_t(send_flags) & IpOnlySendFlagsMask;
-        chksum.addWord(WrapType<uint16_t>(), flags_offset);
+        std::uint16_t flags_offset = std::uint16_t(send_flags) & IpOnlySendFlagsMask;
+        chksum.addWord(WrapType<std::uint16_t>(), flags_offset);
         ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         
-        chksum.addWord(WrapType<uint16_t>(), ttl_proto.value);
+        chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value);
         ip4_header.set(Ip4Header::TtlProto(), ttl_proto.value);
         
         chksum.addWords(&addrs.local_addr.data);
@@ -629,7 +629,7 @@ public:
     IpErr sendIp4DgramFast (IpSendPreparedIp4<Arg> const &prep, IpBufRef dgram,
                             IpSendRetryRequest *retryReq)
     {
-        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<uint16_t>())
+        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>())
         AIPSTACK_ASSERT(dgram.offset >= Ip4Header::Size)
         
         // Reveal IP header.
@@ -644,11 +644,11 @@ public:
         auto ip4_header = Ip4Header::MakeRef(pkt.getChunkPtr());
         IpChksumAccumulator chksum(prep.partial_chksum_state);
         
-        chksum.addWord(WrapType<uint16_t>(), uint16_t(pkt.tot_len));
-        ip4_header.set(Ip4Header::TotalLen(), uint16_t(pkt.tot_len));
+        chksum.addWord(WrapType<std::uint16_t>(), std::uint16_t(pkt.tot_len));
+        ip4_header.set(Ip4Header::TotalLen(), std::uint16_t(pkt.tot_len));
         
-        uint16_t ident = m_next_id++; // generate identification number
-        chksum.addWord(WrapType<uint16_t>(), ident);
+        std::uint16_t ident = m_next_id++; // generate identification number
+        chksum.addWord(WrapType<std::uint16_t>(), ident);
         ip4_header.set(Ip4Header::Ident(), ident);
         
         // Set the IP header checksum.
@@ -660,7 +660,7 @@ public:
     }
 
 private:
-    static uint16_t const IpOnlySendFlagsMask = 0xFF00;
+    static std::uint16_t const IpOnlySendFlagsMask = 0xFF00;
     
     inline static IpErr checkSendIp4Allowed (
         Ip4Addrs const &addrs, IpSendFlags send_flags, Iface *iface)
@@ -795,7 +795,7 @@ public:
      * @param mtu_info The next-hop-MTU from the ICMP message.
      * @return True if the Path MTU estimate was lowered, false if not.
      */
-    inline bool handleIcmpPacketTooBig (Ip4Addr remote_addr, uint16_t mtu_info)
+    inline bool handleIcmpPacketTooBig (Ip4Addr remote_addr, std::uint16_t mtu_info)
     {
         return m_path_mtu_cache.handlePacketTooBig(remote_addr, mtu_info);
     }
@@ -819,7 +819,7 @@ public:
      */
     inline bool handleLocalPacketTooBig (Ip4Addr remote_addr)
     {
-        return m_path_mtu_cache.handlePacketTooBig(remote_addr, TypeMax<uint16_t>());
+        return m_path_mtu_cache.handlePacketTooBig(remote_addr, TypeMax<std::uint16_t>());
     }
     
     /**
@@ -874,8 +874,8 @@ public:
         Ip4Addrs addrs = {rx_ip_info.dst_addr, rx_ip_info.src_addr};
 
         // Calculate how much of the original datagram we will send.
-        size_t data_len =
-            size_t(rx_ip_info.header_len) + MinValue(size_t(8), rx_dgram.tot_len);
+        std::size_t data_len =
+            std::size_t(rx_ip_info.header_len) + MinValue(std::size_t(8), rx_dgram.tot_len);
         
         // Get this data by revealing the IP header in rx_dgram and taking only the
         // calculated length.
@@ -951,12 +951,12 @@ private:
         IpChksumAccumulator chksum;
         
         // Read Version+IHL+DSCP+ECN and add to checksum.
-        uint16_t version_ihl_dscp_ecn = ip4_header.get(Ip4Header::VersionIhlDscpEcn());
-        chksum.addWord(WrapType<uint16_t>(), version_ihl_dscp_ecn);
+        std::uint16_t version_ihl_dscp_ecn = ip4_header.get(Ip4Header::VersionIhlDscpEcn());
+        chksum.addWord(WrapType<std::uint16_t>(), version_ihl_dscp_ecn);
         
         // Check IP version and header length...
-        uint8_t version_ihl = version_ihl_dscp_ecn >> 8;
-        uint8_t header_len;
+        std::uint8_t version_ihl = version_ihl_dscp_ecn >> 8;
+        std::uint8_t header_len;
         
         // Fast path is that the version is correctly 4 and the header
         // length is minimal (5 words = 20 bytes).
@@ -985,8 +985,8 @@ private:
         }
         
         // Read total length and add to checksum.
-        uint16_t total_len = ip4_header.get(Ip4Header::TotalLen());
-        chksum.addWord(WrapType<uint16_t>(), total_len);
+        std::uint16_t total_len = ip4_header.get(Ip4Header::TotalLen());
+        chksum.addWord(WrapType<std::uint16_t>(), total_len);
         
         // Check total length.
         if (AIPSTACK_UNLIKELY(total_len < header_len || total_len > pkt.tot_len)) {
@@ -997,13 +997,13 @@ private:
         IpBufRef dgram = pkt.hideHeader(header_len).subTo(total_len - header_len);
         
         // Add ident and header checksum to checksum.
-        chksum.addWord(WrapType<uint16_t>(), ip4_header.get(Ip4Header::Ident()));
-        chksum.addWord(WrapType<uint16_t>(),
+        chksum.addWord(WrapType<std::uint16_t>(), ip4_header.get(Ip4Header::Ident()));
+        chksum.addWord(WrapType<std::uint16_t>(),
                        ip4_header.get(Ip4Header::HeaderChksum()));
         
         // Read TTL+protocol and add to checksum.
         Ip4TtlProto ttl_proto = ip4_header.get(Ip4Header::TtlProto());
-        chksum.addWord(WrapType<uint16_t>(), ttl_proto.value);
+        chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value);
         
         // Read addresses and add to checksum
         Ip4Addr src_addr = ip4_header.get(Ip4Header::SrcAddr());
@@ -1012,8 +1012,8 @@ private:
         chksum.addWords(&dst_addr.data);
         
         // Get flags+offset and add to checksum.
-        uint16_t flags_offset = ip4_header.get(Ip4Header::FlagsOffset());
-        chksum.addWord(WrapType<uint16_t>(), flags_offset);        
+        std::uint16_t flags_offset = ip4_header.get(Ip4Header::FlagsOffset());
+        chksum.addWord(WrapType<std::uint16_t>(), flags_offset);        
         
         // Verify IP header checksum.
         if (AIPSTACK_UNLIKELY(chksum.getChksum() != 0)) {
@@ -1033,7 +1033,7 @@ private:
             
             // Get the more-fragments flag and the fragment offset in bytes.
             bool more_fragments = (flags_offset & Ip4FlagMF) != 0;
-            uint16_t fragment_offset = (flags_offset & Ip4OffsetMask) * 8;
+            std::uint16_t fragment_offset = (flags_offset & Ip4OffsetMask) * 8;
             
             // Perform reassembly.
             if (!iface->m_stack->m_reassembly.reassembleIp4(
@@ -1057,7 +1057,7 @@ private:
     
     static void recvIp4Dgram (IpRxInfoIp4<Arg> ip_info, IpBufRef dgram)
     {
-        uint8_t proto = ip_info.ttl_proto.proto();
+        std::uint8_t proto = ip_info.ttl_proto.proto();
         
         // Pass to interface listeners. If any listener accepts the
         // packet, inhibit further processing.
@@ -1124,12 +1124,12 @@ private:
         
         // Read ICMP header fields.
         auto icmp4_header = Icmp4Header::MakeRef(dgram.getChunkPtr());
-        uint8_t type       = icmp4_header.get(Icmp4Header::Type());
-        uint8_t code       = icmp4_header.get(Icmp4Header::Code());
+        std::uint8_t type  = icmp4_header.get(Icmp4Header::Type());
+        std::uint8_t code  = icmp4_header.get(Icmp4Header::Code());
         Icmp4RestType rest = icmp4_header.get(Icmp4Header::Rest());
         
         // Verify ICMP checksum.
-        uint16_t calc_chksum = IpChksum(dgram);
+        std::uint16_t calc_chksum = IpChksum(dgram);
         if (AIPSTACK_UNLIKELY(calc_chksum != 0)) {
             return;
         }
@@ -1167,7 +1167,7 @@ private:
     }
 
     IpErr sendIcmp4Message (Ip4Addrs const &addrs, Iface *iface,
-                            uint8_t type, uint8_t code, Icmp4RestType rest, IpBufRef data)
+                            std::uint8_t type, std::uint8_t code, Icmp4RestType rest, IpBufRef data)
     {
         // Allocate memory for headers.
         TxAllocHelper<Icmp4Header::Size, HeaderBeforeIp4Dgram>
@@ -1186,7 +1186,7 @@ private:
         IpBufRef dgram = dgram_alloc.getBufRef();
         
         // Calculate ICMP checksum.
-        uint16_t calc_chksum = IpChksum(dgram);
+        std::uint16_t calc_chksum = IpChksum(dgram);
         icmp4_header.set(Icmp4Header::Chksum(), calc_chksum);
         
         // Send the datagram.
@@ -1195,7 +1195,7 @@ private:
     }
     
     void handleIcmp4DestUnreach (
-        uint8_t code, Icmp4RestType rest, IpBufRef icmp_data, Iface *iface)
+        std::uint8_t code, Icmp4RestType rest, IpBufRef icmp_data, Iface *iface)
     {
         // Check base IP header length.
         if (AIPSTACK_UNLIKELY(!icmp_data.hasHeader(Ip4Header::Size))) {
@@ -1204,11 +1204,11 @@ private:
         
         // Read IP header fields.
         auto ip4_header = Ip4Header::MakeRef(icmp_data.getChunkPtr());
-        uint8_t version_ihl    = ip4_header.get(Ip4Header::VersionIhlDscpEcn()) >> 8;
-        uint16_t total_len     = ip4_header.get(Ip4Header::TotalLen());
-        uint16_t ttl_proto     = ip4_header.get(Ip4Header::TtlProto());
-        Ip4Addr src_addr       = ip4_header.get(Ip4Header::SrcAddr());
-        Ip4Addr dst_addr       = ip4_header.get(Ip4Header::DstAddr());
+        std::uint8_t version_ihl = ip4_header.get(Ip4Header::VersionIhlDscpEcn()) >> 8;
+        std::uint16_t total_len  = ip4_header.get(Ip4Header::TotalLen());
+        std::uint16_t ttl_proto  = ip4_header.get(Ip4Header::TtlProto());
+        Ip4Addr src_addr         = ip4_header.get(Ip4Header::SrcAddr());
+        Ip4Addr dst_addr         = ip4_header.get(Ip4Header::DstAddr());
         
         // Check IP version.
         if (AIPSTACK_UNLIKELY((version_ihl >> Ip4VersionShift) != 4)) {
@@ -1217,7 +1217,7 @@ private:
         
         // Check header length.
         // We require the entire header to fit into the first buffer.
-        uint8_t header_len = (version_ihl & Ip4IhlMask) * 4;
+        std::uint8_t header_len = (version_ihl & Ip4IhlMask) * 4;
         if (AIPSTACK_UNLIKELY(header_len < Ip4Header::Size ||
                               !icmp_data.hasHeader(header_len)))
         {
@@ -1236,7 +1236,7 @@ private:
         IpRxInfoIp4<Arg> ip_info = {src_addr, dst_addr, ttl_proto, iface, header_len};
         
         // Get the included IP data.
-        size_t data_len = MinValueU(icmp_data.tot_len, total_len) - header_len;
+        std::size_t data_len = MinValueU(icmp_data.tot_len, total_len) - header_len;
         IpBufRef dgram_initial = icmp_data.hideHeader(header_len).subTo(data_len);
         
         // Dispatch based on the protocol.
@@ -1256,7 +1256,7 @@ private:
     Reassembly m_reassembly;
     PathMtuCache m_path_mtu_cache;
     StructureRaiiWrapper<IfaceList> m_iface_list;
-    uint16_t m_next_id;
+    std::uint16_t m_next_id;
     InstantiateVariadic<ResourceTuple, ProtocolsList> m_protocols;
 };
 
@@ -1270,12 +1270,12 @@ struct IpStackOptions {
      * This should be the maximum of the required space of any IP interface
      * driver that may be used.
      */
-    AIPSTACK_OPTION_DECL_VALUE(HeaderBeforeIp, size_t, 14)
+    AIPSTACK_OPTION_DECL_VALUE(HeaderBeforeIp, std::size_t, 14)
     
     /**
      * TTL of outgoing ICMP packets.
      */
-    AIPSTACK_OPTION_DECL_VALUE(IcmpTTL, uint8_t, 64)
+    AIPSTACK_OPTION_DECL_VALUE(IcmpTTL, std::uint8_t, 64)
     
     /**
      * Whether to respond to broadcast pings.

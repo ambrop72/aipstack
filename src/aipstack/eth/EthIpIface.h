@@ -25,8 +25,8 @@
 #ifndef AIPSTACK_ETH_IP_IFACE_H
 #define AIPSTACK_ETH_IP_IFACE_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 
 #include <aipstack/meta/ChooseInt.h>
 #include <aipstack/misc/Assert.h>
@@ -91,7 +91,7 @@ struct EthIfaceDriverParams {
      * 
      * The resulting IP MTU (14 bytes less) must be at least @ref IpStack::MinMTU.
      */
-    size_t eth_mtu = 0;
+    std::size_t eth_mtu = 0;
     
     /**
      * Pointer to the MAC address of the network interface.
@@ -183,7 +183,7 @@ class EthIpIface final :
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
     
-    static size_t const EthArpPktSize = EthHeader::Size + ArpIp4Header::Size;
+    static std::size_t const EthArpPktSize = EthHeader::Size + ArpIp4Header::Size;
     
     // Sanity check ARP table configuration.
     static_assert(NumArpEntries > 0, "");
@@ -197,8 +197,8 @@ class EthIpIface final :
     static ArpEntryIndexType const ArpEntryNull = TypeMax<ArpEntryIndexType>();
     
     // Number of ARP resolution attempts in the Query and Refreshing states.
-    static uint8_t const ArpQueryAttempts = 3;
-    static uint8_t const ArpRefreshAttempts = 2;
+    static std::uint8_t const ArpQueryAttempts = 3;
+    static std::uint8_t const ArpRefreshAttempts = 2;
     
     // These need to fit in 4 bits available in ArpEntry::attempts_left.
     static_assert(ArpQueryAttempts <= 15, "");
@@ -229,7 +229,7 @@ class EthIpIface final :
         ArpEntriesLinkModel, TimeType, ArpEntryTimerQueueNodeUserData>;
     
     // ARP entry states.
-    struct ArpEntryState { enum : uint8_t {Free, Query, Valid, Refreshing}; };
+    struct ArpEntryState { enum : std::uint8_t {Free, Query, Valid, Refreshing}; };
     
     // ARP entry states where the entry timer is allowed to be active.
     inline static auto one_of_timer_entry_states ()
@@ -239,7 +239,7 @@ class EthIpIface final :
     
     struct ArpEntryTimerQueueNodeUserData {
         // Entry state (ArpEntryState::*).
-        uint8_t state : 2;
+        std::uint8_t state : 2;
         
         // Whether the entry is weak (seen by chance) or hard (needed at some point).
         // Free entries must be weak.
@@ -251,7 +251,7 @@ class EthIpIface final :
         // Query and Refreshing states: How many more response timeouts before the
         // entry becomes Free or Refreshing respectively.
         // Valid state: 1 if the timeout has not elapsed yet, 0 if it has.
-        uint8_t attempts_left : 4;
+        std::uint8_t attempts_left : 4;
     };
     
     // ARP table entry (in array m_arp_entries)
@@ -310,7 +310,7 @@ public:
     :
         m_params(params),
         m_driver_iface(stack, IpIfaceDriverParams{
-            /*ip_mtu=*/ size_t(params.eth_mtu - EthHeader::Size),
+            /*ip_mtu=*/ std::size_t(params.eth_mtu - EthHeader::Size),
             /*hw_type=*/ IpHwType::Ethernet,
             /*hw_iface=*/ static_cast<EthHwIface *>(this),
             AIPSTACK_BIND_MEMBER_TN(&EthIpIface::driverSendIp4Packet, this),
@@ -379,7 +379,7 @@ public:
         m_rx_eth_header = EthHeader::MakeRef(frame.getChunkPtr());
         
         // Get the EtherType.
-        uint16_t ethtype = m_rx_eth_header.get(EthHeader::EthType());
+        std::uint16_t ethtype = m_rx_eth_header.get(EthHeader::EthType());
         
         // Hide the header to get the payload.
         auto pkt = frame.hideHeader(EthHeader::Size);
@@ -493,9 +493,9 @@ private:
         }
         
         // Get some ARP header fields.
-        uint16_t op_type    = arp_header.get(ArpIp4Header::OpType());
-        MacAddr src_mac     = arp_header.get(ArpIp4Header::SrcHwAddr());
-        Ip4Addr src_ip_addr = arp_header.get(ArpIp4Header::SrcProtoAddr());
+        std::uint16_t op_type = arp_header.get(ArpIp4Header::OpType());
+        MacAddr src_mac       = arp_header.get(ArpIp4Header::SrcHwAddr());
+        Ip4Addr src_ip_addr   = arp_header.get(ArpIp4Header::SrcProtoAddr());
         
         // Try to save the hardware address.
         save_hw_addr(src_ip_addr, src_mac);
@@ -775,7 +775,7 @@ private:
         }
     }
     
-    IpErr send_arp_packet (uint16_t op_type, MacAddr dst_mac, Ip4Addr dst_ipaddr)
+    IpErr send_arp_packet (std::uint16_t op_type, MacAddr dst_mac, Ip4Addr dst_ipaddr)
     {
         // Get a local buffer for the frame,
         TxAllocHelper<EthArpPktSize, HeaderBeforeEth> frame_alloc(EthArpPktSize);
@@ -821,7 +821,7 @@ private:
             timeout = ArpValidTimeoutTicks;
         } else {
             // Query or Refreshing entry, compute timeout with exponential backoff.
-            uint8_t attempts = (entry.nud().state == ArpEntryState::Query) ?
+            std::uint8_t attempts = (entry.nud().state == ArpEntryState::Query) ?
                 ArpQueryAttempts : ArpRefreshAttempts;
             AIPSTACK_ASSERT(entry.nud().attempts_left <= attempts)
             timeout = ArpBaseResponseTimeoutTicks << (attempts - entry.nud().attempts_left);
@@ -1002,7 +1002,7 @@ struct EthIpIfaceOptions {
      * 
      * See @ref EthIfaceDriverParams::send_frame for details.
      */
-    AIPSTACK_OPTION_DECL_VALUE(HeaderBeforeEth, size_t, 0)
+    AIPSTACK_OPTION_DECL_VALUE(HeaderBeforeEth, std::size_t, 0)
     
     /**
      * Data structure to use for ARP entry timers.

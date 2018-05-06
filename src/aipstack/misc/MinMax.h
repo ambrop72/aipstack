@@ -120,10 +120,10 @@ using MinValueURetType = std::conditional_t<
  * Below is a typical use case where this is practical:
  * 
  * ```
- * // We have a value which we want to limit to no more than fits into uint16_t.
- * uint32_t a = ...;
+ * // We have a value which we want to limit to no more than fits into std::uint16_t.
+ * std::uint32_t a = ...;
  * // Use MinValueU and assign the result to uint16_t (no cast needed).
- * uint16_t b = MinValueU(a, TypeMax<uint16_t>());
+ * std::uint16_t b = MinValueU(a, TypeMax<std::uint16_t>());
  * ```
  * 
  * @tparam T1 Type of first operand. Must be an unsigned integer type.

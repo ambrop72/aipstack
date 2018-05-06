@@ -25,9 +25,8 @@
 #ifndef AIPSTACK_TCP_OOS_BUFFER_H
 #define AIPSTACK_TCP_OOS_BUFFER_H
 
-#include <stdint.h>
-#include <stddef.h>
-
+#include <cstdint>
+#include <cstddef>
 #include <algorithm>
 
 #include <aipstack/meta/ChooseInt.h>
@@ -160,7 +159,7 @@ public:
      * @return True on success, false in case of FIN inconsistency
      *         (no updates done).
      */
-    bool updateForSegmentReceived (SeqType rcv_nxt, SeqType seg_start, size_t seg_datalen,
+    bool updateForSegmentReceived (SeqType rcv_nxt, SeqType seg_start, std::size_t seg_datalen,
                                    bool seg_fin, bool &need_ack)
     {
         // Initialize need_ack to whether the segment is out of sequence.
@@ -321,7 +320,7 @@ public:
      * @param fin This will be set to whether a FIN follows the shifted-out
      *            data (or follows rcv_nxt if there is no shifted-out data).
      */
-    void shiftAvailable (SeqType rcv_nxt, size_t &datalen, bool &fin)
+    void shiftAvailable (SeqType rcv_nxt, std::size_t &datalen, bool &fin)
     {
         // Check if we have a data segment starting at rcv_nxt.
         if (!m_ooseq[0].isEndOrFin() && m_ooseq[0].start == rcv_nxt) {
@@ -368,7 +367,7 @@ private:
 };
 
 struct TcpOosBufferServiceOptions {
-    AIPSTACK_OPTION_DECL_VALUE(NumOosSegs, size_t, 4)
+    AIPSTACK_OPTION_DECL_VALUE(NumOosSegs, std::size_t, 4)
 };
 
 template <typename... Options>

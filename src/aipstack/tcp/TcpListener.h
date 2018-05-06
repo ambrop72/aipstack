@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_TCP_LISTENER_H
 #define AIPSTACK_TCP_LISTENER_H
 
-#include <stddef.h>
+#include <cstddef>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/NonCopyable.h>
@@ -209,7 +209,7 @@ public:
      * may still use a smaller initial receive window than configued with this
      * function.
      */
-    void setInitialReceiveWindow (size_t rcv_wnd)
+    void setInitialReceiveWindow (std::size_t rcv_wnd)
     {
         m_initial_rcv_wnd = MinValueU(Constants::MaxWindow, rcv_wnd);
     }

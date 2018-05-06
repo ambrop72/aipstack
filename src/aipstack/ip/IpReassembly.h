@@ -25,8 +25,8 @@
 #ifndef AIPSTACK_IPREASSEMBLY_H
 #define AIPSTACK_IPREASSEMBLY_H
 
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
 
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
@@ -83,20 +83,20 @@ class IpReassembly :
     static_assert(MaxReassTimeSeconds >= 5, "");
     
     // Null link value in HoleDescriptor lists.
-    static uint16_t const ReassNullLink = TypeMax<uint16_t>();
+    static std::uint16_t const ReassNullLink = TypeMax<std::uint16_t>();
     
     // Hole descriptor structure, placed at the beginning of a hole.
     AIPSTACK_DEFINE_STRUCT(HoleDescriptor,
-        (HoleSize,       StructRawField<uint16_t>)
-        (NextHoleOffset, StructRawField<uint16_t>)
+        (HoleSize,       StructRawField<std::uint16_t>)
+        (NextHoleOffset, StructRawField<std::uint16_t>)
     )
     
     // We need to be able to put a hole descriptor after the reassembled data.
-    static_assert(MaxReassSize <= TypeMax<uint16_t>() - HoleDescriptor::Size, "");
+    static_assert(MaxReassSize <= TypeMax<std::uint16_t>() - HoleDescriptor::Size, "");
     
     // The size of the reassembly buffers, with additional space for a hole descriptor
     // at the end.
-    static uint16_t const ReassBufferSize = MaxReassSize + HoleDescriptor::Size;
+    static std::uint16_t const ReassBufferSize = MaxReassSize + HoleDescriptor::Size;
     
     // Maximum time that a reassembly entry can be valid.
     static TimeType const ReassMaxExpirationTicks =
@@ -110,9 +110,9 @@ class IpReassembly :
     
     struct ReassEntry {
         // Offset in data to the first hole, or ReassNullLink for free entry.
-        uint16_t first_hole_offset;
+        std::uint16_t first_hole_offset;
         // The total data length, or 0 if last fragment not yet received.
-        uint16_t data_length;
+        std::uint16_t data_length;
         // Time after which the entry is considered invalid.
         TimeType expiration_time;
         // IPv4 header (options not stored).
@@ -176,11 +176,11 @@ public:
      *        function.
      * @return True if a datagram was reassembled, false if not.
      */
-    bool reassembleIp4 (uint16_t ident, Ip4Addr src_addr, Ip4Addr dst_addr, uint8_t proto,
-                        uint8_t ttl, bool more_fragments, uint16_t fragment_offset,
+    bool reassembleIp4 (std::uint16_t ident, Ip4Addr src_addr, Ip4Addr dst_addr, std::uint8_t proto,
+                        std::uint8_t ttl, bool more_fragments, std::uint16_t fragment_offset,
                         char const *header, IpBufRef &dgram)
     {
-        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<uint16_t>())
+        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>())
         AIPSTACK_ASSERT(more_fragments || fragment_offset > 0)
         
         // Sanity check data length.
@@ -197,7 +197,7 @@ public:
             reass = alloc_reass_entry(now, ttl);
             
             // Copy the IP header.
-            ::memcpy(reass->header, header, Ip4Header::Size);
+            std::memcpy(reass->header, header, Ip4Header::Size);
             
             // Set first hole and unknown data length.
             reass->first_hole_offset = 0;
@@ -215,11 +215,11 @@ public:
         do {
             // Verify that the fragment fits into the buffer.
             if (fragment_offset > MaxReassSize ||
-                dgram.tot_len > uint16_t(MaxReassSize - fragment_offset))
+                dgram.tot_len > std::uint16_t(MaxReassSize - fragment_offset))
             {
                 goto invalidate_reass;
             }
-            uint16_t fragment_end = uint16_t(fragment_offset + dgram.tot_len);
+            std::uint16_t fragment_end = std::uint16_t(fragment_offset + dgram.tot_len);
             
             // Summary of last-fragment related sanity checks:
             // - When we first receive a last fragment, we remember the data size and
@@ -248,9 +248,9 @@ public:
             }
             
             // Update the holes based on this fragment.
-            uint16_t prev_hole_offset = ReassNullLink;
-            uint16_t hole_offset = reass->first_hole_offset;
-            uint8_t num_holes = 0;
+            std::uint16_t prev_hole_offset = ReassNullLink;
+            std::uint16_t hole_offset = reass->first_hole_offset;
+            std::uint8_t num_holes = 0;
             do {
                 AIPSTACK_ASSERT(prev_hole_offset == ReassNullLink ||
                              hole_offset_valid(prev_hole_offset))
@@ -258,13 +258,13 @@ public:
                 
                 // Get the hole info.
                 auto hole = HoleDescriptor::MakeRef(reass->data + hole_offset);
-                uint16_t hole_size = hole.get(typename HoleDescriptor::HoleSize());
-                uint16_t next_hole_offset =
+                std::uint16_t hole_size = hole.get(typename HoleDescriptor::HoleSize());
+                std::uint16_t next_hole_offset =
                     hole.get(typename HoleDescriptor::NextHoleOffset());
                 
                 // Calculate the hole end.
                 AIPSTACK_ASSERT(hole_size <= ReassBufferSize - hole_offset)
-                uint16_t hole_end = hole_offset + hole_size;
+                std::uint16_t hole_end = hole_offset + hole_size;
                 
                 // If this is the last fragment, sanity check that the hole offset
                 // is not greater than the end of this fragment; this would mean
@@ -287,7 +287,7 @@ public:
                 // Create a new hole on the left if needed.
                 if (fragment_offset > hole_offset) {
                     // Sanity check hole size.
-                    uint16_t new_hole_size = fragment_offset - hole_offset;
+                    std::uint16_t new_hole_size = fragment_offset - hole_offset;
                     if (new_hole_size < HoleDescriptor::Size) {
                         goto invalidate_reass;
                     }
@@ -309,7 +309,7 @@ public:
                 // Create a new hole on the right if needed.
                 if (fragment_end < hole_end) {
                     // Sanity check hole size.
-                    uint16_t new_hole_size = hole_end - fragment_end;
+                    std::uint16_t new_hole_size = hole_end - fragment_end;
                     if (new_hole_size < HoleDescriptor::Size) {
                         goto invalidate_reass;
                     }
@@ -360,8 +360,8 @@ public:
             AIPSTACK_ASSERT(reass->first_hole_offset == reass->data_length)
 #if AIPSTACK_ASSERTIONS
             auto hole = HoleDescriptor::MakeRef(reass->data + reass->first_hole_offset);
-            uint16_t hole_size        = hole.get(typename HoleDescriptor::HoleSize());
-            uint16_t next_hole_offset = hole.get(typename HoleDescriptor::NextHoleOffset());
+            std::uint16_t hole_size        = hole.get(typename HoleDescriptor::HoleSize());
+            std::uint16_t next_hole_offset = hole.get(typename HoleDescriptor::NextHoleOffset());
             AIPSTACK_ASSERT(hole_size == ReassBufferSize - reass->first_hole_offset)
             AIPSTACK_ASSERT(next_hole_offset == ReassNullLink)
 #endif
@@ -383,8 +383,8 @@ public:
     }
     
 private:
-    ReassEntry * find_reass_entry (TimeType now, uint16_t ident, Ip4Addr src_addr,
-                                   Ip4Addr dst_addr, uint8_t proto)
+    ReassEntry * find_reass_entry (TimeType now, std::uint16_t ident, Ip4Addr src_addr,
+                                   Ip4Addr dst_addr, std::uint8_t proto)
     {
         ReassEntry *found_entry = nullptr;
         
@@ -406,7 +406,7 @@ private:
             if (reass_hdr.get(Ip4Header::Ident())    == ident &&
                 reass_hdr.get(Ip4Header::SrcAddr())  == src_addr &&
                 reass_hdr.get(Ip4Header::DstAddr())  == dst_addr &&
-                uint8_t(reass_hdr.get(Ip4Header::TtlProto()) == proto))
+                std::uint8_t(reass_hdr.get(Ip4Header::TtlProto()) == proto))
             {
                 found_entry = &reass;
             }
@@ -415,7 +415,7 @@ private:
         return found_entry;
     }
     
-    ReassEntry * alloc_reass_entry (TimeType now, uint8_t ttl)
+    ReassEntry * alloc_reass_entry (TimeType now, std::uint8_t ttl)
     {
         TimeType future = now + ReassMaxExpirationTicks;
         
@@ -438,13 +438,13 @@ private:
         }
         
         // Set the expiration time.
-        uint8_t seconds = MinValue(ttl, MaxReassTimeSeconds);
+        std::uint8_t seconds = MinValue(ttl, MaxReassTimeSeconds);
         result_reass->expiration_time = now + seconds * TimeType(Platform::TimeFreq);
         
         return result_reass;
     }
     
-    static void reass_link_prev (ReassEntry *reass, uint16_t prev_hole_offset, uint16_t hole_offset)
+    static void reass_link_prev (ReassEntry *reass, std::uint16_t prev_hole_offset, std::uint16_t hole_offset)
     {
         AIPSTACK_ASSERT(prev_hole_offset == ReassNullLink || hole_offset_valid(prev_hole_offset))
         
@@ -456,7 +456,7 @@ private:
         }
     }
     
-    inline static bool hole_offset_valid (uint16_t hole_offset)
+    inline static bool hole_offset_valid (std::uint16_t hole_offset)
     {
         return hole_offset <= MaxReassSize;
     }
@@ -487,18 +487,18 @@ struct IpReassemblyOptions {
     /**
      * Maximum size of reassembled datagrams. This affects memory use.
      */
-    AIPSTACK_OPTION_DECL_VALUE(MaxReassSize, uint16_t, 1480)
+    AIPSTACK_OPTION_DECL_VALUE(MaxReassSize, std::uint16_t, 1480)
     
     /**
      * Maximum number of holes in an incompletely reassembled datagram.
      */
-    AIPSTACK_OPTION_DECL_VALUE(MaxReassHoles, uint8_t, 10)
+    AIPSTACK_OPTION_DECL_VALUE(MaxReassHoles, std::uint8_t, 10)
     
     /**
      * Maximum allowed timeout of an incompletely reassembled datagram,
      * as an additional restriction to the TTL seconds limit.
      */
-    AIPSTACK_OPTION_DECL_VALUE(MaxReassTimeSeconds, uint8_t, 60)
+    AIPSTACK_OPTION_DECL_VALUE(MaxReassTimeSeconds, std::uint8_t, 60)
 };
 
 /**

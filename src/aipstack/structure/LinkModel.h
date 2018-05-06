@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_LINK_MODEL_H
 #define AIPSTACK_LINK_MODEL_H
 
-#include <stddef.h>
+#include <cstddef>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
@@ -183,14 +183,14 @@ public:
     inline ArrayLinkModelAccessorState (ArrayContainer &container)
     : m_array(&ArrayAccessor::access(container)[0]) {}
     
-    inline Entry & getEntryAt (size_t index)
+    inline Entry & getEntryAt (std::size_t index)
     {
         return m_array[index];
     }
     
-    inline size_t getEntryIndex (Entry &entry)
+    inline std::size_t getEntryIndex (Entry &entry)
     {
-        return size_t(&entry - m_array);
+        return std::size_t(&entry - m_array);
     }
     
 private:

@@ -25,10 +25,9 @@
 #ifndef AIPSTACK_TCP_CONNECTION_H
 #define AIPSTACK_TCP_CONNECTION_H
 
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
-
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <type_traits>
 
 #include <aipstack/misc/Assert.h>
@@ -57,8 +56,8 @@ template <typename> class TcpApi;
 template <typename Arg>
 struct TcpStartConnectionArgs {
     Ip4Addr addr = Ip4Addr::ZeroAddr();
-    uint16_t port = 0;
-    size_t rcv_wnd = 0;
+    std::uint16_t port = 0;
+    std::size_t rcv_wnd = 0;
 };
 
 /**
@@ -147,7 +146,7 @@ public:
         TcpConProto *tcp = pcb->tcp;
         
         // Setup the MTU reference.
-        uint16_t pmtu;
+        std::uint16_t pmtu;
         if (!mtu_ref().setup(tcp->m_stack, pcb->remote_addr, nullptr, pmtu)) {
             return IpErr::NO_IPMTU_AVAIL;
         }
@@ -196,7 +195,7 @@ public:
         TcpConProto &tcp = api.proto();
         
         // Setup the MTU reference.
-        uint16_t pmtu;
+        std::uint16_t pmtu;
         if (!mtu_ref().setup(tcp.m_stack, args.addr, nullptr, pmtu)) {
             return IpErr::NO_IPMTU_AVAIL;
         }
@@ -234,7 +233,7 @@ public:
         static_assert(std::is_trivially_copy_constructible<TcpConOosBuffer>::value, "");
         
         // Byte-copy the whole m_v.
-        ::memcpy(&m_v, &src_con->m_v, sizeof(m_v));
+        std::memcpy(&m_v, &src_con->m_v, sizeof(m_v));
         
         // Update the PCB association.
         m_v.pcb->con = this;
@@ -280,7 +279,7 @@ public:
      * 
      * May only be called in CONNECTED state.
      */
-    uint16_t getLocalPort () const
+    std::uint16_t getLocalPort () const
     {
         AIPSTACK_ASSERT(isConnected())
         
@@ -292,7 +291,7 @@ public:
      * 
      * May only be called in CONNECTED state.
      */
-    uint16_t getRemotePort () const
+    std::uint16_t getRemotePort () const
     {
         AIPSTACK_ASSERT(isConnected())
         
@@ -347,7 +346,7 @@ public:
      * The 'div' defines the proportion as a division of buffer_size, it must
      * be greater than or equal to 2.
      */
-    void setProportionalWindowUpdateThreshold (size_t buffer_size, int div)
+    void setProportionalWindowUpdateThreshold (std::size_t buffer_size, int div)
     {
         AIPSTACK_ASSERT(div >= 2)
         using UInt = unsigned int;
@@ -364,7 +363,7 @@ public:
      * This is intended to be used when a connection is accepted to determine
      * the minimum amount of receive buffer which must be available.
      */
-    size_t getAnnouncedRcvWnd () const
+    std::size_t getAnnouncedRcvWnd () const
     {
         assert_connected();
         
@@ -377,7 +376,7 @@ public:
             ann_wnd--;
         }
         
-        AIPSTACK_ASSERT(ann_wnd <= TypeMax<size_t>())
+        AIPSTACK_ASSERT(ann_wnd <= TypeMax<std::size_t>())
         return ann_wnd;
     }
     
@@ -409,10 +408,10 @@ public:
      * Extends the receive buffer for the specified amount.
      * May only be called in CONNECTED or CLOSED state.
      */
-    void extendRecvBuf (size_t amount)
+    void extendRecvBuf (std::size_t amount)
     {
         assert_started();
-        AIPSTACK_ASSERT(amount <= TypeMax<size_t>() - m_v.rcv_buf.tot_len)
+        AIPSTACK_ASSERT(amount <= TypeMax<std::size_t>() - m_v.rcv_buf.tot_len)
         
         // Extend the receive buffer.
         m_v.rcv_buf.tot_len += amount;
@@ -458,7 +457,7 @@ public:
      * initiated connections, it only possibly decreases when the
      * connection is established.
      */
-    inline size_t getSndBufOverhead () const
+    inline std::size_t getSndBufOverhead () const
     {
         assert_connected();
         
@@ -485,7 +484,7 @@ public:
         AIPSTACK_ASSERT(m_v.snd_buf_cur.tot_len <= m_v.snd_buf.tot_len)
         
         // Calculate the send offset and check if the send buffer is being extended.
-        size_t snd_offset = m_v.snd_buf.tot_len - m_v.snd_buf_cur.tot_len;
+        std::size_t snd_offset = m_v.snd_buf.tot_len - m_v.snd_buf_cur.tot_len;
         bool extended = snd_buf.tot_len > m_v.snd_buf.tot_len;
 
         // Set the send buffer.
@@ -506,10 +505,10 @@ public:
      * May only be called in CONNECTED or CLOSED state.
      * May only be called before endSending is called.
      */
-    void extendSendBuf (size_t amount)
+    void extendSendBuf (std::size_t amount)
     {
         assert_sending();
-        AIPSTACK_ASSERT(amount <= TypeMax<size_t>() - m_v.snd_buf.tot_len)
+        AIPSTACK_ASSERT(amount <= TypeMax<std::size_t>() - m_v.snd_buf.tot_len)
         AIPSTACK_ASSERT(m_v.snd_buf_cur.tot_len <= m_v.snd_buf.tot_len)
         
         // Increment the amount of data in the send buffer.
@@ -644,7 +643,7 @@ protected:
      * buffer by that amount. Zero amount indicates that FIN
      * was received.
      */
-    virtual void dataReceived (size_t amount) = 0;
+    virtual void dataReceived (std::size_t amount) = 0;
     
     /**
      * Called when some data or FIN has been sent and acknowledged.
@@ -652,7 +651,7 @@ protected:
      * Each dataSent callback corresponds to shifting of the send buffer
      * by that amount. Zero amount indicates that FIN was acknowledged.
      */
-    virtual void dataSent (size_t amount) = 0;
+    virtual void dataSent (std::size_t amount) = 0;
     
 private:
     inline IpMtuRef<TcpConStackArg> & mtu_ref () {
@@ -740,7 +739,7 @@ private:
         connectionEstablished();
     }
     
-    void data_sent (size_t amount)
+    void data_sent (std::size_t amount)
     {
         assert_connected();
         AIPSTACK_ASSERT(!m_v.end_sent)
@@ -763,7 +762,7 @@ private:
         dataSent(0);
     }
     
-    void data_received (size_t amount)
+    void data_received (std::size_t amount)
     {
         assert_connected();
         AIPSTACK_ASSERT(!m_v.end_received)
@@ -786,7 +785,7 @@ private:
     }
     
     // Callback from MtuRef when the PMTU changes.
-    void pmtuChanged (uint16_t pmtu) override final
+    void pmtuChanged (std::uint16_t pmtu) override final
     {
         assert_connected();
         
@@ -821,7 +820,7 @@ private:
         typename TcpConConstants::RttType rttvar;
         typename TcpConConstants::RttType srtt;
         TcpConOosBuffer ooseq;
-        size_t snd_psh_index;
+        std::size_t snd_psh_index;
     };
     
     TcpConVars m_v;

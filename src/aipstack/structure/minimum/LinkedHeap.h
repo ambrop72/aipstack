@@ -25,9 +25,8 @@
 #ifndef AIPSTACK_LINKED_HEAP_H
 #define AIPSTACK_LINKED_HEAP_H
 
-#include <stddef.h>
-#include <stdint.h>
-
+#include <cstddef>
+#include <cstdint>
 #include <type_traits>
 #include <initializer_list>
 
@@ -67,7 +66,7 @@ template <
     typename Accessor,
     typename Compare,
     typename LinkModel,
-    typename SizeType = size_t
+    typename SizeType = std::size_t
 >
 class LinkedHeap
 {
@@ -106,7 +105,7 @@ public:
         AIPSTACK_ASSERT(m_root.isNull() || m_count > 0)
         AIPSTACK_ASSERT(m_root.isNull() || m_count < TypeMax<SizeType>())
         
-        int8_t child_dir;
+        std::int8_t child_dir;
         Ref child;
         
         if (AIPSTACK_UNLIKELY(m_root.isNull())) {
@@ -477,7 +476,7 @@ private:
     }
     
     AIPSTACK_OPTIMIZE_SIZE
-    void connect_and_bubble_down_node (State st, Ref node, Ref parent, int8_t side, Link child0, Link child1)
+    void connect_and_bubble_down_node (State st, Ref node, Ref parent, std::int8_t side, Link child0, Link child1)
     {
         while (true) {
             // Find minimum child (if any)
@@ -553,7 +552,7 @@ private:
         Link child1 = ac(node).link[1];
         
         Ref parent = ac(node).parent.ref(st);
-        int8_t side = !parent.isNull() && node.link(st) == ac(parent).link[1];
+        std::int8_t side = !parent.isNull() && node.link(st) == ac(parent).link[1];
         
         if (!parent.isNull() && Compare::compareEntries(st, srcnode, parent) < 0) {
             Link sibling = ac(parent).link[!side];

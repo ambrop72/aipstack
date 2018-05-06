@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_TX_ALLOC_HELPER_H
 #define AIPSTACK_TX_ALLOC_HELPER_H
 
-#include <stddef.h>
+#include <cstddef>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/infra/Buf.h>
@@ -52,9 +52,10 @@ class TxAllocHelperUninitialized {};
  * results in stack allocation.
  * 
  * This class is used as follows:
- * 1. The constructor @ref TxAllocHelper(size_t) is used to construct for a specific data
- *    size. Alternatively, the constructor @ref TxAllocHelper(TxAllocHelperUninitialized)
- *    is used then @ref reset is called with the data size.
+ * 1. The constructor @ref TxAllocHelper(std::size_t) is used to construct for a specific
+ *    data size. Alternatively, the constructor @ref
+ *    TxAllocHelper(TxAllocHelperUninitialized) is used then @ref reset is called with the
+ *    data size.
  * 2. @ref getPtr is called to get the pointer to the embedded buffer and data is written to
  *    this location. This can also be done later (this class never accesses the data only
  *    allocates the memory).
@@ -70,9 +71,9 @@ class TxAllocHelperUninitialized {};
  * @tparam MaxSize Maximum possible data size.
  * @tparam HeaderBefore Space before the data to reserve for headers.
  */
-template <size_t MaxSize, size_t HeaderBefore>
+template <std::size_t MaxSize, std::size_t HeaderBefore>
 class TxAllocHelper {
-    static size_t const TotalMaxSize = HeaderBefore + MaxSize;
+    static std::size_t const TotalMaxSize = HeaderBefore + MaxSize;
     
 public:
     /**
@@ -86,7 +87,7 @@ public:
     {
         m_node.ptr = m_data;
 #if AIPSTACK_ASSERTIONS
-        m_node.len = size_t(-1);
+        m_node.len = std::size_t(-1);
 #endif
     }
     
@@ -98,7 +99,7 @@ public:
      * 
      * @param size Data size. Must be less than or equal to `MaxSize`.
      */
-    inline TxAllocHelper (size_t size)
+    inline TxAllocHelper (std::size_t size)
     : TxAllocHelper(TxAllocHelperUninitialized())
     {
         reset(size);
@@ -108,11 +109,11 @@ public:
      * Reset the object for data of the specified size.
      * 
      * This is equivalent to reconstructing the object using the constructor
-     * @ref TxAllocHelper(size_t).
+     * @ref TxAllocHelper(std::size_t).
      * 
      * @param size Data size. Must be less than or equal to `MaxSize`.
      */
-    inline void reset (size_t size)
+    inline void reset (std::size_t size)
     {
         AIPSTACK_ASSERT(size <= MaxSize)
         AIPSTACK_ASSERT(m_node.ptr == m_data)
@@ -140,12 +141,12 @@ public:
      * Change the size of the data.
      * 
      * This can be called to change the data size after it has already been specified using
-     * @ref TxAllocHelper(size_t) or @ref reset. It must not be called after @ref setNext
-     * (unless @ref reset has subsequently been called).
+     * @ref TxAllocHelper(std::size_t) or @ref reset. It must not be called after @ref
+     * setNext (unless @ref reset has subsequently been called).
      * 
      * @param size Data size. Must be less than or equal to `MaxSize`.
      */
-    inline void changeSize (size_t size)
+    inline void changeSize (std::size_t size)
     {
         AIPSTACK_ASSERT(isInitialized())
         AIPSTACK_ASSERT(m_node.next == nullptr)
@@ -170,7 +171,7 @@ public:
      *        not be null.
      * @param next_len Length of the additional data.
      */
-    inline void setNext (IpBufNode const *next_node, size_t next_len)
+    inline void setNext (IpBufNode const *next_node, std::size_t next_len)
     {
         AIPSTACK_ASSERT(isInitialized())
         AIPSTACK_ASSERT(m_node.next == nullptr)
@@ -192,14 +193,14 @@ public:
      *   @ref TxAllocHelper object.
      * - @ref IpBufRef::offset "offset" equal to `HeaderBefore`.
      * - @ref IpBufRef::tot_len "tot_len" equal to the embedded data size as specified in
-     *   @ref TxAllocHelper(size_t), @ref reset or @ref changeSize plus the size of any
+     *   @ref TxAllocHelper(std::size_t), @ref reset or @ref changeSize plus the size of any
      *   additional data specified by @ref setNext.
      * 
      * The internal @ref IpBufNode object which is the first in the buffer chain will have:
      * - @ref IpBufNode::ptr "ptr" equal to the start of the contained buffer including the
      *   header space, that is @ref getPtr() - `HeaderBefore`.
      * - @ref IpBufNode::len "len" equal to the embedded data size as specified in
-     *   @ref TxAllocHelper(size_t), @ref reset or @ref changeSize.
+     *   @ref TxAllocHelper(std::size_t), @ref reset or @ref changeSize.
      * - @ref IpBufNode::next "next" equal to null (if @ref setNext has not been used) or
      *        the `next_node` specified in @ref setNext (if it has been).
      * 
@@ -219,7 +220,7 @@ private:
     inline bool isInitialized () const
     {
         #if AIPSTACK_ASSERTIONS
-        return m_node.len != size_t(-1);
+        return m_node.len != std::size_t(-1);
         #else
         return true;
         #endif
@@ -227,7 +228,7 @@ private:
     
 private:
     IpBufNode m_node;
-    size_t m_tot_len;
+    std::size_t m_tot_len;
     char m_data[TotalMaxSize];
 };
 

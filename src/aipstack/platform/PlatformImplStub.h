@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_PLATFORM_IMPL_STUB_H
 #define AIPSTACK_PLATFORM_IMPL_STUB_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/MinMax.h>
@@ -105,7 +105,7 @@ public:
      * In practice the stack will avoid setting a @ref Timer to expire more than a
      * specific time in the future or the past; see @ref RelativeTimeLimit.
      */
-    using TimeType = uint64_t;
+    using TimeType = std::uint64_t;
     
     /**
      * Defines the frequency of the clock in Hz.

@@ -25,8 +25,8 @@
 #ifndef AIPSTACK_IP_UDP_PROTO_H
 #define AIPSTACK_IP_UDP_PROTO_H
 
-#include <stdint.h>
-#include <stddef.h>
+#include <cstdint>
+#include <cstddef>
 
 #include <aipstack/meta/BasicMetaUtils.h>
 #include <aipstack/misc/Use.h>
@@ -73,7 +73,7 @@ class IpUdpProto;
 template <typename Arg>
 struct UdpListenParams {
     Ip4Addr iface_addr = Ip4Addr::ZeroAddr();
-    uint16_t port = 0;
+    std::uint16_t port = 0;
     bool accept_broadcast = false;
     bool accept_nonlocal_dst = false;
     IpIface<typename Arg::StackArg> *iface = nullptr;
@@ -81,8 +81,8 @@ struct UdpListenParams {
 
 template <typename Arg>
 struct UdpRxInfo {
-    uint16_t src_port;
-    uint16_t dst_port;
+    std::uint16_t src_port;
+    std::uint16_t dst_port;
     bool has_checksum;
 };
 
@@ -94,15 +94,15 @@ enum class UdpRecvResult {
 
 template <typename Arg>
 struct UdpTxInfo {
-    uint16_t src_port;
-    uint16_t dst_port;
+    std::uint16_t src_port;
+    std::uint16_t dst_port;
 };
 
 struct UdpAssociationKey {
     Ip4Addr local_addr;
     Ip4Addr remote_addr;
-    uint16_t local_port;
-    uint16_t remote_port;
+    std::uint16_t local_port;
+    std::uint16_t remote_port;
 };
 
 template <typename Arg>
@@ -142,10 +142,10 @@ public:
 
     using Association = UdpAssociation<Arg>;
 
-    static size_t const HeaderBeforeUdpData =
+    static std::size_t const HeaderBeforeUdpData =
         IpStack<StackArg>::HeaderBeforeIp4Dgram + Udp4Header::Size;
 
-    static size_t const MaxUdpDataLenIp4 = TypeMax<uint16_t>() - Udp4Header::Size;
+    static std::size_t const MaxUdpDataLenIp4 = TypeMax<std::uint16_t>() - Udp4Header::Size;
 
     IpErr sendUdpIp4Packet (Ip4Addrs const &addrs, UdpTxInfo<Arg> const &udp_info,
                             IpBufRef udp_data, IpIface<StackArg> *iface,
@@ -161,18 +161,18 @@ public:
         auto udp_header = Udp4Header::MakeRef(dgram.getChunkPtr());
         udp_header.set(Udp4Header::SrcPort(),  udp_info.src_port);
         udp_header.set(Udp4Header::DstPort(),  udp_info.dst_port);
-        udp_header.set(Udp4Header::Length(),   uint16_t(dgram.tot_len));
+        udp_header.set(Udp4Header::Length(),   std::uint16_t(dgram.tot_len));
         udp_header.set(Udp4Header::Checksum(), 0);
         
         // Calculate UDP checksum.
         IpChksumAccumulator chksum_accum;
         chksum_accum.addWords(&addrs.local_addr.data);
         chksum_accum.addWords(&addrs.remote_addr.data);
-        chksum_accum.addWord(WrapType<uint16_t>(), Ip4ProtocolUdp);
-        chksum_accum.addWord(WrapType<uint16_t>(), uint16_t(dgram.tot_len));
-        uint16_t checksum = chksum_accum.getChksum(dgram);
+        chksum_accum.addWord(WrapType<std::uint16_t>(), Ip4ProtocolUdp);
+        chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
+        std::uint16_t checksum = chksum_accum.getChksum(dgram);
         if (checksum == 0) {
-            checksum = TypeMax<uint16_t>();
+            checksum = TypeMax<std::uint16_t>();
         }
         udp_header.set(Udp4Header::Checksum(), checksum);
         
@@ -431,9 +431,9 @@ class IpUdpProto :
         &UdpAssociation<Arg>::m_index_node> {};
     
     using AssociationKeyCompare = LexiKeyCompare<UdpAssociationKey, MakeTypeList<
-        WrapValue<uint16_t UdpAssociationKey::*, &UdpAssociationKey::remote_port>,
+        WrapValue<std::uint16_t UdpAssociationKey::*, &UdpAssociationKey::remote_port>,
         WrapValue<Ip4Addr UdpAssociationKey::*, &UdpAssociationKey::remote_addr>,
-        WrapValue<uint16_t UdpAssociationKey::*, &UdpAssociationKey::local_port>,
+        WrapValue<std::uint16_t UdpAssociationKey::*, &UdpAssociationKey::local_port>,
         WrapValue<Ip4Addr UdpAssociationKey::*, &UdpAssociationKey::local_addr>
     >>;
     
@@ -478,7 +478,7 @@ public:
         udp_info.dst_port = udp_header.get(Udp4Header::DstPort());
 
         // Check UDP length.
-        uint16_t udp_length = udp_header.get(Udp4Header::Length());
+        std::uint16_t udp_length = udp_header.get(Udp4Header::Length());
         if (AIPSTACK_UNLIKELY(udp_length < Udp4Header::Size ||
                               udp_length > dgram.tot_len))
         {
@@ -631,7 +631,7 @@ private:
         IpRxInfoIp4<StackArg> const &ip_info, Udp4Header::Ref udp_header,
         IpBufRef dgram, bool &has_checksum)
     {
-        uint16_t checksum = udp_header.get(Udp4Header::Checksum());
+        std::uint16_t checksum = udp_header.get(Udp4Header::Checksum());
 
         has_checksum = (checksum != 0);
 
@@ -639,8 +639,8 @@ private:
             IpChksumAccumulator chksum_accum;
             chksum_accum.addWords(&ip_info.src_addr.data);
             chksum_accum.addWords(&ip_info.dst_addr.data);
-            chksum_accum.addWord(WrapType<uint16_t>(), Ip4ProtocolUdp);
-            chksum_accum.addWord(WrapType<uint16_t>(), uint16_t(dgram.tot_len));
+            chksum_accum.addWord(WrapType<std::uint16_t>(), Ip4ProtocolUdp);
+            chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
 
             if (chksum_accum.getChksum(dgram) != 0) {
                 return false;
@@ -680,9 +680,9 @@ private:
 #endif
 
 struct IpUdpProtoOptions {
-    AIPSTACK_OPTION_DECL_VALUE(UdpTTL, uint8_t, 64)
-    AIPSTACK_OPTION_DECL_VALUE(EphemeralPortFirst, uint16_t, 49152)
-    AIPSTACK_OPTION_DECL_VALUE(EphemeralPortLast, uint16_t, 65535)
+    AIPSTACK_OPTION_DECL_VALUE(UdpTTL, std::uint8_t, 64)
+    AIPSTACK_OPTION_DECL_VALUE(EphemeralPortFirst, std::uint16_t, 49152)
+    AIPSTACK_OPTION_DECL_VALUE(EphemeralPortLast, std::uint16_t, 65535)
     AIPSTACK_OPTION_DECL_TYPE(UdpIndexService, void)
 };
 
@@ -698,7 +698,7 @@ class IpUdpProtoService {
     
 public:
     // This tells IpStack which IP protocol we receive packets for.
-    using IpProtocolNumber = WrapValue<uint8_t, Ip4ProtocolUdp>;
+    using IpProtocolNumber = WrapValue<std::uint8_t, Ip4ProtocolUdp>;
     
 #ifndef IN_DOXYGEN
     template <typename PlatformImpl_, typename StackArg_>

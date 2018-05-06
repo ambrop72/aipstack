@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_ERR_H
 #define AIPSTACK_ERR_H
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace AIpStack {
 
@@ -39,7 +39,7 @@ namespace AIpStack {
 /**
  * Error code enumeration used in various places, especially for sending packets.
  */
-enum class IpErr : uint8_t {
+enum class IpErr : std::uint8_t {
     SUCCESS         = 0, /**< The operation was successful. */
     ARP_QUERY       = 1, /**< An ARP query is in progress and needs to complete. */
     NO_HEADER_SPACE = 2, /**< Insufficient header space is available in the buffer. */

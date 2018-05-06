@@ -25,8 +25,7 @@
 #ifndef AIPSTACK_AVL_TREE_H
 #define AIPSTACK_AVL_TREE_H
 
-#include <stdint.h>
-
+#include <cstdint>
 #include <algorithm>
 
 #include <aipstack/misc/Assert.h>
@@ -50,7 +49,7 @@ class AvlTreeNode {
 private:
     Link parent;
     Link child[2];
-    int8_t balance;
+    std::int8_t balance;
 };
 
 template <
@@ -285,12 +284,12 @@ private:
         return Accessor::access(*ref);
     }
     
-    inline static int8_t optneg (int8_t x, bool neg)
+    inline static std::int8_t optneg (std::int8_t x, bool neg)
     {
         return neg ? -x : x;
     }
     
-    void rebalance (State st, Ref node, bool side, int8_t deltac)
+    void rebalance (State st, Ref node, bool side, std::int8_t deltac)
     {
         AIPSTACK_ASSERT(deltac >= -1 && deltac <= 1)
         AIPSTACK_ASSERT(ac(node).balance >= -1 && ac(node).balance <= 1)
@@ -301,8 +300,8 @@ private:
         }
         
         // calculate how much our height changed
-        int8_t rel_balance = optneg(ac(node).balance, side);
-        int8_t delta = std::max<int8_t>(deltac, rel_balance) - std::max<int8_t>(0, rel_balance);
+        std::int8_t rel_balance = optneg(ac(node).balance, side);
+        std::int8_t delta = std::max<std::int8_t>(deltac, rel_balance) - std::max<std::int8_t>(0, rel_balance);
         AIPSTACK_ASSERT(delta >= -1 && delta <= 1)
         
         // update our balance factor
@@ -314,7 +313,7 @@ private:
         // perform transformations if the balance factor is wrong
         if (ac(node).balance == 2 || ac(node).balance == -2) {
             bool bside;
-            int8_t bsidef;
+            std::int8_t bsidef;
             if (ac(node).balance == 2) {
                 bside = true;
                 bsidef = 1;
@@ -345,8 +344,8 @@ private:
                     gchild = ac(child).child[!bside].ref(st);
                     rotate(st, child, bside, node);
                     rotate(st, node, !bside, ac(node).parent.ref(st));
-                    ac(node).balance = -std::max<int8_t>(0, ac(gchild).balance * bsidef) * bsidef;
-                    ac(child).balance = std::max<int8_t>(0, -ac(gchild).balance * bsidef) * bsidef;
+                    ac(node).balance = -std::max<std::int8_t>(0, ac(gchild).balance * bsidef) * bsidef;
+                    ac(child).balance = std::max<std::int8_t>(0, -ac(gchild).balance * bsidef) * bsidef;
                     ac(gchild).balance = 0;
                     node = gchild;
                     delta -= 1;
@@ -480,7 +479,7 @@ private:
         }
         
         // swap balance factors
-        int8_t b = ac(node).balance;
+        std::int8_t b = ac(node).balance;
         ac(node).balance = ac(enode).balance;
         ac(enode).balance = b;
     }

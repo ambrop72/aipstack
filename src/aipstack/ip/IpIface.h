@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_IP_IFACE_H
 #define AIPSTACK_IP_IFACE_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/Assert.h>
@@ -81,7 +81,7 @@ namespace AIpStack {
         IpIface (IpStack<Arg> *stack, IpIfaceDriverParams const &params) :
             m_stack(stack),
             m_params(params),
-            m_ip_mtu(MinValueU(TypeMax<uint16_t>(), params.ip_mtu)),
+            m_ip_mtu(MinValueU(TypeMax<std::uint16_t>(), params.ip_mtu)),
             m_have_addr(false),
             m_have_gateway(false)
         {
@@ -257,7 +257,7 @@ namespace AIpStack {
          * @return MTU in bytes including the IP header. It will be at least
          *         @ref IpStack::MinMTU.
          */
-        inline uint16_t getMtu () const {
+        inline std::uint16_t getMtu () const {
             return m_ip_mtu;
         }
         
@@ -282,7 +282,7 @@ namespace AIpStack {
         Observable<IpIfaceStateObserver<Arg>> m_state_observable;
         IpStack<Arg> *m_stack;
         IpIfaceDriverParams m_params;
-        uint16_t m_ip_mtu;
+        std::uint16_t m_ip_mtu;
         IpIfaceIp4Addrs m_addr;
         Ip4Addr m_gateway;
         bool m_have_addr;

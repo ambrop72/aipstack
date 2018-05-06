@@ -22,6 +22,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <memory>
@@ -57,7 +58,7 @@
 static bool const DeviceUseDhcp = true;
 static AIpStack::Ip4Addr const DeviceIpAddr =
     AIpStack::Ip4Addr::FromBytes(192, 168, 64, 10);
-static uint8_t const DevicePrefixLength = 24;
+static std::uint8_t const DevicePrefixLength = 24;
 static AIpStack::Ip4Addr const DeviceGatewayAddr =
     AIpStack::Ip4Addr::FromBytes(192, 168, 64, 1);
 static AIpStack::MacAddr const DeviceMacAddr =

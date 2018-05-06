@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_ICMP4_PROTO_H
 #define AIPSTACK_ICMP4_PROTO_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <aipstack/misc/BinaryTools.h>
 #include <aipstack/infra/Struct.h>
@@ -37,24 +37,24 @@ using Icmp4RestType = StructByteArray<4>;
 #ifndef IN_DOXYGEN
 
 AIPSTACK_DEFINE_STRUCT(Icmp4Header,
-    (Type,         uint8_t)
-    (Code,         uint8_t)
-    (Chksum,       uint16_t)
+    (Type,         std::uint8_t)
+    (Code,         std::uint8_t)
+    (Chksum,       std::uint16_t)
     (Rest,         Icmp4RestType)
 )
 
 #endif
 
-static uint8_t const Icmp4TypeEchoReply   = 0;
-static uint8_t const Icmp4TypeEchoRequest = 8;
-static uint8_t const Icmp4TypeDestUnreach = 3;
+static std::uint8_t const Icmp4TypeEchoReply   = 0;
+static std::uint8_t const Icmp4TypeEchoRequest = 8;
+static std::uint8_t const Icmp4TypeDestUnreach = 3;
 
-static uint8_t const Icmp4CodeDestUnreachPortUnreach = 3;
-static uint8_t const Icmp4CodeDestUnreachFragNeeded = 4;
+static std::uint8_t const Icmp4CodeDestUnreachPortUnreach = 3;
+static std::uint8_t const Icmp4CodeDestUnreachFragNeeded = 4;
 
-inline uint16_t Icmp4GetMtuFromRest (Icmp4RestType rest)
+inline std::uint16_t Icmp4GetMtuFromRest (Icmp4RestType rest)
 {
-    return ReadBinaryInt<uint16_t, BinaryBigEndian>(
+    return ReadBinaryInt<std::uint16_t, BinaryBigEndian>(
         reinterpret_cast<char const *>(rest.data) + 2);
 }
 

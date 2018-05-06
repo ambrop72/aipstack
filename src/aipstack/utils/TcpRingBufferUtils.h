@@ -25,8 +25,8 @@
 #ifndef AIPSTACK_TCP_RING_BUFFER_UTILS_H
 #define AIPSTACK_TCP_RING_BUFFER_UTILS_H
 
-#include <stddef.h>
-#include <string.h>
+#include <cstddef>
+#include <cstring>
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
@@ -41,7 +41,7 @@ namespace AIpStack {
 template <typename TcpArg>
 class SendRingBuffer {
 public:
-    void setup (TcpConnection<TcpArg> &con, char *buf, size_t buf_size)
+    void setup (TcpConnection<TcpArg> &con, char *buf, std::size_t buf_size)
     {
         AIPSTACK_ASSERT(buf != nullptr)
         AIPSTACK_ASSERT(buf_size > 0)
@@ -51,7 +51,7 @@ public:
         
         IpBufRef old_send_buf = con.getSendBuf();
 
-        IpBufRef send_buf = IpBufRef{&m_buf_node, size_t(0), old_send_buf.tot_len};
+        IpBufRef send_buf = IpBufRef{&m_buf_node, std::size_t(0), old_send_buf.tot_len};
 
         if (old_send_buf.tot_len > 0) {
             IpBufRef tmp_buf = send_buf;
@@ -72,13 +72,13 @@ public:
 
         // The range of free space for writing data is the complement of the range of
         // buffered outgoing data.
-        size_t write_offset = getModulo().add(send_buf.offset, send_buf.tot_len);
-        size_t free_len = getModulo().modulusComplement(send_buf.tot_len);
+        std::size_t write_offset = getModulo().add(send_buf.offset, send_buf.tot_len);
+        std::size_t free_len = getModulo().modulusComplement(send_buf.tot_len);
         
         return IpBufRef{&m_buf_node, write_offset, free_len};
     }
     
-    inline void provideData (TcpConnection<TcpArg> &con, size_t amount)
+    inline void provideData (TcpConnection<TcpArg> &con, std::size_t amount)
     {
         AIPSTACK_ASSERT(amount <= getWriteRange(con).tot_len)
         
@@ -101,7 +101,7 @@ public:
     // NOTE: If using mirror region and initial_rx_data is not empty, it is
     // you may need to call updateMirrorAfterDataReceived to make sure initial
     // data is mirrored as applicable.
-    void setup (TcpConnection<TcpArg> &con, char *buf, size_t buf_size, int wnd_upd_div,
+    void setup (TcpConnection<TcpArg> &con, char *buf, std::size_t buf_size, int wnd_upd_div,
                 IpBufRef initial_rx_data = IpBufRef{})
     {
         AIPSTACK_ASSERT(buf != nullptr)
@@ -116,7 +116,7 @@ public:
         
         IpBufRef old_recv_buf = con.getRecvBuf();
 
-        IpBufRef recv_buf = IpBufRef{&m_buf_node, size_t(0), buf_size};
+        IpBufRef recv_buf = IpBufRef{&m_buf_node, std::size_t(0), buf_size};
         
         if (initial_rx_data.tot_len > 0) {
             recv_buf.giveBuf(initial_rx_data);
@@ -141,13 +141,13 @@ public:
         
         // The range of used space with received data is the complement of the range of
         // available space for received data.
-        size_t read_offset = getModulo().add(recv_buf.offset, recv_buf.tot_len);
-        size_t used_len = getModulo().modulusComplement(recv_buf.tot_len);
+        std::size_t read_offset = getModulo().add(recv_buf.offset, recv_buf.tot_len);
+        std::size_t used_len = getModulo().modulusComplement(recv_buf.tot_len);
         
         return IpBufRef{&m_buf_node, read_offset, used_len};
     }
     
-    inline void consumeData (TcpConnection<TcpArg> &con, size_t amount)
+    inline void consumeData (TcpConnection<TcpArg> &con, std::size_t amount)
     {
         AIPSTACK_ASSERT(amount <= getReadRange(con).tot_len)
         
@@ -155,7 +155,7 @@ public:
     }
     
     void updateMirrorAfterReceived (
-        TcpConnection<TcpArg> &con, size_t mirror_size, size_t amount)
+        TcpConnection<TcpArg> &con, std::size_t mirror_size, std::size_t amount)
     {
         AIPSTACK_ASSERT(mirror_size >= 0)
         AIPSTACK_ASSERT(mirror_size <= getModulo().modulus())
@@ -172,23 +172,23 @@ public:
 
         // Calculate the offset in the buffer to which new data was written and
         // the number of bytes wrap-around.
-        size_t data_offset = mod.sub(recv_buf.offset, amount);
-        size_t wrap_len = mod.modulusComplement(data_offset);
+        std::size_t data_offset = mod.sub(recv_buf.offset, amount);
+        std::size_t wrap_len = mod.modulusComplement(data_offset);
         
         // Copy initial data to the mirror region as needed.
         if (data_offset < mirror_size) {
-            ::memcpy(
+            std::memcpy(
                 m_buf_node.ptr + mod.modulus() + data_offset,
                 m_buf_node.ptr + data_offset,
-                MinValue(amount, size_t(mirror_size - data_offset)));
+                MinValue(amount, std::size_t(mirror_size - data_offset)));
         }
 
         // Copy final data to the mirror region as needed.
         if (amount > wrap_len) {
-            ::memcpy(
+            std::memcpy(
                 m_buf_node.ptr + mod.modulus(),
                 m_buf_node.ptr,
-                MinValue(size_t(amount - wrap_len), mirror_size));
+                MinValue(std::size_t(amount - wrap_len), mirror_size));
         }
     }
     

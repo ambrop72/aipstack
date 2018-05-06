@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_IPSTACK_TYPES_H
 #define AIPSTACK_IPSTACK_TYPES_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <aipstack/misc/EnumBitfieldUtils.h>
 #include <aipstack/infra/Chksum.h>
@@ -68,7 +68,7 @@ struct IpIfaceIp4AddrSetting {
      * @param prefix_ Subnet prefix length.
      * @param addr_ IPv4 address.
      */
-    inline constexpr IpIfaceIp4AddrSetting (uint8_t prefix_, Ip4Addr addr_) :
+    inline constexpr IpIfaceIp4AddrSetting (std::uint8_t prefix_, Ip4Addr addr_) :
         present(true),
         prefix(prefix_),
         addr(addr_)
@@ -84,7 +84,7 @@ struct IpIfaceIp4AddrSetting {
     /**
      * The subnet prefix length.
      */
-    uint8_t prefix = 0;
+    std::uint8_t prefix = 0;
     
     /**
      * The IPv4 address.
@@ -164,7 +164,7 @@ struct IpIfaceIp4Addrs {
     /**
      * The subnet prefix length.
      */
-    uint8_t prefix;
+    std::uint8_t prefix;
 };
 
 /**
@@ -188,14 +188,14 @@ struct IpIfaceDriverState {
  * 
  * Operators provided by @ref AIPSTACK_ENUM_BITFIELD_OPS are available.
  */
-enum class IpSendFlags : uint16_t {
+enum class IpSendFlags : std::uint16_t {
     /**
      * Allow broadcast.
      * 
      * This flag is required in order to send to a local broadcast or all-ones address.
      * If it is set then sending to non-broadcast addresses is still allowed.
      */
-    AllowBroadcastFlag = uint16_t(1) << 0,
+    AllowBroadcastFlag = std::uint16_t(1) << 0,
 
     /**
      * Allow sending from from a non-local address.
@@ -203,7 +203,7 @@ enum class IpSendFlags : uint16_t {
      * This flag is required in order to send using a source address that is not the
      * address of the outgoing network interface.
      */
-    AllowNonLocalSrc = uint16_t(1) << 1,
+    AllowNonLocalSrc = std::uint16_t(1) << 1,
 
     /**
      * Do-not-fragment flag.
@@ -232,7 +232,7 @@ struct Ip4DestUnreachMeta {
      * 
      * For example, `Icmp4CodeDestUnreachFragNeeded` may be of interest.
      */
-    uint8_t icmp_code = 0;
+    std::uint8_t icmp_code = 0;
     
     /**
      * The "Rest of Header" part of the ICMP header (4 bytes).
@@ -252,7 +252,7 @@ public:
     /**
      * The encoded TLL and protocol.
      */
-    uint16_t value;
+    std::uint16_t value;
     
 public:
     /**
@@ -266,7 +266,7 @@ public:
      * @param ttl_proto Encoded TTL and protocol. The \ref value field
      *        will be initialized to this value.
      */
-    constexpr inline Ip4TtlProto (uint16_t ttl_proto)
+    constexpr inline Ip4TtlProto (std::uint16_t ttl_proto)
     : value(ttl_proto)
     {
     }
@@ -277,8 +277,8 @@ public:
      * @param ttl The TTL.
      * @param proto The protocol.
      */
-    constexpr inline Ip4TtlProto (uint8_t ttl, uint8_t proto)
-    : value(uint16_t((uint16_t(ttl) << 8) | proto))
+    constexpr inline Ip4TtlProto (std::uint8_t ttl, std::uint8_t proto)
+    : value(std::uint16_t((std::uint16_t(ttl) << 8) | proto))
     {
     }
     
@@ -287,9 +287,9 @@ public:
      * 
      * @return The TTL.
      */
-    constexpr inline uint8_t ttl () const
+    constexpr inline std::uint8_t ttl () const
     {
-        return uint8_t(value >> 8);
+        return std::uint8_t(value >> 8);
     }
     
     /**
@@ -297,9 +297,9 @@ public:
      * 
      * @return The protocol.
      */
-    constexpr inline uint8_t proto () const
+    constexpr inline std::uint8_t proto () const
     {
-        return uint8_t(value);
+        return std::uint8_t(value);
     }
 };
 
@@ -379,7 +379,7 @@ struct IpRxInfoIp4 {
     /**
      * The length of the IPv4 header in bytes.
      */
-    uint8_t header_len;
+    std::uint8_t header_len;
 };
 
 /**

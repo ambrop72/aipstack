@@ -25,8 +25,8 @@
 #ifndef AIPSTACK_IP_TCP_PROTO_OUTPUT_H
 #define AIPSTACK_IP_TCP_PROTO_OUTPUT_H
 
-#include <stdint.h>
-#include <stddef.h>
+#include <cstdint>
+#include <cstddef>
 
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
@@ -91,8 +91,8 @@ public:
         
         // The SYN and SYN-ACK must always have non-scaled window size.
         // For justification of assert see see create_connection, listen_input.
-        AIPSTACK_ASSERT(pcb->rcv_ann_wnd <= TypeMax<uint16_t>())
-        uint16_t window_size = uint16_t(pcb->rcv_ann_wnd);
+        AIPSTACK_ASSERT(pcb->rcv_ann_wnd <= TypeMax<std::uint16_t>())
+        std::uint16_t window_size = std::uint16_t(pcb->rcv_ann_wnd);
         
         // Send SYN or SYN-ACK flags depending on the state.
         FlagsType flags = Tcp4FlagSyn |
@@ -122,7 +122,7 @@ public:
     static void pcb_send_empty_ack (TcpPcb *pcb)
     {
         // Get the window size value.
-        uint16_t window_size = Input::pcb_ann_wnd(pcb);
+        std::uint16_t window_size = Input::pcb_ann_wnd(pcb);
         
         // Send it.
         send_tcp_nodata(pcb->tcp, *pcb, pcb->snd_nxt, pcb->rcv_nxt, window_size,
@@ -260,7 +260,7 @@ public:
         
         IpBufRef *snd_buf_cur;
         SeqType rem_wnd;
-        size_t data_threshold;
+        std::size_t data_threshold;
         bool fin;
         
         if (AIPSTACK_UNLIKELY(rtx_or_window_probe)) {
@@ -294,7 +294,7 @@ public:
             SeqType full_wnd = MinValue(con->m_v.snd_wnd, con->m_v.cwnd);
             
             // Calculate the remaining window relative to snd_buf_cur.
-            size_t snd_offset = con->m_v.snd_buf.tot_len - snd_buf_cur->tot_len;
+            std::size_t snd_offset = con->m_v.snd_buf.tot_len - snd_buf_cur->tot_len;
             if (AIPSTACK_LIKELY(snd_offset <= full_wnd)) {
                 rem_wnd = full_wnd - SeqType(snd_offset);
             } else {
@@ -305,8 +305,8 @@ public:
             // which sending will not be delayed. This calculation achieves that
             // delay is only allowed if we have less than snd_mss data left and none
             // of this is being pushed via snd_psh_index.
-            size_t psh_to_end = con->m_v.snd_buf.tot_len - con->m_v.snd_psh_index;
-            data_threshold = MinValue(psh_to_end, size_t(pcb->snd_mss - 1));
+            std::size_t psh_to_end = con->m_v.snd_buf.tot_len - con->m_v.snd_psh_index;
+            data_threshold = MinValue(psh_to_end, std::size_t(pcb->snd_mss - 1));
             
             // Allow sending a FIN if it is queued.
             fin = pcb->hasFlag(PcbFlags::FIN_PENDING);
@@ -351,7 +351,7 @@ public:
             AIPSTACK_ASSERT(seg_seqlen <= snd_buf_cur->tot_len + fin)
             
             // Check sent sequence length to see if a FIN was sent.
-            size_t data_sent;
+            std::size_t data_sent;
             if (AIPSTACK_UNLIKELY(seg_seqlen > snd_buf_cur->tot_len)) {
                 // FIN was sent, we must still have FIN_PENDING.
                 AIPSTACK_ASSERT(pcb->hasFlag(PcbFlags::FIN_PENDING))
@@ -421,7 +421,7 @@ public:
         // Send a FIN if it is queued.
         if (fin) do {
             // Send a FIN segment.
-            uint16_t window_size = Input::pcb_ann_wnd(pcb);
+            std::uint16_t window_size = Input::pcb_ann_wnd(pcb);
             FlagsType flags = Tcp4FlagAck|Tcp4FlagFin|Tcp4FlagPsh;
             IpErr err = send_tcp_nodata(pcb->tcp, *pcb, pcb->snd_una, pcb->rcv_nxt,
                                         window_size, flags, nullptr, pcb);
@@ -864,13 +864,13 @@ public:
     }
     
     // Calculate snd_mss based on the current MtuRef information.
-    static uint16_t pcb_calc_snd_mss_from_pmtu (TcpPcb *pcb, uint16_t pmtu)
+    static std::uint16_t pcb_calc_snd_mss_from_pmtu (TcpPcb *pcb, std::uint16_t pmtu)
     {
         AIPSTACK_ASSERT(pmtu >= IpStack<StackArg>::MinMTU)
         
         // Calculate the snd_mss from the MTU, bound to no more than base_snd_mss.
-        uint16_t mtu_mss = pmtu - Ip4TcpHeaderSize;
-        uint16_t snd_mss = MinValue(pcb->base_snd_mss, mtu_mss);
+        std::uint16_t mtu_mss = pmtu - Ip4TcpHeaderSize;
+        std::uint16_t snd_mss = MinValue(pcb->base_snd_mss, mtu_mss);
         
         // This snd_mss cannot be less than MinAllowedMss:
         // - base_snd_mss was explicitly checked in TcpUtils::calc_snd_mss.
@@ -884,7 +884,7 @@ public:
     // This is called when the MtuRef notifies us that the PMTU has
     // changed. It is very important that we do not reset/deinit any
     // MtuRef here (including this PCB's, such as through pcb_abort).
-    static void pcb_pmtu_changed (TcpPcb *pcb, uint16_t pmtu)
+    static void pcb_pmtu_changed (TcpPcb *pcb, std::uint16_t pmtu)
     {
         AIPSTACK_ASSERT(pcb->state != OneOf(TcpState::CLOSED,
                                          TcpState::SYN_RCVD, TcpState::TIME_WAIT))
@@ -904,7 +904,7 @@ public:
         }
         
         // Calculate the new snd_mss based on the PMTU.
-        uint16_t new_snd_mss = pcb_calc_snd_mss_from_pmtu(pcb, pmtu);
+        std::uint16_t new_snd_mss = pcb_calc_snd_mss_from_pmtu(pcb, pmtu);
         
         // If the snd_mss has not changed, there is nothing to do.
         if (AIPSTACK_UNLIKELY(new_snd_mss == pcb->snd_mss)) {
@@ -999,7 +999,7 @@ public:
     // This conforms to RFC 793 handling of segments not belonging to a known
     // connection.
     static void send_rst_reply (TcpProto *tcp, IpRxInfoIp4<StackArg> const &ip_info,
-                                TcpSegMeta const &tcp_meta, size_t tcp_data_len)
+                                TcpSegMeta const &tcp_meta, std::size_t tcp_data_len)
     {
         SeqType rst_seq_num;
         bool rst_ack;
@@ -1077,7 +1077,7 @@ private:
         AIPSTACK_ASSERT(data.tot_len > 0 || fin)
         AIPSTACK_ASSERT(rem_wnd > 0)
         
-        size_t rem_data_len = data.tot_len;
+        std::size_t rem_data_len = data.tot_len;
         
         // Calculate segment data length and adjust data to contain only that.
         // We send the minimum of:
@@ -1102,10 +1102,10 @@ private:
         }
         
         // Determine offset from start of send buffer.
-        size_t offset = pcb->con->m_v.snd_buf.tot_len - rem_data_len;
+        std::size_t offset = pcb->con->m_v.snd_buf.tot_len - rem_data_len;
         
         // Set the PSH flag if the push index is within this segment.
-        size_t psh_index = pcb->con->m_v.snd_psh_index;
+        std::size_t psh_index = pcb->con->m_v.snd_psh_index;
         if (TcpUtils::InOpenClosedIntervalStartLen(offset, data.tot_len, psh_index)) {
             seg_flags |= Tcp4FlagPsh;
         }
@@ -1236,16 +1236,16 @@ private:
             
             // Sequence number
             tcp_header.set(Tcp4Header::SeqNum(), seq_num);
-            chksum.addWord(WrapType<uint32_t>(), seq_num);
+            chksum.addWord(WrapType<std::uint32_t>(), seq_num);
             
             // Offset+flags
             FlagsType offset_flags = (FlagsType(5) << TcpOffsetShift) | seg_flags;
             tcp_header.set(Tcp4Header::OffsetFlags(), offset_flags);
-            chksum.addWord(WrapType<uint16_t>(), offset_flags);
+            chksum.addWord(WrapType<std::uint16_t>(), offset_flags);
             
             // Add TCP length to checksum.
-            uint16_t tcp_len = uint16_t(Tcp4Header::Size + data.tot_len);
-            chksum.addWord(WrapType<uint16_t>(), tcp_len);
+            std::uint16_t tcp_len = std::uint16_t(Tcp4Header::Size + data.tot_len);
+            chksum.addWord(WrapType<std::uint16_t>(), tcp_len);
             
             // Include any data.
             IpBufNode data_node;
@@ -1275,26 +1275,26 @@ private:
             
             // Source port
             tcp_header.set(Tcp4Header::SrcPort(), pcb->local_port);
-            chksum.addWord(WrapType<uint16_t>(), pcb->local_port);
+            chksum.addWord(WrapType<std::uint16_t>(), pcb->local_port);
             
             // Destination port
             tcp_header.set(Tcp4Header::DstPort(), pcb->remote_port);
-            chksum.addWord(WrapType<uint16_t>(), pcb->remote_port);
+            chksum.addWord(WrapType<std::uint16_t>(), pcb->remote_port);
             
             // Acknowledgement
             tcp_header.set(Tcp4Header::AckNum(), pcb->rcv_nxt);
-            chksum.addWord(WrapType<uint32_t>(), pcb->rcv_nxt);
+            chksum.addWord(WrapType<std::uint32_t>(), pcb->rcv_nxt);
             
             // Window size (update it first)
-            uint16_t window_size = Input::pcb_ann_wnd(pcb);
+            std::uint16_t window_size = Input::pcb_ann_wnd(pcb);
             tcp_header.set(Tcp4Header::WindowSize(), window_size);
-            chksum.addWord(WrapType<uint16_t>(), window_size);
+            chksum.addWord(WrapType<std::uint16_t>(), window_size);
             
             // Urgent pointer
             tcp_header.set(Tcp4Header::UrgentPtr(), 0);
             
             // Add known pseudo-header fields to checksum.
-            chksum.addWord(WrapType<uint16_t>(), Ip4ProtocolTcp);
+            chksum.addWord(WrapType<std::uint16_t>(), Ip4ProtocolTcp);
             chksum.addWords(&pcb->local_addr.data);
             chksum.addWords(&pcb->remote_addr.data);
             
@@ -1318,11 +1318,11 @@ private:
     AIPSTACK_NO_INLINE
     static IpErr send_tcp_nodata (
         TcpProto *tcp, PcbKey const &key, SeqType seq_num, SeqType ack_num,
-        uint16_t window_size, FlagsType flags, TcpOptions *opts,
+        std::uint16_t window_size, FlagsType flags, TcpOptions *opts,
         IpSendRetryRequest *retryReq)
     {
         // Compute length of TCP options.
-        uint8_t opts_len = (opts != nullptr) ? TcpUtils::calc_options_len(*opts) : 0;
+        std::uint8_t opts_len = (opts != nullptr) ? TcpUtils::calc_options_len(*opts) : 0;
         
         // Allocate memory for headers.
         TxAllocHelper<Tcp4Header::Size+TcpUtils::MaxOptionsWriteLen, HeaderBeforeIp4Dgram>
@@ -1337,28 +1337,28 @@ private:
         
         // Adding constants to checksum is more easily optimized if done first.
         // Add protocol field of pseudo-header.
-        chksum_accum.addWord(WrapType<uint16_t>(), Ip4ProtocolTcp);
+        chksum_accum.addWord(WrapType<std::uint16_t>(), Ip4ProtocolTcp);
         
         // Write the TCP header...
         auto tcp_header = Tcp4Header::MakeRef(dgram_alloc.getPtr());
         
         tcp_header.set(Tcp4Header::SrcPort(),     key.local_port);
-        chksum_accum.addWord(WrapType<uint16_t>(), key.local_port);
+        chksum_accum.addWord(WrapType<std::uint16_t>(), key.local_port);
         
         tcp_header.set(Tcp4Header::DstPort(),     key.remote_port);
-        chksum_accum.addWord(WrapType<uint16_t>(), key.remote_port);
+        chksum_accum.addWord(WrapType<std::uint16_t>(), key.remote_port);
         
         tcp_header.set(Tcp4Header::SeqNum(),      seq_num);
-        chksum_accum.addWord(WrapType<uint32_t>(), seq_num);
+        chksum_accum.addWord(WrapType<std::uint32_t>(), seq_num);
         
         tcp_header.set(Tcp4Header::AckNum(),      ack_num);
-        chksum_accum.addWord(WrapType<uint32_t>(), ack_num);
+        chksum_accum.addWord(WrapType<std::uint32_t>(), ack_num);
         
         tcp_header.set(Tcp4Header::OffsetFlags(), offset_flags);
-        chksum_accum.addWord(WrapType<uint16_t>(), offset_flags);
+        chksum_accum.addWord(WrapType<std::uint16_t>(), offset_flags);
         
         tcp_header.set(Tcp4Header::WindowSize(),  window_size);
-        chksum_accum.addWord(WrapType<uint16_t>(), window_size);
+        chksum_accum.addWord(WrapType<std::uint16_t>(), window_size);
         
         tcp_header.set(Tcp4Header::UrgentPtr(),   0);
         
@@ -1373,10 +1373,10 @@ private:
         // Add remaining pseudo-header to checksum (protocol was added above).
         chksum_accum.addWords(&key.local_addr.data);
         chksum_accum.addWords(&key.remote_addr.data);
-        chksum_accum.addWord(WrapType<uint16_t>(), uint16_t(dgram.tot_len));
+        chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
         
         // Complete and write checksum.
-        uint16_t calc_chksum = chksum_accum.getChksum(dgram.hideHeader(Tcp4Header::Size));
+        std::uint16_t calc_chksum = chksum_accum.getChksum(dgram.hideHeader(Tcp4Header::Size));
         tcp_header.set(Tcp4Header::Checksum(), calc_chksum);
         
         // Send the datagram.

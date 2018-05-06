@@ -25,8 +25,8 @@
 #ifndef AIPSTACK_IP_PATH_MTU_CACHE_H
 #define AIPSTACK_IP_PATH_MTU_CACHE_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 
 #include <aipstack/meta/ChooseInt.h>
 #include <aipstack/misc/Use.h>
@@ -162,9 +162,9 @@ private:
             FreeListNode free_list_node;
             Link first_ref;
         };
-        uint16_t mtu;
+        std::uint16_t mtu;
         EntryState state;
-        uint8_t minutes_old;
+        std::uint8_t minutes_old;
         Ip4Addr remote_addr;
     };
     
@@ -207,7 +207,7 @@ public:
         }
     }
     
-    bool handlePacketTooBig (Ip4Addr remote_addr, uint16_t mtu_info)
+    bool handlePacketTooBig (Ip4Addr remote_addr, std::uint16_t mtu_info)
     {
         // Find the entry of this address. If it there is none, do nothing.
         MtuLinkModelRef mtu_ref = m_mtu_index.findEntry(remote_addr, *this);
@@ -223,7 +223,7 @@ public:
         // we assume the minimum PMTU that we allow. Generally we bump
         // up the reported next link MTU to be no less than our MinMTU.
         // This is what Linux does, it must be good enough for us too.
-        uint16_t bump_mtu = MaxValue(MinMTU, mtu_info);
+        std::uint16_t bump_mtu = MaxValue(MinMTU, mtu_info);
         
         // Make sure the PMTU will not exceed the interface MTU.
         IpRouteInfoIp4<StackArg> route_info;
@@ -318,7 +318,7 @@ public:
         }
         
         bool setup (IpPathMtuCache *cache, Ip4Addr remote_addr, IpIface<StackArg> *iface,
-                    uint16_t &out_pmtu)
+                    std::uint16_t &out_pmtu)
         {
             AIPSTACK_ASSERT(!isSetup())
             
@@ -468,7 +468,7 @@ public:
         // It MUST NOT reset/deinit this or any other MtuRef object!
         // This is because the caller is iterating the linked list
         // of references without considerations for its modification.
-        virtual void pmtuChanged (uint16_t pmtu) = 0;
+        virtual void pmtuChanged (std::uint16_t pmtu) = 0;
     };
     
 private:
@@ -541,7 +541,7 @@ private:
         } else {
             // Reset the PMTU to that of the interface. If we changed the PMTU
             // then notify all MtuRef referencing this entry.
-            uint16_t iface_mtu = route_info.iface->getMtu();
+            std::uint16_t iface_mtu = route_info.iface->getMtu();
             if (mtu_entry.mtu != iface_mtu) {
                 mtu_entry.mtu = iface_mtu;
                 notify_pmtu_changed(mtu_entry);
@@ -577,7 +577,7 @@ private:
         // any MtuRef's so we do not implement any safety but we do have
         // some asserts to detect violators.
         
-        uint16_t pmtu = mtu_entry.mtu;
+        std::uint16_t pmtu = mtu_entry.mtu;
         
         MtuRef *ref = &get_ref_from_next_link(mtu_entry.first_ref.link);
         
@@ -607,12 +607,12 @@ struct IpPathMtuCacheOptions {
     /**
      * Number of PMTU cache entries (must be \>0).
      */
-    AIPSTACK_OPTION_DECL_VALUE(NumMtuEntries, size_t, 0)
+    AIPSTACK_OPTION_DECL_VALUE(NumMtuEntries, std::size_t, 0)
     
     /**
      * PMTU cache entry timeout in minutes (must be \>0).
      */
-    AIPSTACK_OPTION_DECL_VALUE(MtuTimeoutMinutes, uint8_t, 10)
+    AIPSTACK_OPTION_DECL_VALUE(MtuTimeoutMinutes, std::uint8_t, 10)
     
     /**
      * Data structure service for indexing PMTU cache entries by IP address.

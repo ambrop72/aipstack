@@ -25,9 +25,9 @@
 #ifndef AIPSTACK_IP_DHCP_OPTIONS_H
 #define AIPSTACK_IP_DHCP_OPTIONS_H
 
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 
 #include <aipstack/misc/LoopUtils.h>
 #include <aipstack/misc/Assert.h>
@@ -46,15 +46,15 @@ namespace AIpStack {
  * Implementation of DHCP option reading and writing for @ref IpDhcpClient.
  */
 template <
-    uint8_t MaxDnsServers,
-    uint8_t MaxClientIdSize,
-    uint8_t MaxVendorClassIdSize,
-    uint8_t MaxMessageSize
+    std::uint8_t MaxDnsServers,
+    std::uint8_t MaxClientIdSize,
+    std::uint8_t MaxVendorClassIdSize,
+    std::uint8_t MaxMessageSize
 >
 class IpDhcpOptions
 {
     // Calculates option size for given option data size.
-    static constexpr size_t OptSize (size_t data_size)
+    static constexpr std::size_t OptSize (std::size_t data_size)
     {
         return DhcpOptionHeader::Size + data_size;
     }
@@ -62,7 +62,7 @@ class IpDhcpOptions
     // Calculates the size of a DHCP option.
     // OptDataType is the payload type declared with AIPSTACK_DEFINE_STRUCT.
     template <typename OptDataType>
-    static constexpr size_t OptSize ()
+    static constexpr std::size_t OptSize ()
     {
         return OptSize(OptDataType::Size);
     }
@@ -71,11 +71,11 @@ class IpDhcpOptions
     enum class OptionRegion {Options, File, Sname};
     
     // Number of parameters requested in the "parameter request list" option.
-    static size_t const ParameterRequestListSize = 3;
+    static std::size_t const ParameterRequestListSize = 3;
     
 public:
     // Maximum size of options that we could possibly transmit.
-    static size_t const MaxOptionsSendSize =
+    static std::size_t const MaxOptionsSendSize =
         // DHCP message type
         OptSize<DhcpOptMsgType>() +
         // requested IP address
@@ -106,15 +106,15 @@ public:
             bool rebinding_time : 1;
             bool subnet_mask : 1;
             bool router : 1;
-            uint8_t dns_servers; // count
+            std::uint8_t dns_servers; // count
         } have;
         
         // The option values (only options set in Have are initialized).
         DhcpMessageType dhcp_message_type;
-        uint32_t dhcp_server_identifier;
-        uint32_t ip_address_lease_time;
-        uint32_t renewal_time;
-        uint32_t rebinding_time;
+        std::uint32_t dhcp_server_identifier;
+        std::uint32_t ip_address_lease_time;
+        std::uint32_t renewal_time;
+        std::uint32_t rebinding_time;
         Ip4Addr subnet_mask;
         Ip4Addr router;
         Ip4Addr dns_servers[MaxDnsServers];
@@ -140,7 +140,7 @@ public:
         
         // The option values (only options set in Have are relevant).
         Ip4Addr requested_ip_address;
-        uint32_t dhcp_server_identifier;
+        std::uint32_t dhcp_server_identifier;
         MemRef client_identifier;
         MemRef vendor_class_identifier;
         MemRef message;
@@ -187,7 +187,7 @@ public:
                 if (data.tot_len == 0) {
                     return false;
                 }
-                uint8_t opt_len = uint8_t(data.takeByte());
+                std::uint8_t opt_len = std::uint8_t(data.takeByte());
                 
                 // Check that the remainder of the option is available.
                 if (opt_len > data.tot_len) {
@@ -230,7 +230,7 @@ public:
     
     // Write DHCP options to a buffer, return the end pointer.
     static char * writeOptions (
-        char *opt_writeptr, DhcpMessageType msg_type, uint16_t max_msg_size,
+        char *opt_writeptr, DhcpMessageType msg_type, std::uint16_t max_msg_size,
         DhcpSendOptions const &opts)
     {
         // The opt_writeptr will be incremented as options are written.
@@ -288,7 +288,7 @@ public:
                     DhcpOptionType::DomainNameServer,
                 };
                 static_assert(sizeof(opt) == ParameterRequestListSize, "");
-                ::memcpy(opt_data, opt, sizeof(opt));
+                std::memcpy(opt_data, opt, sizeof(opt));
                 return sizeof(opt);
             });
         }
@@ -318,7 +318,7 @@ public:
     }
     
 private:
-    static void parse_option (DhcpOptionType opt_type, uint8_t opt_len, IpBufRef &data,
+    static void parse_option (DhcpOptionType opt_type, std::uint8_t opt_len, IpBufRef &data,
                               DhcpRecvOptions &opts, OptionRegion region,
                               DhcpOptionOverload &option_overload)
     {
@@ -404,7 +404,7 @@ private:
                 if (opt_len % DhcpOptAddr::Size != 0) {
                     goto skip_data;
                 }
-                uint8_t num_servers = opt_len / DhcpOptAddr::Size;
+                std::uint8_t num_servers = opt_len / DhcpOptAddr::Size;
                 for (auto server_index : LoopRange(num_servers)) {
                     (void)server_index;
                     // Must consume all servers from data even if we can't save
@@ -455,23 +455,23 @@ private:
         oh.set(DhcpOptionHeader::OptType(), opt_type);
         
         // Write option payload using payload_func and receive its size.
-        size_t opt_len = payload_func(opt_writeptr + DhcpOptionHeader::Size);
-        AIPSTACK_ASSERT(opt_len <= TypeMax<uint8_t>())
+        std::size_t opt_len = payload_func(opt_writeptr + DhcpOptionHeader::Size);
+        AIPSTACK_ASSERT(opt_len <= TypeMax<std::uint8_t>())
         
         // Set the payload size in the header.
-        oh.set(DhcpOptionHeader::OptLen(), uint8_t(opt_len));
+        oh.set(DhcpOptionHeader::OptLen(), std::uint8_t(opt_len));
         
         // Increment the write pointer.
         opt_writeptr += DhcpOptionHeader::Size + opt_len;
     }
     
     static void write_memref_option (char *&opt_writeptr, DhcpOptionType opt_type,
-                                     uint8_t max_len, MemRef val)
+                                     std::uint8_t max_len, MemRef val)
     {
-        uint8_t eff_len = MinValueU(max_len, val.len);
+        std::uint8_t eff_len = MinValueU(max_len, val.len);
         
         write_option(opt_writeptr, opt_type, [&](char *opt_data) {
-            ::memcpy(opt_data, val.ptr, eff_len);
+            std::memcpy(opt_data, val.ptr, eff_len);
             return eff_len;
         });
     }

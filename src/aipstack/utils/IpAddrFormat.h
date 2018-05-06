@@ -25,9 +25,9 @@
 #ifndef AIPSTACK_IP_ADDR_FORMAT_H
 #define AIPSTACK_IP_ADDR_FORMAT_H
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
 
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/Assert.h>
@@ -48,7 +48,7 @@ namespace AIpStack {
  * Maximum number of characters that @ref FormatIpAddr may write including the null
  * terminator.
  */
-static constexpr size_t MaxIp4AddrPrintLen = 16;
+static constexpr std::size_t MaxIp4AddrPrintLen = 16;
 
 /**
  * Format an IPv4 address to dot-decimal representation.
@@ -66,7 +66,7 @@ static constexpr size_t MaxIp4AddrPrintLen = 16;
 AIPSTACK_OPTIMIZE_SIZE
 inline char * FormatIpAddr (char *out_str, Ip4Addr addr)
 {
-    auto len = ::sprintf(out_str, "%d.%d.%d.%d",
+    auto len = std::sprintf(out_str, "%d.%d.%d.%d",
         int(addr.getByte<0>()), int(addr.getByte<1>()),
         int(addr.getByte<2>()), int(addr.getByte<3>()));
     AIPSTACK_ASSERT(len > 0)
@@ -92,7 +92,7 @@ inline bool ParseIpAddr (MemRef str, Ip4Addr &out_addr)
 
     using UChar = unsigned char;
 
-    uint8_t bytes[4];
+    std::uint8_t bytes[4];
 
     char const *ptr = str.ptr;
     char const *end = str.ptr + str.len;
@@ -129,7 +129,7 @@ inline bool ParseIpAddr (MemRef str, Ip4Addr &out_addr)
             return false;
         }
 
-        bytes[i] = uint8_t(byte_val);
+        bytes[i] = std::uint8_t(byte_val);
     }
 
     if (ptr != end) {

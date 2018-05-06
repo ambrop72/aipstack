@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_RESOURCE_ARRAY_H
 #define AIPSTACK_RESOURCE_ARRAY_H
 
-#include <stddef.h>
+#include <cstddef>
 
 #include <type_traits>
 #include <utility>
@@ -44,7 +44,7 @@ namespace AIpStack {
  */
 class ResourceArrayInitSame {};
 
-template <typename Elem, size_t Size>
+template <typename Elem, std::size_t Size>
 class ResourceArray;
 
 #ifndef IN_DOXYGEN
@@ -121,7 +121,7 @@ namespace ResourceArrayPrivate {
         MoveAssignMixin & operator= (MoveAssignMixin &&) = delete;
     };
     
-    template <typename Elem, size_t Size>
+    template <typename Elem, std::size_t Size>
     class ArrayBase
     {
         friend ResourceArray<Elem, Size>;
@@ -136,7 +136,7 @@ namespace ResourceArrayPrivate {
     public:
         ArrayBase ()
         {
-            size_t i;
+            std::size_t i;
             AIPSTACK_TRY {
                 for (i = 0; i < Size; i++) {
                     new(elem_ptr(i)) Elem();
@@ -150,7 +150,7 @@ namespace ResourceArrayPrivate {
         
         ArrayBase (ArrayBase const &other)
         {
-            size_t i;
+            std::size_t i;
             AIPSTACK_TRY {
                 for (i = 0; i < Size; i++) {
                     new(elem_ptr(i)) Elem(*other.elem_ptr(i));
@@ -164,7 +164,7 @@ namespace ResourceArrayPrivate {
         
         ArrayBase (ArrayBase &&other)
         {
-            size_t i;
+            std::size_t i;
             AIPSTACK_TRY {
                 for (i = 0; i < Size; i++) {
                     new(elem_ptr(i)) Elem(std::move(*other.elem_ptr(i)));
@@ -179,7 +179,7 @@ namespace ResourceArrayPrivate {
         template <typename... Args>
         ArrayBase (ResourceArrayInitSame, Args const & ... args)
         {
-            size_t i;
+            std::size_t i;
             AIPSTACK_TRY {
                 for (i = 0; i < Size; i++) {
                     new(elem_ptr(i)) Elem(args...);
@@ -198,7 +198,7 @@ namespace ResourceArrayPrivate {
         
         ArrayBase & operator= (ArrayBase const &other)
         {
-            for (size_t i = 0; i < Size; i++) {
+            for (std::size_t i = 0; i < Size; i++) {
                 elem_ptr(i)->operator=(*other.elem_ptr(i));
             }
             return *this;
@@ -206,26 +206,26 @@ namespace ResourceArrayPrivate {
         
         ArrayBase & operator= (ArrayBase &&other)
         {
-            for (size_t i = 0; i < Size; i++) {
+            for (std::size_t i = 0; i < Size; i++) {
                 elem_ptr(i)->operator=(std::move(*other.elem_ptr(i)));
             }
             return *this;
         }
         
     private:
-        inline Elem * elem_ptr (size_t index)
+        inline Elem * elem_ptr (std::size_t index)
         {
             return reinterpret_cast<Elem *>(&m_arr) + index;
         }
         
-        inline Elem const * elem_ptr (size_t index) const
+        inline Elem const * elem_ptr (std::size_t index) const
         {
             return reinterpret_cast<Elem const *>(&m_arr) + index;
         }
         
-        void destruct_elems (size_t count)
+        void destruct_elems (std::size_t count)
         {
-            for (size_t i = count; i > 0; i--) {
+            for (std::size_t i = count; i > 0; i--) {
                 elem_ptr(i - 1)->Elem::~Elem();
             }
         }
@@ -263,7 +263,7 @@ namespace ResourceArrayPrivate {
  * @tparam Elem Type of array elements.
  * @tparam Size Number of array elements. Must be positive.
  */
-template <typename Elem, size_t Size>
+template <typename Elem, std::size_t Size>
 class ResourceArray
 #ifndef IN_DOXYGEN
     :private ResourceArrayPrivate::ArrayBase<Elem, Size>,
@@ -301,7 +301,7 @@ public:
      * @param index Index of element. Must be less than `Size`.
      * @return Reference to the element at index `index`.
      */
-    inline Elem & operator[] (size_t index)
+    inline Elem & operator[] (std::size_t index)
     {
         return *this->elem_ptr(index);
     }
@@ -312,7 +312,7 @@ public:
      * @param index Index of element. Must be less than `Size`.
      * @return Reference to the element at index `index`.
      */
-    inline Elem const & operator[] (size_t index) const
+    inline Elem const & operator[] (std::size_t index) const
     {
         return *this->elem_ptr(index);
     }
@@ -342,7 +342,7 @@ public:
      * 
      * @return `Size`
      */
-    inline constexpr static size_t size ()
+    inline constexpr static std::size_t size ()
     {
         return Size;
     }

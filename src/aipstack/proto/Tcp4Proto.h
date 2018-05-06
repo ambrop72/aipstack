@@ -25,8 +25,8 @@
 #ifndef AIPSTACK_TCP4_PROTO_H
 #define AIPSTACK_TCP4_PROTO_H
 
-#include <stdint.h>
-#include <stddef.h>
+#include <cstdint>
+#include <cstddef>
 
 #include <aipstack/infra/Struct.h>
 #include <aipstack/proto/Ip4Proto.h>
@@ -34,37 +34,37 @@
 namespace AIpStack {
 
 AIPSTACK_DEFINE_STRUCT(Tcp4Header,
-    (SrcPort,     uint16_t)
-    (DstPort,     uint16_t)
-    (SeqNum,      uint32_t)
-    (AckNum,      uint32_t)
-    (OffsetFlags, uint16_t)
-    (WindowSize,  uint16_t)
-    (Checksum,    uint16_t)
-    (UrgentPtr,   uint16_t)
+    (SrcPort,     std::uint16_t)
+    (DstPort,     std::uint16_t)
+    (SeqNum,      std::uint32_t)
+    (AckNum,      std::uint32_t)
+    (OffsetFlags, std::uint16_t)
+    (WindowSize,  std::uint16_t)
+    (Checksum,    std::uint16_t)
+    (UrgentPtr,   std::uint16_t)
 )
 
-static uint16_t const Tcp4FlagFin = uint16_t(1) << 0;
-static uint16_t const Tcp4FlagSyn = uint16_t(1) << 1;
-static uint16_t const Tcp4FlagRst = uint16_t(1) << 2;
-static uint16_t const Tcp4FlagPsh = uint16_t(1) << 3;
-static uint16_t const Tcp4FlagAck = uint16_t(1) << 4;
-static uint16_t const Tcp4FlagUrg = uint16_t(1) << 5;
-static uint16_t const Tcp4FlagEce = uint16_t(1) << 6;
-static uint16_t const Tcp4FlagCwr = uint16_t(1) << 7;
-static uint16_t const Tcp4FlagNs  = uint16_t(1) << 8;
+static std::uint16_t const Tcp4FlagFin = std::uint16_t(1) << 0;
+static std::uint16_t const Tcp4FlagSyn = std::uint16_t(1) << 1;
+static std::uint16_t const Tcp4FlagRst = std::uint16_t(1) << 2;
+static std::uint16_t const Tcp4FlagPsh = std::uint16_t(1) << 3;
+static std::uint16_t const Tcp4FlagAck = std::uint16_t(1) << 4;
+static std::uint16_t const Tcp4FlagUrg = std::uint16_t(1) << 5;
+static std::uint16_t const Tcp4FlagEce = std::uint16_t(1) << 6;
+static std::uint16_t const Tcp4FlagCwr = std::uint16_t(1) << 7;
+static std::uint16_t const Tcp4FlagNs  = std::uint16_t(1) << 8;
 
-static uint16_t const Tcp4BasicFlags = Tcp4FlagFin|Tcp4FlagSyn|Tcp4FlagRst|Tcp4FlagAck;
-static uint16_t const Tcp4SeqFlags = Tcp4FlagFin|Tcp4FlagSyn;
+static std::uint16_t const Tcp4BasicFlags = Tcp4FlagFin|Tcp4FlagSyn|Tcp4FlagRst|Tcp4FlagAck;
+static std::uint16_t const Tcp4SeqFlags = Tcp4FlagFin|Tcp4FlagSyn;
 
 static int const TcpOffsetShift = 12;
 
-static uint8_t const TcpOptionEnd = 0;
-static uint8_t const TcpOptionNop = 1;
-static uint8_t const TcpOptionMSS = 2;
-static uint8_t const TcpOptionWndScale = 3;
+static std::uint8_t const TcpOptionEnd = 0;
+static std::uint8_t const TcpOptionNop = 1;
+static std::uint8_t const TcpOptionMSS = 2;
+static std::uint8_t const TcpOptionWndScale = 3;
 
-static size_t const Ip4TcpHeaderSize = Ip4Header::Size + Tcp4Header::Size;
+static std::size_t const Ip4TcpHeaderSize = Ip4Header::Size + Tcp4Header::Size;
 
 }
 

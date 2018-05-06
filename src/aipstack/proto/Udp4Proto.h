@@ -25,17 +25,17 @@
 #ifndef AIPSTACK_UDP4_PROTO_H
 #define AIPSTACK_UDP4_PROTO_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <aipstack/infra/Struct.h>
 
 namespace AIpStack {
 
 AIPSTACK_DEFINE_STRUCT(Udp4Header,
-    (SrcPort,     uint16_t)
-    (DstPort,     uint16_t)
-    (Length,      uint16_t)
-    (Checksum,    uint16_t)
+    (SrcPort,     std::uint16_t)
+    (DstPort,     std::uint16_t)
+    (Length,      std::uint16_t)
+    (Checksum,    std::uint16_t)
 )
 
 }

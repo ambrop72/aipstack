@@ -25,7 +25,7 @@
 #ifndef AIPSTACK_IP_TCP_PROTO_CONSTANTS_H
 #define AIPSTACK_IP_TCP_PROTO_CONSTANTS_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <aipstack/meta/BitsInInt.h>
 #include <aipstack/meta/BitsInFloat.h>
@@ -62,14 +62,14 @@ public:
     
     // We store such scaled times in 16-bit variables. This gives us a range of at least 65
     // seconds.
-    using RttType = uint16_t;
+    using RttType = std::uint16_t;
     
     // For intermediate RTT results we need a larger type.
-    using RttNextType = uint32_t;
+    using RttNextType = std::uint32_t;
 
     // Don't allow the remote host to lower the MSS beyond this.
     // NOTE: pcb_calc_snd_mss_from_pmtu relies on this definition.
-    static uint16_t const MinAllowedMss = IpStack<StackArg>::MinMTU - Ip4TcpHeaderSize;
+    static std::uint16_t const MinAllowedMss = IpStack<StackArg>::MinMTU - Ip4TcpHeaderSize;
     
     // Common flags passed to IpStack::sendIp4Dgram.
     // We disable fragmentation of TCP segments sent by us, due to PMTUD.
@@ -116,21 +116,21 @@ public:
         MinValue(double(TypeMax<RttType>()), 60. * RttTimeFreq);
     
     // Number of duplicate ACKs to trigger fast retransmit/recovery.
-    static uint8_t const FastRtxDupAcks = 3;
+    static std::uint8_t const FastRtxDupAcks = 3;
     
     // Maximum number of additional duplicate ACKs that will result in CWND increase.
-    static uint8_t const MaxAdditionaDupAcks = 32;
+    static std::uint8_t const MaxAdditionaDupAcks = 32;
     
     // Number of bits needed to represent the maximum supported duplicate ACK count.
     static int const DupAckBits = BitsInInt<FastRtxDupAcks + MaxAdditionaDupAcks>::Value;
     
     // Window scale shift count to send and use in outgoing ACKs.
-    static uint8_t const RcvWndShift = 6;
+    static std::uint8_t const RcvWndShift = 6;
     static_assert(RcvWndShift <= 14, "");
     
     // Minimum amount to extend the receive window when a PCB is
     // abandoned before the FIN has been received.
-    static SeqType const MinAbandonRcvWndIncr = TypeMax<uint16_t>();
+    static SeqType const MinAbandonRcvWndIncr = TypeMax<std::uint16_t>();
 };
 
 }

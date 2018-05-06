@@ -25,9 +25,8 @@
 #ifndef AIPSTACK_TCP_UTILS_H
 #define AIPSTACK_TCP_UTILS_H
 
-#include <stdint.h>
-#include <stddef.h>
-
+#include <cstdint>
+#include <cstddef>
 #include <limits>
 
 #include <aipstack/misc/Assert.h>
@@ -42,14 +41,14 @@ namespace AIpStack {
 
 class TcpUtils {
 public:
-    using FlagsType = uint16_t;
-    using SeqType = uint32_t;
+    using FlagsType = std::uint16_t;
+    using SeqType = std::uint32_t;
     
 private:
-    static uint8_t const Bit0 = 1 << 0;
-    static uint8_t const Bit1 = 1 << 1;
-    static uint8_t const Bit2 = 1 << 2;
-    static uint8_t const Bit3 = 1 << 3;
+    static std::uint8_t const Bit0 = 1 << 0;
+    static std::uint8_t const Bit1 = 1 << 1;
+    static std::uint8_t const Bit2 = 1 << 2;
+    static std::uint8_t const Bit3 = 1 << 3;
     
 public:
     /**
@@ -67,7 +66,7 @@ public:
      * have just received a FIN, but we will only go to TIME_WAIT
      * after calling callbacks.
      */
-    enum TcpState : uint8_t {
+    enum TcpState : std::uint8_t {
         CLOSED               = 0   |Bit2|0   |Bit0,
         SYN_SENT             = Bit3|Bit2|0   |Bit0,
         SYN_RCVD             = Bit3|Bit2|0   |0   ,
@@ -90,22 +89,22 @@ public:
         PortNum remote_port;
         SeqType seq_num;
         SeqType ack_num;
-        uint16_t window_size;
+        std::uint16_t window_size;
         FlagsType flags;
         TcpOptions *opts; // not used for RX (undefined), may be null for TX
     };
     
     // TCP options flags used in TcpOptions options field.
-    struct OptionFlags { enum : uint8_t {
+    struct OptionFlags { enum : std::uint8_t {
         MSS       = 1 << 0,
         WND_SCALE = 1 << 1,
     }; };
     
     // Container for TCP options that we care about.
     struct TcpOptions {
-        uint8_t options;
-        uint8_t wnd_scale;
-        uint16_t mss;
+        std::uint8_t options;
+        std::uint8_t wnd_scale;
+        std::uint16_t mss;
     };
     
     static SeqType const SeqMSB = SeqType(1) << 31;
@@ -124,7 +123,7 @@ public:
     {
         SeqType sum = op1 + op2;
         if (sum < op2) {
-            sum = TypeMax<uint32_t>();
+            sum = TypeMax<std::uint32_t>();
         }
         return sum;
     }
@@ -144,31 +143,31 @@ public:
         return seq_diff(op1, op2) >= SeqMSB;
     }
     
-    static inline size_t tcplen (FlagsType flags, size_t tcp_data_len)
+    static inline std::size_t tcplen (FlagsType flags, std::size_t tcp_data_len)
     {
         return tcp_data_len + ((flags & Tcp4SeqFlags) != 0);
     }
     
-    static inline bool state_is_active (uint8_t state)
+    static inline bool state_is_active (std::uint8_t state)
     {
         return state != OneOf(TcpState::CLOSED, TcpState::SYN_SENT,
                               TcpState::SYN_RCVD, TcpState::TIME_WAIT);
     }
     
-    static inline bool state_is_synsent_synrcvd (uint8_t state)
+    static inline bool state_is_synsent_synrcvd (std::uint8_t state)
     {
         //return state == OneOf(TcpState::SYN_SENT, TcpState::SYN_RCVD);
         return (state >> 1) == ((Bit3|Bit2) >> 1);
     }
     
-    static inline bool accepting_data_in_state (uint8_t state)
+    static inline bool accepting_data_in_state (std::uint8_t state)
     {
         //return state == OneOf(TcpState::ESTABLISHED, TcpState::FIN_WAIT_1,
         //                      TcpState::FIN_WAIT_2);
         return (state & (Bit3|Bit0)) == 0;
     }
     
-    static inline bool can_output_in_state (uint8_t state)
+    static inline bool can_output_in_state (std::uint8_t state)
     {
         //return state == OneOf(TcpState::ESTABLISHED, TcpState::FIN_WAIT_1,
         //                      TcpState::CLOSING, TcpState::CLOSE_WAIT,
@@ -176,7 +175,7 @@ public:
         return (state & Bit2) == 0;
     }
     
-    static inline bool snd_open_in_state (uint8_t state)
+    static inline bool snd_open_in_state (std::uint8_t state)
     {
         //return state == OneOf(TcpState::ESTABLISHED, TcpState::CLOSE_WAIT);
         return (state >> 1) == 0;
@@ -189,7 +188,7 @@ public:
         
         while (buf.tot_len > 0) {
             // Read the option kind.
-            uint8_t kind = uint8_t(buf.takeByte());
+            std::uint8_t kind = std::uint8_t(buf.takeByte());
             
             // Hanlde end option and nop option.
             if (kind == TcpOptionEnd) {
@@ -203,13 +202,13 @@ public:
             if (buf.tot_len == 0) {
                 break;
             }
-            uint8_t length = uint8_t(buf.takeByte());
+            std::uint8_t length = std::uint8_t(buf.takeByte());
             
             // Check the option length.
             if (length < 2) {
                 break;
             }
-            uint8_t opt_data_len = length - 2;
+            std::uint8_t opt_data_len = length - 2;
             if (buf.tot_len < opt_data_len) {
                 break;
             }
@@ -224,7 +223,7 @@ public:
                     char opt_data[2];
                     buf.takeBytes(opt_data_len, opt_data);
                     out_opts->options |= OptionFlags::MSS;
-                    out_opts->mss = ReadBinaryInt<uint16_t,
+                    out_opts->mss = ReadBinaryInt<std::uint16_t,
                                             BinaryBigEndian>(opt_data);
                 } break;
                 
@@ -233,7 +232,7 @@ public:
                     if (opt_data_len != 1) {
                         goto skip_option;
                     }
-                    uint8_t value = uint8_t(buf.takeByte());
+                    std::uint8_t value = std::uint8_t(buf.takeByte());
                     out_opts->options |= OptionFlags::WND_SCALE;
                     out_opts->wnd_scale = value;
                 } break;
@@ -247,14 +246,14 @@ public:
         }
     }
     
-    static size_t const OptWriteLenMSS = 4;
-    static size_t const OptWriteLenWndScale = 4;
+    static std::size_t const OptWriteLenMSS = 4;
+    static std::size_t const OptWriteLenWndScale = 4;
     
-    static size_t const MaxOptionsWriteLen = OptWriteLenMSS + OptWriteLenWndScale;
+    static std::size_t const MaxOptionsWriteLen = OptWriteLenMSS + OptWriteLenWndScale;
     
-    static inline uint8_t calc_options_len (TcpOptions const &tcp_opts)
+    static inline std::uint8_t calc_options_len (TcpOptions const &tcp_opts)
     {
-        uint8_t opts_len = 0;
+        std::uint8_t opts_len = 0;
         if ((tcp_opts.options & OptionFlags::MSS) != 0) {
             opts_len += OptWriteLenMSS;
         }
@@ -269,34 +268,34 @@ public:
     static inline void write_options (TcpOptions const &tcp_opts, char *out)
     {
         if ((tcp_opts.options & OptionFlags::MSS) != 0) {
-            WriteBinaryInt<uint8_t,  BinaryBigEndian>(
+            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(
                                                             TcpOptionMSS,       out + 0);
-            WriteBinaryInt<uint8_t,  BinaryBigEndian>(
+            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(
                                                             4,                  out + 1);
-            WriteBinaryInt<uint16_t, BinaryBigEndian>(
+            WriteBinaryInt<std::uint16_t, BinaryBigEndian>(
                                                             tcp_opts.mss,       out + 2);
             out += OptWriteLenMSS;
         }
         if ((tcp_opts.options & OptionFlags::WND_SCALE) != 0) {
-            WriteBinaryInt<uint8_t,  BinaryBigEndian>(
+            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(
                                                             TcpOptionNop     ,  out + 0);
-            WriteBinaryInt<uint8_t,  BinaryBigEndian>(
+            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(
                                                             TcpOptionWndScale,  out + 1);
-            WriteBinaryInt<uint8_t,  BinaryBigEndian>(
+            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(
                                                             3,                  out + 2);
-            WriteBinaryInt<uint8_t,  BinaryBigEndian>(
+            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(
                                                             tcp_opts.wnd_scale, out + 3);
             out += OptWriteLenWndScale;
         }
     }
     
-    template <uint16_t MinAllowedMss>
-    static bool calc_snd_mss (uint16_t iface_mss,
-                              TcpOptions const &tcp_opts, uint16_t *out_mss)
+    template <std::uint16_t MinAllowedMss>
+    static bool calc_snd_mss (std::uint16_t iface_mss,
+                              TcpOptions const &tcp_opts, std::uint16_t *out_mss)
     {
-        uint16_t req_mss = ((tcp_opts.options & OptionFlags::MSS) != 0) ?
+        std::uint16_t req_mss = ((tcp_opts.options & OptionFlags::MSS) != 0) ?
             tcp_opts.mss : 536;
-        uint16_t mss = MinValue(iface_mss, req_mss);
+        std::uint16_t mss = MinValue(iface_mss, req_mss);
         if (mss < MinAllowedMss) {
             return false;
         }
@@ -304,7 +303,7 @@ public:
         return true;
     }
     
-    static SeqType calc_initial_cwnd (uint16_t snd_mss)
+    static SeqType calc_initial_cwnd (std::uint16_t snd_mss)
     {
         if (snd_mss > 2190) {
             return 2 * SeqType(snd_mss);

@@ -25,8 +25,8 @@
 #ifndef AIPSTACK_MEMREF_H
 #define AIPSTACK_MEMREF_H
 
-#include <stddef.h>
-#include <string.h>
+#include <cstddef>
+#include <cstring>
 
 #include <aipstack/misc/Assert.h>
 
@@ -57,7 +57,7 @@ struct MemRef {
     /**
      * Number of bytes in the byte sequence.
      */
-    size_t len = 0;
+    std::size_t len = 0;
     
     /**
      * Default constructor, sets null pointer and zero length (same as @ref Null).
@@ -73,7 +73,7 @@ struct MemRef {
      * @param ptr_arg Value to initialize @ref ptr with.
      * @param len_arg Value to initialize @ref len with.
      */
-    inline MemRef (char const *ptr_arg, size_t len_arg)
+    inline MemRef (char const *ptr_arg, std::size_t len_arg)
     : ptr(ptr_arg), len(len_arg)
     {
     }
@@ -86,7 +86,7 @@ struct MemRef {
      * @param cstr Pointer to null-terminated string (must not be null).
      */
     inline MemRef (char const *cstr)
-    : ptr(cstr), len(strlen(cstr))
+    : ptr(cstr), len(std::strlen(cstr))
     {
     }
     
@@ -106,7 +106,7 @@ struct MemRef {
      * @param pos Position of the byte. Must be less than @ref len.
      * @return `ptr[pos]`
      */
-    inline char at (size_t pos) const
+    inline char at (std::size_t pos) const
     {
         AIPSTACK_ASSERT(ptr)
         AIPSTACK_ASSERT(pos < len)
@@ -124,7 +124,7 @@ struct MemRef {
      * @return A @ref MemRef with @ref ptr incremented by `offset` and @ref len
      *         decremented by `offset` compared to this object.
      */
-    inline MemRef subFrom (size_t offset) const
+    inline MemRef subFrom (std::size_t offset) const
     {
         AIPSTACK_ASSERT(ptr)
         AIPSTACK_ASSERT(offset <= len)
@@ -142,7 +142,7 @@ struct MemRef {
      * @return a @ref MemRef with @ref ptr the same as this object and @ref len equal to
      *         `offset`.
      */
-    inline MemRef subTo (size_t offset) const
+    inline MemRef subTo (std::size_t offset) const
     {
         AIPSTACK_ASSERT(ptr)
         AIPSTACK_ASSERT(offset <= len)
@@ -165,7 +165,7 @@ struct MemRef {
         AIPSTACK_ASSERT(ptr)
         AIPSTACK_ASSERT(other.ptr)
         
-        return len == other.len && !memcmp(ptr, other.ptr, len);
+        return len == other.len && !std::memcmp(ptr, other.ptr, len);
     }
     
     /**
@@ -183,7 +183,7 @@ struct MemRef {
      */
     bool removePrefix (char const *prefix)
     {
-        size_t pos = 0;
+        std::size_t pos = 0;
         while (prefix[pos] != '\0') {
             if (pos == len || ptr[pos] != prefix[pos]) {
                 return false;
@@ -204,13 +204,13 @@ struct MemRef {
      *        occurrence (not changed otherwise).
      * @return True if the character is found, false if not.
      */
-    bool findChar (char ch, size_t &out_index) const
+    bool findChar (char ch, std::size_t &out_index) const
     {
-        char const *res = reinterpret_cast<char const *>(::memchr(ptr, ch, len));
+        char const *res = reinterpret_cast<char const *>(std::memchr(ptr, ch, len));
         if (res == nullptr) {
             return false;
         }
-        out_index = size_t(res - ptr);
+        out_index = std::size_t(res - ptr);
         return true;
     }
 };
@@ -234,7 +234,7 @@ inline namespace Literals {
          * @param len Length of the character array.
          * @return @ref MemRef(`ptr`, `len`).
          */
-        inline MemRef operator""_mr (char const *ptr, size_t len) noexcept
+        inline MemRef operator""_mr (char const *ptr, std::size_t len) noexcept
         {
             return MemRef(ptr, len);
         }
