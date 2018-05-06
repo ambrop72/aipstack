@@ -34,14 +34,40 @@
 
 namespace AIpStack {
 
-class HostedPlatformImpl
+/**
+ * @addtogroup platform
+ * @{
+ */
+
+/**
+ * Reference platform implementation using the %AIpStack @ref event-loop.
+ * 
+ * This can be used on hosted platforms supported by the @ref event-loop as a
+ * a platform implementation. It implements all the functionality described in
+ * the @ref PlatformImplStub documentation. Note that the documentation of this
+ * class does not include definitions matching those in @ref PlatformImplStub.
+ */
+class HostedPlatformImpl :
+    public NonCopyable<HostedPlatformImpl>
 {
 public:
-    using ThePlatformRef = PlatformRef<HostedPlatformImpl>;
-
+    /**
+     * Construct the platform implementation.
+     * 
+     * @param loop Event loop; it must outlive this platform implementation object.
+     */
     inline HostedPlatformImpl (EventLoop &loop);
 
+    /**
+     * Return a reference to the event loop.
+     * 
+     * @return The event loop this class was constructed with.
+     */
     inline EventLoop & getEventLoop () const { return m_loop; }
+
+    #ifndef IN_DOXYGEN
+
+    using ThePlatformRef = PlatformRef<HostedPlatformImpl>;
 
     static bool const ImplIsStatic = false;
 
@@ -80,6 +106,8 @@ public:
         EventLoopTimer m_timer;
     };
 
+    #endif
+
 private:
     inline static TimeType eventLoopTimeToTimeType (EventLoopTime time);
 
@@ -88,6 +116,8 @@ private:
 private:
     EventLoop &m_loop;
 };
+
+#ifndef IN_DOXYGEN
 
 HostedPlatformImpl::HostedPlatformImpl (EventLoop &loop) :
     m_loop(loop)
@@ -143,6 +173,10 @@ auto HostedPlatformImpl::timeTypeToEventLoopTime (TimeType time) -> EventLoopTim
     // No simple way to avoid it.
     return EventLoopTime(EventLoopTime::duration(EventLoopTime::rep(time)));
 }
+
+#endif
+
+/** @} */
 
 }
 
