@@ -62,8 +62,8 @@ class EnableEnumBitfield;
 /**
  * Enables various operators for an enum type with bitfield semantics.
  * 
- * This macro may only be used in namespace context, without any semicolon
- * afterward.
+ * @note This macro may only be used in namespace scope within the @ref AIpStack
+ * namespace. There should be no semicolon after the invocation.
  * 
  * It is suggested to invoke this macro right after the definition of the
  * enum, for example:
@@ -94,7 +94,7 @@ class EnableEnumBitfield;
 #define AIPSTACK_ENUM_BITFIELD_OPS(EnumType) \
 static_assert(std::is_enum<EnumType>::value, "AIPSTACK_ENUM_BITFIELD_OPS: not an enum"); \
 template <> \
-class ::AIpStack::EnableEnumBitfield<EnumType> { \
+class EnableEnumBitfield<EnumType> { \
 public: \
     using Enabled = void; \
 };
