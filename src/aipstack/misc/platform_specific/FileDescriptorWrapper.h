@@ -48,13 +48,13 @@ namespace AIpStack {
  * 
  * This class is only available on \*nix platforms.
  * 
- * A file descriptor object internally stores an `int` value; the object is
- * considered to have a file descriptor when the stored value is non-negative
- * and is otherwise considered to be empty.
+ * A @ref FileDescriptorWrapper object internally stores an `int` value; the
+ * object is considered to have a file descriptor when the stored value is
+ * non-negative and is otherwise considered to be empty.
  * 
- * An empty file descriptor object typically has the value -1, but other
- * negative values could be introduced via the @ref FileDescriptorWrapper(int)
- * constructor.
+ * In this implementation, the value -1 is used when explicitly making a @ref
+ * FileDescriptorWrapper empty. However, other negative values can be intorduced
+ * via the constructor @ref FileDescriptorWrapper(int) and moved to other objects.
  */
 class FileDescriptorWrapper :
     private AIpStack::NonCopyable<FileDescriptorWrapper>
@@ -64,7 +64,7 @@ private:
     
 public:
     /**
-     * Default constructor, constructs an empty file descriptor object.
+     * Default constructor, constructs an empty object.
      * 
      * The new object gets the value -1.
      */
@@ -93,19 +93,20 @@ public:
      * 
      * The new object gets the specified value.
      * 
-     * @param fd Value which the new object gets. A non-negative value is assumed
-     *        to be a file descriptor (which would be closed in the destructor)
-     *        while a negative value results in an empty object.
+     * @param fd Value which the new object gets. If it is negative the result is
+     *        an empty object, otherwise the value is assumed to be a file
+     *        descriptor (which would be closed in the destructor).
      */
     explicit FileDescriptorWrapper (int fd) :
         m_fd(fd)
     {}
     
     /**
-     * Destructor, closes the file descriptor if there is any.
+     * Destructor, closes the file descriptor if there is one.
      * 
-     * This closes the file descriptor if there is one (the value is non-negative).
-     * If closing fails, an error message is printed to standard error.
+     * If there is a file descriptor in this object, it is closed by calling
+     * `close(value)`. If closing fails, an error message is printed to standard
+     * error.
      */
     ~FileDescriptorWrapper ()
     {
@@ -116,8 +117,9 @@ public:
      * Move-assignment operator.
      * 
      * If the other object is this object then does nothing, otherwise:
-     * - Closes the current file descriptor in this object if there is one. If
-     *   closing fails, an error message is printed to standard error.
+     * - If there is a file descriptor in this object, it is closed by calling
+     *   `close(value)`. If closing fails, an error message is printed to standard
+     *   error.
      * - This object gets the value of the other object (possibly taking ownership
      *   of a file descriptor) and the other object gets the value -1.
      * 
