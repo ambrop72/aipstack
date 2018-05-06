@@ -35,7 +35,7 @@
 namespace AIpStack {
 
 /**
- * @addtogroup misc
+ * @addtogroup misc-platform_specific
  * @{
  */
 
