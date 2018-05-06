@@ -48,7 +48,7 @@ namespace AIpStack {
  * Maximum number of characters that @ref FormatIpAddr may write including the null
  * terminator.
  */
-static size_t const MaxIp4AddrPrintLen = 16;
+static constexpr size_t MaxIp4AddrPrintLen = 16;
 
 /**
  * Format an IPv4 address to dot-decimal representation.

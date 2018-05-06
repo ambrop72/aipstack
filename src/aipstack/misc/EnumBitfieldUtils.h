@@ -52,7 +52,7 @@ class EnumZeroType {};
 /**
  * An @ref EnumZeroType value for convenience.
  */
-constexpr EnumZeroType EnumZero = EnumZeroType();
+static constexpr EnumZeroType EnumZero = EnumZeroType();
 
 #ifndef IN_DOXYGEN
 template <typename EnumType>
