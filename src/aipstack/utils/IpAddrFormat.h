@@ -136,7 +136,7 @@ inline bool ParseIpAddr (MemRef str, Ip4Addr &out_addr)
         return false;
     }
     
-    out_addr = Ip4Addr::FromBytes(bytes);
+    out_addr = Ip4Addr(bytes[0], bytes[1], bytes[2], bytes[3]);
     return true;
 }
 

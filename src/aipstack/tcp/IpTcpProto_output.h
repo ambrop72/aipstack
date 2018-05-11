@@ -1295,8 +1295,8 @@ private:
             
             // Add known pseudo-header fields to checksum.
             chksum.addWord(WrapType<std::uint16_t>(), Ip4ProtocolTcp);
-            chksum.addWords(&pcb->local_addr.data);
-            chksum.addWords(&pcb->remote_addr.data);
+            chksum.addWord(WrapType<std::uint32_t>(), pcb->local_addr.value());
+            chksum.addWord(WrapType<std::uint32_t>(), pcb->remote_addr.value());
             
             // Store the state of the partial checksum.
             partial_chksum_state = chksum.getState();
@@ -1371,8 +1371,8 @@ private:
         IpBufRef dgram = dgram_alloc.getBufRef();
         
         // Add remaining pseudo-header to checksum (protocol was added above).
-        chksum_accum.addWords(&key.local_addr.data);
-        chksum_accum.addWords(&key.remote_addr.data);
+        chksum_accum.addWord(WrapType<std::uint32_t>(), key.local_addr.value());
+        chksum_accum.addWord(WrapType<std::uint32_t>(), key.remote_addr.value());
         chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
         
         // Complete and write checksum.

@@ -439,10 +439,10 @@ public:
         chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value);
         ip4_header.set(Ip4Header::TtlProto(), ttl_proto.value);
         
-        chksum.addWords(&addrs.local_addr.data);
+        chksum.addWord(WrapType<std::uint32_t>(), addrs.local_addr.value());
         ip4_header.set(Ip4Header::SrcAddr(), addrs.local_addr);
         
-        chksum.addWords(&addrs.remote_addr.data);
+        chksum.addWord(WrapType<std::uint32_t>(), addrs.remote_addr.value());
         ip4_header.set(Ip4Header::DstAddr(), addrs.remote_addr);
         
         // Set the IP header checksum.
@@ -591,10 +591,10 @@ public:
         chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value);
         ip4_header.set(Ip4Header::TtlProto(), ttl_proto.value);
         
-        chksum.addWords(&addrs.local_addr.data);
+        chksum.addWord(WrapType<std::uint32_t>(), addrs.local_addr.value());
         ip4_header.set(Ip4Header::SrcAddr(), addrs.local_addr);
         
-        chksum.addWords(&addrs.remote_addr.data);
+        chksum.addWord(WrapType<std::uint32_t>(), addrs.remote_addr.value());
         ip4_header.set(Ip4Header::DstAddr(), addrs.remote_addr);
         
         // Save the partial header checksum.
@@ -1007,9 +1007,9 @@ private:
         
         // Read addresses and add to checksum
         Ip4Addr src_addr = ip4_header.get(Ip4Header::SrcAddr());
-        chksum.addWords(&src_addr.data);
+        chksum.addWord(WrapType<std::uint32_t>(), src_addr.value());
         Ip4Addr dst_addr = ip4_header.get(Ip4Header::DstAddr());
-        chksum.addWords(&dst_addr.data);
+        chksum.addWord(WrapType<std::uint32_t>(), dst_addr.value());
         
         // Get flags+offset and add to checksum.
         std::uint16_t flags_offset = ip4_header.get(Ip4Header::FlagsOffset());
@@ -1167,7 +1167,7 @@ private:
     }
 
     IpErr sendIcmp4Message (Ip4Addrs const &addrs, Iface *iface,
-                            std::uint8_t type, std::uint8_t code, Icmp4RestType rest, IpBufRef data)
+        std::uint8_t type, std::uint8_t code, Icmp4RestType rest, IpBufRef data)
     {
         // Allocate memory for headers.
         TxAllocHelper<Icmp4Header::Size, HeaderBeforeIp4Dgram>

@@ -166,8 +166,8 @@ public:
         
         // Calculate UDP checksum.
         IpChksumAccumulator chksum_accum;
-        chksum_accum.addWords(&addrs.local_addr.data);
-        chksum_accum.addWords(&addrs.remote_addr.data);
+        chksum_accum.addWord(WrapType<std::uint32_t>(), addrs.local_addr.value());
+        chksum_accum.addWord(WrapType<std::uint32_t>(), addrs.remote_addr.value());
         chksum_accum.addWord(WrapType<std::uint16_t>(), Ip4ProtocolUdp);
         chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
         std::uint16_t checksum = chksum_accum.getChksum(dgram);
@@ -612,7 +612,7 @@ public:
             }
 
             // Send an ICMP Destination Unreachable, Port Unreachable message.
-            Ip4DestUnreachMeta du_meta = {Icmp4CodeDestUnreachPortUnreach, Icmp4RestType()};
+            Ip4DestUnreachMeta du_meta{Icmp4CodeDestUnreachPortUnreach, Icmp4RestType()};
             m_stack->sendIp4DestUnreach(ip_info, dgram, du_meta);
         }
     }
@@ -637,8 +637,8 @@ private:
 
         if (has_checksum) {
             IpChksumAccumulator chksum_accum;
-            chksum_accum.addWords(&ip_info.src_addr.data);
-            chksum_accum.addWords(&ip_info.dst_addr.data);
+            chksum_accum.addWord(WrapType<std::uint32_t>(), ip_info.src_addr.value());
+            chksum_accum.addWord(WrapType<std::uint32_t>(), ip_info.dst_addr.value());
             chksum_accum.addWord(WrapType<std::uint16_t>(), Ip4ProtocolUdp);
             chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
 

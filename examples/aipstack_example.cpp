@@ -56,13 +56,11 @@
 
 // Address configuration
 static bool const DeviceUseDhcp = true;
-static AIpStack::Ip4Addr const DeviceIpAddr =
-    AIpStack::Ip4Addr::FromBytes(192, 168, 64, 10);
+static AIpStack::Ip4Addr const DeviceIpAddr = AIpStack::Ip4Addr(192, 168, 64, 10);
 static std::uint8_t const DevicePrefixLength = 24;
-static AIpStack::Ip4Addr const DeviceGatewayAddr =
-    AIpStack::Ip4Addr::FromBytes(192, 168, 64, 1);
+static AIpStack::Ip4Addr const DeviceGatewayAddr = AIpStack::Ip4Addr(192, 168, 64, 1);
 static AIpStack::MacAddr const DeviceMacAddr =
-    AIpStack::MacAddr::Make(0x8e, 0x86, 0x90, 0x97, 0x65, 0xd5);
+    AIpStack::MacAddr(0x8e, 0x86, 0x90, 0x97, 0x65, 0xd5);
 
 // Index data structure to use for various things.
 using IndexService = AIpStack::AvlTreeIndexService; // AVL tree

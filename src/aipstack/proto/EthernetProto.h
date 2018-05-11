@@ -27,45 +27,83 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <array>
 
 #include <aipstack/infra/Struct.h>
 
 namespace AIpStack {
 
-class MacAddr : public StructByteArray<6>
-{
+class MacAddr {
 public:
-    static inline constexpr MacAddr ZeroAddr ()
-    {
-        return MacAddr{};
+    static constexpr std::size_t Size = 6;
+
+    using ValueArray = std::array<std::uint8_t, Size>;
+    
+private:
+    ValueArray m_value;
+
+public:
+    inline MacAddr () = default;
+
+    inline explicit constexpr MacAddr (ValueArray value) :
+        m_value(value)
+    {}
+
+    inline explicit constexpr MacAddr (
+        std::uint8_t b1, std::uint8_t b2, std::uint8_t b3,
+        std::uint8_t b4, std::uint8_t b5, std::uint8_t b6)
+    :
+        MacAddr(ValueArray{{b1, b2, b3, b4, b5, b6}})
+    {}
+
+    inline constexpr ValueArray value () const {
+        return m_value;
+    }
+
+    inline bool operator== (MacAddr other) const {
+        return value() == other.value();
     }
     
-    static inline constexpr MacAddr BroadcastAddr ()
-    {
-        MacAddr result = {};
-        for (std::size_t i = 0; i < MacAddr::Size; i++) {
-            result.data[i] = 0xFF;
-        }
-        return result;
+    inline bool operator!= (MacAddr other) const {
+        return value() != other.value();
     }
     
-    static inline constexpr MacAddr Make (std::uint8_t b1, std::uint8_t b2, std::uint8_t b3,
-                                          std::uint8_t b4, std::uint8_t b5, std::uint8_t b6)
-    {
-        MacAddr result = {};
-        result.data[0] = b1;
-        result.data[1] = b2;
-        result.data[2] = b3;
-        result.data[3] = b4;
-        result.data[4] = b5;
-        result.data[5] = b6;
-        return result;
+    inline bool operator< (MacAddr other) const {
+        return value() < other.value();
     }
     
-    inline static MacAddr decode (char const *bytes)
-    {
-        return StructByteArray<6>::template decodeTo<MacAddr>(bytes);
+    inline bool operator<= (MacAddr other) const {
+        return value() <= other.value();
     }
+    
+    inline bool operator> (MacAddr other) const {
+        return value() > other.value();
+    }
+    
+    inline bool operator>= (MacAddr other) const {
+        return value() >= other.value();
+    }
+    
+    inline static constexpr MacAddr ZeroAddr () {
+        return MacAddr(0, 0, 0, 0, 0, 0);
+    }
+    
+    inline static constexpr MacAddr BroadcastAddr () {
+        return MacAddr(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
+    }
+    
+    inline static MacAddr readBinary (char const *src) {
+        return MacAddr(ReadSingleField<ValueArray>(src));
+    }
+
+    inline void writeBinary (char *dst) const {
+        WriteSingleField<ValueArray>(dst, value());
+    }
+};
+
+template <>
+struct StructTypeHandler<MacAddr, void> {
+    using Handler = StructConventionalTypeHandler<MacAddr>;
 };
 
 AIPSTACK_DEFINE_STRUCT(EthHeader,

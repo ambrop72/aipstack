@@ -26,12 +26,12 @@
 #define AIPSTACK_STRUCT_H
 
 #include <cstddef>
-#include <cstdint>
 #include <cstring>
-
+#include <array>
 #include <type_traits>
 
 #include <aipstack/meta/TypeListUtils.h>
+#include <aipstack/meta/BasicMetaUtils.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/BinaryTools.h>
 #include <aipstack/misc/EnumUtils.h>
@@ -114,27 +114,31 @@ namespace AIpStack {
  * from existing data.
  * 
  * The system directly supports the following field types:
- * - Fixed-width integer types (`intN_t` and `uintN_t` for N=8,16,32,64) and enum types
- *   based on these types. Big-endian byte order is used. The `get` and `set` operations
- *   use the same type as the field is defined as. The `ref` operation is not available.
+ * - Binary integer types including `char`, `unsigned char` and fixed-width integer types
+ *   (`intN_t` and `uintN_t` for N=8,16,32,64), as well as enum types based on these
+ *   types. Big-endian byte order is used. The `get` and `set` operations use the same
+ *   type as the field is defined as. The `ref` operation is not available.
  * - Structures types defined though this same system (nested structures). The `get` and
  *   `set` operations use the type @ref StructBase::Val corresponding to the field type.
  *   The `ref` operation is available and returns a @ref StructBase::Ref referencing the
  *   nested structure.
- * - Fixed-length arrays of fixed-width integers, using field type
- *   @ref StructIntArray\<T, Length\>. Big-endian byte order is used. The `get` and `set`
- *   operations use this @ref StructIntArray type, which contains the
- *   @ref StructIntArray::data array. The `ref` operation is not available, except when
- *   T is `std::uint8_t` (see below).
- * - Fixed-length byte arrays, using field type @ref StructByteArray\<Length\>. This is
- *   actually a type alias for @ref StructIntArray\<std::uint8_t, Length\>, but the `ref`
- *   operation is also available, which returns a `char *` pointing to the field contents.
+ * - Fixed-size arrays: for any type `T` that may be used in a field definition,
+ *   `T[Size]` may also be used, representing an array of `Size` instances of that type.
+ *   The `get` and `set` operations for such an array field use the type
+ *   `std::array<V, Size>` where `V` is the type used for `get` and `set` for a field
+ *   declared with type `T`. Additionally, when `V` would be the same as `T`, it is also
+ *   allowed to use `std::array<T, Size>` as the field type.
+ * - As a special case for array fields, when the type `T` in `T[Size]` is `char` or
+ *   `unsigned char`, the `ref` operation is also available and returns `T *` pointing
+ *   to the field contents.
  * - Any trivial type T (as defined by `std::is_trivial<T>`) using its native
  *   representation, when using field type @ref StructRawField\<T\>. The `get` and `set`
  *   operations use the type T. The `ref` operation is not available.
  * 
  * Support for additional types can be added by adding additional specializations of
- * @ref StructTypeHandler (see the documentation of that).
+ * @ref StructTypeHandler (see the documentation of that). Additionally, the generic
+ * type handler template @ref StructConventionalTypeHandler may simplify supporting
+ * custom class types.
  * 
  * @{
  */
@@ -166,9 +170,11 @@ namespace AIpStack {
  *   field data, for the `ref` operation.
  * 
  * @tparam Type Field type (as declared via @ref AIPSTACK_DEFINE_STRUCT).
- * @tparam Dummy Dummy template parameter to assist SFINAE, will be `void`.
+ * @tparam Void Dummy type parameter instantiated as `void`. This allows specializations
+ *         to define conditions based on SFINAE, e.g. using `enable_if_t` or `void_t`.
+ *         If no condition is needed, the specialization should use `void` here.
  */
-template <typename Type, typename Dummy=void>
+template <typename Type, typename Void>
 struct StructTypeHandler;
 
 #ifndef IN_DOXYGEN
@@ -179,7 +185,7 @@ struct StructField {
 };
 
 template <typename FieldType>
-using StructFieldHandler = typename StructTypeHandler<FieldType>::Handler;
+using StructFieldHandler = typename StructTypeHandler<FieldType, void>::Handler;
 
 #endif
 
@@ -660,20 +666,12 @@ public:
     }
 };
 
-#define AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(IntType) \
-template <typename Type> \
-struct StructTypeHandler<Type, std::enable_if_t<AIpStack::IsSameOrEnumWithBaseType<Type, IntType>::Value>> { \
-    using Handler = AIpStack::StructBinaryTypeHandler<Type>; \
+template <typename Type>
+struct StructTypeHandler<Type,
+    std::enable_if_t<BinaryReadWriteSupportsType<GetSameOrEnumBaseType<Type>>()>>
+{
+    using Handler = AIpStack::StructBinaryTypeHandler<Type>;
 };
-
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::uint8_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::uint16_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::uint32_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::uint64_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::int8_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::int16_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::int32_t)
-AIPSTACK_STRUCT_REGISTER_BINARY_TYPE(std::int64_t)
 
 template <typename StructType>
 class StructNestedTypeHandler {
@@ -704,243 +702,100 @@ struct StructTypeHandler<Type, std::enable_if_t<std::is_base_of<StructBase<Type>
     using Handler = StructNestedTypeHandler<Type>;
 };
 
-#endif
+template <typename ElemFieldType, std::size_t Length>
+class StructArrayTypeHandler {
+    using ElemFieldHandler = StructFieldHandler<ElemFieldType>;
+    using ElemValType = typename ElemFieldHandler::ValType;
 
-/**
- * Contains a fixed-length array of integers.
- * 
- * Elements are stored in the @ref data array which can be accessed directly.
- * 
- * @tparam ElemType_ Type of elements. Must be one of the fixed-width integer types, or
- *         more specifically must be supported by @ref ReadBinaryInt and
- *         @ref WriteBinaryInt.
- * @tparam Length_ Number of elements in the array.
- */
-template <typename ElemType_, std::size_t Length_>
-class StructIntArray {
 public:
-    /**
-     * Element type.
-     */
-    using ElemType = ElemType_;
+    static std::size_t const FieldSize = Length * ElemFieldHandler::FieldSize;
     
-    /**
-     * Size of an encoded element in bytes.
-     */
-    static std::size_t const ElemSize = sizeof(ElemType);
-    
-    /**
-     * Number of elements in the array.
-     */
-    static std::size_t const Length = Length_;
-    
-    /**
-     * Size of an encoded array in bytes.
-     */
-    static std::size_t const Size = Length * ElemSize;
-    
-    /**
-     * Decode a sequence of bytes into a @ref AIpStack::StructIntArray "StructIntArray" or
-     * derived type.
-     * 
-     * Decoding is done using big-endian byte order. A `ResType` object is
-     * default-constructed, its @ref data elements are filled in and the object
-     * is returned.
-     * 
-     * @tparam ResType Result type. Must be @ref StructIntArray or a type derived from that.
-     * @param bytes Pointer to start of data. There must be at least @ref Size bytes
-     *        available which will be read.
-     * @return Decoded integer array.
-     */
-    template <typename ResType>
-    inline static ResType decodeTo (char const *bytes)
-    {
-        static_assert(std::is_base_of<StructIntArray, ResType>::value, "");
-        
-        ResType result;
-        for (std::size_t i = 0; i < Length; i++) {
-            result.StructIntArray::data[i] = ReadBinaryInt<ElemType, BinaryBigEndian>(bytes + i * ElemSize);
-        }
-        return result;
-    }
-    
-    /**
-     * Decode a sequence of bytes into a @ref AIpStack::StructIntArray "StructIntArray".
-     * 
-     * This is equivalent to @ref decodeTo\<StructIntArray\>.
-     * 
-     * @param bytes Pointer to start of data. There must be at least @ref Size bytes
-     *        available which will be decoded.
-     * @return Decoded integer array.
-     */
-    inline static StructIntArray decode (char const *bytes)
-    {
-        return decodeTo<StructIntArray>(bytes);
-    }
-    
-    /**
-     * Encode into a sequence of bytes.
-     * 
-     * Encoding is done using big-endian byte order.
-     * 
-     * @param bytes Pointer to where the encoded data will be written. There must be at
-     *        least @ref Size bytes available which will be written.
-     */
-    inline void encode (char *bytes) const
-    {
-        for (std::size_t i = 0; i < Length; i++) {
-            WriteBinaryInt<ElemType, BinaryBigEndian>(data[i], bytes + i * ElemSize);
-        }
-    }
-    
-    /**
-     * Equality operator.
-     * 
-     * @param other The other integer array.
-     * @return Whether the arrays are equal.
-     */
-    inline constexpr bool operator== (StructIntArray const &other) const
-    {
-        for (std::size_t i = 0; i < Length; i++) {
-            if (data[i] != other.data[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-    
-    /**
-     * Inequality operator.
-     * 
-     * @param other The other integer array.
-     * @return Whether the arrays are not equal.
-     */
-    inline constexpr bool operator!= (StructIntArray const &other) const
-    {
-        return !operator==(other);
-    }
-    
-    /**
-     * Less-than operator using lexicographical order.
-     * 
-     * @param other The other integer array.
-     * @return Whether this array is less than `other`.
-     */
-    inline constexpr bool operator< (StructIntArray const &other) const
-    {
-        for (std::size_t i = 0; i < Length; i++) {
-            if (data[i] < other.data[i]) {
-                return true;
-            }
-            if (data[i] != other.data[i]) {
-                return false;
-            }
-        }
-        return false;
-    }
-    
-    /**
-     * Greater-than operator using lexicographical order.
-     * 
-     * @param other The other integer array.
-     * @return Whether this array is greater than `other`.
-     */
-    inline constexpr bool operator> (StructIntArray const &other) const
-    {
-        return other.operator<(*this);
-    }
-    
-    /**
-     * Less-than-or-equal operator using lexicographical order.
-     * 
-     * @param other The other integer array.
-     * @return Whether this array is less than or equal to `other`.
-     */
-    inline constexpr bool operator<= (StructIntArray const &other) const
-    {
-        return !other.operator<(*this);
-    }
-    
-    /**
-     * Greater-than-or-equal operator using lexicographical order.
-     * 
-     * @param other The other integer array.
-     * @return Whether this array is greater than or equal to `other`.
-     */
-    inline constexpr bool operator>= (StructIntArray const &other) const
-    {
-        return !operator<(other);
-    }
-    
-public:
-    /**
-     * The array of integers stored in this object.
-     */
-    ElemType data[Length];
-};
-
-/**
- * A type containing an array of bytes (std::uint8_t).
- * 
- * This is just an alias for @ref StructIntArray\<std::uint8_t, Length\>;
- */
-template <std::size_t Length>
-using StructByteArray = StructIntArray<std::uint8_t, Length>;
-
-#ifndef IN_DOXYGEN
-
-template <typename TValType>
-class StructIntArrayTypeHandler {
-public:
-    static std::size_t const FieldSize = TValType::Size;
-    
-    using ValType = TValType;
-    
-    inline static ValType get (char const *data)
-    {
-        return ValType::template decodeTo<ValType>(data);
-    }
-    
-    inline static void set (char *data, ValType value)
-    {
-        value.encode(data);
-    }
-};
-
-template <typename TValType>
-class StructByteArrayTypeHandler {
-public:
-    static std::size_t const FieldSize = TValType::Size;
-    
-    using ValType = TValType;
-    using RefType = char *;
+    using ValType = std::array<ElemValType, Length>;
     
     inline static ValType get (char const *data)
     {
         ValType value;
-        std::memcpy(value.data, data, ValType::Size);
+        for (std::size_t i = 0; i < Length; i++) {
+            value[i] = ElemFieldHandler::get(data + i * ElemFieldHandler::FieldSize);
+        }
         return value;
     }
     
     inline static void set (char *data, ValType value)
     {
-        std::memcpy(data, value.data, ValType::Size);
+        for (std::size_t i = 0; i < Length; i++) {
+            ElemFieldHandler::set(data + i * ElemFieldHandler::FieldSize, value[i]);
+        }
+    }
+};
+
+template <typename T>
+using StructIsByteType = WrapBool<
+    std::is_same<T, char>::value || std::is_same<T, unsigned char>::value
+>;
+
+template <typename ElemType, std::size_t Length>
+class StructByteArrayTypeHandler {
+    static_assert(StructIsByteType<ElemType>::Value, "");
+    
+public:
+    static std::size_t const FieldSize = Length * sizeof(ElemType);
+    
+    using ValType = std::array<ElemType, Length>;
+    using RefType = ElemType *;
+    
+    inline static ValType get (char const *data)
+    {
+        ValType value;
+        std::memcpy(value.data(), data, FieldSize);
+        return value;
+    }
+    
+    inline static void set (char *data, ValType value)
+    {
+        std::memcpy(data, value.data(), FieldSize);
     }
     
     inline static RefType ref (char *data)
     {
-        return data;
+        return reinterpret_cast<ElemType *>(data);
     }
 };
 
-template <typename Type>
-struct StructTypeHandler<Type, std::enable_if_t<std::is_base_of<StructIntArray<typename Type::ElemType, Type::Length>, Type>::value>> {
-    using Handler = std::conditional_t<
-        std::is_base_of<StructByteArray<Type::Length>, Type>::value,
-        StructByteArrayTypeHandler<Type>,
-        StructIntArrayTypeHandler<Type>
-    >;
+template <typename ElemFieldType, std::size_t Length>
+using StructSelectArrayTypeHandler = std::conditional_t<
+    StructIsByteType<ElemFieldType>::Value,
+    StructByteArrayTypeHandler<ElemFieldType, Length>,
+    StructArrayTypeHandler<ElemFieldType, Length>
+>;
+
+template <typename ElemFieldType, std::size_t Length>
+struct StructTypeHandler<ElemFieldType[Length],
+    VoidFor<StructFieldHandler<ElemFieldType>>>
+{
+    using Handler = StructSelectArrayTypeHandler<ElemFieldType, Length>;
 };
+
+template <typename ElemFieldType, std::size_t Length>
+struct StructTypeHandler<std::array<ElemFieldType, Length>,
+    std::enable_if_t<std::is_same<StructFieldValType<ElemFieldType>, ElemFieldType>::value>>
+{
+    using Handler = StructSelectArrayTypeHandler<ElemFieldType, Length>;
+};
+
+#endif
+
+/**
+ * Field type of a raw field using native representation.
+ * 
+ * See the @ref struct module description.
+ * 
+ * @tparam Type Value type. Must be a trivial type (`std::is_trivial<T>`).
+ */
+template <typename Type>
+struct StructRawField {};
+
+#ifndef IN_DOXYGEN
 
 template <typename Type>
 class StructRawTypeHandler {
@@ -964,26 +819,55 @@ public:
     }
 };
 
-#endif
-
-/**
- * Field type of a raw field using native representation.
- * 
- * See the @ref struct module description.
- * 
- * @tparam Type Value type. Must be a trivial type (`std::is_trivial<T>`).
- */
-template <typename Type>
-struct StructRawField {};
-
-#ifndef IN_DOXYGEN
-
 template <typename Type>
 struct StructTypeHandler<StructRawField<Type>, void> {
     using Handler = StructRawTypeHandler<Type>;
 };
 
 #endif
+
+/**
+ * Simplifies adding support for custom class types to the @ref struct system
+ * based on specific conventions.
+ * 
+ * In order to use this, the specified type (`Type`) must provide the following:
+ * - A static integer constant `Size` declaring the size of an encoded object in bytes.
+ * - A decoding function: `static Type readBinary(char const *data)`. This function
+ *   may read up to `Size` bytes from `data`.
+ * - An encoding function: `static void writeBinary(char *data, ValType value)`. This
+ *   function must write exactly `Size` bytes to `data`.
+ * 
+ * A type handler registration is still required by specializing `StructTypeHandler`.
+ * In simple cases this is done like this:
+ * 
+ * ```
+ * template <>
+ * struct StructTypeHandler<Type, void> {
+ *     using Handler = StructConventionalTypeHandler<Type>;
+ * };
+ * ```
+ */
+template <typename Type>
+class StructConventionalTypeHandler {
+public:
+    #ifndef IN_DOXYGEN
+
+    static std::size_t const FieldSize = Type::Size;
+    
+    using ValType = Type;
+    
+    inline static ValType get (char const *data)
+    {
+        return Type::readBinary(data);
+    }
+    
+    inline static void set (char *data, ValType value)
+    {
+        return value.writeBinary(data);
+    }
+
+    #endif
+};
 
 /** @} */
 

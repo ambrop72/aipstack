@@ -59,6 +59,11 @@ using WrapInt = WrapValue<int, Value>;
 template <std::size_t Value>
 using WrapSize = WrapValue<std::size_t, Value>;
 
+// VoidFor
+
+template <typename ...>
+using VoidFor = void;
+
 // GetReturnType
 
 #ifndef IN_DOXYGEN

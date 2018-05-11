@@ -27,219 +27,173 @@
 
 #include <cstdint>
 #include <cstddef>
-#include <type_traits>
 
 #include <aipstack/misc/Assert.h>
+#include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/BinaryTools.h>
 #include <aipstack/infra/Struct.h>
 
 namespace AIpStack {
 
-template <typename AddrType, typename ElemType, std::size_t Length>
-class IpGenericAddr : public StructIntArray<ElemType, Length>
-{
-    static_assert(std::is_unsigned<ElemType>::value, "");
-    
+class Ip4Addr {
 public:
-    static std::size_t const Bits      = 8 * IpGenericAddr::Size;
-    static std::size_t const ElemBits  = 8 * IpGenericAddr::ElemSize;
+    static constexpr std::size_t Size = 4;
     
+    static constexpr std::size_t Bits = 32;
+
+    using ValueInt = std::uint32_t;
+
+private:
+    ValueInt m_value;
+
 public:
-    static inline constexpr AddrType ZeroAddr ()
-    {
-        return AddrType{};
+    inline Ip4Addr () = default;
+
+    inline explicit constexpr Ip4Addr (ValueInt value) :
+        m_value(value)
+    {}
+
+    inline explicit constexpr Ip4Addr (
+        std::uint8_t n1, std::uint8_t n2, std::uint8_t n3, std::uint8_t n4)
+    :
+        Ip4Addr(ValueInt(
+            (ValueInt(n1) << 24) |
+            (ValueInt(n2) << 16) |
+            (ValueInt(n3) << 8) |
+            (ValueInt(n4) << 0)))
+    {}
+
+    inline constexpr ValueInt value () const {
+        return m_value;
+    }
+
+    inline constexpr bool operator==(Ip4Addr other) const {
+        return value() == other.value();
+    }
+
+    inline constexpr bool operator!=(Ip4Addr other) const {
+        return value() != other.value();
+    }
+
+    inline constexpr bool operator<(Ip4Addr other) const {
+        return value() < other.value();
+    }
+
+    inline constexpr bool operator<=(Ip4Addr other) const {
+        return value() <= other.value();
+    }
+
+    inline constexpr bool operator>(Ip4Addr other) const {
+        return value() > other.value();
+    }
+
+    inline constexpr bool operator>=(Ip4Addr other) const {
+        return value() >= other.value();
+    }
+
+    inline constexpr Ip4Addr operator& (Ip4Addr other) const {
+        return Ip4Addr(ValueInt(value() & other.value()));
     }
     
-    static inline constexpr AddrType AllOnesAddr ()
-    {
-        AddrType res_addr = {};
-        for (std::size_t i = 0; i < Length; i++) {
-            res_addr.data[i] = ElemType(-1);
-        }
-        return res_addr;
+    inline constexpr Ip4Addr operator| (Ip4Addr other) const {
+        return Ip4Addr(ValueInt(value() | other.value()));
     }
     
-    static AddrType PrefixMask (std::size_t prefix_bits)
+    inline constexpr Ip4Addr operator~ () const {
+        return Ip4Addr(ValueInt(~value()));
+    }
+    
+    inline static constexpr Ip4Addr ZeroAddr () {
+        return Ip4Addr(ValueInt(0));
+    }
+    
+    inline static constexpr Ip4Addr AllOnesAddr () {
+        return Ip4Addr(TypeMax<ValueInt>());
+    }
+    
+    static Ip4Addr PrefixMask (std::size_t prefix_bits)
     {
         AIPSTACK_ASSERT(prefix_bits <= Bits)
         
-        AddrType res_addr;
-        std::size_t elem_idx = 0;
-        std::size_t bits_left = prefix_bits;
-        
-        while (bits_left >= ElemBits) {
-            res_addr.data[elem_idx++] = ElemType(-1);
-            bits_left -= ElemBits;
-        }
-        
-        if (bits_left > 0) {
-            ElemType mask = ~((ElemType(1) << (ElemBits - bits_left)) - 1);
-            res_addr.data[elem_idx++] = mask;
-        }
-        
-        while (elem_idx < Length) {
-            res_addr.data[elem_idx++] = 0;
-        }
-        
-        return res_addr;
+        return
+            (prefix_bits == 0) ? ZeroAddr() :
+            (prefix_bits >= Bits) ? AllOnesAddr() :
+            Ip4Addr(ValueInt(~((ValueInt(1) << (Bits - prefix_bits)) - 1)));
     }
     
     template <std::size_t PrefixBits>
-    static constexpr AddrType PrefixMask ()
+    static constexpr Ip4Addr PrefixMask ()
     {
         static_assert(PrefixBits <= Bits, "");
         
-        AddrType res_addr = {};
-        std::size_t elem_idx = 0;
-        std::size_t bits_left = PrefixBits;
-        
-        while (bits_left >= ElemBits) {
-            res_addr.data[elem_idx++] = ElemType(-1);
-            bits_left -= ElemBits;
-        }
-        
-        if (bits_left > 0) {
-            ElemType mask = ~((ElemType(1) << (ElemBits - bits_left)) - 1);
-            res_addr.data[elem_idx++] = mask;
-        }
-        
-        while (elem_idx < Length) {
-            res_addr.data[elem_idx++] = 0;
-        }
-        
-        return res_addr;
+        return
+            (PrefixBits == 0) ? ZeroAddr() :
+            (PrefixBits >= Bits) ? AllOnesAddr() :
+            Ip4Addr(ValueInt(~((ValueInt(1) << (Bits - PrefixBits)) - 1)));
     }
     
-    static constexpr AddrType FromBytes (std::uint8_t const bytes[IpGenericAddr::Size])
-    {
-        AddrType addr = {};
-        std::size_t byte_idx = 0;
-        for (std::size_t elem_idx = 0; elem_idx < Length; elem_idx++) {
-            for (std::size_t i = 0; i < IpGenericAddr::ElemSize; i++) {
-                addr.data[elem_idx] |=
-                    ElemType(bytes[byte_idx]) << (8 * (IpGenericAddr::ElemSize - 1 - i));
-                byte_idx++;
-            }
-        }
-        return addr;
-    }
-    
-    static constexpr AddrType Join (
-        IpGenericAddr const &mask, IpGenericAddr const &first, IpGenericAddr const &second)
-    {
+    inline static constexpr Ip4Addr Join (Ip4Addr mask, Ip4Addr first, Ip4Addr second) {
         return (first & mask) | (second & ~mask);
     }
     
-    bool isZero () const
-    {
-        return *this == IpGenericAddr::ZeroAddr();
+    inline constexpr bool isZero () const {
+        return value() == 0;
     }
     
-    bool isAllOnes () const
-    {
-        return *this == IpGenericAddr::AllOnesAddr();
-    }
-    
-    template <typename Func>
-    constexpr AddrType bitwiseOp (IpGenericAddr const &other, Func func) const
-    {
-        AddrType res = {};
-        for (std::size_t i = 0; i < Length; i++) {
-            res.data[i] = func(this->data[i], other.data[i]);
-        }
-        return res;
-    }
-    
-    template <typename Func>
-    constexpr AddrType bitwiseOp (Func func) const
-    {
-        AddrType res = {};
-        for (std::size_t i = 0; i < Length; i++) {
-            res.data[i] = func(this->data[i]);
-        }
-        return res;
-    }
-    
-    constexpr AddrType operator& (IpGenericAddr const &other) const
-    {
-        return bitwiseOp(other, [](ElemType x, ElemType y) { return x & y; });
-    }
-    
-    constexpr AddrType operator| (IpGenericAddr const &other) const
-    {
-        return bitwiseOp(other, [](ElemType x, ElemType y) { return x | y; });
-    }
-    
-    constexpr AddrType operator~ () const
-    {
-        return bitwiseOp([](ElemType x) { return ~x; });
+    inline constexpr bool isAllOnes () const {
+        return value() == TypeMax<ValueInt>();
     }
     
     constexpr std::size_t countLeadingOnes () const
     {
+        ValueInt val = value();
         std::size_t leading_ones = 0;
-        for (std::size_t elem_idx = 0; elem_idx < Length; elem_idx++) {
-            ElemType elem = this->data[elem_idx];
-            for (std::size_t bit_idx = ElemBits - 1;
-                 bit_idx != std::size_t(-1); bit_idx--)
-            {
-                if ((elem & (ElemType(1) << bit_idx)) == 0) {
-                    return leading_ones;
-                }
-                leading_ones++;
+        for (std::size_t bit = Bits - 1; bit != std::size_t(-1); bit--) {
+            if ((val & (ValueInt(1) << bit)) == 0) {
+                break;
             }
+            leading_ones++;
         }
         return leading_ones;
     }
 
     template <std::size_t ByteIndex>
-    constexpr std::uint8_t getByte () const
-    {
-        static_assert(ByteIndex < IpGenericAddr::Size, "");
+    inline constexpr std::uint8_t getByte () const {
+        static_assert(ByteIndex < Size, "");
 
-        std::size_t elem_idx = ByteIndex / IpGenericAddr::ElemSize;
-        std::size_t elem_byte_idx = ByteIndex % IpGenericAddr::ElemSize;
-
-        ElemType elem = this->data[elem_idx];
-        return (elem >> (8 * (IpGenericAddr::ElemSize - 1 - elem_byte_idx))) & 0xFF;
-    }
-};
-
-class Ip4Addr : public IpGenericAddr<Ip4Addr, std::uint32_t, 1>
-{
-public:
-    using IpGenericAddr::FromBytes;
-    
-    static constexpr Ip4Addr FromBytes (
-        std::uint8_t n1, std::uint8_t n2, std::uint8_t n3, std::uint8_t n4)
-    {
-        std::uint8_t bytes[] = {n1, n2, n3, n4};
-        return IpGenericAddr::FromBytes(bytes);
-    }
-
-    bool isMulticast() const
-    {
-        return (*this & Ip4Addr::FromBytes(0xF0, 0, 0, 0))
-            == Ip4Addr::FromBytes(0xE0, 0, 0, 0);
+        return (value() >> (8 * (Size - 1 - ByteIndex))) & 0xFF;
     }
     
-    bool isAllOnesOrMulticast () const
-    {
+    inline constexpr bool isMulticast () const {
+        return (*this & Ip4Addr(0xF0, 0, 0, 0)) == Ip4Addr(0xE0, 0, 0, 0);
+    }
+    
+    inline constexpr bool isAllOnesOrMulticast () const {
         return isAllOnes() || isMulticast();
     }
+
+    inline static Ip4Addr readBinary (char const *src) {
+        return Ip4Addr(ReadBinaryInt<ValueInt, BinaryBigEndian>(src));
+    }
+
+    inline void writeBinary (char *dst) const {
+        WriteBinaryInt<ValueInt, BinaryBigEndian>(value(), dst);
+    }
 };
+
+#ifndef IN_DOXYGEN
+template <>
+struct StructTypeHandler<Ip4Addr, void> {
+    using Handler = StructConventionalTypeHandler<Ip4Addr>;
+};
+#endif
 
 /**
  * A pair of local and remote IPv4 addresses.
  */
 struct Ip4Addrs {
-    /**
-     * Local address.
-     */
-    Ip4Addr local_addr;
-    /**
-     * Remote address.
-     */
-    Ip4Addr remote_addr;
+    Ip4Addr local_addr; /**< Local address. */
+    Ip4Addr remote_addr; /**< Remote address. */
 };
 
 /**

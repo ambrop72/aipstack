@@ -96,12 +96,12 @@ AIPSTACK_DEFINE_STRUCT(DhcpHeader1,
     (DhcpYiaddr,  Ip4Addr)
     (DhcpSiaddr,  Ip4Addr)
     (DhcpGiaddr,  Ip4Addr)
-    (DhcpChaddr,  StructByteArray<16>)
+    (DhcpChaddr,  char[16])
 )
 
 AIPSTACK_DEFINE_STRUCT(DhcpHeader2,
-    (DhcpSname,   StructByteArray<64>)
-    (DhcpFile,    StructByteArray<128>)
+    (DhcpSname,   char[64])
+    (DhcpFile,    char[128])
 )
 
 AIPSTACK_DEFINE_STRUCT(DhcpHeader3,

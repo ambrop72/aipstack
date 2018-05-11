@@ -91,8 +91,8 @@ public:
         
         // Check TCP checksum.
         IpChksumAccumulator chksum_accum;
-        chksum_accum.addWords(&ip_info.src_addr.data);
-        chksum_accum.addWords(&ip_info.dst_addr.data);
+        chksum_accum.addWord(WrapType<std::uint32_t>(), ip_info.src_addr.value());
+        chksum_accum.addWord(WrapType<std::uint32_t>(), ip_info.dst_addr.value());
         chksum_accum.addWord(WrapType<std::uint16_t>(), Ip4ProtocolTcp);
         chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
         if (AIPSTACK_UNLIKELY(chksum_accum.getChksum(dgram) != 0)) {

@@ -129,7 +129,6 @@ inline std::uint16_t IpChksum (char const *data, std::size_t len)
  * 2. Call the following functions as needed to add the header to the running checksum:
  *    @ref addWord(WrapType<std::uint16_t>, std::uint16_t),
  *    @ref addWord(WrapType<std::uint32_t>, std::uint32_t),
- *    @ref addWords(WordType const *), @ref addWords(WordType const (*)[NumWords]),
  *    @ref addEvenBytes. The order of these calls with respect to each another does
  *    not matter due to commutativity of the IP checksum.
  * 3. Call @ref getChksum() or @ref getChksum(IpBufRef) to add any data to the
@@ -200,41 +199,6 @@ public:
     {
         addWord(WrapType<std::uint16_t>(), std::uint16_t(word >> 16));
         addWord(WrapType<std::uint16_t>(), std::uint16_t(word));
-    }
-    
-    /**
-     * Add a constant number of contiguous words.
-     * 
-     * The word widths supported are those for which an `addWord` overloads exist.
-     * 
-     * @tparam WordType Unsigned integer type corresponding to the word width;
-     *         see `addWord` overloads for supported widths/types.
-     * @tparam NumWords Number of words (must be >=0).
-     * @param words Pointer to the words to add.
-     */
-    template <typename WordType, int NumWords>
-    inline void addWords (WordType const *words)
-    {
-        for (int i = 0; i < NumWords; i++) {
-            addWord(WrapType<WordType>(), words[i]);
-        }
-    }
-    
-    /**
-     * Add a constant-sized array of words.
-     * 
-     * This is equivalent to @ref addWords(WordType const *) but can deduce the number
-     * of words based on the array type.
-     * 
-     * @tparam WordType Unsigned integer type corresponding to the word width;
-     *         see `addWord` overloads for supported widths/types.
-     * @tparam NumWords Number of words (must be >=0).
-     * @param words Pointer to the array of words to add.
-     */
-    template <typename WordType, int NumWords>
-    inline void addWords (WordType const (*words)[NumWords])
-    {
-        addWords<WordType, NumWords>(*words);
     }
     
     /**

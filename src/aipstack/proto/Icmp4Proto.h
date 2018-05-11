@@ -26,13 +26,14 @@
 #define AIPSTACK_ICMP4_PROTO_H
 
 #include <cstdint>
+#include <array>
 
 #include <aipstack/misc/BinaryTools.h>
 #include <aipstack/infra/Struct.h>
 
 namespace AIpStack {
 
-using Icmp4RestType = StructByteArray<4>;
+using Icmp4RestType = std::array<char, 4>;
 
 #ifndef IN_DOXYGEN
 
@@ -54,8 +55,7 @@ static std::uint8_t const Icmp4CodeDestUnreachFragNeeded = 4;
 
 inline std::uint16_t Icmp4GetMtuFromRest (Icmp4RestType rest)
 {
-    return ReadBinaryInt<std::uint16_t, BinaryBigEndian>(
-        reinterpret_cast<char const *>(rest.data) + 2);
+    return ReadBinaryInt<std::uint16_t, BinaryBigEndian>(rest.data() + 2);
 }
 
 }

@@ -803,7 +803,7 @@ private:
             dhcp_header1.get(DhcpHeader1::DhcpHtype()) == DhcpHwAddrType::Ethernet &&
             dhcp_header1.get(DhcpHeader1::DhcpHlen())  == MacAddr::Size &&
             dhcp_header1.get(DhcpHeader1::DhcpXid())   == m_xid &&
-            MacAddr::decode(dhcp_header1.ref(DhcpHeader1::DhcpChaddr())) ==
+            MacAddr::readBinary(dhcp_header1.ref(DhcpHeader1::DhcpChaddr())) ==
                 ethHw()->getMacAddr();
         if (!sane) {
             return;
@@ -1023,12 +1023,12 @@ private:
         }
         
         // Check that it's not a loopback address.
-        if ((addr & Ip4Addr::PrefixMask<8>()) == Ip4Addr::FromBytes(127, 0, 0, 0)) {
+        if ((addr & Ip4Addr::PrefixMask<8>()) == Ip4Addr(127, 0, 0, 0)) {
             return false;
         }
         
         // Check that that it's not a multicast address.
-        if ((addr & Ip4Addr::PrefixMask<4>()) == Ip4Addr::FromBytes(224, 0, 0, 0)) {
+        if ((addr & Ip4Addr::PrefixMask<4>()) == Ip4Addr(224, 0, 0, 0)) {
             return false;
         }
         
@@ -1052,17 +1052,17 @@ private:
         
         // If there is no subnet mask, choose one based on the address class.
         if (!opts.have.subnet_mask) {
-            if (addr < Ip4Addr::FromBytes(128, 0, 0, 0)) {
+            if (addr < Ip4Addr(128, 0, 0, 0)) {
                 // Class A.
-                opts.subnet_mask = Ip4Addr::FromBytes(255, 0, 0, 0);
+                opts.subnet_mask = Ip4Addr(255, 0, 0, 0);
             }
-            else if (addr < Ip4Addr::FromBytes(192, 0, 0, 0)) {
+            else if (addr < Ip4Addr(192, 0, 0, 0)) {
                 // Class C.
-                opts.subnet_mask = Ip4Addr::FromBytes(255, 255, 0, 0);
+                opts.subnet_mask = Ip4Addr(255, 255, 0, 0);
             }
-            else if (addr < Ip4Addr::FromBytes(224, 0, 0, 0)) {
+            else if (addr < Ip4Addr(224, 0, 0, 0)) {
                 // Class D.
-                opts.subnet_mask = Ip4Addr::FromBytes(255, 255, 255, 0);
+                opts.subnet_mask = Ip4Addr(255, 255, 255, 0);
             }
             else {
                 // Class D or E, considered invalid.
@@ -1327,7 +1327,7 @@ private:
         dhcp_header1.set(DhcpHeader1::DhcpHlen(),   MacAddr::Size);
         dhcp_header1.set(DhcpHeader1::DhcpXid(),    m_xid);
         dhcp_header1.set(DhcpHeader1::DhcpCiaddr(), ciaddr);
-        ethHw()->getMacAddr().encode(dhcp_header1.ref(DhcpHeader1::DhcpChaddr()));
+        ethHw()->getMacAddr().writeBinary(dhcp_header1.ref(DhcpHeader1::DhcpChaddr()));
         auto dhcp_header3 = DhcpHeader3::MakeRef(
             dhcp_header1.data + DhcpHeader1::Size + DhcpHeader2::Size);
         dhcp_header3.set(DhcpHeader3::DhcpMagic(),  DhcpMagicNumber);

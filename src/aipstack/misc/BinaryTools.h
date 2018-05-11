@@ -50,14 +50,34 @@ namespace AIpStack {
  */
 
 #ifndef IN_DOXYGEN
+namespace BinaryToolsPrivate {
+    template <typename T, bool IsIntegral>
+    struct IntegerSupported {
+        static constexpr bool Value = std::numeric_limits<T>::radix == 2;
+    };
+
+    template <typename T>
+    struct IntegerSupported<T, false> {
+        static constexpr bool Value = false;
+    };
+}
+#endif
+
+/**
+ * Determine whether a type is supported for binary encoding/decoding by @ref
+ * ReadBinaryInt and @ref WriteBinaryInt.
+ * 
+ * @tparam T Type to check.
+ * @return True if the type is supported, false if not.
+ */
+template <typename T>
+constexpr bool BinaryReadWriteSupportsType () {
+    return BinaryToolsPrivate::IntegerSupported<T, std::is_integral<T>::value>::Value;
+}
+
+#ifndef IN_DOXYGEN
 
 namespace BinaryToolsPrivate {
-    
-    template <typename T>
-    constexpr bool IsValidType ()
-    {
-        return std::is_integral<T>::value && std::numeric_limits<T>::radix == 2;
-    }
     
     template <int Bits>
     struct RepresentativeImpl;
@@ -77,7 +97,7 @@ namespace BinaryToolsPrivate {
     
     template <typename T>
     struct RepresentativeCheck {
-        static_assert(IsValidType<T>(), "");
+        static_assert(BinaryReadWriteSupportsType<T>(), "");
         static_assert(std::is_unsigned<T>::value, "");
         
         using Type = typename RepresentativeImpl<std::numeric_limits<T>::digits>::Type;
@@ -263,7 +283,7 @@ using BinaryBigEndian = BinaryEndian<true>;
 template <typename T, typename Endian>
 inline T ReadBinaryInt (char const *src)
 {
-    static_assert(BinaryToolsPrivate::IsValidType<T>(), "");
+    static_assert(BinaryReadWriteSupportsType<T>(), "");
     
     return BinaryToolsPrivate::SignHelper<std::is_signed<T>::value>::
         template read_it<T, Endian::BigEndian>(src);
@@ -282,7 +302,7 @@ inline T ReadBinaryInt (char const *src)
 template <typename T, typename Endian>
 inline void WriteBinaryInt (T value, char *dst)
 {
-    static_assert(BinaryToolsPrivate::IsValidType<T>(), "");
+    static_assert(BinaryReadWriteSupportsType<T>(), "");
     
     return BinaryToolsPrivate::SignHelper<std::is_signed<T>::value>::
         template write_it<T, Endian::BigEndian>(value, dst);
