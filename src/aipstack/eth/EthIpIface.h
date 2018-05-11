@@ -55,6 +55,7 @@
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/ip/hw/EthHw.h>
+#include <aipstack/eth/MacAddr.h>
 #include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {

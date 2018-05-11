@@ -33,8 +33,8 @@
 #include <aipstack/infra/Err.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/platform/HostedPlatformImpl.h>
-#include <aipstack/proto/EthernetProto.h>
 #include <aipstack/eth/EthIpIface.h>
+#include <aipstack/eth/MacAddr.h>
 #include <aipstack/tap/TapDevice.h>
 
 namespace AIpStackExamples {

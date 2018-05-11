@@ -30,7 +30,6 @@
 #include <stdexcept>
 
 #include <aipstack/misc/Function.h>
-#include <aipstack/proto/EthernetProto.h>
 #include <aipstack/structure/index/AvlTreeIndex.h>
 #include <aipstack/structure/index/MruListIndex.h>
 #include <aipstack/structure/minimum/LinkedHeap.h>
@@ -47,6 +46,8 @@
 #include <aipstack/tcp/IpTcpProto.h>
 #include <aipstack/udp/IpUdpProto.h>
 #include <aipstack/eth/EthIpIface.h>
+#include <aipstack/eth/MacAddr.h>
+#include <aipstack/proto/EthernetProto.h>
 #include <aipstack/utils/IpAddrFormat.h>
 
 #include "tap_iface.h"

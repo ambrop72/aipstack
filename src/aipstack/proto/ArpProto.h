@@ -28,8 +28,8 @@
 #include <cstdint>
 
 #include <aipstack/infra/Struct.h>
-#include <aipstack/proto/EthernetProto.h>
 #include <aipstack/ip/IpAddr.h>
+#include <aipstack/eth/MacAddr.h>
 
 namespace AIpStack {
 
