@@ -38,24 +38,58 @@ namespace AIpStack {
  * @{
  */
 
+/**
+ * Represents an Ethernet MAC address.
+ * 
+ * A @ref MacAddr object is defined by its value which is an array of 6 octets.
+ * The @ref ValueArray type alias defines the `std::array` type used.
+ * 
+ * A @ref MacAddr object with a specific value can be constructed using the
+ * constructor @ref MacAddr(ValueArray), and the value of an object can be obtained
+ * using @ref value().
+ */
 class MacAddr {
 public:
+    /**
+     * Size of a MAC address in bytes.
+     */
     static constexpr std::size_t Size = 6;
 
+    /**
+     * The `std::array` type used to represent the value of a MAC address.
+     */
     using ValueArray = std::array<std::uint8_t, Size>;
     
 private:
     ValueArray m_value;
 
 public:
+    /**
+     * Default constructor, constructs an address with all octets zero.
+     */
     inline constexpr MacAddr () :
         m_value{{0, 0, 0, 0, 0, 0}}
     {}
 
+    /**
+     * Constructor from a specific value.
+     * 
+     * @param value Value of the address.
+     */
     inline explicit constexpr MacAddr (ValueArray value) :
         m_value(value)
     {}
 
+    /**
+     * Constructor from six octet values.
+     * 
+     * @param b1 First octet.
+     * @param b2 Second octet.
+     * @param b3 Third octet.
+     * @param b4 Fourth octet.
+     * @param b5 Fifth octet.
+     * @param b6 Sixth octet.
+     */
     inline explicit constexpr MacAddr (
         std::uint8_t b1, std::uint8_t b2, std::uint8_t b3,
         std::uint8_t b4, std::uint8_t b5, std::uint8_t b6)
@@ -63,46 +97,108 @@ public:
         m_value{{b1, b2, b3, b4, b5, b6}}
     {}
 
+    /**
+     * Get the value of the address as an `std::array`.
+     * 
+     * @return The value of the address.
+     */
     inline constexpr ValueArray value () const {
         return m_value;
     }
 
+    /**
+     * Equal-to operator.
+     * 
+     * @param other The other address to compare.
+     * @return `value() == other.value()`
+     */
     inline bool operator== (MacAddr other) const {
         return value() == other.value();
     }
     
+    /**
+     * Not-equal-to operator.
+     * 
+     * @param other The other address to compare.
+     * @return `value() != other.value()`
+     */
     inline bool operator!= (MacAddr other) const {
         return value() != other.value();
     }
     
+    /**
+     * Less-than operator.
+     * 
+     * @param other The other address to compare.
+     * @return `value() < other.value()`
+     */
     inline bool operator< (MacAddr other) const {
         return value() < other.value();
     }
     
+    /**
+     * Less-than-or-equal operator.
+     * 
+     * @param other The other address to compare.
+     * @return `value() <= other.value()`
+     */
     inline bool operator<= (MacAddr other) const {
         return value() <= other.value();
     }
     
+    /**
+     * Greater-than operator.
+     * 
+     * @param other The other address to compare.
+     * @return `value() > other.value()`
+     */
     inline bool operator> (MacAddr other) const {
         return value() > other.value();
     }
     
+    /**
+     * Greater-than-or-equal operator.
+     * 
+     * @param other The other address to compare.
+     * @return `value() >= other.value()`
+     */
     inline bool operator>= (MacAddr other) const {
         return value() >= other.value();
     }
     
+    /**
+     * Return an address with all octets zero.
+     * 
+     * @return Address with all octets zero.
+     */
     inline static constexpr MacAddr ZeroAddr () {
         return MacAddr(0, 0, 0, 0, 0, 0);
     }
     
+    /**
+     * Return the broadcast address, with all octets 0xFF.
+     * 
+     * @return Address with all octets 0xFF.
+     */
     inline static constexpr MacAddr BroadcastAddr () {
         return MacAddr(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
     }
     
+    /**
+     * Decode an address from a byte representation.
+     *
+     * @param src Memory location to read from; @ref Size (6) bytes must be available.
+     * @return Decoded address.
+     */
     inline static MacAddr readBinary (char const *src) {
         return MacAddr(ReadSingleField<ValueArray>(src));
     }
 
+    /**
+     * Encode the address to a byte representation.
+     * 
+     * @param dst Memory location to write to; @ref Size (6) bytes will be written.
+     */
     inline void writeBinary (char *dst) const {
         WriteSingleField<ValueArray>(dst, value());
     }
