@@ -792,7 +792,7 @@ private:
     PortNum get_ephemeral_port (Ip4Addr local_addr,
                                  Ip4Addr remote_addr, PortNum remote_port)
     {
-        for (PortNum i : LoopRange(NumEphemeralPorts)) {
+        for (PortNum i : IntRange(NumEphemeralPorts)) {
             (void)i;
             
             PortNum port = m_next_ephemeral_port;

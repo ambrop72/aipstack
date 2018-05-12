@@ -32,7 +32,7 @@ namespace AIpStack {
  * @defgroup loop-utils Looping Utilities
  * @brief Utilities for looping using range-based for loops.
  * 
- * The @ref LoopRange(IntType) and @ref LoopRange(IntType, IntType) function allows
+ * The @ref IntRange(IntType) and @ref IntRange(IntType, IntType) function allows
  * concisely looping through a range of integers.
  * 
  * @{
@@ -41,27 +41,27 @@ namespace AIpStack {
 #ifndef IN_DOXYGEN
 
 template <typename IntType>
-class LoopRangeIter;
+class IntRangeIter;
 
 template <typename IntType>
-class LoopRangeImpl {
+class IntRangeImpl {
 public:
-    inline LoopRangeImpl (IntType start, IntType end)
+    inline IntRangeImpl (IntType start, IntType end)
     : m_start(start), m_end(end)
     {}
     
-    inline LoopRangeImpl (IntType end)
+    inline IntRangeImpl (IntType end)
     : m_start(0), m_end(end)
     {}
     
-    inline LoopRangeIter<IntType> begin () const
+    inline IntRangeIter<IntType> begin () const
     {
-        return LoopRangeIter<IntType>(m_start);
+        return IntRangeIter<IntType>(m_start);
     }
     
-    inline LoopRangeIter<IntType> end () const
+    inline IntRangeIter<IntType> end () const
     {
-        return LoopRangeIter<IntType>(m_end);
+        return IntRangeIter<IntType>(m_end);
     }
     
 private:
@@ -70,9 +70,9 @@ private:
 };
 
 template <typename IntType>
-class LoopRangeIter {
+class IntRangeIter {
 public:
-    inline LoopRangeIter (IntType value)
+    inline IntRangeIter (IntType value)
     : m_value(value)
     {}
     
@@ -81,12 +81,12 @@ public:
         return m_value;
     }
     
-    inline bool operator!= (LoopRangeIter const &other) const
+    inline bool operator!= (IntRangeIter const &other) const
     {
         return m_value != other.m_value;
     }
     
-    inline LoopRangeIter & operator++ ()
+    inline IntRangeIter & operator++ ()
     {
         m_value++;
         return *this;
@@ -104,7 +104,7 @@ private:
  * This should be used with the range-based for loop, for example:
  * 
  * ```
- * for (auto x : LoopRange(5)) {
+ * for (auto x : IntRange(5)) {
  *    // x is an int with values 0, 1, ..., 4.
  * }
  * ```
@@ -115,9 +115,9 @@ private:
  * @return Object to be used in a range-based for loop.
  */
 template <typename IntType>
-LoopRangeImpl<IntType> LoopRange (IntType end)
+IntRangeImpl<IntType> IntRange (IntType end)
 {
-    return LoopRangeImpl<IntType>(end);
+    return IntRangeImpl<IntType>(end);
 }
 
 /**
@@ -126,7 +126,7 @@ LoopRangeImpl<IntType> LoopRange (IntType end)
  * This should be used with the range-based for loop, for example:
  * 
  * ```
- * for (auto x : LoopRange(2, 8)) {
+ * for (auto x : IntRange(2, 8)) {
  *    // x is an int with values 2, 3, ..., 7.
  * }
  * ```
@@ -138,9 +138,9 @@ LoopRangeImpl<IntType> LoopRange (IntType end)
  * @return Object to be used in a range-based for loop.
  */
 template <typename IntType>
-LoopRangeImpl<IntType> LoopRange (IntType start, IntType end)
+IntRangeImpl<IntType> IntRange (IntType start, IntType end)
 {
-    return LoopRangeImpl<IntType>(start, end);
+    return IntRangeImpl<IntType>(start, end);
 }
 
 /** @} */

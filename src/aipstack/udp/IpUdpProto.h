@@ -652,7 +652,7 @@ private:
 
     bool get_ephemeral_port (UdpAssociationKey &key)
     {
-        for (PortNum i : LoopRange(NumEphemeralPorts)) {
+        for (PortNum i : IntRange(NumEphemeralPorts)) {
             (void)i;
             
             PortNum port = m_next_ephemeral_port;
