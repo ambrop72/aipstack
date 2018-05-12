@@ -47,7 +47,7 @@
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
-#include <aipstack/ip/hw/IpHwCommon.h>
+#include <aipstack/ip/IpHwCommon.h>
 #include <aipstack/ip/IpDhcpOptions.h>
 #include <aipstack/udp/IpUdpProto.h>
 #include <aipstack/eth/MacAddr.h>

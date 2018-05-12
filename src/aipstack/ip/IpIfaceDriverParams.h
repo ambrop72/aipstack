@@ -33,7 +33,7 @@
 #include <aipstack/infra/SendRetry.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStackTypes.h>
-#include <aipstack/ip/hw/IpHwCommon.h>
+#include <aipstack/ip/IpHwCommon.h>
 
 namespace AIpStack {
     /**
