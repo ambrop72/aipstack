@@ -48,10 +48,10 @@
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/ip/hw/IpHwCommon.h>
-#include <aipstack/ip/hw/EthHw.h>
 #include <aipstack/ip/IpDhcpOptions.h>
 #include <aipstack/udp/IpUdpProto.h>
 #include <aipstack/eth/MacAddr.h>
+#include <aipstack/eth/EthHw.h>
 #include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {

@@ -34,7 +34,7 @@
 namespace AIpStack {
 
 /**
- * @addtogroup eth-ip-iface
+ * @addtogroup eth
  * @{
  */
 

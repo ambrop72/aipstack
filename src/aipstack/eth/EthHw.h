@@ -37,7 +37,7 @@
 namespace AIpStack {
 
 /**
- * @ingroup ip-stack
+ * @ingroup eth
  * @defgroup eth-hw Ethernet HW-specific Interface
  * @brief Abstract interfaces specific to Ethernet-based network interfaces.
  *

@@ -54,20 +54,14 @@
 #include <aipstack/proto/ArpProto.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
-#include <aipstack/ip/hw/EthHw.h>
 #include <aipstack/eth/MacAddr.h>
+#include <aipstack/eth/EthHw.h>
 #include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {
 
 /**
- * @defgroup eth-ip-iface Ethernet Interface Support
- * @brief Ethernet network interface support including ARP.
- * 
- * The @ref EthIpIface class provides support for Ethernet-based network interfaces, and
- * should be used by applications integrate such network interfaces into the @ref IpStack.
- * Its primary responsibilities are adding/removing Ethernet headers and operation of ARP.
- * 
+ * @addtogroup eth
  * @{
  */
 
