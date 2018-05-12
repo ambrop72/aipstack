@@ -415,45 +415,28 @@ public:
         AIPSTACK_ASSERT(!snd_open_in_state(pcb->state))
         AIPSTACK_ASSERT(!pcb->hasFlag(PcbFlags::IDLE_TIMER))
         
-        // Send a FIN if rtx_or_window_probe or otherwise if FIN is queued.
-        bool fin = rtx_or_window_probe ? true : pcb->hasFlag(PcbFlags::FIN_PENDING);
-        
-        // Send a FIN if it is queued.
-        if (fin) do {
+        // Send a FIN if rtx_or_window_probe or one is queued.
+        if (rtx_or_window_probe || pcb->hasFlag(PcbFlags::FIN_PENDING)) {
             // Send a FIN segment.
-            std::uint16_t window_size = Input::pcb_ann_wnd(pcb);
-            FlagsType flags = Tcp4FlagAck|Tcp4FlagFin|Tcp4FlagPsh;
-            IpErr err = send_tcp_nodata(pcb->tcp, *pcb, pcb->snd_una, pcb->rcv_nxt,
-                                        window_size, flags, nullptr, pcb);
-            
-            // On success take note of what was sent.
-            if (AIPSTACK_LIKELY(err == IpErr::SUCCESS)) {
-                // Set the FIN_SENT flag.
-                pcb->setFlag(PcbFlags::FIN_SENT);
-                
-                // Bump snd_nxt if needed.
-                if (pcb->snd_nxt == pcb->snd_una) {
-                    pcb->snd_nxt++;
-                }
-            }
+            // Upon success this will also update FIN_SENT and snd_nxt as appropriate.
+            IpErr err = pcb_output_empty_fin_segment(pcb);
             
             // If this was for retransmission or window probe, don't do anything else.
-            if (AIPSTACK_UNLIKELY(rtx_or_window_probe)) {
+            if (rtx_or_window_probe) {
                 return;
             }
             
-            // If there was an error sending the segment, stop for now and retry later.
             if (AIPSTACK_UNLIKELY(err != IpErr::SUCCESS)) {
+                // There was an error sending the segment, stop for now and retry later.
                 pcb_set_output_timer_for_retry(pcb, err);
-                break;
+            } else {            
+                // Clear the FIN_PENDING flag.
+                pcb->clearFlag(PcbFlags::FIN_PENDING);
+                
+                // Clear ACK_PENDING flag to avoid sending an empty ACK needlessly.
+                pcb->clearFlag(PcbFlags::ACK_PENDING);
             }
-            
-            // Clear the FIN_PENDING flag.
-            pcb->clearFlag(PcbFlags::FIN_PENDING);
-            
-            // Clear ACK_PENDING flag to avoid sending an empty ACK needlessly.
-            pcb->clearFlag(PcbFlags::ACK_PENDING);
-        } while (false);
+        }
         
         // Set the retransmission timer as needed. This is really the same as
         // in pcb_output_active, the logic just reduces to this.
@@ -1155,6 +1138,35 @@ private:
         }
         
         return IpErr::SUCCESS;
+    }
+
+    // This is exclusively for use from pcb_output_abandoned and for this
+    // reason requires the PCB to abandoned, to keep things simple.
+    static IpErr pcb_output_empty_fin_segment (TcpPcb *pcb)
+    {
+        AIPSTACK_ASSERT(can_output_in_state(pcb->state))
+        AIPSTACK_ASSERT(pcb->con == nullptr)
+        
+        // Get the windows size to announce.
+        std::uint16_t window_size = Input::pcb_ann_wnd(pcb);
+
+        // Send a FIN segment.
+        FlagsType flags = Tcp4FlagAck|Tcp4FlagFin|Tcp4FlagPsh;
+        IpErr err = send_tcp_nodata(pcb->tcp, *pcb, pcb->snd_una, pcb->rcv_nxt,
+                                    window_size, flags, nullptr, pcb);
+        
+        // On success take note of what was sent.
+        if (AIPSTACK_LIKELY(err == IpErr::SUCCESS)) {
+            // Set the FIN_SENT flag.
+            pcb->setFlag(PcbFlags::FIN_SENT);
+            
+            // Bump snd_nxt if needed.
+            if (pcb->snd_nxt == pcb->snd_una) {
+                pcb->snd_nxt++;
+            }
+        }   
+
+        return err;     
     }
     
     static void pcb_increase_cwnd_acked (TcpPcb *pcb, SeqType acked)
