@@ -48,7 +48,9 @@ private:
     ValueArray m_value;
 
 public:
-    inline MacAddr () = default;
+    inline constexpr MacAddr () :
+        m_value{{0, 0, 0, 0, 0, 0}}
+    {}
 
     inline explicit constexpr MacAddr (ValueArray value) :
         m_value(value)
@@ -58,7 +60,7 @@ public:
         std::uint8_t b1, std::uint8_t b2, std::uint8_t b3,
         std::uint8_t b4, std::uint8_t b5, std::uint8_t b6)
     :
-        MacAddr(ValueArray{{b1, b2, b3, b4, b5, b6}})
+        m_value{{b1, b2, b3, b4, b5, b6}}
     {}
 
     inline constexpr ValueArray value () const {

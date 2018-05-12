@@ -47,7 +47,9 @@ private:
     ValueInt m_value;
 
 public:
-    inline Ip4Addr () = default;
+    inline constexpr Ip4Addr () :
+        m_value(0)
+    {}
 
     inline explicit constexpr Ip4Addr (ValueInt value) :
         m_value(value)

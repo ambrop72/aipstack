@@ -256,9 +256,11 @@ public:
     
 public:
     /**
-     * Default constructor, leaves the \ref value uninitialized.
+     * Default constructor, initializes \ref value to zero.
      */
-    Ip4TtlProto () = default;
+    inline constexpr Ip4TtlProto () :
+        value(0)
+    {}
     
     /**
      * Constructor from an encoded TTL and protocol value.
@@ -266,7 +268,7 @@ public:
      * @param ttl_proto Encoded TTL and protocol. The \ref value field
      *        will be initialized to this value.
      */
-    constexpr inline Ip4TtlProto (std::uint16_t ttl_proto)
+    inline constexpr Ip4TtlProto (std::uint16_t ttl_proto)
     : value(ttl_proto)
     {
     }
@@ -277,7 +279,7 @@ public:
      * @param ttl The TTL.
      * @param proto The protocol.
      */
-    constexpr inline Ip4TtlProto (std::uint8_t ttl, std::uint8_t proto)
+    inline constexpr Ip4TtlProto (std::uint8_t ttl, std::uint8_t proto)
     : value(std::uint16_t((std::uint16_t(ttl) << 8) | proto))
     {
     }
@@ -287,7 +289,7 @@ public:
      * 
      * @return The TTL.
      */
-    constexpr inline std::uint8_t ttl () const
+    inline constexpr std::uint8_t ttl () const
     {
         return std::uint8_t(value >> 8);
     }
@@ -297,7 +299,7 @@ public:
      * 
      * @return The protocol.
      */
-    constexpr inline std::uint8_t proto () const
+    inline constexpr std::uint8_t proto () const
     {
         return std::uint8_t(value);
     }

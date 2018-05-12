@@ -120,7 +120,7 @@ private:
     
 public:
     /**
-     * Default constructor (defaulted), default-constructs the elements.
+     * Default constructor, value-initializes the elements.
      */
     ResourceTuple () = default;
     
