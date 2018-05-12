@@ -47,6 +47,10 @@ namespace AIpStack {
  * A @ref MacAddr object with a specific value can be constructed using the
  * constructor @ref MacAddr(ValueArray), and the value of an object can be obtained
  * using @ref value().
+ * 
+ * @ref MacAddr may be used as a field type in header definitions based on the
+ * @ref struct system; `get` and `set` operations on such a field use the @ref
+ * MacAddr type directly.
  */
 class MacAddr {
 public:

@@ -53,6 +53,10 @@ namespace AIpStack {
  * 
  * Functions for representing and parsing IPv4 addresses using dot-decimal
  * notation are available in the @ref ip-addr-format module.
+ * 
+ * @ref Ip4Addr may be used as a field type in header definitions based on the
+ * @ref struct system; `get` and `set` operations on such a field use the @ref
+ * Ip4Addr type directly.
  */
 class Ip4Addr {
 public:
