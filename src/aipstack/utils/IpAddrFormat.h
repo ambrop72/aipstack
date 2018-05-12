@@ -38,7 +38,7 @@ namespace AIpStack {
 
 /**
  * @ingroup misc
- * @defgroup ip-addr-format IP address formatting
+ * @defgroup ip-addr-format IP Address Formatting
  * @brief Utilities for formatting and parsing IP addresses
  * 
  * @{

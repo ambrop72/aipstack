@@ -38,7 +38,7 @@ namespace AIpStack {
 
 /**
  * @ingroup misc
- * @defgroup integer-format Integer formatting
+ * @defgroup integer-format Integer Formatting
  * @brief Utilities for formatting and parsing integers
  * 
  * @{
