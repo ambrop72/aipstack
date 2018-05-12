@@ -33,16 +33,16 @@
 namespace AIpStack {
 
 /**
- * @addtogroup buffer
- * @{
- */
-
-/**
  * Dummy class for the constructor
  * @ref TxAllocHelper::TxAllocHelper(TxAllocHelperUninitialized)
  * "TxAllocHelper(TxAllocHelperUninitialized)".
  */
 class TxAllocHelperUninitialized {};
+
+/**
+ * @addtogroup buffer
+ * @{
+ */
 
 /**
  * Provides simple automatic/static allocation for outgoing packets.

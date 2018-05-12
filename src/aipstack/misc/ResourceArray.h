@@ -35,14 +35,14 @@
 namespace AIpStack {
 
 /**
- * @addtogroup misc
- * @{
- */
-
-/**
  * Dummy class used to select a @ref ResourceArray constructor.
  */
 class ResourceArrayInitSame {};
+
+/**
+ * @addtogroup misc
+ * @{
+ */
 
 template <typename Elem, std::size_t Size>
 class ResourceArray;

@@ -36,14 +36,14 @@
 namespace AIpStack {
 
 /**
- * @addtogroup misc
- * @{
- */
-
-/**
  * Dummy class used to select a @ref ResourceTuple constructor.
  */
 struct ResourceTupleInitSame {};
+
+/**
+ * @addtogroup misc
+ * @{
+ */
 
 #ifndef IN_DOXYGEN
 
