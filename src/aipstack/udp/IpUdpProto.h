@@ -147,7 +147,7 @@ public:
 
     static std::size_t const MaxUdpDataLenIp4 = TypeMax<std::uint16_t>() - Udp4Header::Size;
 
-    IpErr sendUdpIp4Packet (Ip4Addrs const &addrs, UdpTxInfo<Arg> const &udp_info,
+    IpErr sendUdpIp4Packet (Ip4AddrPair const &addrs, UdpTxInfo<Arg> const &udp_info,
                             IpBufRef udp_data, IpIface<StackArg> *iface,
                             IpSendRetryRequest *retryReq, IpSendFlags send_flags)
     {

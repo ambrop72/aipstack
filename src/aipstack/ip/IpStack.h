@@ -369,7 +369,7 @@ public:
      * @return Success or error code.
      */
     AIPSTACK_NO_INLINE
-    IpErr sendIp4Dgram (Ip4Addrs const &addrs, Ip4TtlProto ttl_proto, IpBufRef dgram,
+    IpErr sendIp4Dgram (Ip4AddrPair const &addrs, Ip4TtlProto ttl_proto, IpBufRef dgram,
                         IpIface<Arg> *iface, IpSendRetryRequest *retryReq,
                         IpSendFlags send_flags)
     {
@@ -559,7 +559,7 @@ public:
      * @return Success or error code.
      */
     AIPSTACK_ALWAYS_INLINE
-    IpErr prepareSendIp4Dgram (Ip4Addrs const &addrs, Ip4TtlProto ttl_proto,
+    IpErr prepareSendIp4Dgram (Ip4AddrPair const &addrs, Ip4TtlProto ttl_proto,
                                char *header_end_ptr, IpSendFlags send_flags,
                                IpSendPreparedIp4<Arg> &prep)
     {
@@ -663,7 +663,7 @@ private:
     static std::uint16_t const IpOnlySendFlagsMask = 0xFF00;
     
     inline static IpErr checkSendIp4Allowed (
-        Ip4Addrs const &addrs, IpSendFlags send_flags, Iface *iface)
+        Ip4AddrPair const &addrs, IpSendFlags send_flags, Iface *iface)
     {
         if (AIPSTACK_LIKELY((send_flags & IpSendFlags::AllowBroadcastFlag) == EnumZero)) {
             if (AIPSTACK_UNLIKELY(addrs.remote_addr.isAllOnes())) {
@@ -870,8 +870,8 @@ public:
     {
         AIPSTACK_ASSERT(rx_dgram.offset >= rx_ip_info.header_len)
 
-        // Build the Ip4Addrs wwith IP addresses for sending.
-        Ip4Addrs addrs = {rx_ip_info.dst_addr, rx_ip_info.src_addr};
+        // Build the Ip4AddrPair with IP addresses for sending.
+        Ip4AddrPair addrs = {rx_ip_info.dst_addr, rx_ip_info.src_addr};
 
         // Calculate how much of the original datagram we will send.
         std::size_t data_len =
@@ -1162,11 +1162,11 @@ private:
             return;
         }
         
-        Ip4Addrs addrs = {iface->m_addr.addr, dst_addr};
+        Ip4AddrPair addrs = {iface->m_addr.addr, dst_addr};
         sendIcmp4Message(addrs, iface, Icmp4TypeEchoReply, /*code=*/0, rest, data);
     }
 
-    IpErr sendIcmp4Message (Ip4Addrs const &addrs, Iface *iface,
+    IpErr sendIcmp4Message (Ip4AddrPair const &addrs, Iface *iface,
         std::uint8_t type, std::uint8_t code, Icmp4RestType rest, IpBufRef data)
     {
         // Allocate memory for headers.

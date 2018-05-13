@@ -386,7 +386,7 @@ struct StructTypeHandler<Ip4Addr, void> {
 /**
  * A pair of local and remote IPv4 addresses.
  */
-struct Ip4Addrs {
+struct Ip4AddrPair {
     Ip4Addr local_addr; /**< Local address. */
     Ip4Addr remote_addr; /**< Remote address. */
 };

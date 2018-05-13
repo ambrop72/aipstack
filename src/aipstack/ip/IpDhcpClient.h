@@ -1348,7 +1348,7 @@ private:
 
         // Determine addresses and send flags. When sending from zero address, we need
         // IpSendFlags::AllowNonLocalSrc for that to be allowed.
-        Ip4Addrs addrs = {ciaddr, dst_addr};
+        Ip4AddrPair addrs = {ciaddr, dst_addr};
         IpSendFlags send_flags = IpSendFlags::AllowBroadcastFlag |
             (ciaddr.isZero() ? IpSendFlags::AllowNonLocalSrc : IpSendFlags());
         
