@@ -411,7 +411,7 @@ public:
             pkt_send_len = Ip4RoundFragLen(Ip4Header::Size, route_info.iface->getMtu());
             
             // Set the MoreFragments IP flag (will be cleared for the last fragment).
-            send_flags |= IpSendFlags(Ip4Flag::MF);
+            send_flags |= IpFlagsToSendFlags(Ip4Flags::MF);
         } else {
             // First packet has all the data.
             pkt_send_len = std::uint16_t(pkt.tot_len);
@@ -432,8 +432,8 @@ public:
         chksum.addWord(WrapType<std::uint16_t>(), ident);
         ip4_header.set(Ip4Header::Ident(), ident);
         
-        std::uint16_t flags_offset = std::uint16_t(send_flags) & IpOnlySendFlagsMask;
-        chksum.addWord(WrapType<std::uint16_t>(), flags_offset);
+        Ip4Flags flags_offset = IpFlagsInSendFlags(send_flags);
+        chksum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(flags_offset));
         ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         
         chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value());
@@ -450,7 +450,7 @@ public:
         
         // Send the packet to the driver.
         // Fast path is no fragmentation, this permits tail call optimization.
-        if (AIPSTACK_LIKELY((send_flags & IpSendFlags(Ip4Flag::MF)) == EnumZero)) {
+        if (AIPSTACK_LIKELY((send_flags & IpFlagsToSendFlags(Ip4Flags::MF)) == EnumZero)) {
             return route_info.iface->m_params.send_ip4_packet(
                 pkt, route_info.addr, retryReq);
         }
@@ -493,15 +493,15 @@ private:
             std::size_t rem_pkt_length = Ip4Header::Size + dgram.tot_len;
             if (rem_pkt_length <= route_info.iface->getMtu()) {
                 pkt_send_len = std::uint16_t(rem_pkt_length);
-                send_flags &= ~IpSendFlags(Ip4Flag::MF);
+                send_flags &= ~IpFlagsToSendFlags(Ip4Flags::MF);
             }
             
             auto ip4_header = Ip4Header::MakeRef(pkt.getChunkPtr());
             
             // Write the fragment-specific IP header fields.
             ip4_header.set(Ip4Header::TotalLen(), pkt_send_len);
-            std::uint16_t flags_offset = (std::uint16_t(send_flags) & IpOnlySendFlagsMask) |
-                                    (fragment_offset / 8);
+            Ip4Flags flags_offset =
+                IpFlagsInSendFlags(send_flags) | Ip4Flags(fragment_offset / 8);
             ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
             ip4_header.set(Ip4Header::HeaderChksum(), 0);
             
@@ -521,7 +521,7 @@ private:
                 frag_pkt, route_info.addr, retryReq);
             
             // If this was the last fragment or there was an error, return.
-            if ((send_flags & IpSendFlags(Ip4Flag::MF)) == EnumZero ||
+            if ((send_flags & IpFlagsToSendFlags(Ip4Flags::MF)) == EnumZero ||
                 AIPSTACK_UNLIKELY(err != IpErr::SUCCESS))
             {
                 return err;
@@ -584,8 +584,8 @@ public:
         chksum.addWord(WrapType<std::uint16_t>(), version_ihl_dscp_ecn);
         ip4_header.set(Ip4Header::VersionIhlDscpEcn(), version_ihl_dscp_ecn);
         
-        std::uint16_t flags_offset = std::uint16_t(send_flags) & IpOnlySendFlagsMask;
-        chksum.addWord(WrapType<std::uint16_t>(), flags_offset);
+        Ip4Flags flags_offset = IpFlagsInSendFlags(send_flags);
+        chksum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(flags_offset));
         ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         
         chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value());
@@ -660,8 +660,6 @@ public:
     }
 
 private:
-    static std::uint16_t const IpOnlySendFlagsMask = 0xFF00;
-    
     inline static IpErr checkSendIp4Allowed (
         Ip4AddrPair const &addrs, IpSendFlags send_flags, Iface *iface)
     {
@@ -1012,8 +1010,8 @@ private:
         chksum.addWord(WrapType<std::uint32_t>(), dst_addr.value());
         
         // Get flags+offset and add to checksum.
-        std::uint16_t flags_offset = ip4_header.get(Ip4Header::FlagsOffset());
-        chksum.addWord(WrapType<std::uint16_t>(), flags_offset);        
+        Ip4Flags flags_offset = ip4_header.get(Ip4Header::FlagsOffset());
+        chksum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(flags_offset));
         
         // Verify IP header checksum.
         if (AIPSTACK_UNLIKELY(chksum.getChksum() != 0)) {
@@ -1021,7 +1019,7 @@ private:
         }
         
         // Check if the more-fragments flag is set or the fragment offset is nonzero.
-        if (AIPSTACK_UNLIKELY((flags_offset & (Ip4Flag::MF|Ip4OffsetMask)) != 0)) {
+        if (AIPSTACK_UNLIKELY((flags_offset & (Ip4Flags::MF|Ip4Flags::OffsetMask)) != EnumZero)) {
             // Only accept fragmented packets which are unicasts to the
             // incoming interface address. This is to prevent filling up
             // our reassembly buffers with irrelevant packets. Note that
@@ -1032,8 +1030,9 @@ private:
             }
             
             // Get the more-fragments flag and the fragment offset in bytes.
-            bool more_fragments = (flags_offset & Ip4Flag::MF) != 0;
-            std::uint16_t fragment_offset = (flags_offset & Ip4OffsetMask) * 8;
+            bool more_fragments = (flags_offset & Ip4Flags::MF) != EnumZero;
+            std::uint16_t fragment_offset =
+                std::uint16_t(flags_offset & Ip4Flags::OffsetMask) * 8;
             
             // Perform reassembly.
             if (!iface->m_stack->m_reassembly.reassembleIp4(

@@ -30,6 +30,7 @@
 
 #include <aipstack/infra/Struct.h>
 #include <aipstack/ip/IpAddr.h>
+#include <aipstack/misc/EnumBitfieldUtils.h>
 
 namespace AIpStack {
 
@@ -39,11 +40,18 @@ enum class Ip4Protocol : std::uint8_t {
     Udp  = 17,
 };
 
+enum class Ip4Flags : std::uint16_t {
+    DF = std::uint16_t(1) << 14,
+    MF = std::uint16_t(1) << 13,
+    OffsetMask = 0x1fff,
+};
+AIPSTACK_ENUM_BITFIELD_OPS(Ip4Flags)
+
 AIPSTACK_DEFINE_STRUCT(Ip4Header,
     (VersionIhlDscpEcn, std::uint16_t)
     (TotalLen,          std::uint16_t)
     (Ident,             std::uint16_t)
-    (FlagsOffset,       std::uint16_t)
+    (FlagsOffset,       Ip4Flags)
     (TtlProto,          std::uint16_t)
     (HeaderChksum,      std::uint16_t)
     (SrcAddr,           Ip4Addr)
@@ -52,13 +60,6 @@ AIPSTACK_DEFINE_STRUCT(Ip4Header,
 
 static int const Ip4VersionShift = 4;
 static std::uint8_t const Ip4IhlMask = 0xF;
-
-namespace Ip4Flag {
-    static std::uint16_t const DF = std::uint16_t(1) << 14;
-    static std::uint16_t const MF = std::uint16_t(1) << 13;
-}
-
-static std::uint16_t const Ip4OffsetMask = 0x1fff;
 
 static std::size_t const Ip4MaxHeaderSize = 60;
 

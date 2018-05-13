@@ -188,6 +188,12 @@ struct IpIfaceDriverState {
  * "IpStack::prepareSendIp4Dgram".
  * 
  * Operators provided by @ref AIPSTACK_ENUM_BITFIELD_OPS are available.
+ * 
+ * Note that internally in the implementation, standard IP flags (as in the IP
+ * header) are used with this enum type for performance reasons. To support this,
+ * the @ref IpSendFlags::DontFragmentFlag "DontFragmentFlag" flag has the same
+ * value as the IP flag "DF" and the other (non-IP) flags defined here use low bits
+ * which do not conflict with IP flags.
  */
 enum class IpSendFlags : std::uint16_t {
     /**
@@ -212,16 +218,32 @@ enum class IpSendFlags : std::uint16_t {
      * Using this flag will both prevent fragmentation of the outgoing
      * datagram as well as set the Dont-Fragment flag in the IP header.
      */
-    DontFragmentFlag = Ip4Flag::DF,
+    DontFragmentFlag = ToUnderlyingType(Ip4Flags::DF),
 
     /**
      * Mask of all flags which may be passed to send functions.
      */
     AllFlags = AllowBroadcastFlag|AllowNonLocalSrc|DontFragmentFlag,
 };
-
 #ifndef IN_DOXYGEN
 AIPSTACK_ENUM_BITFIELD_OPS(IpSendFlags)
+#endif
+
+#ifndef IN_DOXYGEN
+
+// Convert IP flags to IpSendFlags (for internal use).
+inline constexpr IpSendFlags IpFlagsToSendFlags(Ip4Flags flags) {
+    return IpSendFlags(ToUnderlyingType(flags));
+}
+
+// Extract only IP flags from IpSendFlags (for internal use).
+inline constexpr Ip4Flags IpFlagsInSendFlags(IpSendFlags send_flags) {
+    // One might argue we should AND with 0xE000 but this is fine as
+    // well since we the defined flags in IpSendFlags use very low
+    // low bits, and may be a bit more efficient.
+    return Ip4Flags(ToUnderlyingType(send_flags) & 0xFF00);
+}
+
 #endif
 
 /**
