@@ -33,160 +33,162 @@
 #include <aipstack/ip/IpIfaceDriverParams.h>
 
 namespace AIpStack {
+
 #ifndef IN_DOXYGEN
-    template <typename> class IpStack;
-    template <typename> class IpIfaceStateObserver;
+template <typename> class IpStack;
+template <typename> class IpIfaceStateObserver;
 #endif
+
+/**
+ * @addtogroup ip-stack
+ * @{
+ */
+
+/**
+ * A logical network interface from the perspective of an IP-level interface
+ * driver.
+ * 
+ * An interface driver creates an instance of this class to register a new
+ * network interface with the stack, and destructs the instance to deregister
+ * the interface.
+ * 
+ * @note Often the interface driver will not use this class directly but via
+ * a class providing support for a lower-level protocol, such as @ref EthIpIface
+ * for Ethernet/ARP support.
+ * 
+ * Each @ref IpDriverIface instance internally contains a single @ref IpIface
+ * instance (accessible via @ref iface()), which represents the network interface
+ * in a more general context. Interface drivers generally should not expose the
+ * @ref IpDriverIface but should expose the @ref IpIface to allow the interface
+ * to be configured and/or managed externally.
+ * 
+ * The interface driver and the stack interact in both directions:
+ * - Calls from the driver to the stack are based on simple functions in @ref
+ *   IpDriverIface (such as @ref recvIp4Packet to process received packets).
+ * - Calls from the stack to the driver are based on polymorphic calls using
+ *   @ref Function<Ret(Args...)> "Function" objects as provided by the driver
+ *   ("driver functions") within the @ref IpIfaceDriverParams structure passed
+ *   to the constructor (such as @ref IpIfaceDriverParams::send_ip4_packet to
+ *   send a packet).
+ * 
+ * @tparam Arg Template parameter of @ref IpStack.
+ */
+template <typename Arg>
+class IpDriverIface :
+    private NonCopyable<IpDriverIface<Arg>>
+#ifndef IN_DOXYGEN
+    ,private IpIface<Arg>
+#endif
+{
+    template <typename> friend class IpIface;
+
+public:
+    /**
+     * Construct the network interface, registering it with the stack.
+     * 
+     * This should be used by the driver when the interface should start existing
+     * from the perspective of the IP stack. After (and only after) this, the
+     * various driver functions specified within @ref IpIfaceDriverParams may be
+     * called.
+     * 
+     * The driver must be careful to not perform any action that might result in
+     * calls of driver functions (such as sending packets to this interface) until
+     * the driver is able to handle these calls.
+     * 
+     * @param stack Pointer to the IP stack.
+     * @param params Interface parameters including driver functions, see @ref
+     *        IpIfaceDriverParams. This structure is copied.
+     */
+    inline IpDriverIface (IpStack<Arg> *stack, IpIfaceDriverParams const &params) :
+        IpIface<Arg>(stack, params)
+    {}
     
     /**
-     * @addtogroup ip-stack
-     * @{
+     * Destruct the network interface, deregistering it from the stack.
+     * 
+     * The interface should be destructed when the interface should stop existing
+     * from the perspective of the IP stack. After this, driver functions will
+     * not be called any more, nor will any driver function be called from this
+     * function.
+     * 
+     * The driver must be careful to not perform any action that might result in calls
+     * of driver functions (such as sending packets to this interface) after it is
+     * no longer ready to handle these calls.
+     * 
+     * When this is called, there must be no remaining @ref IpIfaceListener
+     * objects listening on this interface or @ref IpIfaceStateObserver objects
+     * observing this interface. Additionally, this must not be called in
+     * potentially hazardous context with respect to IP processing, such as
+     * from withing receive processing of this interface (@ref recvIp4Packet).
+     * Safety can be ensured by performing the destruction from a top-level event
+     * handler such as a timer.
      */
+    inline ~IpDriverIface () = default;
+
+    /**
+     * Get the @ref IpIface representing this network interface.
+     * 
+     * @return Reference to the @ref IpIface.
+     */
+    inline IpIface<Arg> & iface () {
+        return static_cast<IpIface<Arg> &>(*this);
+    }
+
+    /**
+     * Process a received IPv4 packet.
+     * 
+     * This function should be called by the driver when an IPv4 packet is
+     * received (or what appears to be one at least).
+     * 
+     * @note The driver must support various driver functions being called from
+     * within this, especially @ref IpIfaceDriverParams::send_ip4_packet.
+     * 
+     * @param pkt Received packet, presumably starting with the IP header.
+     *            The referenced buffers will only be read from within this
+     *            function call.
+     */
+    inline void recvIp4Packet (IpBufRef pkt) {
+        IpStack<Arg>::processRecvedIp4Packet(&iface(), pkt);
+    }
     
     /**
-     * A logical network interface from the perspective of an IP-level interface
-     * driver.
+     * Return information about the current IPv4 address assignment.
      * 
-     * An interface driver creates an instance of this class to register a new
-     * network interface with the stack, and destructs the instance to deregister
-     * the interface.
+     * This can be used by the driver if it needs information about the
+     * IPv4 address assigned to the interface, or other places where the
+     * information is useful.
      * 
-     * @note Often the interface driver will not use this class directly but via
-     * a class providing support for a lower-level protocol, such as @ref EthIpIface
-     * for Ethernet/ARP support.
-     * 
-     * Each @ref IpDriverIface instance internally contains a single @ref IpIface
-     * instance (accessible via @ref iface()), which represents the network interface
-     * in a more general context. Interface drivers generally should not expose the
-     * @ref IpDriverIface but should expose the @ref IpIface to allow the interface
-     * to be configured and/or managed externally.
-     * 
-     * The interface driver and the stack interact in both directions:
-     * - Calls from the driver to the stack are based on simple functions in @ref
-     *   IpDriverIface (such as @ref recvIp4Packet to process received packets).
-     * - Calls from the stack to the driver are based on polymorphic calls using
-     *   @ref Function<Ret(Args...)> "Function" objects as provided by the driver
-     *   ("driver functions") within the @ref IpIfaceDriverParams structure passed
-     *   to the constructor (such as @ref IpIfaceDriverParams::send_ip4_packet to
-     *   send a packet).
-     * 
-     * @tparam Arg Template parameter of @ref IpStack.
+     * @return If no IPv4 address is assigned, then null. If an address is
+     *         assigned, then a pointer to an @ref IpIfaceIp4Addrs structure
+     *         with the adddress information. The pointer is only valid
+     *         temporarily (it should not be cached).
      */
-    template <typename Arg>
-    class IpDriverIface :
-        private NonCopyable<IpDriverIface<Arg>>
-#ifndef IN_DOXYGEN
-        ,private IpIface<Arg>
-#endif
+    inline IpIfaceIp4Addrs const * getIp4Addrs () {
+        return iface().m_have_addr ? &iface().m_addr : nullptr;
+    }
+    
+    /**
+     * Notify that the driver-provided state may have changed.
+     * 
+     * This should be called by the driver after the values that would be
+     * returned by @ref IpIfaceDriverParams::get_state have changed. It does
+     * not strictly have to be called immediately after every change but it
+     * should be called soon after a change.
+     * 
+     * @note The driver must support various driver functions being called from
+     * within this, especially @ref IpIfaceDriverParams::send_ip4_packet.
+     */
+    void stateChanged ()
     {
-        template <typename> friend class IpIface;
+        iface().m_state_observable.notifyKeepObservers(
+            [&](IpIfaceStateObserver<Arg> &observer) {
+                observer.m_handler();
+            });
+    }
+};
 
-    public:
-        /**
-         * Construct the network interface, registering it with the stack.
-         * 
-         * This should be used by the driver when the interface should start existing
-         * from the perspective of the IP stack. After (and only after) this, the
-         * various driver functions specified within @ref IpIfaceDriverParams may be
-         * called.
-         * 
-         * The driver must be careful to not perform any action that might result in
-         * calls of driver functions (such as sending packets to this interface) until
-         * the driver is able to handle these calls.
-         * 
-         * @param stack Pointer to the IP stack.
-         * @param params Interface parameters including driver functions, see @ref
-         *        IpIfaceDriverParams. This structure is copied.
-         */
-        inline IpDriverIface (IpStack<Arg> *stack, IpIfaceDriverParams const &params) :
-            IpIface<Arg>(stack, params)
-        {}
-        
-        /**
-         * Destruct the network interface, deregistering it from the stack.
-         * 
-         * The interface should be destructed when the interface should stop existing
-         * from the perspective of the IP stack. After this, driver functions will
-         * not be called any more, nor will any driver function be called from this
-         * function.
-         * 
-         * The driver must be careful to not perform any action that might result in calls
-         * of driver functions (such as sending packets to this interface) after it is
-         * no longer ready to handle these calls.
-         * 
-         * When this is called, there must be no remaining @ref IpIfaceListener
-         * objects listening on this interface or @ref IpIfaceStateObserver objects
-         * observing this interface. Additionally, this must not be called in
-         * potentially hazardous context with respect to IP processing, such as
-         * from withing receive processing of this interface (@ref recvIp4Packet).
-         * Safety can be ensured by performing the destruction from a top-level event
-         * handler such as a timer.
-         */
-        inline ~IpDriverIface () = default;
+/** @} */
 
-        /**
-         * Get the @ref IpIface representing this network interface.
-         * 
-         * @return Reference to the @ref IpIface.
-         */
-        inline IpIface<Arg> & iface () {
-            return static_cast<IpIface<Arg> &>(*this);
-        }
-
-        /**
-         * Process a received IPv4 packet.
-         * 
-         * This function should be called by the driver when an IPv4 packet is
-         * received (or what appears to be one at least).
-         * 
-         * @note The driver must support various driver functions being called from
-         * within this, especially @ref IpIfaceDriverParams::send_ip4_packet.
-         * 
-         * @param pkt Received packet, presumably starting with the IP header.
-         *            The referenced buffers will only be read from within this
-         *            function call.
-         */
-        inline void recvIp4Packet (IpBufRef pkt) {
-            IpStack<Arg>::processRecvedIp4Packet(&iface(), pkt);
-        }
-        
-        /**
-         * Return information about the current IPv4 address assignment.
-         * 
-         * This can be used by the driver if it needs information about the
-         * IPv4 address assigned to the interface, or other places where the
-         * information is useful.
-         * 
-         * @return If no IPv4 address is assigned, then null. If an address is
-         *         assigned, then a pointer to an @ref IpIfaceIp4Addrs structure
-         *         with the adddress information. The pointer is only valid
-         *         temporarily (it should not be cached).
-         */
-        inline IpIfaceIp4Addrs const * getIp4Addrs () {
-            return iface().m_have_addr ? &iface().m_addr : nullptr;
-        }
-        
-        /**
-         * Notify that the driver-provided state may have changed.
-         * 
-         * This should be called by the driver after the values that would be
-         * returned by @ref IpIfaceDriverParams::get_state have changed. It does
-         * not strictly have to be called immediately after every change but it
-         * should be called soon after a change.
-         * 
-         * @note The driver must support various driver functions being called from
-         * within this, especially @ref IpIfaceDriverParams::send_ip4_packet.
-         */
-        void stateChanged ()
-        {
-            iface().m_state_observable.notifyKeepObservers(
-                [&](IpIfaceStateObserver<Arg> &observer) {
-                    observer.m_handler();
-                });
-        }
-    };
-
-    /** @} */
 }
 
 #endif

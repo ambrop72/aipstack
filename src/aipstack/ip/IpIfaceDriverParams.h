@@ -36,80 +36,82 @@
 #include <aipstack/ip/IpHwCommon.h>
 
 namespace AIpStack {
+
+/**
+ * @addtogroup ip-stack
+ * @{
+ */
+
+/**
+ * Encapsulates interface parameters passed to the @ref IpDriverIface constructor.
+ */
+struct IpIfaceDriverParams {
     /**
-     * @addtogroup ip-stack
-     * @{
+     * The Maximum Transmission Unit (MTU), including the IP header.
+     * 
+     * It must be at least @ref IpStack::MinMTU (this is an assert).
      */
+    std::size_t ip_mtu = 0;
     
     /**
-     * Encapsulates interface parameters passed to the @ref IpDriverIface constructor.
+     * The type of the hardware-type-specific interface.
+     * 
+     * See @ref IpIface::getHwType for an explanation of the
+     * hardware-type-specific interface mechanism. If no hardware-type-specific
+     * interface is available, use @ref IpHwType::Undefined.
      */
-    struct IpIfaceDriverParams {
-        /**
-         * The Maximum Transmission Unit (MTU), including the IP header.
-         * 
-         * It must be at least @ref IpStack::MinMTU (this is an assert).
-         */
-        std::size_t ip_mtu = 0;
-        
-        /**
-         * The type of the hardware-type-specific interface.
-         * 
-         * See @ref IpIface::getHwType for an explanation of the
-         * hardware-type-specific interface mechanism. If no hardware-type-specific
-         * interface is available, use @ref IpHwType::Undefined.
-         */
-        IpHwType hw_type = IpHwType::Undefined;
-        
-        /**
-         * Pointer to the hardware-type-specific interface.
-         * 
-         * If @ref hw_type is @ref IpHwType::Undefined, use null. Otherwise this must
-         * point to an instance of the hardware-type-specific interface class
-         * corresponding to @ref hw_type.
-         */
-        void *hw_iface = nullptr;
+    IpHwType hw_type = IpHwType::Undefined;
+    
+    /**
+     * Pointer to the hardware-type-specific interface.
+     * 
+     * If @ref hw_type is @ref IpHwType::Undefined, use null. Otherwise this must
+     * point to an instance of the hardware-type-specific interface class
+     * corresponding to @ref hw_type.
+     */
+    void *hw_iface = nullptr;
 
-        /**
-         * Driver function used to send an IPv4 packet through the interface.
-         * 
-         * @note This function must be provided.
-         * 
-         * This is called whenever an IPv4 packet needs to be sent. The driver should
-         * copy the packet as needed because it must not access the referenced buffers
-         * outside this function.
-         * 
-         * @param pkt Packet to send, this includes the IP header. It is guaranteed
-         *        that its size does not exceed the MTU reported by the driver. The
-         *        packet is expected to have HeaderBeforeIp bytes available before
-         *        the IP header for link-layer protocol headers, but needed header
-         *        space should still be checked since higher-layer prococols are
-         *        responsible for allocating the buffers of packets they send.
-         * @param ip_addr Next hop address.
-         * @param sendRetryReq If sending fails and this is not null, the driver
-         *        may use this to notify the requestor when sending should be retried.
-         *        For example if the issue was that there is no ARP cache entry
-         *        or similar entry for the given address, the notification should
-         *        be done when the associated ARP query is successful.
-         * @return Success or error code.
-         */
-        Function<IpErr(IpBufRef pkt, Ip4Addr ip_addr, IpSendRetryRequest *sendRetryReq)>
-            send_ip4_packet = nullptr;
-        
-        /**
-         * Driver function to get the driver-provided interface state.
-         * 
-         * @note This function must be provided.
-         * 
-         * The driver should call @ref IpDriverIface::stateChanged whenever the state
-         * that would be returned here has changed.
-         * 
-         * @return Driver-provided-state (currently just the link-up flag).
-         */
-        Function<IpIfaceDriverState()> get_state = nullptr;
-    };
+    /**
+     * Driver function used to send an IPv4 packet through the interface.
+     * 
+     * @note This function must be provided.
+     * 
+     * This is called whenever an IPv4 packet needs to be sent. The driver should
+     * copy the packet as needed because it must not access the referenced buffers
+     * outside this function.
+     * 
+     * @param pkt Packet to send, this includes the IP header. It is guaranteed
+     *        that its size does not exceed the MTU reported by the driver. The
+     *        packet is expected to have HeaderBeforeIp bytes available before
+     *        the IP header for link-layer protocol headers, but needed header
+     *        space should still be checked since higher-layer prococols are
+     *        responsible for allocating the buffers of packets they send.
+     * @param ip_addr Next hop address.
+     * @param sendRetryReq If sending fails and this is not null, the driver
+     *        may use this to notify the requestor when sending should be retried.
+     *        For example if the issue was that there is no ARP cache entry
+     *        or similar entry for the given address, the notification should
+     *        be done when the associated ARP query is successful.
+     * @return Success or error code.
+     */
+    Function<IpErr(IpBufRef pkt, Ip4Addr ip_addr, IpSendRetryRequest *sendRetryReq)>
+        send_ip4_packet = nullptr;
+    
+    /**
+     * Driver function to get the driver-provided interface state.
+     * 
+     * @note This function must be provided.
+     * 
+     * The driver should call @ref IpDriverIface::stateChanged whenever the state
+     * that would be returned here has changed.
+     * 
+     * @return Driver-provided-state (currently just the link-up flag).
+     */
+    Function<IpIfaceDriverState()> get_state = nullptr;
+};
 
-    /** @} */
+/** @} */
+
 }
 
 #endif
