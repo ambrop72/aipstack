@@ -28,7 +28,6 @@
 #include <cstdint>
 #include <array>
 
-#include <aipstack/misc/BinaryTools.h>
 #include <aipstack/infra/Struct.h>
 
 namespace AIpStack {
@@ -55,7 +54,7 @@ AIPSTACK_DEFINE_STRUCT(Icmp4Header,
 )
 
 inline std::uint16_t Icmp4GetMtuFromRest (Icmp4RestType rest) {
-    return ReadBinaryInt<std::uint16_t, BinaryBigEndian>(rest.data() + 2);
+    return ReadSingleField<std::uint16_t>(rest.data() + 2);
 }
 
 }

@@ -32,8 +32,8 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/MinMax.h>
-#include <aipstack/misc/BinaryTools.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/Struct.h>
 
 /**
  * @ingroup infra
@@ -80,12 +80,12 @@ inline std::uint16_t IpChksumInverted (char const *data, std::size_t len)
     std::uint32_t sum = 0;
     
     while (data < even_end) {
-        sum += ReadBinaryInt<std::uint16_t, BinaryBigEndian>(data);
+        sum += ReadSingleField<std::uint16_t>(data);
         data += 2;
     }
     
     if ((len & 1) != 0) {
-        std::uint8_t byte = ReadBinaryInt<std::uint8_t, BinaryBigEndian>(data);
+        std::uint8_t byte = ReadSingleField<std::uint8_t>(data);
         sum += std::uint32_t(std::uint16_t(byte) << 8);
     }
     
@@ -213,7 +213,7 @@ public:
         
         char const *endptr = ptr + num_bytes;
         while (ptr < endptr) {
-            std::uint16_t word = ReadBinaryInt<std::uint16_t, BinaryBigEndian>(ptr);
+            std::uint16_t word = ReadSingleField<std::uint16_t>(ptr);
             ptr += 2;
             addWord(WrapType<std::uint16_t>(), word);
         }

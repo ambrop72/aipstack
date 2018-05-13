@@ -30,7 +30,6 @@
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
-#include <aipstack/misc/BinaryTools.h>
 #include <aipstack/infra/Struct.h>
 
 namespace AIpStack {
@@ -363,7 +362,7 @@ public:
      * @return Decoded address.
      */
     inline static Ip4Addr readBinary (char const *src) {
-        return Ip4Addr(ReadBinaryInt<ValueInt, BinaryBigEndian>(src));
+        return Ip4Addr(ReadSingleField<ValueInt>(src));
     }
 
     /**
@@ -372,7 +371,7 @@ public:
      * @param dst Memory location to write to; @ref Size (4) bytes will be written.
      */
     inline void writeBinary (char *dst) const {
-        WriteBinaryInt<ValueInt, BinaryBigEndian>(value(), dst);
+        WriteSingleField<ValueInt>(dst, value());
     }
 };
 

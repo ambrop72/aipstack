@@ -31,11 +31,11 @@
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
-#include <aipstack/misc/BinaryTools.h>
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/misc/EnumUtils.h>
 #include <aipstack/misc/EnumBitfieldUtils.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/Struct.h>
 #include <aipstack/proto/Tcp4Proto.h>
 #include <aipstack/ip/IpAddr.h>
 
@@ -224,7 +224,7 @@ public:
                     char opt_data[2];
                     buf.takeBytes(opt_data_len, opt_data);
                     out_opts->options |= OptionFlags::MSS;
-                    out_opts->mss = ReadBinaryInt<std::uint16_t, BinaryBigEndian>(opt_data);
+                    out_opts->mss = ReadSingleField<std::uint16_t>(opt_data);
                 } break;
                 
                 // Window Scale
@@ -268,17 +268,17 @@ public:
     static inline void write_options (TcpOptions const &tcp_opts, char *out)
     {
         if ((tcp_opts.options & OptionFlags::MSS) != 0) {
-            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(AsUnderlying(TcpOption::MSS), out + 0);
-            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(4,              out + 1);
-            WriteBinaryInt<std::uint16_t, BinaryBigEndian>(tcp_opts.mss,   out + 2);
+            WriteSingleField<std::uint8_t >(out + 0, AsUnderlying(TcpOption::MSS));
+            WriteSingleField<std::uint8_t >(out + 1, 4);
+            WriteSingleField<std::uint16_t>(out + 2, tcp_opts.mss);
             out += OptWriteLenMSS;
         }
 
         if ((tcp_opts.options & OptionFlags::WND_SCALE) != 0) {
-            WriteBinaryInt<std::uint8_t, BinaryBigEndian>(AsUnderlying(TcpOption::Nop),      out + 0);
-            WriteBinaryInt<std::uint8_t, BinaryBigEndian>(AsUnderlying(TcpOption::WndScale), out + 1);
-            WriteBinaryInt<std::uint8_t, BinaryBigEndian>(3,                   out + 2);
-            WriteBinaryInt<std::uint8_t, BinaryBigEndian>(tcp_opts.wnd_scale,  out + 3);
+            WriteSingleField<std::uint8_t>(out + 0, AsUnderlying(TcpOption::Nop));
+            WriteSingleField<std::uint8_t>(out + 1, AsUnderlying(TcpOption::WndScale));
+            WriteSingleField<std::uint8_t>(out + 2, 3);
+            WriteSingleField<std::uint8_t>(out + 3, tcp_opts.wnd_scale);
             out += OptWriteLenWndScale;
         }
     }

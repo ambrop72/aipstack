@@ -33,7 +33,6 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/MinMax.h>
-#include <aipstack/misc/BinaryTools.h>
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/misc/EnumUtils.h>
 #include <aipstack/infra/Buf.h>
