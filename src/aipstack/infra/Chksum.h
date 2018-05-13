@@ -89,8 +89,8 @@ inline std::uint16_t IpChksumInverted (char const *data, std::size_t len)
         sum += std::uint32_t(std::uint16_t(byte) << 8);
     }
     
-    sum = (sum & UINT32_C(0xFFFF)) + (sum >> 16);
-    sum = (sum & UINT32_C(0xFFFF)) + (sum >> 16);
+    sum = (sum & std::uint32_t(0xFFFF)) + (sum >> 16);
+    sum = (sum & std::uint32_t(0xFFFF)) + (sum >> 16);
     
     return std::uint16_t(sum);
 }
@@ -261,7 +261,8 @@ private:
     
     inline static std::uint32_t swapBytes (std::uint32_t x)
     {
-        return ((x >> 8) & UINT32_C(0x00FF00FF)) | ((x << 8) & UINT32_C(0xFF00FF00));
+        return ((x >> 8) & std::uint32_t(0x00FF00FF)) |
+               ((x << 8) & std::uint32_t(0xFF00FF00));
     }
     
     void addIpBuf (IpBufRef buf)

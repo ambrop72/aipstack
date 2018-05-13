@@ -50,7 +50,7 @@ static std::uint8_t const Ip4IhlMask = 0xF;
 static std::uint16_t const Ip4FlagDF = std::uint16_t(1) << 14;
 static std::uint16_t const Ip4FlagMF = std::uint16_t(1) << 13;
 
-static std::uint16_t const Ip4OffsetMask = UINT16_C(0x1fff);
+static std::uint16_t const Ip4OffsetMask = 0x1fff;
 
 static std::size_t const Ip4MaxHeaderSize = 60;
 

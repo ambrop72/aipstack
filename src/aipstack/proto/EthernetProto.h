@@ -38,8 +38,8 @@ AIPSTACK_DEFINE_STRUCT(EthHeader,
     (EthType, std::uint16_t)
 )
 
-static std::uint16_t const EthTypeIpv4 = UINT16_C(0x0800);
-static std::uint16_t const EthTypeArp  = UINT16_C(0x0806);
+static std::uint16_t const EthTypeIpv4 = 0x0800;
+static std::uint16_t const EthTypeArp  = 0x0806;
 
 }
 

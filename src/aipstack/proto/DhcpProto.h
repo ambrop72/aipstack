@@ -48,7 +48,7 @@ enum class DhcpOptionOverload : std::uint8_t {
     FileSnameOptions = 3,
 };
 
-static std::uint32_t const DhcpMagicNumber = UINT32_C(0x63825363);
+static std::uint32_t const DhcpMagicNumber = 0x63825363;
 
 static std::uint16_t const DhcpServerPort = 67;
 static std::uint16_t const DhcpClientPort = 68;

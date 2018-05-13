@@ -76,13 +76,13 @@ public:
     static IpSendFlags const TcpIpSendFlags = IpSendFlags::DontFragmentFlag;
     
     // Maximum theoreticaly possible send and receive window.
-    static SeqType const MaxWindow = UINT32_C(0x3fffffff);
+    static SeqType const MaxWindow = 0x3fffffff;
     
     // Default window update threshold (overridable by setWindowUpdateThreshold).
     static SeqType const DefaultWndAnnThreshold = 2700;
     
     // How old at most an ACK may be to be considered acceptable (MAX.SND.WND in RFC 5961).
-    static SeqType const MaxAckBefore = UINT32_C(0xFFFF);
+    static SeqType const MaxAckBefore = 0xFFFF;
     
     // SYN_RCVD state timeout.
     static TimeType const SynRcvdTimeoutTicks     = 20.0  * Platform::TimeFreq;
