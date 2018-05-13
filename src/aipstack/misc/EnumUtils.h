@@ -47,7 +47,7 @@ namespace AIpStack {
  * @return Value converted to underlying type.
  */
 template <typename EnumType>
-inline constexpr std::underlying_type_t<EnumType> ToUnderlyingType (EnumType e)
+inline constexpr std::underlying_type_t<EnumType> AsUnderlying (EnumType e)
 {
     static_assert(std::is_enum<EnumType>::value, "EnumType must be an enum type");
     return std::underlying_type_t<EnumType>(e);

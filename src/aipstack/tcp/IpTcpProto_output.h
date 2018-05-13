@@ -1253,7 +1253,7 @@ private:
             // Offset+flags
             Tcp4Flags offset_flags = Tcp4EncodeOffset(5) | seg_flags;
             tcp_header.set(Tcp4Header::OffsetFlags(), offset_flags);
-            chksum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(offset_flags));
+            chksum.addWord(WrapType<std::uint16_t>(), AsUnderlying(offset_flags));
             
             // Add TCP length to checksum.
             std::uint16_t tcp_len = std::uint16_t(Tcp4Header::Size + data.tot_len);
@@ -1306,7 +1306,7 @@ private:
             tcp_header.set(Tcp4Header::UrgentPtr(), 0);
             
             // Add known pseudo-header fields to checksum.
-            chksum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(Ip4Protocol::Tcp));
+            chksum.addWord(WrapType<std::uint16_t>(), AsUnderlying(Ip4Protocol::Tcp));
             chksum.addWord(WrapType<std::uint32_t>(), pcb->local_addr.value());
             chksum.addWord(WrapType<std::uint32_t>(), pcb->remote_addr.value());
             
@@ -1348,7 +1348,7 @@ private:
         
         // Adding constants to checksum is more easily optimized if done first.
         // Add protocol field of pseudo-header.
-        chksum_accum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(Ip4Protocol::Tcp));
+        chksum_accum.addWord(WrapType<std::uint16_t>(), AsUnderlying(Ip4Protocol::Tcp));
         
         // Write the TCP header...
         auto tcp_header = Tcp4Header::MakeRef(dgram_alloc.getPtr());
@@ -1366,7 +1366,7 @@ private:
         chksum_accum.addWord(WrapType<std::uint32_t>(), ack_num);
         
         tcp_header.set(Tcp4Header::OffsetFlags(), offset_flags);
-        chksum_accum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(offset_flags));
+        chksum_accum.addWord(WrapType<std::uint16_t>(), AsUnderlying(offset_flags));
         
         tcp_header.set(Tcp4Header::WindowSize(),  window_size);
         chksum_accum.addWord(WrapType<std::uint16_t>(), window_size);

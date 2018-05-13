@@ -433,7 +433,7 @@ public:
         ip4_header.set(Ip4Header::Ident(), ident);
         
         Ip4Flags flags_offset = IpFlagsInSendFlags(send_flags);
-        chksum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(flags_offset));
+        chksum.addWord(WrapType<std::uint16_t>(), AsUnderlying(flags_offset));
         ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         
         chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value());
@@ -585,7 +585,7 @@ public:
         ip4_header.set(Ip4Header::VersionIhlDscpEcn(), version_ihl_dscp_ecn);
         
         Ip4Flags flags_offset = IpFlagsInSendFlags(send_flags);
-        chksum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(flags_offset));
+        chksum.addWord(WrapType<std::uint16_t>(), AsUnderlying(flags_offset));
         ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         
         chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value());
@@ -1011,7 +1011,7 @@ private:
         
         // Get flags+offset and add to checksum.
         Ip4Flags flags_offset = ip4_header.get(Ip4Header::FlagsOffset());
-        chksum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(flags_offset));
+        chksum.addWord(WrapType<std::uint16_t>(), AsUnderlying(flags_offset));
         
         // Verify IP header checksum.
         if (AIPSTACK_UNLIKELY(chksum.getChksum() != 0)) {

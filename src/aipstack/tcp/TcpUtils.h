@@ -268,15 +268,15 @@ public:
     static inline void write_options (TcpOptions const &tcp_opts, char *out)
     {
         if ((tcp_opts.options & OptionFlags::MSS) != 0) {
-            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(ToUnderlyingType(TcpOption::MSS), out + 0);
+            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(AsUnderlying(TcpOption::MSS), out + 0);
             WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(4,              out + 1);
             WriteBinaryInt<std::uint16_t, BinaryBigEndian>(tcp_opts.mss,   out + 2);
             out += OptWriteLenMSS;
         }
 
         if ((tcp_opts.options & OptionFlags::WND_SCALE) != 0) {
-            WriteBinaryInt<std::uint8_t, BinaryBigEndian>(ToUnderlyingType(TcpOption::Nop),      out + 0);
-            WriteBinaryInt<std::uint8_t, BinaryBigEndian>(ToUnderlyingType(TcpOption::WndScale), out + 1);
+            WriteBinaryInt<std::uint8_t, BinaryBigEndian>(AsUnderlying(TcpOption::Nop),      out + 0);
+            WriteBinaryInt<std::uint8_t, BinaryBigEndian>(AsUnderlying(TcpOption::WndScale), out + 1);
             WriteBinaryInt<std::uint8_t, BinaryBigEndian>(3,                   out + 2);
             WriteBinaryInt<std::uint8_t, BinaryBigEndian>(tcp_opts.wnd_scale,  out + 3);
             out += OptWriteLenWndScale;

@@ -218,7 +218,7 @@ enum class IpSendFlags : std::uint16_t {
      * Using this flag will both prevent fragmentation of the outgoing
      * datagram as well as set the Dont-Fragment flag in the IP header.
      */
-    DontFragmentFlag = ToUnderlyingType(Ip4Flags::DF),
+    DontFragmentFlag = AsUnderlying(Ip4Flags::DF),
 
     /**
      * Mask of all flags which may be passed to send functions.
@@ -233,7 +233,7 @@ AIPSTACK_ENUM_BITFIELD_OPS(IpSendFlags)
 
 // Convert IP flags to IpSendFlags (for internal use).
 inline constexpr IpSendFlags IpFlagsToSendFlags(Ip4Flags flags) {
-    return IpSendFlags(ToUnderlyingType(flags));
+    return IpSendFlags(AsUnderlying(flags));
 }
 
 // Extract only IP flags from IpSendFlags (for internal use).
@@ -241,7 +241,7 @@ inline constexpr Ip4Flags IpFlagsInSendFlags(IpSendFlags send_flags) {
     // One might argue we should AND with 0xE000 but this is fine as
     // well since we the defined flags in IpSendFlags use very low
     // low bits, and may be a bit more efficient.
-    return Ip4Flags(ToUnderlyingType(send_flags) & 0xFF00);
+    return Ip4Flags(AsUnderlying(send_flags) & 0xFF00);
 }
 
 #endif
@@ -299,7 +299,7 @@ public:
      * @param proto The protocol number.
      */
     inline constexpr Ip4TtlProto (std::uint8_t ttl, Ip4Protocol proto) :
-        m_value(std::uint16_t((std::uint16_t(ttl) << 8) | ToUnderlyingType(proto)))
+        m_value(std::uint16_t((std::uint16_t(ttl) << 8) | AsUnderlying(proto)))
     {}
 
     /**

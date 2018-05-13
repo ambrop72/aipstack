@@ -255,10 +255,10 @@ class IpTcpProto :
             return (TcpPcbFlags(flags) & flag) != EnumZero;
         }
         inline void setFlag (TcpPcbFlags flag) {
-            flags = ToUnderlyingType(TcpPcbFlags(flags) | flag);
+            flags = AsUnderlying(TcpPcbFlags(flags) | flag);
         }
         inline void clearFlag (TcpPcbFlags flag) {
-            flags = ToUnderlyingType(TcpPcbFlags(flags) & ~flag);
+            flags = AsUnderlying(TcpPcbFlags(flags) & ~flag);
         }
         
         // Check if a flag is set and clear it.
@@ -266,7 +266,7 @@ class IpTcpProto :
         {
             TcpPcbFlags the_flags = TcpPcbFlags(flags);
             if ((the_flags & flag) != EnumZero) {
-                flags = ToUnderlyingType(the_flags & ~flag);
+                flags = AsUnderlying(the_flags & ~flag);
                 return true;
             }
             return false;
@@ -724,7 +724,7 @@ private:
         // Initialize most of the PCB.
         pcb->state = TcpState::SYN_SENT;
         // WND_SCALE to send the window scale option
-        pcb->flags = ToUnderlyingType(TcpPcbFlags::WND_SCALE);
+        pcb->flags = AsUnderlying(TcpPcbFlags::WND_SCALE);
         pcb->con = con;
         pcb->local_addr = local_addr;
         pcb->remote_addr = remote_addr;

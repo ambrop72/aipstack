@@ -169,7 +169,7 @@ public:
         IpChksumAccumulator chksum_accum;
         chksum_accum.addWord(WrapType<std::uint32_t>(), addrs.local_addr.value());
         chksum_accum.addWord(WrapType<std::uint32_t>(), addrs.remote_addr.value());
-        chksum_accum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(Ip4Protocol::Udp));
+        chksum_accum.addWord(WrapType<std::uint16_t>(), AsUnderlying(Ip4Protocol::Udp));
         chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
         std::uint16_t checksum = chksum_accum.getChksum(dgram);
         if (checksum == 0) {
@@ -641,8 +641,7 @@ private:
             IpChksumAccumulator chksum_accum;
             chksum_accum.addWord(WrapType<std::uint32_t>(), ip_info.src_addr.value());
             chksum_accum.addWord(WrapType<std::uint32_t>(), ip_info.dst_addr.value());
-            chksum_accum.addWord(WrapType<std::uint16_t>(),
-                ToUnderlyingType(Ip4Protocol::Udp));
+            chksum_accum.addWord(WrapType<std::uint16_t>(), AsUnderlying(Ip4Protocol::Udp));
             chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
 
             if (chksum_accum.getChksum(dgram) != 0) {

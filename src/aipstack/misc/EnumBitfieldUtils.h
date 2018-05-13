@@ -108,58 +108,58 @@ public: \
 template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
 inline constexpr EnumType operator~ (EnumType arg)
 {
-    return EnumType(~ToUnderlyingType(arg));
+    return EnumType(~AsUnderlying(arg));
 }
 
 template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
 inline constexpr EnumType operator| (EnumType arg1, EnumType arg2)
 {
-    return EnumType(ToUnderlyingType(arg1) | ToUnderlyingType(arg2));
+    return EnumType(AsUnderlying(arg1) | AsUnderlying(arg2));
 }
 
 template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
 inline constexpr EnumType operator& (EnumType arg1, EnumType arg2)
 {
-    return EnumType(ToUnderlyingType(arg1) & ToUnderlyingType(arg2));
+    return EnumType(AsUnderlying(arg1) & AsUnderlying(arg2));
 }
 
 template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
 inline constexpr EnumType operator^ (EnumType arg1, EnumType arg2)
 {
-    return EnumType(ToUnderlyingType(arg1) ^ ToUnderlyingType(arg2));
+    return EnumType(AsUnderlying(arg1) ^ AsUnderlying(arg2));
 }
 
 template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
 inline constexpr EnumType & operator|= (EnumType &arg1, EnumType arg2)
 {
-    arg1 = EnumType(ToUnderlyingType(arg1) | ToUnderlyingType(arg2));
+    arg1 = EnumType(AsUnderlying(arg1) | AsUnderlying(arg2));
     return arg1;
 }
 
 template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
 inline constexpr EnumType & operator&= (EnumType &arg1, EnumType arg2)
 {
-    arg1 = EnumType(ToUnderlyingType(arg1) & ToUnderlyingType(arg2));
+    arg1 = EnumType(AsUnderlying(arg1) & AsUnderlying(arg2));
     return arg1;
 }
 
 template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
 inline constexpr EnumType & operator^= (EnumType &arg1, EnumType arg2)
 {
-    arg1 = EnumType(ToUnderlyingType(arg1) ^ ToUnderlyingType(arg2));
+    arg1 = EnumType(AsUnderlying(arg1) ^ AsUnderlying(arg2));
     return arg1;
 }
 
 template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
 inline constexpr bool operator== (EnumType arg, EnumZeroType)
 {
-    return ToUnderlyingType(arg) == 0;
+    return AsUnderlying(arg) == 0;
 }
 
 template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
 inline constexpr bool operator!= (EnumType arg, EnumZeroType)
 {
-    return ToUnderlyingType(arg) != 0;
+    return AsUnderlying(arg) != 0;
 }
 
 #undef AIPSTACK_ENABLE_IF_ENUM_BITFIELD

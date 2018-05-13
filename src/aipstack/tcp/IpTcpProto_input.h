@@ -93,7 +93,7 @@ public:
         IpChksumAccumulator chksum_accum;
         chksum_accum.addWord(WrapType<std::uint32_t>(), ip_info.src_addr.value());
         chksum_accum.addWord(WrapType<std::uint32_t>(), ip_info.dst_addr.value());
-        chksum_accum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(Ip4Protocol::Tcp));
+        chksum_accum.addWord(WrapType<std::uint16_t>(), AsUnderlying(Ip4Protocol::Tcp));
         chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
         if (AIPSTACK_UNLIKELY(chksum_accum.getChksum(dgram) != 0)) {
             return;
@@ -105,7 +105,7 @@ public:
         // Get the data offset and calculate many bytes of options there options are.
         // Note that if data_offset is less than Tcp4Header::Size, the difference
         // will wrap around which the next check relies on.
-        std::size_t data_offset = (ToUnderlyingType(tcp_meta.flags) >> TcpOffsetShift) * 4;
+        std::size_t data_offset = (AsUnderlying(tcp_meta.flags) >> TcpOffsetShift) * 4;
         std::size_t opts_len = data_offset - Tcp4Header::Size;
 
         // Check that data offset is within [Tcp4Header::Size, dgram.tot_len].
