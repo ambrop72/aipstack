@@ -436,8 +436,8 @@ public:
         chksum.addWord(WrapType<std::uint16_t>(), flags_offset);
         ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         
-        chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value);
-        ip4_header.set(Ip4Header::TtlProto(), ttl_proto.value);
+        chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value());
+        ip4_header.set(Ip4Header::TtlProto(), ttl_proto.value());
         
         chksum.addWord(WrapType<std::uint32_t>(), addrs.local_addr.value());
         ip4_header.set(Ip4Header::SrcAddr(), addrs.local_addr);
@@ -588,8 +588,8 @@ public:
         chksum.addWord(WrapType<std::uint16_t>(), flags_offset);
         ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         
-        chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value);
-        ip4_header.set(Ip4Header::TtlProto(), ttl_proto.value);
+        chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value());
+        ip4_header.set(Ip4Header::TtlProto(), ttl_proto.value());
         
         chksum.addWord(WrapType<std::uint32_t>(), addrs.local_addr.value());
         ip4_header.set(Ip4Header::SrcAddr(), addrs.local_addr);
@@ -1003,7 +1003,7 @@ private:
         
         // Read TTL+protocol and add to checksum.
         Ip4TtlProto ttl_proto = ip4_header.get(Ip4Header::TtlProto());
-        chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value);
+        chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value());
         
         // Read addresses and add to checksum
         Ip4Addr src_addr = ip4_header.get(Ip4Header::SrcAddr());

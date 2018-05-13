@@ -241,67 +241,69 @@ struct Ip4DestUnreachMeta {
 };
 
 /**
- * Encapsulates a pair of IPv4 TTL and protocol values.
+ * Encapsulates a pair of IPv4 TTL and protocol number.
  * 
- * These are encoded in a 16-bit unsigned integer in the same manner
- * as in the IPv4 header. That is, the TTL is stored in the higher
- * 8 bits and the protocol in the lower 8 bits.
+ * An @ref Ip4TtlProto object is defined by its value which is a 16-bit unsigned
+ * integer representing the TTL and protocol number in the same way as in the
+ * IPv4 header. That is, the TTL is stored in the higher 8 bits and the protocol
+ * in the lower 8 bits.
  */
 class Ip4TtlProto {
-public:
-    /**
-     * The encoded TLL and protocol.
-     */
-    std::uint16_t value;
+private:
+    std::uint16_t m_value;
     
 public:
     /**
-     * Default constructor, initializes \ref value to zero.
+     * Default constructor, initializes the value to zero.
      */
     inline constexpr Ip4TtlProto () :
-        value(0)
+        m_value(0)
     {}
     
     /**
-     * Constructor from an encoded TTL and protocol value.
+     * Constructor from a value (TTL and protocol number together).
      * 
-     * @param ttl_proto Encoded TTL and protocol. The \ref value field
-     *        will be initialized to this value.
+     * @param value Value to initialize with.
      */
-    inline constexpr Ip4TtlProto (std::uint16_t ttl_proto)
-    : value(ttl_proto)
-    {
-    }
+    inline constexpr Ip4TtlProto (std::uint16_t value) :
+        m_value(value)
+    {}
     
     /**
-     * Constructor from separate TTL and protocol values.
+     * Constructor from TTL and protocol number.
      * 
      * @param ttl The TTL.
-     * @param proto The protocol.
+     * @param proto The protocol number.
      */
-    inline constexpr Ip4TtlProto (std::uint8_t ttl, std::uint8_t proto)
-    : value(std::uint16_t((std::uint16_t(ttl) << 8) | proto))
-    {
+    inline constexpr Ip4TtlProto (std::uint8_t ttl, std::uint8_t proto) :
+        m_value(std::uint16_t((std::uint16_t(ttl) << 8) | proto))
+    {}
+
+    /**
+     * Return the value of this object (TTL and protocol number together).
+     * 
+     * @return The value.
+     */
+    inline constexpr std::uint16_t value () const {
+        return m_value;
     }
     
     /**
-     * Returns the TTL.
+     * Return the TTL.
      * 
-     * @return The TTL.
+     * @return The TTL (higher 8 bits of the value).
      */
-    inline constexpr std::uint8_t ttl () const
-    {
-        return std::uint8_t(value >> 8);
+    inline constexpr std::uint8_t ttl () const {
+        return std::uint8_t(m_value >> 8);
     }
     
     /**
-     * Returns the protocol.
+     * Return the protocol number.
      * 
-     * @return The protocol.
+     * @return The protocol number (lower 8 bits of the value).
      */
-    inline constexpr std::uint8_t proto () const
-    {
-        return std::uint8_t(value);
+    inline constexpr std::uint8_t proto () const {
+        return std::uint8_t(m_value);
     }
 };
 
