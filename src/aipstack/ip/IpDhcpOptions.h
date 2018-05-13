@@ -29,7 +29,7 @@
 #include <cstdint>
 #include <cstring>
 
-#include <aipstack/misc/LoopUtils.h>
+#include <aipstack/misc/IntRange.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Use.h>
 #include <aipstack/misc/MinMax.h>

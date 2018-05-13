@@ -35,7 +35,7 @@
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Use.h>
-#include <aipstack/misc/LoopUtils.h>
+#include <aipstack/misc/IntRange.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/ResourceArray.h>
 #include <aipstack/misc/NonCopyable.h>
