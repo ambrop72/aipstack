@@ -35,26 +35,26 @@ namespace AIpStack {
 
 using Icmp4RestType = std::array<char, 4>;
 
-#ifndef IN_DOXYGEN
+enum class Icmp4Type : std::uint8_t {
+    EchoReply   = 0,
+    EchoRequest = 8,
+    DestUnreach = 3,
+};
+
+enum class Icmp4Code : std::uint8_t {
+    Zero                   = 0,
+    DestUnreachPortUnreach = 3,
+    DestUnreachFragNeeded  = 4,
+};
 
 AIPSTACK_DEFINE_STRUCT(Icmp4Header,
-    (Type,         std::uint8_t)
-    (Code,         std::uint8_t)
-    (Chksum,       std::uint16_t)
-    (Rest,         Icmp4RestType)
+    (Type,   Icmp4Type)
+    (Code,   Icmp4Code)
+    (Chksum, std::uint16_t)
+    (Rest,   Icmp4RestType)
 )
 
-#endif
-
-static std::uint8_t const Icmp4TypeEchoReply   = 0;
-static std::uint8_t const Icmp4TypeEchoRequest = 8;
-static std::uint8_t const Icmp4TypeDestUnreach = 3;
-
-static std::uint8_t const Icmp4CodeDestUnreachPortUnreach = 3;
-static std::uint8_t const Icmp4CodeDestUnreachFragNeeded = 4;
-
-inline std::uint16_t Icmp4GetMtuFromRest (Icmp4RestType rest)
-{
+inline std::uint16_t Icmp4GetMtuFromRest (Icmp4RestType rest) {
     return ReadBinaryInt<std::uint16_t, BinaryBigEndian>(rest.data() + 2);
 }
 

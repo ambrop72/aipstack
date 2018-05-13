@@ -411,7 +411,7 @@ public:
             pkt_send_len = Ip4RoundFragLen(Ip4Header::Size, route_info.iface->getMtu());
             
             // Set the MoreFragments IP flag (will be cleared for the last fragment).
-            send_flags |= IpSendFlags(Ip4FlagMF);
+            send_flags |= IpSendFlags(Ip4Flag::MF);
         } else {
             // First packet has all the data.
             pkt_send_len = std::uint16_t(pkt.tot_len);
@@ -450,7 +450,7 @@ public:
         
         // Send the packet to the driver.
         // Fast path is no fragmentation, this permits tail call optimization.
-        if (AIPSTACK_LIKELY((send_flags & IpSendFlags(Ip4FlagMF)) == EnumZero)) {
+        if (AIPSTACK_LIKELY((send_flags & IpSendFlags(Ip4Flag::MF)) == EnumZero)) {
             return route_info.iface->m_params.send_ip4_packet(
                 pkt, route_info.addr, retryReq);
         }
@@ -493,7 +493,7 @@ private:
             std::size_t rem_pkt_length = Ip4Header::Size + dgram.tot_len;
             if (rem_pkt_length <= route_info.iface->getMtu()) {
                 pkt_send_len = std::uint16_t(rem_pkt_length);
-                send_flags &= ~IpSendFlags(Ip4FlagMF);
+                send_flags &= ~IpSendFlags(Ip4Flag::MF);
             }
             
             auto ip4_header = Ip4Header::MakeRef(pkt.getChunkPtr());
@@ -521,7 +521,7 @@ private:
                 frag_pkt, route_info.addr, retryReq);
             
             // If this was the last fragment or there was an error, return.
-            if ((send_flags & IpSendFlags(Ip4FlagMF)) == EnumZero ||
+            if ((send_flags & IpSendFlags(Ip4Flag::MF)) == EnumZero ||
                 AIPSTACK_UNLIKELY(err != IpErr::SUCCESS))
             {
                 return err;
@@ -881,7 +881,7 @@ public:
         // calculated length.
         IpBufRef data = rx_dgram.revealHeaderMust(rx_ip_info.header_len).subTo(data_len);
 
-        return sendIcmp4Message(addrs, rx_ip_info.iface, Icmp4TypeDestUnreach,
+        return sendIcmp4Message(addrs, rx_ip_info.iface, Icmp4Type::DestUnreach,
                                 du_meta.icmp_code, du_meta.icmp_rest, data);
     }
 
@@ -1021,7 +1021,7 @@ private:
         }
         
         // Check if the more-fragments flag is set or the fragment offset is nonzero.
-        if (AIPSTACK_UNLIKELY((flags_offset & (Ip4FlagMF|Ip4OffsetMask)) != 0)) {
+        if (AIPSTACK_UNLIKELY((flags_offset & (Ip4Flag::MF|Ip4OffsetMask)) != 0)) {
             // Only accept fragmented packets which are unicasts to the
             // incoming interface address. This is to prevent filling up
             // our reassembly buffers with irrelevant packets. Note that
@@ -1032,7 +1032,7 @@ private:
             }
             
             // Get the more-fragments flag and the fragment offset in bytes.
-            bool more_fragments = (flags_offset & Ip4FlagMF) != 0;
+            bool more_fragments = (flags_offset & Ip4Flag::MF) != 0;
             std::uint16_t fragment_offset = (flags_offset & Ip4OffsetMask) * 8;
             
             // Perform reassembly.
@@ -1057,7 +1057,7 @@ private:
     
     static void recvIp4Dgram (IpRxInfoIp4<Arg> ip_info, IpBufRef dgram)
     {
-        std::uint8_t proto = ip_info.ttl_proto.proto();
+        Ip4Protocol proto = ip_info.ttl_proto.proto();
         
         // Pass to interface listeners. If any listener accepts the
         // packet, inhibit further processing.
@@ -1090,7 +1090,7 @@ private:
         }
         
         // Handle ICMP packets.
-        if (proto == Ip4ProtocolIcmp) {
+        if (proto == Ip4Protocol::Icmp) {
             return recvIcmp4Dgram(ip_info, dgram);
         }
     }
@@ -1123,9 +1123,9 @@ private:
         }
         
         // Read ICMP header fields.
-        auto icmp4_header = Icmp4Header::MakeRef(dgram.getChunkPtr());
-        std::uint8_t type  = icmp4_header.get(Icmp4Header::Type());
-        std::uint8_t code  = icmp4_header.get(Icmp4Header::Code());
+        auto icmp4_header  = Icmp4Header::MakeRef(dgram.getChunkPtr());
+        Icmp4Type type     = icmp4_header.get(Icmp4Header::Type());
+        Icmp4Code code     = icmp4_header.get(Icmp4Header::Code());
         Icmp4RestType rest = icmp4_header.get(Icmp4Header::Rest());
         
         // Verify ICMP checksum.
@@ -1139,7 +1139,7 @@ private:
         
         IpStack *stack = ip_info.iface->m_stack;
         
-        if (type == Icmp4TypeEchoRequest) {
+        if (type == Icmp4Type::EchoRequest) {
             // Got echo request, send echo reply.
             // But if this is a broadcast request, respond only if allowed.
             if (is_broadcast_dst && !AllowBroadcastPing) {
@@ -1147,7 +1147,7 @@ private:
             }
             stack->sendIcmp4EchoReply(rest, icmp_data, ip_info.src_addr, ip_info.iface);
         }
-        else if (type == Icmp4TypeDestUnreach) {
+        else if (type == Icmp4Type::DestUnreach) {
             stack->handleIcmp4DestUnreach(code, rest, icmp_data, ip_info.iface);
         }
     }
@@ -1163,11 +1163,11 @@ private:
         }
         
         Ip4AddrPair addrs = {iface->m_addr.addr, dst_addr};
-        sendIcmp4Message(addrs, iface, Icmp4TypeEchoReply, /*code=*/0, rest, data);
+        sendIcmp4Message(addrs, iface, Icmp4Type::EchoReply, Icmp4Code::Zero, rest, data);
     }
 
     IpErr sendIcmp4Message (Ip4AddrPair const &addrs, Iface *iface,
-        std::uint8_t type, std::uint8_t code, Icmp4RestType rest, IpBufRef data)
+        Icmp4Type type, Icmp4Code code, Icmp4RestType rest, IpBufRef data)
     {
         // Allocate memory for headers.
         TxAllocHelper<Icmp4Header::Size, HeaderBeforeIp4Dgram>
@@ -1190,12 +1190,12 @@ private:
         icmp4_header.set(Icmp4Header::Chksum(), calc_chksum);
         
         // Send the datagram.
-        return sendIp4Dgram(addrs, {IcmpTTL, Ip4ProtocolIcmp}, dgram, iface, nullptr,
-                            IpSendFlags());        
+        return sendIp4Dgram(addrs, Ip4TtlProto{IcmpTTL, Ip4Protocol::Icmp},
+            dgram, iface, nullptr, IpSendFlags());        
     }
     
     void handleIcmp4DestUnreach (
-        std::uint8_t code, Icmp4RestType rest, IpBufRef icmp_data, Iface *iface)
+        Icmp4Code code, Icmp4RestType rest, IpBufRef icmp_data, Iface *iface)
     {
         // Check base IP header length.
         if (AIPSTACK_UNLIKELY(!icmp_data.hasHeader(Ip4Header::Size))) {

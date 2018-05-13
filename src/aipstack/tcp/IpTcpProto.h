@@ -928,7 +928,7 @@ class IpTcpProtoService {
     
 public:
     // This tells IpStack which IP protocol we receive packets for.
-    using IpProtocolNumber = WrapValue<std::uint8_t, Ip4ProtocolTcp>;
+    using IpProtocolNumber = WrapValue<Ip4Protocol, Ip4Protocol::Tcp>;
     
 #ifndef IN_DOXYGEN
     template <typename PlatformImpl_, typename StackArg_>

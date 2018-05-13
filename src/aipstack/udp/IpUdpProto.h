@@ -36,6 +36,7 @@
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/IntRange.h>
 #include <aipstack/misc/Function.h>
+#include <aipstack/misc/EnumUtils.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
@@ -168,7 +169,7 @@ public:
         IpChksumAccumulator chksum_accum;
         chksum_accum.addWord(WrapType<std::uint32_t>(), addrs.local_addr.value());
         chksum_accum.addWord(WrapType<std::uint32_t>(), addrs.remote_addr.value());
-        chksum_accum.addWord(WrapType<std::uint16_t>(), Ip4ProtocolUdp);
+        chksum_accum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(Ip4Protocol::Udp));
         chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
         std::uint16_t checksum = chksum_accum.getChksum(dgram);
         if (checksum == 0) {
@@ -178,7 +179,8 @@ public:
         
         // Send the datagram.
         return proto().m_stack->sendIp4Dgram(
-            addrs, {UdpTTL, Ip4ProtocolUdp}, dgram, iface, retryReq, send_flags);
+            addrs, Ip4TtlProto{UdpTTL, Ip4Protocol::Udp},
+            dgram, iface, retryReq, send_flags);
     }
 };
 
@@ -612,7 +614,7 @@ public:
             }
 
             // Send an ICMP Destination Unreachable, Port Unreachable message.
-            Ip4DestUnreachMeta du_meta{Icmp4CodeDestUnreachPortUnreach, Icmp4RestType()};
+            Ip4DestUnreachMeta du_meta{Icmp4Code::DestUnreachPortUnreach, Icmp4RestType()};
             m_stack->sendIp4DestUnreach(ip_info, dgram, du_meta);
         }
     }
@@ -639,7 +641,8 @@ private:
             IpChksumAccumulator chksum_accum;
             chksum_accum.addWord(WrapType<std::uint32_t>(), ip_info.src_addr.value());
             chksum_accum.addWord(WrapType<std::uint32_t>(), ip_info.dst_addr.value());
-            chksum_accum.addWord(WrapType<std::uint16_t>(), Ip4ProtocolUdp);
+            chksum_accum.addWord(WrapType<std::uint16_t>(),
+                ToUnderlyingType(Ip4Protocol::Udp));
             chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
 
             if (chksum_accum.getChksum(dgram) != 0) {
@@ -698,7 +701,7 @@ class IpUdpProtoService {
     
 public:
     // This tells IpStack which IP protocol we receive packets for.
-    using IpProtocolNumber = WrapValue<std::uint8_t, Ip4ProtocolUdp>;
+    using IpProtocolNumber = WrapValue<Ip4Protocol, Ip4Protocol::Udp>;
     
 #ifndef IN_DOXYGEN
     template <typename PlatformImpl_, typename StackArg_>

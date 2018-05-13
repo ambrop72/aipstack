@@ -33,6 +33,7 @@
 #include <aipstack/infra/Instance.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/platform/PlatformFacade.h>
+#include <aipstack/proto/Ip4Proto.h>
 
 namespace AIpStack {
 
@@ -211,7 +212,7 @@ public:
      * 
      * This function can be used to support the Path MTU Discovery process.
      * In this case, if the ICMP code (du_meta.icmp_code) is
-     * `Icmp4CodeDestUnreachFragNeeded`, the protocol handler should perform
+     * `Icmp4Code::DestUnreachFragNeeded`, the protocol handler should perform
      * protocol-specific sanity checks (e.g. TCP could check that the message is
      * for an active connection) then call @ref IpStack::handleIcmpPacketTooBig
      * if the checks pass. The latter may result in @ref IpMtuRef::pmtuChanged
@@ -277,7 +278,7 @@ struct IpProtocolHandlerStubService {
      * number the handler is responsible for. The type alias should be for a
      * @ref WrapValue type using uint8_t as the value type.
      */
-    using IpProtocolNumber = WrapValue<std::uint8_t, 99>;
+    using IpProtocolNumber = WrapValue<Ip4Protocol, Ip4Protocol(99)>;
     
     /**
      * Template through which the @ref IpStack instantiates the service.

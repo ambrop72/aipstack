@@ -28,6 +28,7 @@
 #include <cstdint>
 
 #include <aipstack/misc/EnumBitfieldUtils.h>
+#include <aipstack/misc/EnumUtils.h>
 #include <aipstack/infra/Chksum.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Icmp4Proto.h>
@@ -211,7 +212,7 @@ enum class IpSendFlags : std::uint16_t {
      * Using this flag will both prevent fragmentation of the outgoing
      * datagram as well as set the Dont-Fragment flag in the IP header.
      */
-    DontFragmentFlag = Ip4FlagDF,
+    DontFragmentFlag = Ip4Flag::DF,
 
     /**
      * Mask of all flags which may be passed to send functions.
@@ -230,9 +231,9 @@ struct Ip4DestUnreachMeta {
     /**
      * The ICMP code.
      * 
-     * For example, `Icmp4CodeDestUnreachFragNeeded` may be of interest.
+     * For example, `Icmp4Code::DestUnreachFragNeeded` may be of interest.
      */
-    std::uint8_t icmp_code = 0;
+    Icmp4Code icmp_code = Icmp4Code::Zero;
     
     /**
      * The "Rest of Header" part of the ICMP header (4 bytes).
@@ -275,8 +276,8 @@ public:
      * @param ttl The TTL.
      * @param proto The protocol number.
      */
-    inline constexpr Ip4TtlProto (std::uint8_t ttl, std::uint8_t proto) :
-        m_value(std::uint16_t((std::uint16_t(ttl) << 8) | proto))
+    inline constexpr Ip4TtlProto (std::uint8_t ttl, Ip4Protocol proto) :
+        m_value(std::uint16_t((std::uint16_t(ttl) << 8) | ToUnderlyingType(proto)))
     {}
 
     /**
@@ -302,8 +303,8 @@ public:
      * 
      * @return The protocol number (lower 8 bits of the value).
      */
-    inline constexpr std::uint8_t proto () const {
-        return std::uint8_t(m_value);
+    inline constexpr Ip4Protocol proto () const {
+        return Ip4Protocol(m_value & 0xFF);
     }
 };
 

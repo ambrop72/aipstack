@@ -176,9 +176,9 @@ public:
      *        function.
      * @return True if a datagram was reassembled, false if not.
      */
-    bool reassembleIp4 (std::uint16_t ident, Ip4Addr src_addr, Ip4Addr dst_addr, std::uint8_t proto,
-                        std::uint8_t ttl, bool more_fragments, std::uint16_t fragment_offset,
-                        char const *header, IpBufRef &dgram)
+    bool reassembleIp4 (std::uint16_t ident, Ip4Addr src_addr, Ip4Addr dst_addr,
+        Ip4Protocol proto, std::uint8_t ttl, bool more_fragments,
+        std::uint16_t fragment_offset, char const *header, IpBufRef &dgram)
     {
         AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>())
         AIPSTACK_ASSERT(more_fragments || fragment_offset > 0)
@@ -384,7 +384,7 @@ public:
     
 private:
     ReassEntry * find_reass_entry (TimeType now, std::uint16_t ident, Ip4Addr src_addr,
-                                   Ip4Addr dst_addr, std::uint8_t proto)
+                                   Ip4Addr dst_addr, Ip4Protocol proto)
     {
         ReassEntry *found_entry = nullptr;
         
@@ -400,13 +400,13 @@ private:
                 continue;
             }
             
-            // If the entry matches, return it after goingh through all
+            // If the entry matches, return it after going through all
             // so that we purge all expired entries.
             auto reass_hdr = Ip4Header::MakeRef(reass.header);
-            if (reass_hdr.get(Ip4Header::Ident())    == ident &&
-                reass_hdr.get(Ip4Header::SrcAddr())  == src_addr &&
-                reass_hdr.get(Ip4Header::DstAddr())  == dst_addr &&
-                std::uint8_t(reass_hdr.get(Ip4Header::TtlProto()) == proto))
+            if (reass_hdr.get(Ip4Header::Ident())   == ident &&
+                reass_hdr.get(Ip4Header::SrcAddr()) == src_addr &&
+                reass_hdr.get(Ip4Header::DstAddr()) == dst_addr &&
+                Ip4Protocol(reass_hdr.get(Ip4Header::TtlProto()) & 0xFF) == proto)
             {
                 found_entry = &reass;
             }
@@ -469,7 +469,7 @@ private:
         // Purge any expired reassembly entries by calling find_reass_entry with
         // dummy IP information.
         TimeType now = platform().getTime();
-        find_reass_entry(now, 0, Ip4Addr::ZeroAddr(), Ip4Addr::ZeroAddr(), 0);
+        find_reass_entry(now, 0, Ip4Addr::ZeroAddr(), Ip4Addr::ZeroAddr(), Ip4Protocol(0));
     }
 };
 

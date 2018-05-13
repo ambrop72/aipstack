@@ -33,6 +33,7 @@
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/OneOf.h>
+#include <aipstack/misc/EnumUtils.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Chksum.h>
 #include <aipstack/infra/TxAllocHelper.h>
@@ -95,8 +96,8 @@ public:
         std::uint16_t window_size = std::uint16_t(pcb->rcv_ann_wnd);
         
         // Send SYN or SYN-ACK flags depending on the state.
-        FlagsType flags = Tcp4FlagSyn |
-            ((pcb->state == TcpState::SYN_RCVD) ? Tcp4FlagAck : 0);
+        FlagsType flags = Tcp4Flags::Syn |
+            ((pcb->state == TcpState::SYN_RCVD) ? Tcp4Flags::Ack : 0);
         
         // Send the segment.
         IpErr err = send_tcp_nodata(pcb->tcp, *pcb, pcb->snd_una, pcb->rcv_nxt,
@@ -126,7 +127,7 @@ public:
         
         // Send it.
         send_tcp_nodata(pcb->tcp, *pcb, pcb->snd_nxt, pcb->rcv_nxt, window_size,
-                        Tcp4FlagAck, nullptr, pcb);
+                        Tcp4Flags::Ack, nullptr, pcb);
     }
     
     // Send an RST for this PCB.
@@ -987,7 +988,7 @@ public:
         SeqType rst_seq_num;
         bool rst_ack;
         SeqType rst_ack_num;
-        if ((tcp_meta.flags & Tcp4FlagAck) != 0) {
+        if ((tcp_meta.flags & Tcp4Flags::Ack) != 0) {
             rst_seq_num = tcp_meta.ack_num;
             rst_ack = false;
             rst_ack_num = 0;
@@ -1006,7 +1007,7 @@ public:
     static void send_rst (TcpProto *tcp, PcbKey const &key,
                           SeqType seq_num, bool ack, SeqType ack_num)
     {
-        FlagsType flags = Tcp4FlagRst | (ack ? Tcp4FlagAck : 0);
+        FlagsType flags = Tcp4Flags::Rst | (ack ? Tcp4Flags::Ack : 0);
         send_tcp_nodata(tcp, key, seq_num, ack_num, 0, flags, nullptr, nullptr);
     }
     
@@ -1071,7 +1072,7 @@ private:
                                            MinValueU(rem_wnd, pcb->snd_mss));
         
         // We always send the ACK flag, others may be added below.
-        FlagsType seg_flags = Tcp4FlagAck;
+        FlagsType seg_flags = Tcp4Flags::Ack;
         
         // Check if a FIN should be sent. This is when:
         // - a FIN is queued,
@@ -1080,7 +1081,7 @@ private:
         // The first two parts are optimized into a single condition.
         if (AIPSTACK_UNLIKELY(data.tot_len + fin > rem_data_len)) {
             if (rem_wnd > data.tot_len) {
-                seg_flags |= Tcp4FlagFin|Tcp4FlagPsh;
+                seg_flags |= Tcp4Flags::Fin|Tcp4Flags::Psh;
             }
         }
         
@@ -1090,7 +1091,7 @@ private:
         // Set the PSH flag if the push index is within this segment.
         std::size_t psh_index = pcb->con->m_v.snd_psh_index;
         if (TcpUtils::InOpenClosedIntervalStartLen(offset, data.tot_len, psh_index)) {
-            seg_flags |= Tcp4FlagPsh;
+            seg_flags |= Tcp4Flags::Psh;
         }
         
         // Calculate the sequence number.
@@ -1105,7 +1106,7 @@ private:
         // Calculate the sequence length of the segment and set
         // the FIN_SENT flag if a FIN was sent.
         SeqType seg_seqlen = SeqType(data.tot_len);
-        if (AIPSTACK_UNLIKELY((seg_flags & Tcp4FlagFin) != 0)) {
+        if (AIPSTACK_UNLIKELY((seg_flags & Tcp4Flags::Fin) != 0)) {
             seg_seqlen++;
             pcb->setFlag(PcbFlags::FIN_SENT);
         }
@@ -1151,7 +1152,7 @@ private:
         std::uint16_t window_size = Input::pcb_ann_wnd(pcb);
 
         // Send a FIN segment.
-        FlagsType flags = Tcp4FlagAck|Tcp4FlagFin|Tcp4FlagPsh;
+        FlagsType flags = Tcp4Flags::Ack|Tcp4Flags::Fin|Tcp4Flags::Psh;
         IpErr err = send_tcp_nodata(pcb->tcp, *pcb, pcb->snd_una, pcb->rcv_nxt,
                                     window_size, flags, nullptr, pcb);
         
@@ -1306,7 +1307,7 @@ private:
             tcp_header.set(Tcp4Header::UrgentPtr(), 0);
             
             // Add known pseudo-header fields to checksum.
-            chksum.addWord(WrapType<std::uint16_t>(), Ip4ProtocolTcp);
+            chksum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(Ip4Protocol::Tcp));
             chksum.addWord(WrapType<std::uint32_t>(), pcb->local_addr.value());
             chksum.addWord(WrapType<std::uint32_t>(), pcb->remote_addr.value());
             
@@ -1315,8 +1316,8 @@ private:
             
             // Perform IP level preparation.
             IpErr err = pcb->tcp->m_stack->prepareSendIp4Dgram(
-                *pcb, {TcpProto::TcpTTL, Ip4ProtocolTcp}, dgram_alloc.getPtr(),
-                Constants::TcpIpSendFlags, ip_prep);
+                *pcb, Ip4TtlProto{TcpProto::TcpTTL, Ip4Protocol::Tcp},
+                dgram_alloc.getPtr(), Constants::TcpIpSendFlags, ip_prep);
             if (AIPSTACK_UNLIKELY(err != IpErr::SUCCESS)) {
                 return err;
             }
@@ -1349,7 +1350,7 @@ private:
         
         // Adding constants to checksum is more easily optimized if done first.
         // Add protocol field of pseudo-header.
-        chksum_accum.addWord(WrapType<std::uint16_t>(), Ip4ProtocolTcp);
+        chksum_accum.addWord(WrapType<std::uint16_t>(), ToUnderlyingType(Ip4Protocol::Tcp));
         
         // Write the TCP header...
         auto tcp_header = Tcp4Header::MakeRef(dgram_alloc.getPtr());
@@ -1392,8 +1393,9 @@ private:
         tcp_header.set(Tcp4Header::Checksum(), calc_chksum);
         
         // Send the datagram.
-        return tcp->m_stack->sendIp4Dgram(key, {TcpProto::TcpTTL, Ip4ProtocolTcp}, dgram,
-                                          nullptr, retryReq, Constants::TcpIpSendFlags);
+        return tcp->m_stack->sendIp4Dgram(
+            key, Ip4TtlProto{TcpProto::TcpTTL, Ip4Protocol::Tcp},
+            dgram, nullptr, retryReq, Constants::TcpIpSendFlags);
     }
 };
 

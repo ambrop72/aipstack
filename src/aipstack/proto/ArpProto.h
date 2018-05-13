@@ -30,25 +30,30 @@
 #include <aipstack/infra/Struct.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/eth/MacAddr.h>
+#include <aipstack/proto/EthernetProto.h>
 
 namespace AIpStack {
 
+enum class ArpHwType : std::uint16_t {
+    Eth = 1,
+};
+
+enum class ArpOpType : std::uint16_t {
+    Request = 1,
+    Reply = 2,
+};
+
 AIPSTACK_DEFINE_STRUCT(ArpIp4Header,
-    (HwType,       std::uint16_t)
-    (ProtoType,    std::uint16_t)
+    (HwType,       ArpHwType)
+    (ProtoType,    EthType)
     (HwAddrLen,    std::uint8_t)
     (ProtoAddrLen, std::uint8_t)
-    (OpType,       std::uint16_t)
+    (OpType,       ArpOpType)
     (SrcHwAddr,    MacAddr)
     (SrcProtoAddr, Ip4Addr)
     (DstHwAddr,    MacAddr)
     (DstProtoAddr, Ip4Addr)
 )
-
-static std::uint16_t const ArpHwTypeEth = 1;
-
-static std::uint16_t const ArpOpTypeRequest = 1;
-static std::uint16_t const ArpOpTypeReply   = 2;
 
 }
 

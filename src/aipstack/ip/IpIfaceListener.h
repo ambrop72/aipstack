@@ -32,6 +32,7 @@
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/ip/IpStackTypes.h>
+#include <aipstack/proto/Ip4Proto.h>
 
 namespace AIpStack {
 
@@ -87,7 +88,7 @@ public:
      * @param ip4_handler Callback function to which matching received datagrams
      *        will be passed (must not be null).
      */
-    IpIfaceListener (IpIface<Arg> *iface, std::uint8_t proto, Ip4DgramHandler ip4_handler) :
+    IpIfaceListener (IpIface<Arg> *iface, Ip4Protocol proto, Ip4DgramHandler ip4_handler) :
         m_iface(iface),
         m_proto(proto),
         m_ip4_handler(ip4_handler)
@@ -116,7 +117,7 @@ public:
 private:
     LinkedListNode<typename IpStack<Arg>::IfaceListenerLinkModel> m_list_node;
     IpIface<Arg> *m_iface;
-    std::uint8_t m_proto;
+    Ip4Protocol m_proto;
     Ip4DgramHandler m_ip4_handler;
 };
 

@@ -48,7 +48,9 @@ enum class DhcpOptionOverload : std::uint8_t {
     FileSnameOptions = 3,
 };
 
-static std::uint32_t const DhcpMagicNumber = 0x63825363;
+enum class DhcpMagicField : std::uint32_t {
+    Magic = 0x63825363,
+};
 
 static std::uint16_t const DhcpServerPort = 67;
 static std::uint16_t const DhcpClientPort = 68;
@@ -105,10 +107,11 @@ AIPSTACK_DEFINE_STRUCT(DhcpHeader2,
 )
 
 AIPSTACK_DEFINE_STRUCT(DhcpHeader3,
-    (DhcpMagic,   std::uint32_t)
+    (DhcpMagic,   DhcpMagicField)
 )
 
-static std::size_t const DhcpHeaderSize = DhcpHeader1::Size + DhcpHeader2::Size + DhcpHeader3::Size;
+static std::size_t const DhcpHeaderSize =
+    DhcpHeader1::Size + DhcpHeader2::Size + DhcpHeader3::Size;
 
 AIPSTACK_DEFINE_STRUCT(DhcpOptionHeader,
     (OptType,     DhcpOptionType)

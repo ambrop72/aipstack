@@ -33,6 +33,7 @@
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/BinaryTools.h>
 #include <aipstack/misc/OneOf.h>
+#include <aipstack/misc/EnumUtils.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/proto/Tcp4Proto.h>
 #include <aipstack/ip/IpAddr.h>
@@ -145,7 +146,7 @@ public:
     
     static inline std::size_t tcplen (FlagsType flags, std::size_t tcp_data_len)
     {
-        return tcp_data_len + ((flags & Tcp4SeqFlags) != 0);
+        return tcp_data_len + ((flags & Tcp4Flags::SeqFlags) != 0);
     }
     
     static inline bool state_is_active (std::uint8_t state)
@@ -188,13 +189,13 @@ public:
         
         while (buf.tot_len > 0) {
             // Read the option kind.
-            std::uint8_t kind = std::uint8_t(buf.takeByte());
+            TcpOption kind = TcpOption(std::uint8_t(buf.takeByte()));
             
             // Hanlde end option and nop option.
-            if (kind == TcpOptionEnd) {
+            if (kind == TcpOption::End) {
                 break;
             }
-            else if (kind == TcpOptionNop) {
+            else if (kind == TcpOption::Nop) {
                 continue;
             }
             
@@ -216,19 +217,18 @@ public:
             // Handle different options, consume option data.
             switch (kind) {
                 // Maximum Segment Size
-                case TcpOptionMSS: {
+                case TcpOption::MSS: {
                     if (opt_data_len != 2) {
                         goto skip_option;
                     }
                     char opt_data[2];
                     buf.takeBytes(opt_data_len, opt_data);
                     out_opts->options |= OptionFlags::MSS;
-                    out_opts->mss = ReadBinaryInt<std::uint16_t,
-                                            BinaryBigEndian>(opt_data);
+                    out_opts->mss = ReadBinaryInt<std::uint16_t, BinaryBigEndian>(opt_data);
                 } break;
                 
                 // Window Scale
-                case TcpOptionWndScale: {
+                case TcpOption::WndScale: {
                     if (opt_data_len != 1) {
                         goto skip_option;
                     }
@@ -268,23 +268,17 @@ public:
     static inline void write_options (TcpOptions const &tcp_opts, char *out)
     {
         if ((tcp_opts.options & OptionFlags::MSS) != 0) {
-            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(
-                                                            TcpOptionMSS,       out + 0);
-            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(
-                                                            4,                  out + 1);
-            WriteBinaryInt<std::uint16_t, BinaryBigEndian>(
-                                                            tcp_opts.mss,       out + 2);
+            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(ToUnderlyingType(TcpOption::MSS), out + 0);
+            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(4,              out + 1);
+            WriteBinaryInt<std::uint16_t, BinaryBigEndian>(tcp_opts.mss,   out + 2);
             out += OptWriteLenMSS;
         }
+
         if ((tcp_opts.options & OptionFlags::WND_SCALE) != 0) {
-            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(
-                                                            TcpOptionNop     ,  out + 0);
-            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(
-                                                            TcpOptionWndScale,  out + 1);
-            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(
-                                                            3,                  out + 2);
-            WriteBinaryInt<std::uint8_t,  BinaryBigEndian>(
-                                                            tcp_opts.wnd_scale, out + 3);
+            WriteBinaryInt<std::uint8_t, BinaryBigEndian>(ToUnderlyingType(TcpOption::Nop),      out + 0);
+            WriteBinaryInt<std::uint8_t, BinaryBigEndian>(ToUnderlyingType(TcpOption::WndScale), out + 1);
+            WriteBinaryInt<std::uint8_t, BinaryBigEndian>(3,                   out + 2);
+            WriteBinaryInt<std::uint8_t, BinaryBigEndian>(tcp_opts.wnd_scale,  out + 3);
             out += OptWriteLenWndScale;
         }
     }

@@ -33,6 +33,12 @@
 
 namespace AIpStack {
 
+enum class Ip4Protocol : std::uint8_t {
+    Icmp = 1,
+    Tcp  = 6,
+    Udp  = 17,
+};
+
 AIPSTACK_DEFINE_STRUCT(Ip4Header,
     (VersionIhlDscpEcn, std::uint16_t)
     (TotalLen,          std::uint16_t)
@@ -47,23 +53,20 @@ AIPSTACK_DEFINE_STRUCT(Ip4Header,
 static int const Ip4VersionShift = 4;
 static std::uint8_t const Ip4IhlMask = 0xF;
 
-static std::uint16_t const Ip4FlagDF = std::uint16_t(1) << 14;
-static std::uint16_t const Ip4FlagMF = std::uint16_t(1) << 13;
+namespace Ip4Flag {
+    static std::uint16_t const DF = std::uint16_t(1) << 14;
+    static std::uint16_t const MF = std::uint16_t(1) << 13;
+}
 
 static std::uint16_t const Ip4OffsetMask = 0x1fff;
 
 static std::size_t const Ip4MaxHeaderSize = 60;
 
-static std::uint8_t const Ip4ProtocolIcmp = 1;
-static std::uint8_t const Ip4ProtocolTcp  = 6;
-static std::uint8_t const Ip4ProtocolUdp  = 17;
-
 // The full datagram size which every internet destination must be
 // be able to receive either in one piece or in fragments (RFC 791 page 25).
 static std::uint16_t const Ip4RequiredRecvSize = 576;
 
-static std::uint16_t Ip4RoundFragLen (std::uint8_t header_length, std::uint16_t mtu)
-{
+inline std::uint16_t Ip4RoundFragLen (std::uint8_t header_length, std::uint16_t mtu) {
     return header_length + (((mtu - header_length) / 8) * 8);
 }
 

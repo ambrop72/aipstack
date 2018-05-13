@@ -32,14 +32,16 @@
 
 namespace AIpStack {
 
+enum class EthType : std::uint16_t {
+    Ipv4 = 0x0800,
+    Arp  = 0x0806,
+};
+
 AIPSTACK_DEFINE_STRUCT(EthHeader,
     (DstMac,  MacAddr)
     (SrcMac,  MacAddr)
-    (EthType, std::uint16_t)
+    (EthType, AIpStack::EthType)
 )
-
-static std::uint16_t const EthTypeIpv4 = 0x0800;
-static std::uint16_t const EthTypeArp  = 0x0806;
 
 }
 

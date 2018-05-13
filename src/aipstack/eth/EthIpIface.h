@@ -374,16 +374,16 @@ public:
         m_rx_eth_header = EthHeader::MakeRef(frame.getChunkPtr());
         
         // Get the EtherType.
-        std::uint16_t ethtype = m_rx_eth_header.get(EthHeader::EthType());
+        EthType ethtype = m_rx_eth_header.get(EthHeader::EthType());
         
         // Hide the header to get the payload.
         auto pkt = frame.hideHeader(EthHeader::Size);
         
         // Handle based on the EtherType.
-        if (AIPSTACK_LIKELY(ethtype == EthTypeIpv4)) {
+        if (AIPSTACK_LIKELY(ethtype == EthType::Ipv4)) {
             m_driver_iface.recvIp4Packet(pkt);
         }
-        else if (ethtype == EthTypeArp) {
+        else if (ethtype == EthType::Arp) {
             recvArpPacket(pkt);
         }
     }
@@ -426,7 +426,7 @@ private:
         auto eth_header = EthHeader::MakeRef(frame.getChunkPtr());
         eth_header.set(EthHeader::DstMac(),  dst_mac);
         eth_header.set(EthHeader::SrcMac(),  *m_params.mac_addr);
-        eth_header.set(EthHeader::EthType(), EthTypeIpv4);
+        eth_header.set(EthHeader::EthType(), EthType::Ipv4);
         
         // Send the frame via the lower-layer driver.
         return m_params.send_frame(frame);
@@ -456,7 +456,7 @@ private: // EthHwIface
     
     IpErr sendArpQuery (Ip4Addr ip_addr) override final
     {
-        return send_arp_packet(ArpOpTypeRequest, MacAddr::BroadcastAddr(), ip_addr);
+        return send_arp_packet(ArpOpType::Request, MacAddr::BroadcastAddr(), ip_addr);
     }
     
     EthArpObservable & getArpObservable () override final
@@ -479,29 +479,29 @@ private:
         auto arp_header = ArpIp4Header::MakeRef(pkt.getChunkPtr());
         
         // Sanity check ARP header.
-        if (arp_header.get(ArpIp4Header::HwType())       != ArpHwTypeEth  ||
-            arp_header.get(ArpIp4Header::ProtoType())    != EthTypeIpv4   ||
-            arp_header.get(ArpIp4Header::HwAddrLen())    != MacAddr::Size ||
+        if (arp_header.get(ArpIp4Header::HwType())       != ArpHwType::Eth ||
+            arp_header.get(ArpIp4Header::ProtoType())    != EthType::Ipv4  ||
+            arp_header.get(ArpIp4Header::HwAddrLen())    != MacAddr::Size  ||
             arp_header.get(ArpIp4Header::ProtoAddrLen()) != Ip4Addr::Size)
         {
             return;
         }
         
         // Get some ARP header fields.
-        std::uint16_t op_type = arp_header.get(ArpIp4Header::OpType());
-        MacAddr src_mac       = arp_header.get(ArpIp4Header::SrcHwAddr());
-        Ip4Addr src_ip_addr   = arp_header.get(ArpIp4Header::SrcProtoAddr());
+        ArpOpType op_type   = arp_header.get(ArpIp4Header::OpType());
+        MacAddr src_mac     = arp_header.get(ArpIp4Header::SrcHwAddr());
+        Ip4Addr src_ip_addr = arp_header.get(ArpIp4Header::SrcProtoAddr());
         
         // Try to save the hardware address.
         save_hw_addr(src_ip_addr, src_mac);
         
         // If this is an ARP request for our IP address, send a response.
-        if (op_type == ArpOpTypeRequest) {
+        if (op_type == ArpOpType::Request) {
             IpIfaceIp4Addrs const *ifaddr = m_driver_iface.getIp4Addrs();
             if (ifaddr != nullptr &&
                 arp_header.get(ArpIp4Header::DstProtoAddr()) == ifaddr->addr)
             {
-                send_arp_packet(ArpOpTypeReply, src_mac, src_ip_addr);
+                send_arp_packet(ArpOpType::Reply, src_mac, src_ip_addr);
             }
         }
     }
@@ -554,7 +554,7 @@ private:
                 entry.nud().attempts_left = ArpRefreshAttempts;
                 set_entry_timer(entry);
                 update_timer();
-                send_arp_packet(ArpOpTypeRequest, entry.mac_addr, entry.ip_addr);
+                send_arp_packet(ArpOpType::Request, entry.mac_addr, entry.ip_addr);
             }
             
             // Success, return MAC address.
@@ -572,7 +572,7 @@ private:
                 entry.nud().attempts_left = ArpQueryAttempts;
                 set_entry_timer(entry);
                 update_timer();
-                send_arp_packet(ArpOpTypeRequest, MacAddr::BroadcastAddr(), ip_addr);
+                send_arp_packet(ArpOpType::Request, MacAddr::BroadcastAddr(), ip_addr);
             }
             
             // Add a request to the retry list if a request is supplied.
@@ -770,16 +770,16 @@ private:
         }
     }
     
-    IpErr send_arp_packet (std::uint16_t op_type, MacAddr dst_mac, Ip4Addr dst_ipaddr)
+    IpErr send_arp_packet (ArpOpType op_type, MacAddr dst_mac, Ip4Addr dst_ipaddr)
     {
         // Get a local buffer for the frame,
         TxAllocHelper<EthArpPktSize, HeaderBeforeEth> frame_alloc(EthArpPktSize);
         
         // Write the Ethernet header.
         auto eth_header = EthHeader::MakeRef(frame_alloc.getPtr());
-        eth_header.set(EthHeader::DstMac(), dst_mac);
-        eth_header.set(EthHeader::SrcMac(), *m_params.mac_addr);
-        eth_header.set(EthHeader::EthType(), EthTypeArp);
+        eth_header.set(EthHeader::DstMac(),  dst_mac);
+        eth_header.set(EthHeader::SrcMac(),  *m_params.mac_addr);
+        eth_header.set(EthHeader::EthType(), EthType::Arp);
         
         // Determine the source IP address.
         IpIfaceIp4Addrs const *ifaddr = m_driver_iface.getIp4Addrs();
@@ -787,8 +787,8 @@ private:
         
         // Write the ARP header.
         auto arp_header = ArpIp4Header::MakeRef(frame_alloc.getPtr() + EthHeader::Size);
-        arp_header.set(ArpIp4Header::HwType(),       ArpHwTypeEth);
-        arp_header.set(ArpIp4Header::ProtoType(),    EthTypeIpv4);
+        arp_header.set(ArpIp4Header::HwType(),       ArpHwType::Eth);
+        arp_header.set(ArpIp4Header::ProtoType(),    EthType::Ipv4);
         arp_header.set(ArpIp4Header::HwAddrLen(),    MacAddr::Size);
         arp_header.set(ArpIp4Header::ProtoAddrLen(), Ip4Addr::Size);
         arp_header.set(ArpIp4Header::OpType(),       op_type);
@@ -913,7 +913,7 @@ private:
                 } else {
                     set_entry_timer(entry);
                     send_arp_packet(
-                        ArpOpTypeRequest, MacAddr::BroadcastAddr(), entry.ip_addr);
+                        ArpOpType::Request, MacAddr::BroadcastAddr(), entry.ip_addr);
                 }
             } break;
             
@@ -936,9 +936,9 @@ private:
                     entry.nud().state = ArpEntryState::Query;
                     entry.nud().attempts_left = ArpQueryAttempts;
                     send_arp_packet(
-                        ArpOpTypeRequest, MacAddr::BroadcastAddr(), entry.ip_addr);
+                        ArpOpType::Request, MacAddr::BroadcastAddr(), entry.ip_addr);
                 } else {
-                    send_arp_packet(ArpOpTypeRequest, entry.mac_addr, entry.ip_addr);
+                    send_arp_packet(ArpOpType::Request, entry.mac_addr, entry.ip_addr);
                 }
                 set_entry_timer(entry);
             } break;

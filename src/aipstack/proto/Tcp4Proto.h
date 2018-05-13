@@ -44,25 +44,29 @@ AIPSTACK_DEFINE_STRUCT(Tcp4Header,
     (UrgentPtr,   std::uint16_t)
 )
 
-static std::uint16_t const Tcp4FlagFin = std::uint16_t(1) << 0;
-static std::uint16_t const Tcp4FlagSyn = std::uint16_t(1) << 1;
-static std::uint16_t const Tcp4FlagRst = std::uint16_t(1) << 2;
-static std::uint16_t const Tcp4FlagPsh = std::uint16_t(1) << 3;
-static std::uint16_t const Tcp4FlagAck = std::uint16_t(1) << 4;
-static std::uint16_t const Tcp4FlagUrg = std::uint16_t(1) << 5;
-static std::uint16_t const Tcp4FlagEce = std::uint16_t(1) << 6;
-static std::uint16_t const Tcp4FlagCwr = std::uint16_t(1) << 7;
-static std::uint16_t const Tcp4FlagNs  = std::uint16_t(1) << 8;
+namespace Tcp4Flags {
+    static std::uint16_t const Fin = std::uint16_t(1) << 0;
+    static std::uint16_t const Syn = std::uint16_t(1) << 1;
+    static std::uint16_t const Rst = std::uint16_t(1) << 2;
+    static std::uint16_t const Psh = std::uint16_t(1) << 3;
+    static std::uint16_t const Ack = std::uint16_t(1) << 4;
+    static std::uint16_t const Urg = std::uint16_t(1) << 5;
+    static std::uint16_t const Ece = std::uint16_t(1) << 6;
+    static std::uint16_t const Cwr = std::uint16_t(1) << 7;
+    static std::uint16_t const Ns  = std::uint16_t(1) << 8;
 
-static std::uint16_t const Tcp4BasicFlags = Tcp4FlagFin|Tcp4FlagSyn|Tcp4FlagRst|Tcp4FlagAck;
-static std::uint16_t const Tcp4SeqFlags = Tcp4FlagFin|Tcp4FlagSyn;
+    static std::uint16_t const BasicFlags = Fin|Syn|Rst|Ack;
+    static std::uint16_t const SeqFlags = Fin|Syn;
+}
 
 static int const TcpOffsetShift = 12;
 
-static std::uint8_t const TcpOptionEnd = 0;
-static std::uint8_t const TcpOptionNop = 1;
-static std::uint8_t const TcpOptionMSS = 2;
-static std::uint8_t const TcpOptionWndScale = 3;
+enum class TcpOption : std::uint8_t {
+    End = 0,
+    Nop = 1,
+    MSS = 2,
+    WndScale = 3,
+};
 
 static std::size_t const Ip4TcpHeaderSize = Ip4Header::Size + Tcp4Header::Size;
 

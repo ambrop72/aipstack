@@ -822,7 +822,7 @@ private:
         data.takeBytes(DhcpHeader3::Size, dhcp_header3.data);
         
         // Check the magic number.
-        if (dhcp_header3.get(DhcpHeader3::DhcpMagic()) != DhcpMagicNumber) {
+        if (dhcp_header3.get(DhcpHeader3::DhcpMagic()) != DhcpMagicField::Magic) {
             return;
         }
         
@@ -1331,7 +1331,7 @@ private:
         ethHw()->getMacAddr().writeBinary(dhcp_header1.ref(DhcpHeader1::DhcpChaddr()));
         auto dhcp_header3 = DhcpHeader3::MakeRef(
             dhcp_header1.data + DhcpHeader1::Size + DhcpHeader2::Size);
-        dhcp_header3.set(DhcpHeader3::DhcpMagic(),  DhcpMagicNumber);
+        dhcp_header3.set(DhcpHeader3::DhcpMagic(),  DhcpMagicField::Magic);
         
         // Write the DHCP options.
         char *opt_startptr = dgram_alloc.getPtr() + DhcpHeaderSize;
