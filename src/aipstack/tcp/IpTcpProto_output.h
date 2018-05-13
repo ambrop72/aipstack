@@ -56,7 +56,7 @@ class IpTcpProto_output
     AIPSTACK_USE_TYPES(TcpUtils, (SeqType, TcpState, TcpSegMeta, OptionFlags, TcpOptions))
     AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lt2, seq_add_sat, tcplen,
                                  can_output_in_state, snd_open_in_state))
-    AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, PcbFlags, Input, TimeType, Constants, OutputTimer,
+    AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Input, TimeType, Constants, OutputTimer,
                                   RtxTimer, StackArg, Connection, PcbKey))
     AIPSTACK_USE_TYPES(Constants, (RttType, RttNextType))
     AIPSTACK_USE_VALS(IpStack<StackArg>, (HeaderBeforeIp4Dgram))
@@ -67,7 +67,7 @@ public:
     // Check if our FIN has been ACKed.
     static bool pcb_fin_acked (TcpPcb *pcb)
     {
-        return pcb->hasFlag(PcbFlags::FIN_SENT) && pcb->snd_una == pcb->snd_nxt;
+        return pcb->hasFlag(TcpPcbFlags::FIN_SENT) && pcb->snd_una == pcb->snd_nxt;
     }
     
     // Send SYN or SYN-ACK packet (in the SYN_SENT or SYN_RCVD states respectively).
@@ -84,7 +84,7 @@ public:
             pcb->base_snd_mss : pcb->snd_mss;
         
         // Send the window scale option if needed.
-        if (pcb->hasFlag(PcbFlags::WND_SCALE)) {
+        if (pcb->hasFlag(TcpPcbFlags::WND_SCALE)) {
             tcp_opts.options |= OptionFlags::WND_SCALE;
             tcp_opts.wnd_scale = pcb->rcv_wnd_shift;
         }
@@ -112,7 +112,7 @@ public:
                 pcb->snd_nxt = seq_add(pcb->snd_nxt, 1);
             } else {
                 // Retransmission, stop any round-trip-time measurement.
-                pcb->clearFlag(PcbFlags::RTT_PENDING);
+                pcb->clearFlag(TcpPcbFlags::RTT_PENDING);
             }
         }
     }
@@ -145,7 +145,7 @@ public:
         // needed which will be picked up at the end, otherwise send
         // an ACK ourselves.
         if (pcb->inInputProcessing()) {
-            pcb->setFlag(PcbFlags::ACK_PENDING);
+            pcb->setFlag(TcpPcbFlags::ACK_PENDING);
         } else {
             pcb_send_empty_ack(pcb);
         }
@@ -182,7 +182,7 @@ public:
         }
         
         // Queue a FIN for sending.
-        pcb->setFlag(PcbFlags::FIN_PENDING);
+        pcb->setFlag(TcpPcbFlags::FIN_PENDING);
         
         // Push output.
         pcb_push_output(pcb);
@@ -195,7 +195,7 @@ public:
         
         // Schedule a call to pcb_output soon.
         if (pcb->inInputProcessing()) {
-            pcb->setFlag(PcbFlags::OUT_PENDING);
+            pcb->setFlag(TcpPcbFlags::OUT_PENDING);
         } else {
             // Schedule the output timer to call pcb_output.
             pcb_set_output_timer_for_output(pcb);
@@ -235,7 +235,7 @@ public:
         return
             (AIPSTACK_LIKELY(con != nullptr) &&
                 con->m_v.snd_buf_cur.tot_len < con->m_v.snd_buf.tot_len) ||
-            (!snd_open_in_state(pcb->state) && !pcb->hasFlag(PcbFlags::FIN_PENDING));
+            (!snd_open_in_state(pcb->state) && !pcb->hasFlag(TcpPcbFlags::FIN_PENDING));
     }
     
     /**
@@ -309,7 +309,7 @@ public:
             data_threshold = MinValue(psh_to_end, std::size_t(pcb->snd_mss - 1));
             
             // Allow sending a FIN if it is queued.
-            fin = pcb->hasFlag(PcbFlags::FIN_PENDING);
+            fin = pcb->hasFlag(TcpPcbFlags::FIN_PENDING);
         }
         
         // Create the output helper (which optimizes sending multiple segments at a time).
@@ -354,13 +354,13 @@ public:
             std::size_t data_sent;
             if (AIPSTACK_UNLIKELY(seg_seqlen > snd_buf_cur->tot_len)) {
                 // FIN was sent, we must still have FIN_PENDING.
-                AIPSTACK_ASSERT(pcb->hasFlag(PcbFlags::FIN_PENDING))
+                AIPSTACK_ASSERT(pcb->hasFlag(TcpPcbFlags::FIN_PENDING))
                 
                 // All remaining data was sent.
                 data_sent = snd_buf_cur->tot_len;
                 
                 // Clear the FIN_PENDING flag.
-                pcb->clearFlag(PcbFlags::FIN_PENDING);
+                pcb->clearFlag(TcpPcbFlags::FIN_PENDING);
                 
                 // Clear the local fin flag to let the loop stop.
                 fin = false;
@@ -378,15 +378,15 @@ public:
             rem_wnd -= seg_seqlen;
             
             // Clear ACK_PENDING flag to avoid sending an empty ACK needlessly.
-            pcb->clearFlag(PcbFlags::ACK_PENDING);
+            pcb->clearFlag(TcpPcbFlags::ACK_PENDING);
         }
         
         // If the IDLE_TIMER flag is set, clear it and ensure that the RtxTimer
         // is set. This way the code below for setting the timer does not need
         // to concern itself with the idle timeout, and performance is improved
         // for sending with no idle timeouts in between.
-        if (AIPSTACK_UNLIKELY(pcb->hasFlag(PcbFlags::IDLE_TIMER))) {
-            pcb->clearFlag(PcbFlags::IDLE_TIMER);
+        if (AIPSTACK_UNLIKELY(pcb->hasFlag(TcpPcbFlags::IDLE_TIMER))) {
+            pcb->clearFlag(TcpPcbFlags::IDLE_TIMER);
             pcb->tim(RtxTimer()).unset();
         }
         
@@ -413,10 +413,10 @@ public:
         AIPSTACK_ASSERT(pcb->con == nullptr)
         // below are implied by con == nullptr, see also pcb_abandoned
         AIPSTACK_ASSERT(!snd_open_in_state(pcb->state))
-        AIPSTACK_ASSERT(!pcb->hasFlag(PcbFlags::IDLE_TIMER))
+        AIPSTACK_ASSERT(!pcb->hasFlag(TcpPcbFlags::IDLE_TIMER))
         
         // Send a FIN if rtx_or_window_probe or one is queued.
-        if (rtx_or_window_probe || pcb->hasFlag(PcbFlags::FIN_PENDING)) {
+        if (rtx_or_window_probe || pcb->hasFlag(TcpPcbFlags::FIN_PENDING)) {
             // Send a FIN segment.
             // Upon success this will also update FIN_SENT and snd_nxt as appropriate.
             IpErr err = pcb_output_empty_fin_segment(pcb);
@@ -431,17 +431,17 @@ public:
                 pcb_set_output_timer_for_retry(pcb, err);
             } else {            
                 // Clear the FIN_PENDING flag.
-                pcb->clearFlag(PcbFlags::FIN_PENDING);
+                pcb->clearFlag(TcpPcbFlags::FIN_PENDING);
                 
                 // Clear ACK_PENDING flag to avoid sending an empty ACK needlessly.
-                pcb->clearFlag(PcbFlags::ACK_PENDING);
+                pcb->clearFlag(TcpPcbFlags::ACK_PENDING);
             }
         }
         
         // Set the retransmission timer as needed. This is really the same as
         // in pcb_output_active, the logic just reduces to this.
         if (!pcb->tim(RtxTimer()).isSet()) {
-            if (AIPSTACK_LIKELY(!pcb->hasFlag(PcbFlags::FIN_PENDING))) {
+            if (AIPSTACK_LIKELY(!pcb->hasFlag(TcpPcbFlags::FIN_PENDING))) {
                 pcb->tim(RtxTimer()).setAfter(pcb_rto_time(pcb));
             }
         }
@@ -491,7 +491,7 @@ public:
                      can_output_in_state(pcb->state))
         
         // Is this an idle timeout?
-        if (pcb->hasFlag(PcbFlags::IDLE_TIMER)) {
+        if (pcb->hasFlag(TcpPcbFlags::IDLE_TIMER)) {
             // When the idle timer was set, !pcb_has_snd_outstanding held. However
             // for the expiration we have a relaxed precondition (implied by the former),
             // that is !pcb_has_snd_unacked and that the connection is not abandoned.
@@ -512,7 +512,7 @@ public:
             // Clear the IDLE_TIMER flag. This is not strictly necessarily but is mostly
             // cosmetical and for a minor performance gain in pcb_output_active where it
             // avoids clearing this flag and redundantly stopping the timer.
-            pcb->clearFlag(PcbFlags::IDLE_TIMER);
+            pcb->clearFlag(TcpPcbFlags::IDLE_TIMER);
             
             Connection *con = pcb->con;
             
@@ -522,7 +522,7 @@ public:
             SeqType initial_cwnd = TcpUtils::calc_initial_cwnd(pcb->snd_mss);
             if (con->m_v.cwnd >= initial_cwnd) {
                 con->m_v.cwnd = initial_cwnd;
-                pcb->setFlag(PcbFlags::CWND_INIT);
+                pcb->setFlag(TcpPcbFlags::CWND_INIT);
             }
             con->m_v.cwnd_acked = 0;
             
@@ -570,10 +570,10 @@ public:
             // This is for data or FIN retransmission while not abandoned.
             
             // Check for first retransmission.
-            if (!pcb->hasFlag(PcbFlags::RTX_ACTIVE)) {
+            if (!pcb->hasFlag(TcpPcbFlags::RTX_ACTIVE)) {
                 // Set flag to indicate there has been a retransmission.
                 // This will be cleared upon new ACK.
-                pcb->setFlag(PcbFlags::RTX_ACTIVE);
+                pcb->setFlag(TcpPcbFlags::RTX_ACTIVE);
                 
                 // Update ssthresh (RFC 5681).
                 pcb_update_ssthresh_for_rtx(pcb);
@@ -583,11 +583,11 @@ public:
             // Also reset cwnd_acked to avoid old accumulated value
             // from causing an undesired cwnd increase later.
             con->m_v.cwnd = pcb->snd_mss;
-            pcb->clearFlag(PcbFlags::CWND_INIT);
+            pcb->clearFlag(TcpPcbFlags::CWND_INIT);
             con->m_v.cwnd_acked = 0;
             
             // Set recover.
-            pcb->setFlag(PcbFlags::RECOVER);
+            pcb->setFlag(TcpPcbFlags::RECOVER);
             con->m_v.recover = pcb->snd_nxt;
             
             // Exit any fast recovery.
@@ -619,7 +619,7 @@ public:
         
         // Requeue any FIN.
         if (!snd_open_in_state(pcb->state)) {
-            pcb->setFlag(PcbFlags::FIN_PENDING);
+            pcb->setFlag(TcpPcbFlags::FIN_PENDING);
         }
     }
     
@@ -632,12 +632,12 @@ public:
         AIPSTACK_ASSERT(pcb_has_snd_outstanding(pcb))
         
         // Clear the RTX_ACTIVE flag since any retransmission has now been acked.
-        pcb->clearFlag(PcbFlags::RTX_ACTIVE);
+        pcb->clearFlag(TcpPcbFlags::RTX_ACTIVE);
         
         Connection *con = pcb->con;
         
         // Handle end of round-trip-time measurement.
-        if (pcb->hasFlag(PcbFlags::RTT_PENDING)) {
+        if (pcb->hasFlag(TcpPcbFlags::RTT_PENDING)) {
             // If we have RTT_PENDING outside of SYN_SENT/SYN_RCVD we must
             // also have a Connection (see pcb_abandoned, pcb_start_rtt_measurement).
             AIPSTACK_ASSERT(con != nullptr)
@@ -647,7 +647,7 @@ public:
                 pcb_end_rtt_measurement(pcb);
                 
                 // Allow more CWND increase in congestion avoidance.
-                pcb->clearFlag(PcbFlags::CWND_INCRD);
+                pcb->clearFlag(TcpPcbFlags::CWND_INCRD);
             }
         }
         
@@ -667,7 +667,7 @@ public:
                 pcb_increase_cwnd_acked(pcb, acked);
             } else {
                 // Congestion avoidance.
-                if (!pcb->hasFlag(PcbFlags::CWND_INCRD)) {
+                if (!pcb->hasFlag(TcpPcbFlags::CWND_INCRD)) {
                     // Increment cwnd_acked.
                     con->m_v.cwnd_acked = seq_add_sat(con->m_v.cwnd_acked, acked);
                     
@@ -676,7 +676,7 @@ public:
                     if (AIPSTACK_UNLIKELY(con->m_v.cwnd_acked >= con->m_v.cwnd)) {
                         pcb_increase_cwnd_acked(pcb, con->m_v.cwnd_acked);
                         con->m_v.cwnd_acked = 0;
-                        pcb->setFlag(PcbFlags::CWND_INCRD);
+                        pcb->setFlag(TcpPcbFlags::CWND_INCRD);
                     }
                 }
             }
@@ -690,7 +690,7 @@ public:
             AIPSTACK_ASSERT(pcb_has_snd_unacked(pcb))
             
             // If all data up to recover is being ACKed, exit fast recovery.
-            if (!pcb->hasFlag(PcbFlags::RECOVER) || !seq_lt2(ack_num, con->m_v.recover)) {
+            if (!pcb->hasFlag(TcpPcbFlags::RECOVER) || !seq_lt2(ack_num, con->m_v.recover)) {
                 // Deflate the CWND.
                 // Note, cwnd>=snd_mss is respected because ssthresh>=snd_mss.
                 SeqType flight_size = seq_diff(pcb->snd_nxt, ack_num);
@@ -722,10 +722,10 @@ public:
         // If the snd_una increment that will be done for this ACK will
         // leave recover behind snd_una, clear the recover flag to indicate
         // that recover is no longer valid and assumed <snd_una.
-        if (AIPSTACK_UNLIKELY(pcb->hasFlag(PcbFlags::RECOVER)) &&
+        if (AIPSTACK_UNLIKELY(pcb->hasFlag(TcpPcbFlags::RECOVER)) &&
             con != nullptr && seq_lt2(con->m_v.recover, ack_num))
         {
-            pcb->clearFlag(PcbFlags::RECOVER);
+            pcb->clearFlag(TcpPcbFlags::RECOVER);
         }
     }
     
@@ -741,7 +741,7 @@ public:
         // In that case we must decrement num_dupack by one, to indicate that
         // we are not in fast recovery and the next duplicate ACK is still
         // a candidate.
-        if (pcb->hasFlag(PcbFlags::RECOVER)) {
+        if (pcb->hasFlag(TcpPcbFlags::RECOVER)) {
             pcb->num_dupack--;
             return;
         }
@@ -752,7 +752,7 @@ public:
         Connection *con = pcb->con;
         if (AIPSTACK_LIKELY(con != nullptr)) {
             // Set recover.
-            pcb->setFlag(PcbFlags::RECOVER);
+            pcb->setFlag(TcpPcbFlags::RECOVER);
             con->m_v.recover = pcb->snd_nxt;
             
             // Update ssthresh.
@@ -761,10 +761,10 @@ public:
             // Update cwnd.
             SeqType three_mss = 3 * SeqType(pcb->snd_mss);
             con->m_v.cwnd = seq_add_sat(con->m_v.ssthresh, three_mss);
-            pcb->clearFlag(PcbFlags::CWND_INIT);
+            pcb->clearFlag(TcpPcbFlags::CWND_INIT);
             
             // Schedule output due to possible CWND increase.
-            pcb->setFlag(PcbFlags::OUT_PENDING);
+            pcb->setFlag(TcpPcbFlags::OUT_PENDING);
         }
     }
     
@@ -781,7 +781,7 @@ public:
             pcb->con->m_v.cwnd = seq_add_sat(pcb->con->m_v.cwnd, pcb->snd_mss);
             
             // Schedule output due to possible CWND increase.
-            pcb->setFlag(PcbFlags::OUT_PENDING);
+            pcb->setFlag(TcpPcbFlags::OUT_PENDING);
         }
     }
     
@@ -792,11 +792,11 @@ public:
     
     static void pcb_end_rtt_measurement (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->hasFlag(PcbFlags::RTT_PENDING))
+        AIPSTACK_ASSERT(pcb->hasFlag(TcpPcbFlags::RTT_PENDING))
         AIPSTACK_ASSERT(pcb->con != nullptr)
         
         // Clear the flag to indicate end of RTT measurement.
-        pcb->clearFlag(PcbFlags::RTT_PENDING);
+        pcb->clearFlag(TcpPcbFlags::RTT_PENDING);
         
         // Calculate how much time has passed, also in RTT units.
         TimeType time_diff = pcb->platform().getTime() - pcb->rtt_test_time;
@@ -805,8 +805,8 @@ public:
         Connection *con = pcb->con;
         
         // Update RTTVAR and SRTT.
-        if (!pcb->hasFlag(PcbFlags::RTT_VALID)) {
-            pcb->setFlag(PcbFlags::RTT_VALID);
+        if (!pcb->hasFlag(TcpPcbFlags::RTT_VALID)) {
+            pcb->setFlag(TcpPcbFlags::RTT_VALID);
             con->m_v.rttvar = this_rtt/2;
             con->m_v.srtt = this_rtt;
         } else {
@@ -904,7 +904,7 @@ public:
             con->m_v.ssthresh = pcb->snd_mss;
         }
         
-        if (pcb->hasFlag(PcbFlags::CWND_INIT)) {
+        if (pcb->hasFlag(TcpPcbFlags::CWND_INIT)) {
             // Recalculate initial CWND (RFC 5681 page 5).
             con->m_v.cwnd = TcpUtils::calc_initial_cwnd(pcb->snd_mss);
         } else {
@@ -914,7 +914,7 @@ public:
             // rtx_timer and no new ACK has been received since; since the cwnd would
             // have been set to snd_mss then, and should not have been changed since
             // (the latter is not trivial to see though).
-            if (con->m_v.cwnd < pcb->snd_mss || pcb->hasFlag(PcbFlags::RTX_ACTIVE)) {
+            if (con->m_v.cwnd < pcb->snd_mss || pcb->hasFlag(TcpPcbFlags::RTX_ACTIVE)) {
                 con->m_v.cwnd = pcb->snd_mss;
             }
         }
@@ -965,7 +965,7 @@ public:
             // Set the flag OUT_PENDING so that more can be sent due to window
             // enlargement or (unlikely) window probing can start due to window
             // shrinkage.
-            pcb->setFlag(PcbFlags::OUT_PENDING);
+            pcb->setFlag(TcpPcbFlags::OUT_PENDING);
             
             // If the window now became zero or nonzero, make sure the rtx_timer
             // is stopped. Because if it is currently set for one kind of message
@@ -1022,8 +1022,8 @@ private:
         
         // If the OUT_RETRY flag is set, clear it and ensure that
         // the OutputTimer is stopped before the check below.
-        if (AIPSTACK_UNLIKELY(pcb->hasFlag(PcbFlags::OUT_RETRY))) {
-            pcb->clearFlag(PcbFlags::OUT_RETRY);
+        if (AIPSTACK_UNLIKELY(pcb->hasFlag(TcpPcbFlags::OUT_RETRY))) {
+            pcb->clearFlag(TcpPcbFlags::OUT_RETRY);
             pcb->tim(OutputTimer()).unset();
         }
         
@@ -1043,7 +1043,7 @@ private:
         TimeType after = (err == IpErr::BUFFER_FULL) ?
             Constants::OutputRetryFullTicks : Constants::OutputRetryOtherTicks;
         pcb->tim(OutputTimer()).setAfter(after);
-        pcb->setFlag(PcbFlags::OUT_RETRY);
+        pcb->setFlag(TcpPcbFlags::OUT_RETRY);
     }
     
     // This function sends data/FIN for referenced PCBs. It is designed to be
@@ -1107,7 +1107,7 @@ private:
         SeqType seg_seqlen = SeqType(data.tot_len);
         if (AIPSTACK_UNLIKELY((seg_flags & Tcp4Flags::Fin) != EnumZero)) {
             seg_seqlen++;
-            pcb->setFlag(PcbFlags::FIN_SENT);
+            pcb->setFlag(TcpPcbFlags::FIN_SENT);
         }
         
         // Return the sequence length to the caller.
@@ -1115,10 +1115,10 @@ private:
         
         // Stop a round-trip-time measurement if we have retransmitted
         // a segment containing the associated sequence number.
-        if (AIPSTACK_LIKELY(pcb->hasFlag(PcbFlags::RTT_PENDING))) {
+        if (AIPSTACK_LIKELY(pcb->hasFlag(TcpPcbFlags::RTT_PENDING))) {
             if (AIPSTACK_UNLIKELY(seq_diff(pcb->con->m_v.rtt_test_seq, seq_num) < seg_seqlen))
             {
-                pcb->clearFlag(PcbFlags::RTT_PENDING);
+                pcb->clearFlag(TcpPcbFlags::RTT_PENDING);
             }
         }
         
@@ -1129,7 +1129,7 @@ private:
         if (AIPSTACK_LIKELY(seq_lt2(pcb->snd_nxt, seg_endseq))) {
             // Start a round-trip-time measurement if not already started
             // and if we still have a Connection.
-            if (!pcb->hasFlag(PcbFlags::RTT_PENDING)) {
+            if (!pcb->hasFlag(TcpPcbFlags::RTT_PENDING)) {
                 pcb_start_rtt_measurement(pcb, false);
             }
             
@@ -1158,7 +1158,7 @@ private:
         // On success take note of what was sent.
         if (AIPSTACK_LIKELY(err == IpErr::SUCCESS)) {
             // Set the FIN_SENT flag.
-            pcb->setFlag(PcbFlags::FIN_SENT);
+            pcb->setFlag(TcpPcbFlags::FIN_SENT);
             
             // Bump snd_nxt if needed.
             if (pcb->snd_nxt == pcb->snd_una) {
@@ -1179,7 +1179,7 @@ private:
         pcb->con->m_v.cwnd = seq_add_sat(pcb->con->m_v.cwnd, cwnd_inc);
         
         // No longer have initial CWND.
-        pcb->clearFlag(PcbFlags::CWND_INIT);
+        pcb->clearFlag(TcpPcbFlags::CWND_INIT);
     }
     
     // Sets sshthresh according to RFC 5681 equation (4).
@@ -1200,7 +1200,7 @@ private:
         AIPSTACK_ASSERT(syn || pcb->con != nullptr)
         
         // Set the flag, remember the time.
-        pcb->setFlag(PcbFlags::RTT_PENDING);
+        pcb->setFlag(TcpPcbFlags::RTT_PENDING);
         pcb->rtt_test_time = pcb->platform().getTime();
         
         // Remember the sequence number except for SYN.

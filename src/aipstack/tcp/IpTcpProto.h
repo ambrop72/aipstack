@@ -40,6 +40,7 @@
 #include <aipstack/misc/ResourceArray.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/OneOf.h>
+#include <aipstack/misc/EnumUtils.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
@@ -103,43 +104,6 @@ class IpTcpProto :
     AIPSTACK_USE_TYPES(Constants, (RttType))
     
     struct TcpPcb;
-    
-    // PCB flags, see flags in TcpPcb.
-    using FlagsType = std::uint16_t;
-    struct PcbFlags { enum : FlagsType {
-        // ACK is needed; used in input processing
-        ACK_PENDING = FlagsType(1) << 0,
-        // pcb_output_active/pcb_output_abandoned should be called at the end of
-        // input processing. This flag must imply can_output_in_state and
-        // pcb_has_snd_outstanding at the point in pcb_input where it is checked.
-        // Any change that would break this implication must clear the flag.
-        OUT_PENDING = FlagsType(1) << 1,
-        // A FIN was sent at least once and is included in snd_nxt
-        FIN_SENT    = FlagsType(1) << 2,
-        // A FIN is to queued for sending
-        FIN_PENDING = FlagsType(1) << 3,
-        // Round-trip-time is being measured
-        RTT_PENDING = FlagsType(1) << 4,
-        // Round-trip-time is not in initial state
-        RTT_VALID   = FlagsType(1) << 5,
-        // cwnd has been increaded by snd_mss this round-trip
-        CWND_INCRD  = FlagsType(1) << 6,
-        // A segment has been retransmitted and not yet acked
-        RTX_ACTIVE  = FlagsType(1) << 7,
-        // The recover variable valid (and >=snd_una)
-        RECOVER     = FlagsType(1) << 8,
-        // If rtx_timer is running it is for idle timeout
-        IDLE_TIMER  = FlagsType(1) << 9,
-        // Window scaling is used
-        WND_SCALE   = FlagsType(1) << 10,
-        // Current cwnd is the initial cwnd
-        CWND_INIT   = FlagsType(1) << 11,
-        // If OutputTimer is set it is for OutputRetry*Ticks
-        OUT_RETRY   = FlagsType(1) << 12,
-        // rcv_ann_wnd needs update before sending a segment, implies con != nullptr
-        RCV_WND_UPD = FlagsType(1) << 13,
-        // NOTE: Currently no more bits are available, see TcpPcb::flags.
-    }; };
     
     // Number of ephemeral ports.
     static PortNum const NumEphemeralPorts = EphemeralPortLast - EphemeralPortFirst + 1;
@@ -273,8 +237,8 @@ class IpTcpProto :
         // to pack them into a single 32-bit word, if they were narrower
         // they may be packed less efficiently.
         
-        // Flags (see comments in PcbFlags).
-        std::uint32_t flags : 14;
+        // Flags (see comments in TcpPcbFlags).
+        std::uint32_t flags : TcpPcbFlagsBits;
         
         // PCB state.
         std::uint32_t state : TcpUtils::TcpStateBits;
@@ -287,16 +251,22 @@ class IpTcpProto :
         std::uint32_t rcv_wnd_shift : 4;
         
         // Convenience functions for flags.
-        inline bool hasFlag (FlagsType flag) { return (flags & flag) != 0; }
-        inline void setFlag (FlagsType flag) { flags |= flag; }
-        inline void clearFlag (FlagsType flag) { flags &= ~flag; }
+        inline bool hasFlag (TcpPcbFlags flag) {
+            return (TcpPcbFlags(flags) & flag) != EnumZero;
+        }
+        inline void setFlag (TcpPcbFlags flag) {
+            flags = ToUnderlyingType(TcpPcbFlags(flags) | flag);
+        }
+        inline void clearFlag (TcpPcbFlags flag) {
+            flags = ToUnderlyingType(TcpPcbFlags(flags) & ~flag);
+        }
         
         // Check if a flag is set and clear it.
-        inline bool hasAndClearFlag (FlagsType flag)
+        inline bool hasAndClearFlag (TcpPcbFlags flag)
         {
-            FlagsType the_flags = flags;
-            if ((the_flags & flag) != 0) {
-                flags = the_flags & ~flag;
+            TcpPcbFlags the_flags = TcpPcbFlags(flags);
+            if ((the_flags & flag) != EnumZero) {
+                flags = ToUnderlyingType(the_flags & ~flag);
                 return true;
             }
             return false;
@@ -519,7 +489,7 @@ private:
         pcb->tim(RtxTimer()).unset();
         
         // Clear the OUT_PENDING flag due to its preconditions.
-        pcb->clearFlag(PcbFlags::OUT_PENDING);
+        pcb->clearFlag(TcpPcbFlags::OUT_PENDING);
         
         // Start the TIME_WAIT timeout.
         pcb->tim(AbrtTimer()).setAfter(Constants::TimeWaitTimeTicks);
@@ -539,7 +509,7 @@ private:
         pcb->tim(RtxTimer()).unset();
         
         // Clear the OUT_PENDING flag due to its preconditions.
-        pcb->clearFlag(PcbFlags::OUT_PENDING);
+        pcb->clearFlag(TcpPcbFlags::OUT_PENDING);
         
         // Reset the MTU reference.
         if (pcb->con != nullptr) {
@@ -614,10 +584,10 @@ private:
         
         // Clear any RTT_PENDING flag since we've lost the variables
         // needed for RTT measurement.
-        pcb->clearFlag(PcbFlags::RTT_PENDING);
+        pcb->clearFlag(TcpPcbFlags::RTT_PENDING);
         
         // Clear RCV_WND_UPD flag since this flag must imply con != nullptr.
-        pcb->clearFlag(PcbFlags::RCV_WND_UPD);
+        pcb->clearFlag(TcpPcbFlags::RCV_WND_UPD);
         
         // Abort if in SYN_SENT state or some data is queued or some data was received but
         // not processed by the application. The pcb_abort() will decide whether to send an
@@ -628,8 +598,8 @@ private:
         
         // Make sure any idle timeout is stopped, because pcb_rtx_timer_handler
         // requires the connection to not be abandoned when the idle timeout expires.
-        if (pcb->hasFlag(PcbFlags::IDLE_TIMER)) {
-            pcb->clearFlag(PcbFlags::IDLE_TIMER);
+        if (pcb->hasFlag(TcpPcbFlags::IDLE_TIMER)) {
+            pcb->clearFlag(TcpPcbFlags::IDLE_TIMER);
             pcb->tim(RtxTimer()).unset();
         }
         
@@ -753,7 +723,8 @@ private:
         
         // Initialize most of the PCB.
         pcb->state = TcpState::SYN_SENT;
-        pcb->flags = PcbFlags::WND_SCALE; // to send the window scale option
+        // WND_SCALE to send the window scale option
+        pcb->flags = ToUnderlyingType(TcpPcbFlags::WND_SCALE);
         pcb->con = con;
         pcb->local_addr = local_addr;
         pcb->remote_addr = remote_addr;
