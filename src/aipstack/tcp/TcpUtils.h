@@ -42,7 +42,6 @@ namespace AIpStack {
 
 class TcpUtils {
 public:
-    using FlagsType = std::uint16_t;
     using SeqType = std::uint32_t;
     
 private:
@@ -91,7 +90,7 @@ public:
         SeqType seq_num;
         SeqType ack_num;
         std::uint16_t window_size;
-        FlagsType flags;
+        Tcp4Flags flags;
         TcpOptions *opts; // not used for RX (undefined), may be null for TX
     };
     
@@ -144,9 +143,9 @@ public:
         return seq_diff(op1, op2) >= SeqMSB;
     }
     
-    static inline std::size_t tcplen (FlagsType flags, std::size_t tcp_data_len)
+    static inline std::size_t tcplen (Tcp4Flags flags, std::size_t tcp_data_len)
     {
-        return tcp_data_len + ((flags & Tcp4Flags::SeqFlags) != 0);
+        return tcp_data_len + ((flags & Tcp4Flags::SeqFlags) != EnumZero);
     }
     
     static inline bool state_is_active (std::uint8_t state)

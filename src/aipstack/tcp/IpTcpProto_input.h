@@ -56,8 +56,7 @@ class IpTcpProto_input
 {
     using TcpProto = IpTcpProto<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (FlagsType, SeqType, TcpState, TcpSegMeta, TcpOptions,
-                                  OptionFlags))
+    AIPSTACK_USE_TYPES(TcpUtils, (SeqType, TcpState, TcpSegMeta, TcpOptions, OptionFlags))
     AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lte, seq_lt2, tcplen,
                                  can_output_in_state, accepting_data_in_state,
                                  state_is_synsent_synrcvd, snd_open_in_state))
@@ -106,7 +105,7 @@ public:
         // Get the data offset and calculate many bytes of options there options are.
         // Note that if data_offset is less than Tcp4Header::Size, the difference
         // will wrap around which the next check relies on.
-        std::size_t data_offset = (tcp_meta.flags >> TcpOffsetShift) * 4;
+        std::size_t data_offset = (ToUnderlyingType(tcp_meta.flags) >> TcpOffsetShift) * 4;
         std::size_t opts_len = data_offset - Tcp4Header::Size;
 
         // Check that data offset is within [Tcp4Header::Size, dgram.tot_len].
@@ -147,7 +146,7 @@ public:
         }
         
         // Reply with RST, unless this is an RST.
-        if ((tcp_meta.flags & Tcp4Flags::Rst) == 0) {
+        if ((tcp_meta.flags & Tcp4Flags::Rst) == EnumZero) {
             Output::send_rst_reply(tcp, ip_info, tcp_meta, tcp_data.tot_len);
         }
     }
@@ -576,8 +575,8 @@ private:
                                             bool &seg_fin, SeqType &acked)
     {
         // Get the RST, SYN and ACK flags.
-        FlagsType rst_syn_ack = tcp_meta.flags &
-            (Tcp4Flags::Rst|Tcp4Flags::Syn|Tcp4Flags::Ack);
+        Tcp4Flags rst_syn_ack =
+            tcp_meta.flags & (Tcp4Flags::Rst|Tcp4Flags::Syn|Tcp4Flags::Ack);
         
         // Handle uncommon flags (RST set, SYN set or ACK not set).
         if (AIPSTACK_UNLIKELY(rst_syn_ack != Tcp4Flags::Ack)) {
@@ -617,7 +616,7 @@ private:
             // At this point eff_rel_seq may be "negative" (very large) but that would
             // be resolved.
             eff_rel_seq = seq_diff(tcp_meta.seq_num, pcb->rcv_nxt);
-            seg_fin = (tcp_meta.flags & Tcp4Flags::Fin) != 0;
+            seg_fin = (tcp_meta.flags & Tcp4Flags::Fin) != EnumZero;
             
             // Sequence length of segment (data+FIN). Note that we cannot have
             // a SYN here, we would have bailed out at the top, except in SYN_SENT
@@ -701,18 +700,18 @@ private:
         return true;
     }
     
-    static bool pcb_uncommon_flags_processing (TcpPcb *pcb, FlagsType flags_rst_syn_ack,
+    static bool pcb_uncommon_flags_processing (TcpPcb *pcb, Tcp4Flags rst_syn_ack,
                                     TcpSegMeta const &tcp_meta, IpBufRef const &tcp_data)
     {
         bool continue_processing = false;
         
-        if ((flags_rst_syn_ack & Tcp4Flags::Rst) != 0) {
+        if ((rst_syn_ack & Tcp4Flags::Rst) != EnumZero) {
             // RST, handle as per RFC 5961.
             if (pcb->state == TcpState::SYN_SENT) {
                 // The RFC says the reset is acceptable if it acknowledges
                 // the SYN. But due to the possibility that we sent an empty
                 // ACK with seq_num==snd_una, accept also ack_num==snd_una.
-                if ((flags_rst_syn_ack & Tcp4Flags::Ack) != 0 &&
+                if ((rst_syn_ack & Tcp4Flags::Ack) != EnumZero &&
                     seq_lte(tcp_meta.ack_num, pcb->snd_nxt, pcb->snd_una))
                 {
                     TcpProto::pcb_abort(pcb, false);
@@ -733,10 +732,10 @@ private:
                 }
             }
         }
-        else if ((flags_rst_syn_ack & Tcp4Flags::Syn) != 0) {
+        else if ((rst_syn_ack & Tcp4Flags::Syn) != EnumZero) {
             if (pcb->state == TcpState::SYN_SENT) {
                 // Received a SYN in SYN-SENT state.
-                if (flags_rst_syn_ack == (Tcp4Flags::Syn|Tcp4Flags::Ack)) {
+                if (rst_syn_ack == (Tcp4Flags::Syn|Tcp4Flags::Ack)) {
                     // Expected SYN-ACK response, continue processing.
                     continue_processing = true;
                 } else {
@@ -800,7 +799,7 @@ private:
             proceed = false;
         }
         // If in SYN_SENT a SYN is not received, drop the segment silently.
-        else if (syn_sent && (tcp_meta.flags & Tcp4Flags::Syn) == 0) {
+        else if (syn_sent && (tcp_meta.flags & Tcp4Flags::Syn) == EnumZero) {
             proceed = false;
         }
         
@@ -1108,7 +1107,7 @@ private:
             // Check conditions in such an order that we are typically
             // fast for segments which are not duplicate ACKs.
             if (AIPSTACK_UNLIKELY(orig_data_len == 0) &&
-                (tcp_meta.flags & Tcp4Flags::Fin) == 0 &&
+                (tcp_meta.flags & Tcp4Flags::Fin) == EnumZero &&
                 tcp_meta.ack_num == pcb->snd_una &&
                 can_output_in_state(pcb->state) && Output::pcb_has_snd_unacked(pcb) &&
                 pcb->con != nullptr &&
