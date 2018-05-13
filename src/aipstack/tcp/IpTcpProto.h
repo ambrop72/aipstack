@@ -52,12 +52,12 @@
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/platform/MultiTimer.h>
 #include <aipstack/tcp/TcpUtils.h>
 #include <aipstack/tcp/TcpOosBuffer.h>
 #include <aipstack/tcp/TcpApi.h>
 #include <aipstack/tcp/TcpListener.h>
 #include <aipstack/tcp/TcpConnection.h>
+#include <aipstack/tcp/TcpMultiTimer.h>
 #include <aipstack/tcp/IpTcpProto_constants.h>
 #include <aipstack/tcp/IpTcpProto_input.h>
 #include <aipstack/tcp/IpTcpProto_output.h>
@@ -171,7 +171,7 @@ class IpTcpProto :
     using Listener = TcpListener<Arg>;
     using Connection = TcpConnection<Arg>;
     
-    // These TcpPcb fields are injected into MultiTimer to fill up what
+    // These TcpPcb fields are injected into TcpMultiTimer to fill up what
     // would otherwise be holes in the layout, for better memory use.
     struct MultiTimerUserData {
         // The base send MSS. It is computed based on the interface
@@ -190,8 +190,8 @@ class IpTcpProto :
     struct AbrtTimer {};
     struct OutputTimer {};
     struct RtxTimer {};
-    using PcbMultiTimer = MultiTimer<PlatformImpl, TcpPcb, MultiTimerUserData,
-                                     AbrtTimer, OutputTimer, RtxTimer>;
+    using PcbMultiTimer = TcpMultiTimer<
+        PlatformImpl, TcpPcb, MultiTimerUserData, AbrtTimer, OutputTimer, RtxTimer>;
     
     /**
      * A TCP Protocol Control Block.
@@ -657,7 +657,7 @@ private:
         // Abort the PCB.
         pcb_abort(pcb);
         
-        // NOTE: A MultiTimer callback would normally need to call doDelayedTimerUpdate
+        // NOTE: A TcpMultiTimer callback would normally need to call doDelayedTimerUpdate
         // before returning to the event loop but pcb_abort calls PcbMultiTimer::unsetAll
         // which is also sufficient.
     }

@@ -22,8 +22,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_MULTI_TIMER_H
-#define AIPSTACK_MULTI_TIMER_H
+#ifndef AIPSTACK_TCP_MULTI_TIMER_H
+#define AIPSTACK_TCP_MULTI_TIMER_H
 
 #include <aipstack/meta/ChooseInt.h>
 #include <aipstack/meta/TypeListUtils.h>
@@ -36,14 +36,14 @@
 namespace AIpStack {
 
 template <typename PlatformImpl, typename MT, typename TimerId>
-class MultiTimerOne
+class TcpMultiTimerOne
 {
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
     
 public:
     // WARNING: After calling any function which adjusts the timer state and
-    // after timer expiration, MultiTimer::doDelayedUpdate must be called
+    // after timer expiration, TcpMultiTimer::doDelayedUpdate must be called
     // before control returns to the event loop, or unsetAll or deinit. This
     // is an optimization which allows preventing redundant updates of the
     // underlying timer.
@@ -83,13 +83,14 @@ private:
 };
 
 template <typename PlatformImpl, typename Derived, typename UserData, typename... TimerIds>
-class MultiTimer :
-    private MultiTimerOne<PlatformImpl, MultiTimer<PlatformImpl, Derived, UserData, TimerIds...>, TimerIds>...,
+class TcpMultiTimer :
+    private TcpMultiTimerOne<PlatformImpl,
+        TcpMultiTimer<PlatformImpl, Derived, UserData, TimerIds...>, TimerIds>...,
     private PlatformFacade<PlatformImpl>::Timer,
     public UserData
 {
     template <typename, typename, typename>
-    friend class MultiTimerOne;
+    friend class TcpMultiTimerOne;
     
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType, Timer))
@@ -122,8 +123,8 @@ private:
 public:
     using Timer::platform;
     
-    inline MultiTimer (Platform platform_) :
-        Timer(platform_, AIPSTACK_BIND_MEMBER_TN(&MultiTimer::timerHandler, this)),
+    inline TcpMultiTimer (Platform platform_) :
+        Timer(platform_, AIPSTACK_BIND_MEMBER_TN(&TcpMultiTimer::timerHandler, this)),
         m_state(0)
     {
     }
@@ -135,9 +136,10 @@ public:
     }
     
     template <typename TimerId>
-    inline MultiTimerOne<PlatformImpl, MultiTimer, TimerId> & tim (TimerId)
+    inline TcpMultiTimerOne<PlatformImpl, TcpMultiTimer, TimerId> & tim (TimerId)
     {
-        return static_cast<MultiTimerOne<PlatformImpl, MultiTimer, TimerId> &>(*this);
+        return
+            static_cast<TcpMultiTimerOne<PlatformImpl, TcpMultiTimer, TimerId> &>(*this);
     }
     
     inline void doDelayedUpdate ()
@@ -174,8 +176,9 @@ private:
         
         // Go through all timers to find the minimum time.
         ListFor<TimerIdsList>([&] AIPSTACK_TL(TimerId, {
-            if ((state & MultiTimer::TimerBit(TimerId())) != 0) {
-                TimeType time_rel = m_times[MultiTimer::TimerIndex(TimerId())] - ref_time;
+            if ((state & TcpMultiTimer::TimerBit(TimerId())) != 0) {
+                TimeType time_rel =
+                    m_times[TcpMultiTimer::TimerIndex(TimerId())] - ref_time;
                 if (time_rel < min_time_rel) {
                     min_time_rel = time_rel;
                 }
@@ -196,13 +199,13 @@ private:
         
         bool not_handled = ListForBreak<TimerIdsList>([&] AIPSTACK_TL(TimerId,
         {
-            if ((m_state & MultiTimer::TimerBit(TimerId())) != 0 &&
-                m_times[MultiTimer::TimerIndex(TimerId())] == set_time)
+            if ((m_state & TcpMultiTimer::TimerBit(TimerId())) != 0 &&
+                m_times[TcpMultiTimer::TimerIndex(TimerId())] == set_time)
             {
                 // Clear the timer bit and set the dirty bit. The timer callback is
                 // responsible for calling doDelayedUpdate or one of the functions that
                 // reset things.
-                m_state = (m_state & ~MultiTimer::TimerBit(TimerId())) | DirtyBit;
+                m_state = (m_state & ~TcpMultiTimer::TimerBit(TimerId())) | DirtyBit;
                 static_cast<Derived &>(*this).timerExpired(TimerId());
                 return false;
             }
