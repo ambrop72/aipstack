@@ -1315,8 +1315,8 @@ private:
             
             // Perform IP level preparation.
             IpErr err = pcb->tcp->m_stack->prepareSendIp4Dgram(
-                *pcb, Ip4TtlProto{TcpProto::TcpTTL, Ip4Protocol::Tcp},
-                dgram_alloc.getPtr(), Constants::TcpIpSendFlags, ip_prep);
+                dgram_alloc.getPtr(), ip_prep, Ip4CommonSendParams{
+                    *pcb, TcpProto::TcpTTL, Ip4Protocol::Tcp, Constants::TcpIpSendFlags});
             if (AIPSTACK_UNLIKELY(err != IpErr::SUCCESS)) {
                 return err;
             }
@@ -1391,9 +1391,9 @@ private:
         tcp_header.set(Tcp4Header::Checksum(), calc_chksum);
         
         // Send the datagram.
-        return tcp->m_stack->sendIp4Dgram(
-            key, Ip4TtlProto{TcpProto::TcpTTL, Ip4Protocol::Tcp},
-            dgram, nullptr, retryReq, Constants::TcpIpSendFlags);
+        return tcp->m_stack->sendIp4Dgram(dgram, /*iface=*/nullptr, retryReq,
+            Ip4CommonSendParams{
+                key, TcpProto::TcpTTL, Ip4Protocol::Tcp, Constants::TcpIpSendFlags});
     }
 };
 

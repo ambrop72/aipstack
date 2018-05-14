@@ -264,70 +264,44 @@ struct Ip4DestUnreachMeta {
 };
 
 /**
- * Encapsulates a pair of IPv4 TTL and protocol number.
+ * Encapsulates certain parameters relevant for sending IP datagrams.
  * 
- * An @ref Ip4TtlProto object is defined by its value which is a 16-bit unsigned
- * integer representing the TTL and protocol number in the same way as in the
- * IPv4 header. That is, the TTL is stored in the higher 8 bits and the protocol
- * in the lower 8 bits.
+ * This structure appears as an argument to @ref IpStack::sendIp4Dgram and
+ * @ref IpStack::prepareSendIp4Dgram.
+ * 
+ * @note The fields of this structure do not have default value for performance
+ * reasons and must all be filled out.
  */
-class Ip4TtlProto {
-private:
-    std::uint16_t m_value;
-    
-public:
+struct Ip4CommonSendParams {
     /**
-     * Default constructor, initializes the value to zero.
-     */
-    inline constexpr Ip4TtlProto () :
-        m_value(0)
-    {}
-    
-    /**
-     * Constructor from a value (TTL and protocol number together).
+     * Source and destination address for outgoing datagrams.
      * 
-     * @param value Value to initialize with.
+     * @ref Ip4AddrPair::local_addr is the source and @ref
+     * Ip4AddrPair::remote_addr the destination address.
      */
-    inline constexpr Ip4TtlProto (std::uint16_t value) :
-        m_value(value)
-    {}
-    
-    /**
-     * Constructor from TTL and protocol number.
-     * 
-     * @param ttl The TTL.
-     * @param proto The protocol number.
-     */
-    inline constexpr Ip4TtlProto (std::uint8_t ttl, Ip4Protocol proto) :
-        m_value(std::uint16_t((std::uint16_t(ttl) << 8) | AsUnderlying(proto)))
-    {}
+    Ip4AddrPair const &addrs;
 
     /**
-     * Return the value of this object (TTL and protocol number together).
-     * 
-     * @return The value.
+     * The TTL (time-to-live) for outgoing datagrams.
      */
-    inline constexpr std::uint16_t value () const {
-        return m_value;
-    }
-    
+    std::uint8_t ttl;
+
     /**
-     * Return the TTL.
-     * 
-     * @return The TTL (higher 8 bits of the value).
+     * The IP protocol number for outgoing datagrams.
      */
-    inline constexpr std::uint8_t ttl () const {
-        return std::uint8_t(m_value >> 8);
-    }
-    
+    Ip4Protocol proto;
+
     /**
-     * Return the protocol number.
+     * Flags which affect sending.
      * 
-     * @return The protocol number (lower 8 bits of the value).
+     * @note It is not allowed to specify any bits which are not defined in the
+     * @ref IpSendFlags enum.
+     * 
+     * For details consult the documentation of this enum and the function that
+     * this structure is being passed to (@ref IpStack::sendIp4Dgram or @ref
+     * IpStack::prepareSendIp4Dgram).
      */
-    inline constexpr Ip4Protocol proto () const {
-        return Ip4Protocol(m_value & 0xFF);
-    }
+    IpSendFlags send_flags;
 };
 
 /**
@@ -394,9 +368,14 @@ struct IpRxInfoIp4 {
     Ip4Addr dst_addr;
     
     /**
-     * The TTL and protocol fields combined.
+     * The TTL (time-to-live).
      */
-    Ip4TtlProto ttl_proto;
+    std::uint8_t ttl;
+
+    /**
+     * The IP protocol number.
+     */
+    Ip4Protocol proto;
     
     /**
      * The interface through which the packet was received.

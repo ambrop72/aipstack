@@ -191,6 +191,18 @@ public:
     }
     
     /**
+     * Add a 16-bit word given by individual octets.
+     * 
+     * @param high_octet High octet.
+     * @param low_octet Low octet.
+     */
+    inline void addWordOctets(std::uint8_t high_octet, std::uint8_t low_octet)
+    {
+        auto word = std::uint16_t((std::uint16_t(high_octet) << 8) | low_octet);
+        addWord(WrapType<std::uint16_t>(), word);
+    }
+
+    /**
      * Add a 32-bit word.
      * 
      * @param word The word to add.

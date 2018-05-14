@@ -337,7 +337,7 @@ public:
      * on whether iface is given) to determine the required routing information. If this
      * fails, the error @ref IpErr::NO_IP_ROUTE will be returned.
      * 
-     * This function will perform IP fragmentation unless `send_flags` includes
+     * This function will perform IP fragmentation unless `common.send_flags` includes
      * @ref IpSendFlags::DontFragmentFlag. If fragmentation would be needed but this
      * flag is set, the error @ref IpErr::FRAG_NEEDED will be returned. If sending one
      * fragment fails, further fragments are not sent.
@@ -347,16 +347,15 @@ public:
      * @ref IpErr::FRAG_NEEDED as noted above. Identification numbers are generated
      * sequentially and there is no attempt to track which numbers are in use.
      *
-     * Sending to a local broadcast or all-ones address is only allowed if `send_flags`
-     * includes @ref IpSendFlags::AllowBroadcastFlag. Otherwise sending will fail with
-     * the error @ref IpErr::BCAST_REJECTED.
+     * Sending to a local broadcast or all-ones address is only allowed if
+     * `common.send_flags` includes @ref IpSendFlags::AllowBroadcastFlag. Otherwise
+     * sending will fail with the error @ref IpErr::BCAST_REJECTED.
      * 
      * Sending using a source address which is not the address of the outgoing network
-     * interface is only allowed if `send_flags `includes @ref IpSendFlags::AllowNonLocalSrc.
-     * Note that that the presence of this fiag does not influence routing.
+     * interface is only allowed if `common.send_flags` includes @ref
+     * IpSendFlags::AllowNonLocalSrc. Note that that the presence of this fiag does not
+     * influence routing.
      * 
-     * @param addrs Source and destination address.
-     * @param ttl_proto The TTL and protocol fields combined.
      * @param dgram The data to be sent. There must be space available before the
      *              data for the IPv4 header and lower-layer headers (reserving
      *              @ref HeaderBeforeIp4Dgram will suffice). The tot_len of the data
@@ -364,19 +363,21 @@ public:
      * @param iface If not null, force sending through this interface.
      * @param retryReq If not null, this may provide notification when to retry sending
      *                 after an unsuccessful attempt (notification is not guaranteed).
-     * @param send_flags IP flags to send. All flags declared in @ref IpSendFlags are
-     *        allowed (other bits must not be present).
+     * @param common Specifies addresses, the TTL, the protocol number and send flags.
+     *        In `common.send_flags`, all flags declared in @ref IpSendFlags are allowed.
      * @return Success or error code.
      */
     AIPSTACK_NO_INLINE
-    IpErr sendIp4Dgram (Ip4AddrPair const &addrs, Ip4TtlProto ttl_proto, IpBufRef dgram,
-                        IpIface<Arg> *iface, IpSendRetryRequest *retryReq,
-                        IpSendFlags send_flags)
+    IpErr sendIp4Dgram (IpBufRef dgram, IpIface<Arg> *iface, IpSendRetryRequest *retryReq,
+                        Ip4CommonSendParams common)
     {
         AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>())
         AIPSTACK_ASSERT(dgram.offset >= Ip4Header::Size)
-        AIPSTACK_ASSERT((send_flags & ~IpSendFlags::AllFlags) == EnumZero)
-        
+        AIPSTACK_ASSERT((common.send_flags & ~IpSendFlags::AllFlags) == EnumZero)
+
+        // Copy the flags into a variable as we may modify them below.
+        IpSendFlags send_flags = common.send_flags;
+
         // Reveal IP header.
         IpBufRef pkt = dgram.revealHeaderMust(Ip4Header::Size);
         
@@ -384,16 +385,16 @@ public:
         IpRouteInfoIp4<Arg> route_info;
         bool route_ok;
         if (AIPSTACK_UNLIKELY(iface != nullptr)) {
-            route_ok = routeIp4ForceIface(addrs.remote_addr, iface, route_info);
+            route_ok = routeIp4ForceIface(common.addrs.remote_addr, iface, route_info);
         } else {
-            route_ok = routeIp4(addrs.remote_addr, route_info);
+            route_ok = routeIp4(common.addrs.remote_addr, route_info);
         }
         if (AIPSTACK_UNLIKELY(!route_ok)) {
             return IpErr::NO_IP_ROUTE;
         }
         
         // Check if sending is allowed.
-        IpErr check_err = checkSendIp4Allowed(addrs, send_flags, route_info.iface);
+        IpErr check_err = checkSendIp4Allowed(common.addrs, send_flags, route_info.iface);
         if (AIPSTACK_UNLIKELY(check_err != IpErr::SUCCESS)) {
             return check_err;
         }
@@ -436,14 +437,15 @@ public:
         chksum.addWord(WrapType<std::uint16_t>(), AsUnderlying(flags_offset));
         ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         
-        chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value());
-        ip4_header.set(Ip4Header::TtlProto(), ttl_proto.value());
+        chksum.addWordOctets(common.ttl, AsUnderlying(common.proto));
+        ip4_header.set(Ip4Header::Ttl(), common.ttl);
+        ip4_header.set(Ip4Header::Proto(), common.proto);
         
-        chksum.addWord(WrapType<std::uint32_t>(), addrs.local_addr.value());
-        ip4_header.set(Ip4Header::SrcAddr(), addrs.local_addr);
+        chksum.addWord(WrapType<std::uint32_t>(), common.addrs.local_addr.value());
+        ip4_header.set(Ip4Header::SrcAddr(), common.addrs.local_addr);
         
-        chksum.addWord(WrapType<std::uint32_t>(), addrs.remote_addr.value());
-        ip4_header.set(Ip4Header::DstAddr(), addrs.remote_addr);
+        chksum.addWord(WrapType<std::uint32_t>(), common.addrs.remote_addr.value());
+        ip4_header.set(Ip4Header::DstAddr(), common.addrs.remote_addr);
         
         // Set the IP header checksum.
         ip4_header.set(Ip4Header::HeaderChksum(), chksum.getChksum());
@@ -547,31 +549,29 @@ public:
      * Fragmentation or forcing an interface are not supported.
      * 
      * Sending to a broadcast address or from a non-local address is only permitted with
-     * specific flags in `send_flags`; see @ref sendIp4Dgram for details.
+     * specific flags in `common.send_flags`; see @ref sendIp4Dgram for details.
      * 
-     * @param addrs Source and destination address.
-     * @param ttl_proto The TTL and protocol fields combined.
      * @param header_end_ptr Pointer to the end of the IPv4 header (and start of data).
      *                       This must be the same location as for subsequent datagrams.
-     * @param send_flags IP flags to send. All flags declared in @ref IpSendFlags are
-     *        allowed (other bits must not be present).
      * @param prep Internal information is stored into this structure.
+     * @param common Specifies addresses, the TTL, the protocol number and send flags.
+     *        In `common.send_flags`, all flags declared in @ref IpSendFlags are allowed.
      * @return Success or error code.
      */
     AIPSTACK_ALWAYS_INLINE
-    IpErr prepareSendIp4Dgram (Ip4AddrPair const &addrs, Ip4TtlProto ttl_proto,
-                               char *header_end_ptr, IpSendFlags send_flags,
-                               IpSendPreparedIp4<Arg> &prep)
+    IpErr prepareSendIp4Dgram (
+        char *header_end_ptr, IpSendPreparedIp4<Arg> &prep, Ip4CommonSendParams common)
     {
-        AIPSTACK_ASSERT((send_flags & ~IpSendFlags::AllFlags) == EnumZero)
+        AIPSTACK_ASSERT((common.send_flags & ~IpSendFlags::AllFlags) == EnumZero)
         
         // Get routing information (fill in route_info).
-        if (AIPSTACK_UNLIKELY(!routeIp4(addrs.remote_addr, prep.route_info))) {
+        if (AIPSTACK_UNLIKELY(!routeIp4(common.addrs.remote_addr, prep.route_info))) {
             return IpErr::NO_IP_ROUTE;
         }
         
         // Check if sending is allowed.
-        IpErr check_err = checkSendIp4Allowed(addrs, send_flags, prep.route_info.iface);
+        IpErr check_err =
+            checkSendIp4Allowed(common.addrs, common.send_flags, prep.route_info.iface);
         if (AIPSTACK_UNLIKELY(check_err != IpErr::SUCCESS)) {
             return check_err;
         }
@@ -584,18 +584,19 @@ public:
         chksum.addWord(WrapType<std::uint16_t>(), version_ihl_dscp_ecn);
         ip4_header.set(Ip4Header::VersionIhlDscpEcn(), version_ihl_dscp_ecn);
         
-        Ip4Flags flags_offset = IpFlagsInSendFlags(send_flags);
+        Ip4Flags flags_offset = IpFlagsInSendFlags(common.send_flags);
         chksum.addWord(WrapType<std::uint16_t>(), AsUnderlying(flags_offset));
         ip4_header.set(Ip4Header::FlagsOffset(), flags_offset);
         
-        chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value());
-        ip4_header.set(Ip4Header::TtlProto(), ttl_proto.value());
+        chksum.addWordOctets(common.ttl, AsUnderlying(common.proto));
+        ip4_header.set(Ip4Header::Ttl(), common.ttl);
+        ip4_header.set(Ip4Header::Proto(), common.proto);
         
-        chksum.addWord(WrapType<std::uint32_t>(), addrs.local_addr.value());
-        ip4_header.set(Ip4Header::SrcAddr(), addrs.local_addr);
+        chksum.addWord(WrapType<std::uint32_t>(), common.addrs.local_addr.value());
+        ip4_header.set(Ip4Header::SrcAddr(), common.addrs.local_addr);
         
-        chksum.addWord(WrapType<std::uint32_t>(), addrs.remote_addr.value());
-        ip4_header.set(Ip4Header::DstAddr(), addrs.remote_addr);
+        chksum.addWord(WrapType<std::uint32_t>(), common.addrs.remote_addr.value());
+        ip4_header.set(Ip4Header::DstAddr(), common.addrs.remote_addr);
         
         // Save the partial header checksum.
         prep.partial_chksum_state = chksum.getState();
@@ -999,9 +1000,10 @@ private:
         chksum.addWord(WrapType<std::uint16_t>(),
                        ip4_header.get(Ip4Header::HeaderChksum()));
         
-        // Read TTL+protocol and add to checksum.
-        Ip4TtlProto ttl_proto = ip4_header.get(Ip4Header::TtlProto());
-        chksum.addWord(WrapType<std::uint16_t>(), ttl_proto.value());
+        // Read TTL and protocol number and add to checksum.
+        std::uint8_t ttl = ip4_header.get(Ip4Header::Ttl());
+        Ip4Protocol proto = ip4_header.get(Ip4Header::Proto());
+        chksum.addWordOctets(ttl, AsUnderlying(proto));
         
         // Read addresses and add to checksum
         Ip4Addr src_addr = ip4_header.get(Ip4Header::SrcAddr());
@@ -1036,9 +1038,8 @@ private:
             
             // Perform reassembly.
             if (!iface->m_stack->m_reassembly.reassembleIp4(
-                ip4_header.get(Ip4Header::Ident()), src_addr, dst_addr,
-                ttl_proto.proto(), ttl_proto.ttl(), more_fragments,
-                fragment_offset, ip4_header.data, dgram))
+                ip4_header.get(Ip4Header::Ident()), src_addr, dst_addr, ttl, proto,
+                more_fragments, fragment_offset, ip4_header.data, dgram))
             {
                 return;
             }
@@ -1047,7 +1048,7 @@ private:
         }
         
         // Create the IpRxInfoIp4 struct.
-        IpRxInfoIp4<Arg> ip_info = {src_addr, dst_addr, ttl_proto, iface, header_len};
+        IpRxInfoIp4<Arg> ip_info{src_addr, dst_addr, ttl, proto, iface, header_len};
 
         // Do the real processing now that the datagram is complete and
         // sanity checked.
@@ -1056,14 +1057,12 @@ private:
     
     static void recvIp4Dgram (IpRxInfoIp4<Arg> ip_info, IpBufRef dgram)
     {
-        Ip4Protocol proto = ip_info.ttl_proto.proto();
-        
         // Pass to interface listeners. If any listener accepts the
         // packet, inhibit further processing.
         for (IfaceListener *lis = ip_info.iface->m_listeners_list.first();
              lis != nullptr; lis = ip_info.iface->m_listeners_list.next(*lis))
         {
-            if (lis->m_proto == proto) {
+            if (lis->m_proto == ip_info.proto) {
                 if (AIPSTACK_UNLIKELY(lis->m_ip4_handler(ip_info, dgram))) {
                     return;
                 }
@@ -1074,7 +1073,7 @@ private:
         bool not_handled = ListForBreak<ProtocolHelpersList>(
             [&] AIPSTACK_TL(Helper,
         {
-            if (proto == Helper::IpProtocolNumber::Value) {
+            if (ip_info.proto == Helper::IpProtocolNumber::Value) {
                 Helper::get(ip_info.iface->m_stack)->recvIp4Dgram(
                     static_cast<IpRxInfoIp4<Arg> const &>(ip_info),
                     static_cast<IpBufRef>(dgram));
@@ -1089,7 +1088,7 @@ private:
         }
         
         // Handle ICMP packets.
-        if (proto == Ip4Protocol::Icmp) {
+        if (ip_info.proto == Ip4Protocol::Icmp) {
             return recvIcmp4Dgram(ip_info, dgram);
         }
     }
@@ -1189,8 +1188,8 @@ private:
         icmp4_header.set(Icmp4Header::Chksum(), calc_chksum);
         
         // Send the datagram.
-        return sendIp4Dgram(addrs, Ip4TtlProto{IcmpTTL, Ip4Protocol::Icmp},
-            dgram, iface, nullptr, IpSendFlags());        
+        return sendIp4Dgram(dgram, iface, /*retryReq=*/nullptr,
+            Ip4CommonSendParams{addrs, IcmpTTL, Ip4Protocol::Icmp, IpSendFlags()});
     }
     
     void handleIcmp4DestUnreach (
@@ -1205,7 +1204,8 @@ private:
         auto ip4_header = Ip4Header::MakeRef(icmp_data.getChunkPtr());
         std::uint8_t version_ihl = ip4_header.get(Ip4Header::VersionIhlDscpEcn()) >> 8;
         std::uint16_t total_len  = ip4_header.get(Ip4Header::TotalLen());
-        std::uint16_t ttl_proto  = ip4_header.get(Ip4Header::TtlProto());
+        std::uint8_t ttl         = ip4_header.get(Ip4Header::Ttl());
+        Ip4Protocol proto        = ip4_header.get(Ip4Header::Proto());
         Ip4Addr src_addr         = ip4_header.get(Ip4Header::SrcAddr());
         Ip4Addr dst_addr         = ip4_header.get(Ip4Header::DstAddr());
         
@@ -1232,7 +1232,7 @@ private:
         Ip4DestUnreachMeta du_meta = {code, rest};
         
         // Create the IpRxInfoIp4 struct.
-        IpRxInfoIp4<Arg> ip_info = {src_addr, dst_addr, ttl_proto, iface, header_len};
+        IpRxInfoIp4<Arg> ip_info{src_addr, dst_addr, ttl, proto, iface, header_len};
         
         // Get the included IP data.
         std::size_t data_len = MinValueU(icmp_data.tot_len, total_len) - header_len;
@@ -1240,7 +1240,7 @@ private:
         
         // Dispatch based on the protocol.
         ListForBreak<ProtocolHelpersList>([&] AIPSTACK_TL(Helper, {
-            if (ip_info.ttl_proto.proto() == Helper::IpProtocolNumber::Value) {
+            if (ip_info.proto == Helper::IpProtocolNumber::Value) {
                 Helper::get(this)->handleIp4DestUnreach(
                     static_cast<Ip4DestUnreachMeta const &>(du_meta),
                     static_cast<IpRxInfoIp4<Arg> const &>(ip_info),

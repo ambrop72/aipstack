@@ -178,9 +178,8 @@ public:
         udp_header.set(Udp4Header::Checksum(), checksum);
         
         // Send the datagram.
-        return proto().m_stack->sendIp4Dgram(
-            addrs, Ip4TtlProto{UdpTTL, Ip4Protocol::Udp},
-            dgram, iface, retryReq, send_flags);
+        return proto().m_stack->sendIp4Dgram(dgram, iface, retryReq,
+            Ip4CommonSendParams{addrs, UdpTTL, Ip4Protocol::Udp, send_flags});
     }
 };
 

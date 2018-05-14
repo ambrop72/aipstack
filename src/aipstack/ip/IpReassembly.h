@@ -161,8 +161,8 @@ public:
      * @param ident IP identification field.
      * @param src_addr Source address.
      * @param dst_addr Destination address.
-     * @param proto IP protocol number.
      * @param ttl Time-to-live.
+     * @param proto IP protocol number.
      * @param more_fragments More-fragments flag.
      * @param fragment_offset Fragment offset in bytes.
      * @param header Pointer to the IPv4 header (only the base header is used).
@@ -177,7 +177,7 @@ public:
      * @return True if a datagram was reassembled, false if not.
      */
     bool reassembleIp4 (std::uint16_t ident, Ip4Addr src_addr, Ip4Addr dst_addr,
-        Ip4Protocol proto, std::uint8_t ttl, bool more_fragments,
+        std::uint8_t ttl, Ip4Protocol proto, bool more_fragments,
         std::uint16_t fragment_offset, char const *header, IpBufRef &dgram)
     {
         AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>())
@@ -406,7 +406,7 @@ private:
             if (reass_hdr.get(Ip4Header::Ident())   == ident &&
                 reass_hdr.get(Ip4Header::SrcAddr()) == src_addr &&
                 reass_hdr.get(Ip4Header::DstAddr()) == dst_addr &&
-                Ip4Protocol(reass_hdr.get(Ip4Header::TtlProto()) & 0xFF) == proto)
+                reass_hdr.get(Ip4Header::Proto())   == proto)
             {
                 found_entry = &reass;
             }
