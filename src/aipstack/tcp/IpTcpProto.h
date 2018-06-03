@@ -54,6 +54,7 @@
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/tcp/TcpUtils.h>
+#include <aipstack/tcp/TcpState.h>
 #include <aipstack/tcp/TcpPcbFlags.h>
 #include <aipstack/tcp/TcpOosBuffer.h>
 #include <aipstack/tcp/TcpApi.h>
@@ -99,9 +100,7 @@ class IpTcpProto :
     using Input = IpTcpProto_input<Arg>;
     using Output = IpTcpProto_output<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (TcpState, TcpOptions, PcbKey, PcbKeyCompare, SeqType))
-    AIPSTACK_USE_VALS(TcpUtils, (state_is_active, accepting_data_in_state,
-                                 snd_open_in_state))
+    AIPSTACK_USE_TYPES(TcpUtils, (TcpOptions, PcbKey, PcbKeyCompare, SeqType))
     AIPSTACK_USE_TYPES(Constants, (RttType))
     
     struct TcpPcb;
@@ -176,7 +175,7 @@ class IpTcpProto :
         inline TcpPcb (typename IpTcpProto::Platform platform_, IpTcpProto *tcp_) :
             PcbMultiTimer(platform_),
             tcp(tcp_),
-            state(TcpState::CLOSED)
+            state_val(TcpStates::CLOSED.value())
         {
             con = nullptr;
             
@@ -186,7 +185,7 @@ class IpTcpProto :
         
         inline ~TcpPcb ()
         {
-            AIPSTACK_ASSERT(state != TcpState::SYN_RCVD)
+            AIPSTACK_ASSERT(state() != TcpStates::SYN_RCVD)
             AIPSTACK_ASSERT(con == nullptr)
         }
         
@@ -242,7 +241,7 @@ class IpTcpProto :
         std::uint32_t flags : TcpPcbFlagsBits;
         
         // PCB state.
-        std::uint32_t state : TcpUtils::TcpStateBits;
+        std::uint32_t state_val : TcpState::Bits;
         
         // Number of duplicate ACKs (>=FastRtxDupAcks means we're in fast recovery).
         std::uint32_t num_dupack : Constants::DupAckBits;
@@ -252,7 +251,7 @@ class IpTcpProto :
         std::uint32_t rcv_wnd_shift : 4;
         
         // Convenience functions for flags.
-        inline bool hasFlag (TcpPcbFlags flag) {
+        inline bool hasFlag (TcpPcbFlags flag) const {
             return (TcpPcbFlags(flags) & flag) != EnumZero;
         }
         inline void setFlag (TcpPcbFlags flag) {
@@ -271,6 +270,14 @@ class IpTcpProto :
                 return true;
             }
             return false;
+        }
+
+        inline TcpState state () const {
+            return TcpState(TcpState::ValueType(state_val));
+        }
+
+        inline void setState (TcpState state) {
+            state_val = state.value();
         }
         
         // Check if we are called from PCB input processing (pcb_input).
@@ -382,7 +389,7 @@ private:
         AIPSTACK_ASSERT(pcb_is_in_unreferenced_list(pcb))
         
         // Abort the PCB if it's not closed.
-        if (pcb->state != TcpState::CLOSED) {
+        if (pcb->state() != TcpStates::CLOSED) {
             pcb_abort(pcb);
         } else {
             pcb_assert_closed(pcb);
@@ -398,7 +405,7 @@ private:
         AIPSTACK_ASSERT(!pcb->tim(RtxTimer()).isSet())
         AIPSTACK_ASSERT(!pcb->IpSendRetryRequest::isActive())
         AIPSTACK_ASSERT(pcb->tcp == this)
-        AIPSTACK_ASSERT(pcb->state == TcpState::CLOSED)
+        AIPSTACK_ASSERT(pcb->state() == TcpStates::CLOSED)
         AIPSTACK_ASSERT(pcb->con == nullptr)
         (void)pcb;
     }
@@ -407,15 +414,15 @@ private:
     {
         // This function aborts a PCB while sending an RST in
         // all states except these.
-        bool send_rst = pcb->state !=
-            OneOf(TcpState::SYN_SENT, TcpState::SYN_RCVD, TcpState::TIME_WAIT);
+        bool send_rst = pcb->state() !=
+            OneOf(TcpStates::SYN_SENT, TcpStates::SYN_RCVD, TcpStates::TIME_WAIT);
         
         pcb_abort(pcb, send_rst);
     }
     
     static void pcb_abort (TcpPcb *pcb, bool send_rst)
     {
-        AIPSTACK_ASSERT(pcb->state != TcpState::CLOSED)
+        AIPSTACK_ASSERT(pcb->state() != TcpStates::CLOSED)
         IpTcpProto *tcp = pcb->tcp;
         
         // Send RST if desired.
@@ -423,7 +430,7 @@ private:
             Output::pcb_send_rst(pcb);
         }
         
-        if (pcb->state == TcpState::SYN_RCVD) {
+        if (pcb->state() == TcpStates::SYN_RCVD) {
             // Disassociate the Listener.
             pcb_unlink_lis(pcb);
         } else {
@@ -440,7 +447,7 @@ private:
         }
         
         // Remove the PCB from the index in which it is.
-        if (pcb->state == TcpState::TIME_WAIT) {
+        if (pcb->state() == TcpStates::TIME_WAIT) {
             tcp->m_pcb_index_timewait.removeEntry({*pcb, *tcp}, *tcp);
         } else {
             tcp->m_pcb_index_active.removeEntry({*pcb, *tcp}, *tcp);
@@ -455,7 +462,7 @@ private:
         // Reset other relevant fields to initial state.
         pcb->PcbMultiTimer::unsetAll();
         pcb->IpSendRetryRequest::reset();
-        pcb->state = TcpState::CLOSED;
+        pcb->setState(TcpStates::CLOSED);
         
         tcp->pcb_assert_closed(pcb);
     }
@@ -464,8 +471,8 @@ private:
     // We are okay because this is only called from pcb_input.
     static void pcb_go_to_time_wait (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state != OneOf(TcpState::CLOSED, TcpState::SYN_RCVD,
-                                         TcpState::TIME_WAIT))
+        AIPSTACK_ASSERT(pcb->state() !=
+            OneOf(TcpStates::CLOSED, TcpStates::SYN_RCVD, TcpStates::TIME_WAIT))
         
         // Disassociate any Connection. This will call the
         // connectionAborted callback if we do have a Connection.
@@ -478,7 +485,7 @@ private:
         pcb->snd_nxt = pcb->snd_una;
         
         // Change state.
-        pcb->state = TcpState::TIME_WAIT;
+        pcb->setState(TcpStates::TIME_WAIT);
         
         // Move the PCB from the active index to the time-wait index.
         IpTcpProto *tcp = pcb->tcp;
@@ -500,10 +507,10 @@ private:
     // We are okay because this is only called from pcb_input.
     static void pcb_go_to_fin_wait_2 (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state == TcpState::FIN_WAIT_1)
+        AIPSTACK_ASSERT(pcb->state() == TcpStates::FIN_WAIT_1)
         
         // Change state.
-        pcb->state = TcpState::FIN_WAIT_2;
+        pcb->setState(TcpStates::FIN_WAIT_2);
         
         // Stop these timers due to asserts in their handlers.
         pcb->tim(OutputTimer()).unset();
@@ -520,7 +527,7 @@ private:
     
     static void pcb_unlink_con (TcpPcb *pcb, bool closing)
     {
-        AIPSTACK_ASSERT(pcb->state != OneOf(TcpState::CLOSED, TcpState::SYN_RCVD))
+        AIPSTACK_ASSERT(pcb->state() != OneOf(TcpStates::CLOSED, TcpStates::SYN_RCVD))
         
         if (pcb->con != nullptr) {
             // Inform the connection object about the aborting.
@@ -546,7 +553,7 @@ private:
     
     static void pcb_unlink_lis (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state == TcpState::SYN_RCVD)
+        AIPSTACK_ASSERT(pcb->state() == TcpStates::SYN_RCVD)
         AIPSTACK_ASSERT(pcb->lis != nullptr)
         
         Listener *lis = pcb->lis;
@@ -575,7 +582,7 @@ private:
     // is abandoning the PCB.
     static void pcb_abandoned (TcpPcb *pcb, bool rst_needed, SeqType rcv_ann_thres)
     {
-        AIPSTACK_ASSERT(pcb->state == TcpState::SYN_SENT || state_is_active(pcb->state))
+        AIPSTACK_ASSERT(pcb->state() == TcpStates::SYN_SENT || pcb->state().isActive())
         AIPSTACK_ASSERT(pcb->con == nullptr) // Connection just cleared it
         IpTcpProto *tcp = pcb->tcp;
         
@@ -593,7 +600,7 @@ private:
         // Abort if in SYN_SENT state or some data is queued or some data was received but
         // not processed by the application. The pcb_abort() will decide whether to send an
         // RST (no RST in SYN_SENT, RST otherwise).
-        if (pcb->state == TcpState::SYN_SENT || rst_needed) {
+        if (pcb->state() == TcpStates::SYN_SENT || rst_needed) {
             return pcb_abort(pcb);
         }
         
@@ -605,13 +612,13 @@ private:
         }
         
         // Arrange for sending the FIN.
-        if (snd_open_in_state(pcb->state)) {
+        if (pcb->state().isSndOpen()) {
             Output::pcb_end_sending(pcb);
         }
         
         // If we haven't received a FIN, possibly announce more window
         // to encourage the peer to send its outstanding data/FIN.
-        if (accepting_data_in_state(pcb->state)) {
+        if (pcb->state().isAcceptingData()) {
             Input::pcb_update_rcv_wnd_after_abandoned(pcb, rcv_ann_thres);
         }
         
@@ -623,7 +630,7 @@ private:
     
     static void pcb_abrt_timer_handler (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state != TcpState::CLOSED)
+        AIPSTACK_ASSERT(pcb->state() != TcpStates::CLOSED)
         
         // Abort the PCB.
         pcb_abort(pcb);
@@ -667,7 +674,7 @@ private:
     {
         // Abort any PCBs associated with the listener (without RST).
         for (TcpPcb &pcb : m_pcbs) {
-            if (pcb.state == TcpState::SYN_RCVD && pcb.lis == lis) {
+            if (pcb.state() == TcpStates::SYN_RCVD && pcb.lis == lis) {
                 pcb_abort(&pcb, false);
             }
         }
@@ -723,7 +730,7 @@ private:
         SeqType rcv_wnd = 1 + MinValueU(std::uint16_t(TypeMax<std::uint16_t>() - 1), user_rcv_wnd);
         
         // Initialize most of the PCB.
-        pcb->state = TcpState::SYN_SENT;
+        pcb->setState(TcpStates::SYN_SENT);
         // WND_SCALE to send the window scale option
         pcb->flags = AsUnderlying(TcpPcbFlags::WND_SCALE);
         pcb->con = con;
@@ -781,8 +788,8 @@ private:
     
     inline static bool pcb_is_in_unreferenced_list (TcpPcb *pcb)
     {
-        return pcb->state == TcpState::SYN_RCVD ? pcb->lis->m_accept_pcb != pcb
-                                                : pcb->con == nullptr;
+        return pcb->state() == TcpStates::SYN_RCVD ?
+            pcb->lis->m_accept_pcb != pcb : pcb->con == nullptr;
     }
     
     void move_unrefed_pcb_to_front (TcpPcb *pcb)
@@ -801,12 +808,12 @@ private:
         // Look in the active index first.
         TcpPcb *pcb = m_pcb_index_active.findEntry(key, *this);
         AIPSTACK_ASSERT(pcb == nullptr ||
-                     pcb->state != OneOf(TcpState::CLOSED, TcpState::TIME_WAIT))
+                        pcb->state() != OneOf(TcpStates::CLOSED, TcpStates::TIME_WAIT))
         
         // If not found, look in the time-wait index.
         if (AIPSTACK_UNLIKELY(pcb == nullptr)) {
             pcb = m_pcb_index_timewait.findEntry(key, *this);
-            AIPSTACK_ASSERT(pcb == nullptr || pcb->state == TcpState::TIME_WAIT)
+            AIPSTACK_ASSERT(pcb == nullptr || pcb->state() == TcpStates::TIME_WAIT)
         }
         
         return pcb;

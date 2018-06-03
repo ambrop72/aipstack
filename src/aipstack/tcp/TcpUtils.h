@@ -31,7 +31,6 @@
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MinMax.h>
-#include <aipstack/misc/OneOf.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Struct.h>
 #include <aipstack/proto/Tcp4Proto.h>
@@ -42,43 +41,6 @@ namespace AIpStack {
 class TcpUtils {
 public:
     using SeqType = std::uint32_t;
-    
-private:
-    static std::uint8_t const Bit0 = 1 << 0;
-    static std::uint8_t const Bit1 = 1 << 1;
-    static std::uint8_t const Bit2 = 1 << 2;
-    static std::uint8_t const Bit3 = 1 << 3;
-    
-public:
-    /**
-     * TCP states.
-     * 
-     * ATTENTION: The bit values are carefully crafted to allow
-     * efficient implementation of the following state predicates:
-     * - state_is_synsent_synrcvd,
-     * - accepting_data_in_state,
-     * - can_output_in_state,
-     * - snd_open_in_state.
-     * 
-     * NOTE: the FIN_WAIT_2_TIME_WAIT state is not a standard TCP
-     * state but is used transiently when we were in FIN_WAIT_2 and
-     * have just received a FIN, but we will only go to TIME_WAIT
-     * after calling callbacks.
-     */
-    enum TcpState : std::uint8_t {
-        CLOSED               = 0   |Bit2|0   |Bit0,
-        SYN_SENT             = Bit3|Bit2|0   |Bit0,
-        SYN_RCVD             = Bit3|Bit2|0   |0   ,
-        ESTABLISHED          = 0   |0   |0   |0   ,
-        CLOSE_WAIT           = 0   |0   |0   |Bit0,
-        LAST_ACK             = Bit3|0   |0   |0   ,
-        FIN_WAIT_1           = 0   |0   |Bit1|0   ,
-        FIN_WAIT_2           = 0   |Bit2|0   |0   ,
-        FIN_WAIT_2_TIME_WAIT = Bit3|Bit2|Bit1|Bit0,
-        CLOSING              = Bit3|0   |Bit1|Bit0,
-        TIME_WAIT            = Bit3|Bit2|Bit1|0   ,
-    };
-    static int const TcpStateBits = 4;
     
     struct TcpOptions;
     
@@ -146,40 +108,7 @@ public:
     {
         return tcp_data_len + ((flags & Tcp4Flags::SeqFlags) != EnumZero);
     }
-    
-    static inline bool state_is_active (std::uint8_t state)
-    {
-        return state != OneOf(TcpState::CLOSED, TcpState::SYN_SENT,
-                              TcpState::SYN_RCVD, TcpState::TIME_WAIT);
-    }
-    
-    static inline bool state_is_synsent_synrcvd (std::uint8_t state)
-    {
-        //return state == OneOf(TcpState::SYN_SENT, TcpState::SYN_RCVD);
-        return (state >> 1) == ((Bit3|Bit2) >> 1);
-    }
-    
-    static inline bool accepting_data_in_state (std::uint8_t state)
-    {
-        //return state == OneOf(TcpState::ESTABLISHED, TcpState::FIN_WAIT_1,
-        //                      TcpState::FIN_WAIT_2);
-        return (state & (Bit3|Bit0)) == 0;
-    }
-    
-    static inline bool can_output_in_state (std::uint8_t state)
-    {
-        //return state == OneOf(TcpState::ESTABLISHED, TcpState::FIN_WAIT_1,
-        //                      TcpState::CLOSING, TcpState::CLOSE_WAIT,
-        //                      TcpState::LAST_ACK);
-        return (state & Bit2) == 0;
-    }
-    
-    static inline bool snd_open_in_state (std::uint8_t state)
-    {
-        //return state == OneOf(TcpState::ESTABLISHED, TcpState::CLOSE_WAIT);
-        return (state >> 1) == 0;
-    }
-    
+        
     static inline void parse_options (IpBufRef buf, TcpOptions *out_opts)
     {
         // Clear options flags. Below we will set flags for options that we find.

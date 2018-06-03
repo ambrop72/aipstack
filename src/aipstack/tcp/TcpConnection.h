@@ -39,6 +39,7 @@
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpMtuRef.h>
 #include <aipstack/tcp/TcpUtils.h>
+#include <aipstack/tcp/TcpState.h>
 #include <aipstack/tcp/TcpListener.h>
 
 namespace AIpStack {
@@ -139,7 +140,7 @@ public:
     {
         assert_init();
         AIPSTACK_ASSERT(lis.m_accept_pcb != nullptr)
-        AIPSTACK_ASSERT(lis.m_accept_pcb->state == TcpUtils::TcpState::SYN_RCVD)
+        AIPSTACK_ASSERT(lis.m_accept_pcb->state() == TcpStates::SYN_RCVD)
         AIPSTACK_ASSERT(lis.m_accept_pcb->lis == &lis)
         
         TcpConPcb *pcb = lis.m_accept_pcb;
@@ -162,7 +163,7 @@ public:
         // unreferenced PCBs, so we must not try to remove it here.
         
         // Set the PCB state to ESTABLISHED.
-        pcb->state = TcpUtils::TcpState::ESTABLISHED;
+        pcb->setState(TcpStates::ESTABLISHED);
         
         // Associate with the PCB.
         m_v.pcb = pcb;
@@ -371,7 +372,7 @@ public:
         
         // In SYN_SENT we subtract one because one was added
         // by create_connection for receiving the SYN.
-        if (m_v.pcb->state == TcpUtils::TcpState::SYN_SENT) {
+        if (m_v.pcb->state() == TcpStates::SYN_SENT) {
             AIPSTACK_ASSERT(ann_wnd > 0)
             ann_wnd--;
         }
@@ -557,7 +558,7 @@ public:
         // Inform the output code, e.g. to adjust the PCB state
         // and send a FIN. But not in SYN_SENT, in that case the
         // input code will take care of it when the SYN is received.
-        if (m_v.pcb != nullptr && m_v.pcb->state != TcpUtils::TcpState::SYN_SENT) {
+        if (m_v.pcb != nullptr && m_v.pcb->state() != TcpStates::SYN_SENT) {
             TcpConOutput::pcb_end_sending(m_v.pcb);
         }
     }
@@ -601,7 +602,7 @@ public:
         m_v.snd_psh_index = m_v.snd_buf.tot_len;
         
         // Tell the output code to push, if necessary.
-        if (m_v.pcb != nullptr && TcpUtils::snd_open_in_state(m_v.pcb->state) &&
+        if (m_v.pcb != nullptr && m_v.pcb->state().isSndOpen() &&
             m_v.snd_buf.tot_len > 0)
         {
             TcpConOutput::pcb_push_output(m_v.pcb);
@@ -669,12 +670,12 @@ private:
     {
         AIPSTACK_ASSERT(m_v.started)
         AIPSTACK_ASSERT(m_v.pcb == nullptr ||
-                        m_v.pcb->state == TcpUtils::TcpState::SYN_SENT ||
-                        TcpUtils::state_is_active(m_v.pcb->state))
+                        m_v.pcb->state() == TcpStates::SYN_SENT ||
+                        m_v.pcb->state().isActive())
         AIPSTACK_ASSERT(m_v.pcb == nullptr || m_v.pcb->con == this)
         AIPSTACK_ASSERT(m_v.pcb == nullptr ||
-                        m_v.pcb->state == TcpUtils::TcpState::SYN_SENT ||
-                        TcpUtils::snd_open_in_state(m_v.pcb->state) == !m_v.snd_closed)
+                        m_v.pcb->state() == TcpStates::SYN_SENT ||
+                        m_v.pcb->state().isSndOpen() == !m_v.snd_closed)
     }
     
     void assert_connected () const

@@ -71,14 +71,14 @@ struct OneOfStruct<> {
 
 template <typename SelType, typename... OptRefType>
 AIPSTACK_ALWAYS_INLINE
-bool operator== (SelType const &sel, OneOfStruct<OptRefType...> opt_struct)
+constexpr bool operator== (SelType const &sel, OneOfStruct<OptRefType...> opt_struct)
 {
     return opt_struct.one_of(sel);
 }
 
 template <typename SelType, typename... OptRefType>
 AIPSTACK_ALWAYS_INLINE
-bool operator!= (SelType const &sel, OneOfStruct<OptRefType...> opt_struct)
+constexpr bool operator!= (SelType const &sel, OneOfStruct<OptRefType...> opt_struct)
 {
     return !opt_struct.one_of(sel);
 }

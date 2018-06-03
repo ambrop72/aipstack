@@ -832,6 +832,7 @@ EXCLUDE                = \
     src/aipstack/tcp/TcpOosBuffer.h \
     src/aipstack/tcp/TcpPcbFlags.h \
     src/aipstack/tcp/TcpUtils.h \
+    src/aipstack/tcp/TcpState.h \
     src/aipstack/tcp/TcpMultiTimer.h \
     src/aipstack/utils/TcpListenQueue.h \
     src/aipstack/utils/TcpRingBufferUtils.h \

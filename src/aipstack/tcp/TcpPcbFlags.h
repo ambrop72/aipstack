@@ -39,7 +39,7 @@ enum class TcpPcbFlags : TcpPcbFlagsBaseType {
     // ACK is needed; used in input processing
     ACK_PENDING = TcpPcbFlagsBaseType(1) << 0,
     // pcb_output_active/pcb_output_abandoned should be called at the end of
-    // input processing. This flag must imply can_output_in_state and
+    // input processing. This flag must imply state().canOutput() and
     // pcb_has_snd_outstanding at the point in pcb_input where it is checked.
     // Any change that would break this implication must clear the flag.
     OUT_PENDING = TcpPcbFlagsBaseType(1) << 1,
