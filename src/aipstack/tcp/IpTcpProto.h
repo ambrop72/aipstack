@@ -54,6 +54,7 @@
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/tcp/TcpUtils.h>
+#include <aipstack/tcp/TcpPcbFlags.h>
 #include <aipstack/tcp/TcpOosBuffer.h>
 #include <aipstack/tcp/TcpApi.h>
 #include <aipstack/tcp/TcpListener.h>

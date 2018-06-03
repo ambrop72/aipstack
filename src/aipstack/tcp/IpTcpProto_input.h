@@ -43,6 +43,7 @@
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/tcp/TcpUtils.h>
+#include <aipstack/tcp/TcpPcbFlags.h>
 
 namespace AIpStack {
 
