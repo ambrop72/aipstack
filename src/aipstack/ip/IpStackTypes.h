@@ -187,7 +187,7 @@ struct IpIfaceDriverState {
  * "IpStack::sendIp4Dgram" and @ref AIpStack::IpStack::prepareSendIp4Dgram
  * "IpStack::prepareSendIp4Dgram".
  * 
- * Operators provided by @ref AIPSTACK_ENUM_BITFIELD_OPS are available.
+ * Operators provided by @ref AIPSTACK_ENUM_BITFIELD are available.
  * 
  * Note that internally in the implementation, standard IP flags (as in the IP
  * header) are used with this enum type for performance reasons. To support this,
@@ -226,7 +226,7 @@ enum class IpSendFlags : std::uint16_t {
     AllFlags = AllowBroadcastFlag|AllowNonLocalSrc|DontFragmentFlag,
 };
 #ifndef IN_DOXYGEN
-AIPSTACK_ENUM_BITFIELD_OPS(IpSendFlags)
+AIPSTACK_ENUM_BITFIELD(IpSendFlags)
 #endif
 
 #ifndef IN_DOXYGEN

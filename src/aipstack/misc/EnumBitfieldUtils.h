@@ -37,7 +37,7 @@ namespace AIpStack {
  * @brief Bitwise and other operators for enum types
  * 
  * This module provides implementations of various operators for enum types with
- * bitfield semantics; see @ref AIPSTACK_ENUM_BITFIELD_OPS.
+ * bitfield semantics; see @ref AIPSTACK_ENUM_BITFIELD.
  * @{
  */
 
@@ -61,7 +61,7 @@ class EnableEnumBitfield;
  *     Field2 = 1 << 1,
  *     Field3 = 1 << 2,
  * };
- * AIPSTACK_ENUM_BITFIELD_OPS(MyBitfield)
+ * AIPSTACK_ENUM_BITFIELD(MyBitfield)
  * ```
  * 
  * After this macro is invoked, the following bitwise operators will be available for
@@ -84,10 +84,10 @@ class EnableEnumBitfield;
  * @param EnumType Enum type to define operators for.
  */
 #ifdef IN_DOXYGEN
-#define AIPSTACK_ENUM_BITFIELD_OPS(EnumType) implementation_hidden
+#define AIPSTACK_ENUM_BITFIELD(EnumType) implementation_hidden
 #else
-#define AIPSTACK_ENUM_BITFIELD_OPS(EnumType) \
-static_assert(std::is_enum<EnumType>::value, "AIPSTACK_ENUM_BITFIELD_OPS: not an enum"); \
+#define AIPSTACK_ENUM_BITFIELD(EnumType) \
+static_assert(std::is_enum<EnumType>::value, "AIPSTACK_ENUM_BITFIELD: not an enum"); \
 template <> \
 class EnableEnumBitfield<EnumType> { \
 public: \

@@ -145,7 +145,7 @@ public:
  * those events could result in an infinite loop. On the other hand, the `Read` and `Write`
  * events are filtered such that they are only reported when they are requested.
  * 
- * Operators provided by @ref AIPSTACK_ENUM_BITFIELD_OPS are available.
+ * Operators provided by @ref AIPSTACK_ENUM_BITFIELD are available.
  */
 enum class EventLoopFdEvents {
     Zero  = 0, /**< Zero value representing no events. */
@@ -156,7 +156,7 @@ enum class EventLoopFdEvents {
     All   = Read|Write|Error|Hup, /**< Mask of all above event types listed above. */
 };
 #ifndef IN_DOXYGEN
-AIPSTACK_ENUM_BITFIELD_OPS(EventLoopFdEvents)
+AIPSTACK_ENUM_BITFIELD(EventLoopFdEvents)
 #endif
 
 #ifndef IN_DOXYGEN

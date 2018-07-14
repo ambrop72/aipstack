@@ -45,7 +45,7 @@ namespace AIpStack {
  * specific signals in facilities such as @ref SignalCollector and @ref
  * nativeNameForSignalType does.
  * 
- * Operators provided by @ref AIPSTACK_ENUM_BITFIELD_OPS are available.
+ * Operators provided by @ref AIPSTACK_ENUM_BITFIELD are available.
  */
 enum class SignalType {
     /** Zero value represening no signals. */
@@ -79,7 +79,7 @@ enum class SignalType {
     ExitSignals  = Interrupt|Terminate|Hangup|Quit|Break,
 };
 #ifndef IN_DOXYGEN
-AIPSTACK_ENUM_BITFIELD_OPS(SignalType)
+AIPSTACK_ENUM_BITFIELD(SignalType)
 #endif
 
 /**

@@ -42,7 +42,7 @@ enum class TcpOptionFlags : std::uint8_t {
     MSS       = 1 << 0,
     WND_SCALE = 1 << 1,
 };
-AIPSTACK_ENUM_BITFIELD_OPS(TcpOptionFlags)
+AIPSTACK_ENUM_BITFIELD(TcpOptionFlags)
 
 // Container for TCP options that we care about.
 struct TcpOptions {

@@ -45,7 +45,7 @@ enum class Ip4Flags : std::uint16_t {
     MF = std::uint16_t(1) << 13,
     OffsetMask = 0x1fff,
 };
-AIPSTACK_ENUM_BITFIELD_OPS(Ip4Flags)
+AIPSTACK_ENUM_BITFIELD(Ip4Flags)
 
 AIPSTACK_DEFINE_STRUCT(Ip4Header,
     (VersionIhlDscpEcn, std::uint16_t)

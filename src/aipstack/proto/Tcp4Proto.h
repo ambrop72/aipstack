@@ -48,7 +48,7 @@ enum class Tcp4Flags : std::uint16_t {
     BasicFlags = Fin|Syn|Rst|Ack,
     SeqFlags = Fin|Syn,
 };
-AIPSTACK_ENUM_BITFIELD_OPS(Tcp4Flags)
+AIPSTACK_ENUM_BITFIELD(Tcp4Flags)
 
 static int const TcpOffsetShift = 12;
 

@@ -69,7 +69,7 @@ enum class TcpPcbFlags : TcpPcbFlagsBaseType {
     RCV_WND_UPD = TcpPcbFlagsBaseType(1) << 13,
     // NOTE: Currently no more bits are available, see TcpPcb::flags.
 };
-AIPSTACK_ENUM_BITFIELD_OPS(TcpPcbFlags)
+AIPSTACK_ENUM_BITFIELD(TcpPcbFlags)
 
 }
 
