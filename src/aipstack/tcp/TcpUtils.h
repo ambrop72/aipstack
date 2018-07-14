@@ -35,21 +35,20 @@
 #include <aipstack/infra/Struct.h>
 #include <aipstack/proto/Tcp4Proto.h>
 #include <aipstack/ip/IpAddr.h>
+#include <aipstack/tcp/TcpSeqNum.h>
 
 namespace AIpStack {
 
 class TcpUtils {
 public:
-    using SeqType = std::uint32_t;
-    
     struct TcpOptions;
     
     // Container for data in the TCP header (used both in RX and TX).
     struct TcpSegMeta {
         PortNum local_port;
         PortNum remote_port;
-        SeqType seq_num;
-        SeqType ack_num;
+        TcpSeqNum seq_num;
+        TcpSeqNum ack_num;
         std::uint16_t window_size;
         Tcp4Flags flags;
         TcpOptions *opts; // not used for RX (undefined), may be null for TX
@@ -67,42 +66,6 @@ public:
         std::uint8_t wnd_scale;
         std::uint16_t mss;
     };
-    
-    static SeqType const SeqMSB = SeqType(1) << 31;
-    
-    static inline SeqType seq_add (SeqType op1, SeqType op2)
-    {
-        return SeqType(op1 + op2);
-    }
-    
-    static inline SeqType seq_diff (SeqType op1, SeqType op2)
-    {
-        return SeqType(op1 - op2);
-    }
-    
-    static inline SeqType seq_add_sat (SeqType op1, SeqType op2)
-    {
-        SeqType sum = op1 + op2;
-        if (sum < op2) {
-            sum = TypeMax<std::uint32_t>();
-        }
-        return sum;
-    }
-    
-    static inline bool seq_lte (SeqType op1, SeqType op2, SeqType ref)
-    {
-        return (seq_diff(op1, ref) <= seq_diff(op2, ref));
-    }
-    
-    static inline bool seq_lt (SeqType op1, SeqType op2, SeqType ref)
-    {
-        return (seq_diff(op1, ref) < seq_diff(op2, ref));
-    }
-    
-    static inline bool seq_lt2 (SeqType op1, SeqType op2)
-    {
-        return seq_diff(op1, op2) >= SeqMSB;
-    }
     
     static inline std::size_t tcplen (Tcp4Flags flags, std::size_t tcp_data_len)
     {
@@ -224,16 +187,16 @@ public:
         return true;
     }
     
-    static SeqType calc_initial_cwnd (std::uint16_t snd_mss)
+    static TcpSeqInt calc_initial_cwnd (std::uint16_t snd_mss)
     {
         if (snd_mss > 2190) {
-            return 2 * SeqType(snd_mss);
+            return 2u * TcpSeqInt(snd_mss);
         }
         else if (snd_mss > 1095) {
-            return 3 * SeqType(snd_mss);
+            return 3u * TcpSeqInt(snd_mss);
         }
         else {
-            return 4 * SeqType(snd_mss);
+            return 4u * TcpSeqInt(snd_mss);
         }
     }
     

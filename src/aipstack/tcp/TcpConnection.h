@@ -38,8 +38,8 @@
 #include <aipstack/infra/Err.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpMtuRef.h>
-#include <aipstack/tcp/TcpUtils.h>
 #include <aipstack/tcp/TcpState.h>
+#include <aipstack/tcp/TcpSeqNum.h>
 #include <aipstack/tcp/TcpListener.h>
 
 namespace AIpStack {
@@ -331,7 +331,7 @@ public:
      * May only be called in CONNECTED or CLOSED state.
      * The threshold value must be positive and not exceed MaxRcvWnd.
      */
-    void setWindowUpdateThreshold (TcpUtils::SeqType rcv_ann_thres)
+    void setWindowUpdateThreshold (TcpSeqInt rcv_ann_thres)
     {
         assert_started();
         AIPSTACK_ASSERT(rcv_ann_thres > 0)
@@ -351,10 +351,10 @@ public:
     {
         AIPSTACK_ASSERT(div >= 2)
         using UInt = unsigned int;
-        using SeqType = TcpUtils::SeqType;
         
-        SeqType max_rx_window = MinValueU(buffer_size, TcpApi<Arg>::MaxRcvWnd);
-        SeqType thres = MaxValue(SeqType(1), SeqType(max_rx_window / UInt(div)));
+        TcpSeqInt max_rx_window = MinValueU(buffer_size, TcpApi<Arg>::MaxRcvWnd);
+        TcpSeqInt thres = MaxValue(TcpSeqInt(1), TcpSeqInt(max_rx_window / UInt(div)));
+        
         setWindowUpdateThreshold(thres);
     }
     
@@ -368,17 +368,17 @@ public:
     {
         assert_connected();
         
-        TcpUtils::SeqType ann_wnd = m_v.pcb->rcv_ann_wnd;
+        TcpSeqInt ann_wnd = m_v.pcb->rcv_ann_wnd;
         
         // In SYN_SENT we subtract one because one was added
         // by create_connection for receiving the SYN.
         if (m_v.pcb->state() == TcpStates::SYN_SENT) {
             AIPSTACK_ASSERT(ann_wnd > 0)
-            ann_wnd--;
+            ann_wnd -= 1u;
         }
         
         AIPSTACK_ASSERT(ann_wnd <= TypeMax<std::size_t>())
-        return ann_wnd;
+        return std::size_t(ann_wnd);
     }
     
     /**
@@ -807,17 +807,17 @@ private:
         IpBufRef snd_buf;
         IpBufRef rcv_buf;
         IpBufRef snd_buf_cur;
-        TcpUtils::SeqType snd_wnd : 30;
-        TcpUtils::SeqType started : 1;
-        TcpUtils::SeqType snd_closed : 1;
-        TcpUtils::SeqType cwnd;
-        TcpUtils::SeqType ssthresh;
-        TcpUtils::SeqType cwnd_acked;
-        TcpUtils::SeqType recover;
-        TcpUtils::SeqType rcv_ann_thres : 30;
-        TcpUtils::SeqType end_sent : 1;
-        TcpUtils::SeqType end_received : 1;
-        TcpUtils::SeqType rtt_test_seq;
+        TcpSeqInt snd_wnd : 30;
+        TcpSeqInt started : 1;
+        TcpSeqInt snd_closed : 1;
+        TcpSeqInt cwnd;
+        TcpSeqInt ssthresh;
+        TcpSeqInt cwnd_acked;
+        TcpSeqNum recover;
+        TcpSeqInt rcv_ann_thres : 30;
+        TcpSeqInt end_sent : 1;
+        TcpSeqInt end_received : 1;
+        TcpSeqNum rtt_test_seq;
         typename TcpConConstants::RttType rttvar;
         typename TcpConConstants::RttType srtt;
         TcpConOosBuffer ooseq;

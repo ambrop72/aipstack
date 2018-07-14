@@ -44,6 +44,7 @@
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/tcp/TcpUtils.h>
 #include <aipstack/tcp/TcpState.h>
+#include <aipstack/tcp/TcpSeqNum.h>
 #include <aipstack/tcp/TcpPcbFlags.h>
 
 namespace AIpStack {
@@ -57,8 +58,8 @@ class IpTcpProto_input
 {
     using TcpProto = IpTcpProto<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (SeqType, TcpSegMeta, TcpOptions, OptionFlags))
-    AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lte, seq_lt2, tcplen))
+    AIPSTACK_USE_TYPES(TcpUtils, (TcpSegMeta, TcpOptions, OptionFlags))
+    AIPSTACK_USE_VALS(TcpUtils, (tcplen))
     AIPSTACK_USE_TYPES(TcpProto, (Listener, Connection, TcpPcb, Output, Constants,
                                   AbrtTimer, RtxTimer, OutputTimer, StackArg))
     AIPSTACK_USE_VALS(TcpProto, (pcb_aborted_in_callback))
@@ -171,7 +172,7 @@ public:
         auto tcp_header = Tcp4Header::MakeRef(dgram_initial.getChunkPtr());
         PortNum local_port   = tcp_header.get(Tcp4Header::SrcPort());
         PortNum remote_port  = tcp_header.get(Tcp4Header::DstPort());
-        SeqType seq_num      = tcp_header.get(Tcp4Header::SeqNum());
+        TcpSeqNum seq_num    = tcp_header.get(Tcp4Header::SeqNum());
         
         // Look for a PCB associated with these addresses.
         TcpPcb *pcb = tcp->find_pcb({ip_info.src_addr, ip_info.dst_addr,
@@ -182,7 +183,7 @@ public:
         
         // Check that the PCB state is one where output is possible and that the
         // received sequence number is between snd_una and snd_nxt inclusive.
-        if (!pcb->state().canOutput() || !seq_lte(seq_num, pcb->snd_nxt, pcb->snd_una)) {
+        if (!pcb->state().canOutput() || !pcb->snd_una.ref_lte(seq_num, pcb->snd_nxt)) {
             return;
         }
         
@@ -242,7 +243,7 @@ public:
                 AIPSTACK_ASSERT(pcb->con != nullptr)
                 
                 // Calculate how much window can be announced and bump rcv_ann_wnd.
-                SeqType ann_wnd = pcb_calc_wnd_update(pcb);
+                TcpSeqInt ann_wnd = pcb_calc_wnd_update(pcb);
                 if (ann_wnd > pcb->rcv_ann_wnd) {
                     pcb->rcv_ann_wnd = ann_wnd;
                 }
@@ -272,7 +273,7 @@ public:
         
         if (AIPSTACK_LIKELY(pcb->state().isAcceptingData())) {
             // Calculate how much window we could announce.
-            SeqType ann_wnd = pcb_calc_wnd_update(pcb);
+            TcpSeqInt ann_wnd = pcb_calc_wnd_update(pcb);
             
             // If we can announce at least rcv_ann_thres more window than
             // already announced then we need to send an ACK immediately.
@@ -295,22 +296,21 @@ public:
         }
     }
     
-    static void pcb_update_rcv_wnd_after_abandoned (TcpPcb *pcb, SeqType rcv_ann_thres)
+    static void pcb_update_rcv_wnd_after_abandoned (TcpPcb *pcb, TcpSeqInt rcv_ann_thres)
     {
         AIPSTACK_ASSERT(pcb->state().isAcceptingData())
         
         // This is our heuristic for the window increment.
-        SeqType min_window =
-            MaxValue(rcv_ann_thres, Constants::MinAbandonRcvWndIncr);
+        TcpSeqInt min_window = MaxValue(rcv_ann_thres, Constants::MinAbandonRcvWndIncr);
         
         // Make sure it fits in std::size_t (relevant if std::size_t is 16-bit),
         // to ensure the invariant that rcv_ann_wnd always fits in std::size_t.
-        if (TypeMax<std::size_t>() < TypeMax<std::uint32_t>()) {
+        if (TypeMax<std::size_t>() < TypeMax<TcpSeqInt>()) {
             min_window = MinValueU(min_window, TypeMax<std::size_t>());
         }
         
         // Round up to the nearest window that can be advertised.
-        SeqType scale_mask = (SeqType(1) << pcb->rcv_wnd_shift) - 1;
+        TcpSeqInt scale_mask = (TcpSeqInt(1) << pcb->rcv_wnd_shift) - 1u;
         min_window = (min_window + scale_mask) & ~scale_mask;
         
         // Make sure we do not set rcv_ann_wnd to more than can be announced.
@@ -351,7 +351,7 @@ public:
         
         // Read the snd_wnd which was temporarily stuffed to snd_una
         // (pcb_input_syn_sent_rcvd_processing), and restore snd_una
-        SeqType snd_wnd = pcb->snd_una;
+        TcpSeqInt snd_wnd = pcb->snd_una.value();
         pcb->snd_una = pcb->snd_nxt;
         
         // Initialize some variables.
@@ -407,14 +407,14 @@ private:
             }
             
             // Generate an initial sequence number.
-            SeqType iss = tcp->make_iss();
+            TcpSeqNum iss = tcp->make_iss();
             
             // Initially advertised receive window, at most 16-bit wide since
             // SYN-ACK segments have unscaled window.
             // NOTE: rcv_ann_wnd fits into size_t as required since m_initial_rcv_wnd
             // also does (Listener::setInitialReceiveWindow).
             AIPSTACK_ASSERT(lis->m_initial_rcv_wnd <= TypeMax<std::size_t>())
-            SeqType rcv_wnd = MinValueU(TypeMax<std::uint16_t>(), lis->m_initial_rcv_wnd);
+            TcpSeqInt rcv_wnd = MinValueU(lis->m_initial_rcv_wnd, TypeMax<std::uint16_t>());
             
             // Initialize most of the PCB.
             pcb->setState(TcpStates::SYN_RCVD);
@@ -424,7 +424,7 @@ private:
             pcb->remote_addr = ip_info.src_addr;
             pcb->local_port = tcp_meta.local_port;
             pcb->remote_port = tcp_meta.remote_port;
-            pcb->rcv_nxt = seq_add(tcp_meta.seq_num, 1);
+            pcb->rcv_nxt = tcp_meta.seq_num + 1u;
             pcb->rcv_ann_wnd = rcv_wnd;
             pcb->snd_una = iss;
             pcb->snd_nxt = iss;
@@ -511,9 +511,9 @@ private:
         // - Check acceptability.
         // - Trim segment into window.
         // - Check ACK validity.
-        SeqType eff_rel_seq;
+        TcpSeqInt eff_rel_seq;
         bool seg_fin;
-        SeqType acked;
+        TcpSeqInt acked;
         if (!pcb_input_basic_processing(pcb, tcp_meta, tcp_data, eff_rel_seq,
                                         seg_fin, acked))
         {
@@ -568,8 +568,7 @@ private:
     }
     
     static bool pcb_input_basic_processing (TcpPcb *pcb, TcpSegMeta const &tcp_meta,
-                                            IpBufRef &tcp_data, SeqType &eff_rel_seq,
-                                            bool &seg_fin, SeqType &acked)
+        IpBufRef &tcp_data, TcpSeqInt &eff_rel_seq, bool &seg_fin, TcpSeqInt &acked)
     {
         // Get the RST, SYN and ACK flags.
         Tcp4Flags rst_syn_ack =
@@ -593,7 +592,8 @@ private:
             // We require that the ACK acknowledges the SYN. We must also
             // check that we have event sent the SYN (snd_nxt).
             if (pcb->snd_nxt == pcb->snd_una || tcp_meta.ack_num != pcb->snd_nxt) {
-                Output::send_rst(pcb->tcp, *pcb, tcp_meta.ack_num, false, 0);
+                Output::send_rst(pcb->tcp, /*key=*/*pcb,
+                    /*seq_num=*/tcp_meta.ack_num, /*ack=*/false, /*ack_num=*/TcpSeqNum(0));
                 return false;
             }
             
@@ -601,10 +601,12 @@ private:
             acked = 1;
         } else {
             // Calculate the right edge of the receive window.
-            SeqType rcv_wnd = pcb->rcv_ann_wnd;
-            if (AIPSTACK_LIKELY(pcb->state() != TcpStates::SYN_RCVD && pcb->con != nullptr)) {
+            TcpSeqInt rcv_wnd = pcb->rcv_ann_wnd;
+            if (AIPSTACK_LIKELY(
+                pcb->state() != TcpStates::SYN_RCVD && pcb->con != nullptr))
+            {
                 std::size_t rcv_buf_len = pcb->con->m_v.rcv_buf.tot_len;
-                SeqType avail_wnd = MinValueU(rcv_buf_len, Constants::MaxWindow);
+                TcpSeqInt avail_wnd = MinValueU(rcv_buf_len, Constants::MaxWindow);
                 rcv_wnd = MaxValue(rcv_wnd, avail_wnd);
             }
             
@@ -612,7 +614,7 @@ private:
             // and also tcp_data will be modified below if the segment is trimmed.
             // At this point eff_rel_seq may be "negative" (very large) but that would
             // be resolved.
-            eff_rel_seq = seq_diff(tcp_meta.seq_num, pcb->rcv_nxt);
+            eff_rel_seq = tcp_meta.seq_num - pcb->rcv_nxt;
             seg_fin = (tcp_meta.flags & Tcp4Flags::Fin) != EnumZero;
             
             // Sequence length of segment (data+FIN). Note that we cannot have
@@ -639,7 +641,7 @@ private:
                 // is within the receive window. In SYN_RCVD we could be more strict
                 // and not allow data before the SYN, but for performance reasons
                 // we check that later in pcb_input_syn_sent_rcvd_processing.
-                SeqType last_rel_seq = seq_diff(seq_add(eff_rel_seq, SeqType(seqlen)), 1);
+                TcpSeqInt last_rel_seq = TcpSeqInt(TcpSeqInt(eff_rel_seq + seqlen) - 1u);
                 bool left_edge_in_window = eff_rel_seq < rcv_wnd;
                 bool right_edge_in_window = last_rel_seq < rcv_wnd;
                 
@@ -651,22 +653,22 @@ private:
                     if (left_edge_in_window) {
                         // The segment contains some extra data beyond the receive window,
                         // remove this data from the end.
-                        SeqType left_keep = seq_diff(rcv_wnd, eff_rel_seq);
+                        TcpSeqInt left_keep = rcv_wnd - eff_rel_seq;
                         AIPSTACK_ASSERT(left_keep > 0)   // because left_edge_in_window
                         AIPSTACK_ASSERT(left_keep < seqlen) // because !right_edge_in_window
                         seg_fin = false; // a FIN would be outside the window
-                        tcp_data.tot_len = left_keep;
+                        tcp_data.tot_len = std::size_t(left_keep);
                     }
                     else if (right_edge_in_window) {
                         // The segment contains some already received data
                         // (seq_num < rcv_nxt), remove this data from the front.
-                        SeqType left_trim = -eff_rel_seq;
+                        TcpSeqInt left_trim = TcpSeqInt(-eff_rel_seq);
                         AIPSTACK_ASSERT(left_trim > 0)   // because !left_edge_in_window
                         AIPSTACK_ASSERT(left_trim < seqlen) // because right_edge_in_window
                         eff_rel_seq = 0;
                         // No change to seg_fin: for SYN we'd have bailed out earlier,
                         // and FIN could not be trimmed because left_trim < seqlen.
-                        tcp_data.skipBytes(left_trim);
+                        tcp_data.skipBytes(std::size_t(left_trim));
                     }
                     else {
                         // The segment is completely outside the receive window.
@@ -678,14 +680,14 @@ private:
             }
             
             // Check ACK validity as per RFC 5961.
-            SeqType ack_minus_una = seq_diff(tcp_meta.ack_num, pcb->snd_una);
-            if (AIPSTACK_LIKELY(ack_minus_una <= seq_diff(pcb->snd_nxt, pcb->snd_una))) {
+            TcpSeqInt ack_minus_una = tcp_meta.ack_num - pcb->snd_una;
+            if (AIPSTACK_LIKELY(ack_minus_una <= pcb->snd_nxt - pcb->snd_una)) {
                 // Fast path: it is not an old ACK.
                 acked = ack_minus_una;
             } else {
                 // Slow path: it is an old or too new ACK. If it is permissibly
                 // old then allow it otherwise just send an empty ACK.
-                SeqType una_minus_ack = -ack_minus_una;
+                TcpSeqInt una_minus_ack = TcpSeqInt(-ack_minus_una);
                 if (AIPSTACK_UNLIKELY(una_minus_ack > Constants::MaxAckBefore)) {
                     Output::pcb_send_empty_ack(pcb);
                     return false;
@@ -697,8 +699,8 @@ private:
         return true;
     }
     
-    static bool pcb_uncommon_flags_processing (TcpPcb *pcb, Tcp4Flags rst_syn_ack,
-                                    TcpSegMeta const &tcp_meta, IpBufRef const &tcp_data)
+    static bool pcb_uncommon_flags_processing (TcpPcb *pcb,
+        Tcp4Flags rst_syn_ack, TcpSegMeta const &tcp_meta, IpBufRef const &tcp_data)
     {
         bool continue_processing = false;
         
@@ -709,7 +711,7 @@ private:
                 // the SYN. But due to the possibility that we sent an empty
                 // ACK with seq_num==snd_una, accept also ack_num==snd_una.
                 if ((rst_syn_ack & Tcp4Flags::Ack) != EnumZero &&
-                    seq_lte(tcp_meta.ack_num, pcb->snd_nxt, pcb->snd_una))
+                    pcb->snd_una.ref_lte(tcp_meta.ack_num, pcb->snd_nxt))
                 {
                     TcpProto::pcb_abort(pcb, false);
                 }
@@ -724,7 +726,7 @@ private:
                 // a problem.
                 // NOTE: But we are slightly violating RFC 5961 by allowing seq_num at
                 // exactly the right edge (same as we do for ACK, see below).
-                else if (seq_diff(tcp_meta.seq_num, pcb->rcv_nxt) <= pcb->rcv_ann_wnd) {
+                else if (tcp_meta.seq_num - pcb->rcv_nxt <= pcb->rcv_ann_wnd) {
                     Output::pcb_send_empty_ack(pcb);
                 }
             }
@@ -738,13 +740,13 @@ private:
                 } else {
                     // SYN without ACK, we do not support this yet, send RST.
                     std::size_t seqlen = tcplen(tcp_meta.flags, tcp_data.tot_len);
-                    Output::send_rst(pcb->tcp, *pcb, 0, true,
-                                     seq_add(tcp_meta.seq_num, SeqType(seqlen)));
+                    Output::send_rst(pcb->tcp, *pcb, /*seq_num=*/TcpSeqNum(0),
+                        /*ack=*/true, /*ack_num=*/ tcp_meta.seq_num + seqlen);
                 }
             } else {
                 // Handle SYN as per RFC 5961.
                 if (pcb->state() == TcpStates::SYN_RCVD &&
-                    tcp_meta.seq_num == seq_diff(pcb->rcv_nxt, 1))
+                    tcp_meta.seq_num == pcb->rcv_nxt - 1u)
                 {
                     // This seems to be a retransmission of the SYN, retransmit our
                     // SYN+ACK and bump the abort timeout.
@@ -768,7 +770,7 @@ private:
     }
     
     static bool pcb_input_syn_sent_rcvd_processing (
-            TcpPcb *pcb, TcpSegMeta const &tcp_meta, SeqType acked)
+        TcpPcb *pcb, TcpSegMeta const &tcp_meta, TcpSeqInt acked)
     {
         AIPSTACK_ASSERT(pcb->state() == OneOf(TcpStates::SYN_SENT, TcpStates::SYN_RCVD))
         AIPSTACK_ASSERT(pcb->state() != TcpStates::SYN_SENT || pcb->con != nullptr)
@@ -784,7 +786,7 @@ private:
         // In SYN_RCVD check that the sequence number is not less than
         // rcv_nxt. Note that if it was less, the segment was trimmed in
         // pcb_input_basic_processing, so we could do without this check.
-        if (!syn_sent && seq_lt2(tcp_meta.seq_num, pcb->rcv_nxt)) {
+        if (!syn_sent && tcp_meta.seq_num.mod_lt(pcb->rcv_nxt)) {
             Output::pcb_send_empty_ack(pcb);
             proceed = false;
         }
@@ -792,7 +794,8 @@ private:
         // RFC 793 seems to allow ack_num==snd_una which doesn't make sense.
         // Note that in SYN_SENT, acked is always one here.
         else if (acked == 0) {
-            Output::send_rst(pcb->tcp, *pcb, tcp_meta.ack_num, false, 0);
+            Output::send_rst(pcb->tcp, *pcb,
+                /*seq_num=*/tcp_meta.ack_num, /*ack=*/false, /*ack_num=*/TcpSeqNum(0));
             proceed = false;
         }
         // If in SYN_SENT a SYN is not received, drop the segment silently.
@@ -812,7 +815,7 @@ private:
         
         // In SYN_SENT and SYN_RCVD the remote acks only our SYN no more.
         // Otherwise we would have bailed out already.
-        AIPSTACK_ASSERT(pcb->snd_nxt == seq_add(pcb->snd_una, 1))
+        AIPSTACK_ASSERT(pcb->snd_nxt == pcb->snd_una + 1u)
         AIPSTACK_ASSERT(tcp_meta.ack_num == pcb->snd_nxt)
         
         // Stop the SYN_RCVD abort timer.
@@ -830,16 +833,16 @@ private:
         // snd_una will also be restored to snd_nxt. We don't abuse snd_nxt
         // for this because pcb_abort->pcb_send_rst could read snd_nxt in
         // this state but there is no problem with snd_una.
-        pcb->snd_una = pcb_decode_wnd_size(pcb, tcp_meta.window_size);
+        pcb->snd_una = TcpSeqNum(pcb_decode_wnd_size(pcb, tcp_meta.window_size));
         
         TcpProto *tcp = pcb->tcp;
         
         if (syn_sent) {
             // Update rcv_nxt and rcv_ann_wnd now that we have received the SYN.
-            AIPSTACK_ASSERT(pcb->rcv_nxt == 0)
+            AIPSTACK_ASSERT(pcb->rcv_nxt.value() == 0)
             AIPSTACK_ASSERT(pcb->rcv_ann_wnd > 0)
-            pcb->rcv_nxt = seq_add(tcp_meta.seq_num, 1);
-            pcb->rcv_ann_wnd--;
+            pcb->rcv_nxt = tcp_meta.seq_num + 1u;
+            pcb->rcv_ann_wnd -= 1u;
             
             // Go to ESTABLISHED state.
             pcb->setState(TcpStates::ESTABLISHED);
@@ -957,8 +960,8 @@ private:
         return true;
     }
     
-    static bool pcb_input_ack_wnd_processing (TcpPcb *pcb, TcpSegMeta const &tcp_meta,
-                                              SeqType acked, std::size_t orig_data_len)
+    static bool pcb_input_ack_wnd_processing (TcpPcb *pcb,
+        TcpSegMeta const &tcp_meta, TcpSeqInt acked, std::size_t orig_data_len)
     {
         AIPSTACK_ASSERT(pcb->state() !=
             OneOf(TcpStates::CLOSED, TcpStates::SYN_SENT, TcpStates::SYN_RCVD))
@@ -978,7 +981,7 @@ private:
             AIPSTACK_ASSERT(pcb->state().canOutput())
             AIPSTACK_ASSERT(Output::pcb_has_snd_outstanding(pcb))
             // The amount of acknowledged sequence numbers was already calculated.
-            AIPSTACK_ASSERT(acked == seq_diff(tcp_meta.ack_num, pcb->snd_una))
+            AIPSTACK_ASSERT(acked == tcp_meta.ack_num - pcb->snd_una)
             
             // Inform Output that something was acked. This performs RTT
             // measurement and congestion control related processing.
@@ -991,7 +994,7 @@ private:
             bool fin_acked = Output::pcb_fin_acked(pcb);
             
             // Calculate the amount of acknowledged data (without ACK of FIN).
-            SeqType data_acked_seq = acked - SeqType(fin_acked);
+            TcpSeqInt data_acked_seq = acked - fin_acked;
             AIPSTACK_ASSERT(data_acked_seq <= TypeMax<std::size_t>())
             std::size_t data_acked = data_acked_seq;
             
@@ -1013,7 +1016,8 @@ private:
                 }
                 
                 // Advance the send buffer.
-                std::size_t cur_offset = con->m_v.snd_buf.tot_len - con->m_v.snd_buf_cur.tot_len;
+                std::size_t cur_offset =
+                    con->m_v.snd_buf.tot_len - con->m_v.snd_buf_cur.tot_len;
                 if (data_acked >= cur_offset) {
                     con->m_v.snd_buf_cur.skipBytes(data_acked - cur_offset);
                     con->m_v.snd_buf = con->m_v.snd_buf_cur;
@@ -1113,8 +1117,8 @@ private:
                 pcb->con != nullptr &&
                 pcb_decode_wnd_size(pcb, tcp_meta.window_size) == pcb->con->m_v.snd_wnd
             ) {
-                if (pcb->num_dupack < Constants::FastRtxDupAcks +
-                                      Constants::MaxAdditionaDupAcks)
+                if (pcb->num_dupack <
+                        Constants::FastRtxDupAcks + Constants::MaxAdditionaDupAcks)
                 {
                     pcb->num_dupack++;
                     if (pcb->num_dupack == Constants::FastRtxDupAcks) {
@@ -1140,22 +1144,22 @@ private:
         // but this could only happen if segments are reordered, and is
         // far from being a serious problem even if it does happen.
         if (AIPSTACK_LIKELY(pcb->snd_una == tcp_meta.ack_num)) {
-            SeqType new_snd_wnd = pcb_decode_wnd_size(pcb, tcp_meta.window_size);
+            TcpSeqInt new_snd_wnd = pcb_decode_wnd_size(pcb, tcp_meta.window_size);
             Output::pcb_update_snd_wnd(pcb, new_snd_wnd);
         }
         
         return true;
     }
     
-    static bool pcb_input_rcv_processing (TcpPcb *pcb, SeqType eff_rel_seq, bool seg_fin,
-                                          IpBufRef const &tcp_data)
+    static bool pcb_input_rcv_processing (TcpPcb *pcb,
+        TcpSeqInt eff_rel_seq, bool seg_fin, IpBufRef const &tcp_data)
     {
         AIPSTACK_ASSERT(pcb->state().isAcceptingData())
         
         // We only get here if the segment fits into the receive window, this is assured
         // by pcb_input_basic_processing. It is also ensured that pcb->rcv_ann_wnd fits
         // into std::size_t and we need this to avoid oveflows in buffer space checks below.
-        if (TypeMax<std::size_t>() < TypeMax<std::uint32_t>()) {
+        if (TypeMax<std::size_t>() < TypeMax<TcpSeqInt>()) {
             AIPSTACK_ASSERT(eff_rel_seq <= TypeMax<std::size_t>())
             AIPSTACK_ASSERT(tcp_data.tot_len <= TypeMax<std::size_t>() - eff_rel_seq)
         }
@@ -1202,7 +1206,7 @@ private:
         // Slow path performs out-of-sequence buffering.
         else {
             // Update information about out-of-sequence data and FIN.
-            SeqType eff_seq = seq_add(pcb->rcv_nxt, eff_rel_seq);
+            TcpSeqNum eff_seq = pcb->rcv_nxt + eff_rel_seq;
             bool need_ack;
             bool update_ok = con->m_v.ooseq.updateForSegmentReceived(
                 pcb->rcv_nxt, eff_seq, tcp_data.tot_len, seg_fin, need_ack);
@@ -1249,7 +1253,7 @@ private:
         
         // Compute the amount of processed sequence numbers. Note that rcv_fin
         // is not used from now on, instead rcv_seqlen and rcv_datalen are compared.
-        SeqType rcv_seqlen = SeqType(rcv_datalen) + rcv_fin;
+        TcpSeqInt rcv_seqlen = TcpSeqInt(rcv_datalen) + rcv_fin;
         
         // Process received data/FIN.
         return pcb_process_received(pcb, rcv_seqlen, rcv_datalen);
@@ -1257,7 +1261,8 @@ private:
     
     // Update state due to any received data (e.g. rcv_nxt), make state transitions
     // due to any received FIN, and call associated application callbacks.
-    static bool pcb_process_received (TcpPcb *pcb, SeqType rcv_seqlen, std::size_t rcv_datalen)
+    static bool pcb_process_received (
+        TcpPcb *pcb, TcpSeqInt rcv_seqlen, std::size_t rcv_datalen)
     {
         // If nothing was received we have nothing to do.
         if (rcv_seqlen == 0) {
@@ -1265,7 +1270,7 @@ private:
         }
         
         // Adjust rcv_nxt due to newly received data.
-        pcb->rcv_nxt = seq_add(pcb->rcv_nxt, rcv_seqlen);
+        pcb->rcv_nxt += rcv_seqlen;
         
         // Adjust rcv_ann_wnd which is relative to rcv_nxt.
         // Note, it is possible that rcv_seqlen is greater than rcv_ann_wnd
@@ -1344,37 +1349,37 @@ private:
     }
     
     // Apply window scaling to a received window size value.
-    inline static SeqType pcb_decode_wnd_size (TcpPcb *pcb, std::uint16_t rx_wnd_size)
+    inline static TcpSeqInt pcb_decode_wnd_size (TcpPcb *pcb, std::uint16_t rx_wnd_size)
     {
-        return SeqType(rx_wnd_size) << pcb->snd_wnd_shift;
+        return TcpSeqInt(rx_wnd_size) << pcb->snd_wnd_shift;
     }
     
     // Return the maximum receive window that can be announced
     // with respect to window scaling.
-    static SeqType max_rcv_wnd_ann (TcpPcb *pcb)
+    static TcpSeqInt max_rcv_wnd_ann (TcpPcb *pcb)
     {
-        return SeqType(TypeMax<std::uint16_t>()) << pcb->rcv_wnd_shift;
+        return TcpSeqInt(TypeMax<std::uint16_t>()) << pcb->rcv_wnd_shift;
     }
     
     // Calculate how much window would be announced if sent an ACK now.
-    static SeqType pcb_calc_wnd_update (TcpPcb *pcb)
+    static TcpSeqInt pcb_calc_wnd_update (TcpPcb *pcb)
     {
         AIPSTACK_ASSERT(pcb->state().isAcceptingData())
         AIPSTACK_ASSERT(pcb->con != nullptr)
         
         // Calculate the maximum window that can be announced with the the
         // current window scale factor.
-        SeqType max_ann = max_rcv_wnd_ann(pcb);
+        TcpSeqInt max_ann = max_rcv_wnd_ann(pcb);
         
         // Calculate the minimum of the available buffer space and the maximum
         // window that can be announced. There is no need to also clamp to
         // MaxWindow since max_ann will be less than MaxWindow.
-        SeqType bounded_wnd = MinValueU(pcb->con->m_v.rcv_buf.tot_len, max_ann);
+        TcpSeqInt bounded_wnd = MinValueU(pcb->con->m_v.rcv_buf.tot_len, max_ann);
         
         // Clear the lowest order bits which cannot be sent with the current
         // window scale factor. The already calculated max_ann is suitable
         // as a mask for this (consider that bounded_wnd<=max_ann).
-        SeqType ann_wnd = bounded_wnd & max_ann;
+        TcpSeqInt ann_wnd = bounded_wnd & max_ann;
         
         // Result which may be assigned to pcb->rcv_ann_wnd is guaranteed to fit
         // into size_t as required since it is <=rcv_buf.tot_len which is a size_t.

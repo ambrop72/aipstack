@@ -34,7 +34,7 @@
 #include <aipstack/misc/Function.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/ip/IpAddr.h>
-#include <aipstack/tcp/TcpUtils.h>
+#include <aipstack/tcp/TcpSeqNum.h>
 
 #include "TcpListener.h"
 
@@ -69,7 +69,6 @@ class TcpListener :
     
     using TcpProto = IpTcpProto<Arg>;
 
-    AIPSTACK_USE_TYPES(TcpUtils, (SeqType))
     AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Constants))
     
 public:
@@ -211,14 +210,14 @@ public:
      */
     void setInitialReceiveWindow (std::size_t rcv_wnd)
     {
-        m_initial_rcv_wnd = MinValueU(Constants::MaxWindow, rcv_wnd);
+        m_initial_rcv_wnd = MinValueU(rcv_wnd, Constants::MaxWindow);
     }
     
 private:
     EstablishedHandler m_established_handler;
     LinkedListNode<typename TcpProto::ListenerLinkModel> m_listeners_node;
     TcpProto *m_tcp;
-    SeqType m_initial_rcv_wnd;
+    TcpSeqInt m_initial_rcv_wnd;
     TcpPcb *m_accept_pcb;
     Ip4Addr m_addr;
     PortNum m_port;

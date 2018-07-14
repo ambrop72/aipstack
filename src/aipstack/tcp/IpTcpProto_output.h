@@ -42,6 +42,7 @@
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/tcp/TcpUtils.h>
 #include <aipstack/tcp/TcpState.h>
+#include <aipstack/tcp/TcpSeqNum.h>
 #include <aipstack/tcp/TcpPcbFlags.h>
 
 namespace AIpStack {
@@ -55,8 +56,8 @@ class IpTcpProto_output
 {
     using TcpProto = IpTcpProto<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (SeqType, TcpSegMeta, OptionFlags, TcpOptions))
-    AIPSTACK_USE_VALS(TcpUtils, (seq_add, seq_diff, seq_lt2, seq_add_sat, tcplen))
+    AIPSTACK_USE_TYPES(TcpUtils, (TcpSegMeta, OptionFlags, TcpOptions))
+    AIPSTACK_USE_VALS(TcpUtils, (tcplen))
     AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Input, TimeType, Constants, OutputTimer,
                                   RtxTimer, StackArg, Connection, PcbKey))
     AIPSTACK_USE_TYPES(Constants, (RttType, RttNextType))
@@ -110,7 +111,7 @@ public:
                 pcb_start_rtt_measurement(pcb, true);
                 
                 // Bump snd_nxt.
-                pcb->snd_nxt = seq_add(pcb->snd_nxt, 1);
+                pcb->snd_nxt += 1u;
             } else {
                 // Retransmission, stop any round-trip-time measurement.
                 pcb->clearFlag(TcpPcbFlags::RTT_PENDING);
@@ -135,7 +136,7 @@ public:
     {
         bool ack = pcb->state() != TcpStates::SYN_SENT;
         
-        send_rst(pcb->tcp, *pcb, pcb->snd_nxt, ack, pcb->rcv_nxt);
+        send_rst(pcb->tcp, *pcb, /*seq_num=*/pcb->snd_nxt, ack, /*ack_num=*/pcb->rcv_nxt);
     }
     
     static void pcb_need_ack (TcpPcb *pcb)
@@ -173,7 +174,7 @@ public:
         // If sending was closed without abandoning the connection, the push
         // index must have been set to the end of the send buffer.
         AIPSTACK_ASSERT(pcb->con == nullptr ||
-                     pcb->con->m_v.snd_psh_index == pcb->con->m_v.snd_buf.tot_len)
+            pcb->con->m_v.snd_psh_index == pcb->con->m_v.snd_buf.tot_len)
         
         // Make the appropriate state transition.
         if (pcb->state() == TcpStates::ESTABLISHED) {
@@ -261,7 +262,7 @@ public:
         Connection *con = pcb->con;
         
         IpBufRef *snd_buf_cur;
-        SeqType rem_wnd;
+        TcpSeqInt rem_wnd;
         std::size_t data_threshold;
         bool fin;
         
@@ -272,7 +273,7 @@ public:
             
             // Send no more than allowed by the receiver window but at
             // least one count. We can ignore the congestion window.
-            rem_wnd = MaxValue(SeqType(1), con->m_v.snd_wnd);
+            rem_wnd = MaxValue(con->m_v.snd_wnd, TcpSeqInt(1));
             
             // Set the data_threshold to zero to not inhibit sending.
             data_threshold = 0;
@@ -293,12 +294,12 @@ public:
             
             // Calculate the miniumum of snd_wnd and cwnd which is how much
             // we can send relative to the start of the send buffer.
-            SeqType full_wnd = MinValue(con->m_v.snd_wnd, con->m_v.cwnd);
+            TcpSeqInt full_wnd = MinValue(con->m_v.snd_wnd, con->m_v.cwnd);
             
             // Calculate the remaining window relative to snd_buf_cur.
             std::size_t snd_offset = con->m_v.snd_buf.tot_len - snd_buf_cur->tot_len;
             if (AIPSTACK_LIKELY(snd_offset <= full_wnd)) {
-                rem_wnd = full_wnd - SeqType(snd_offset);
+                rem_wnd = TcpSeqInt(full_wnd - snd_offset);
             } else {
                 rem_wnd = 0;
             }
@@ -322,7 +323,7 @@ public:
         // of rtx_or_window_probe, this condition is always true.
         while ((snd_buf_cur->tot_len > data_threshold || fin) && rem_wnd > 0) {
             // Send a segment.
-            SeqType seg_seqlen;
+            TcpSeqInt seg_seqlen;
             IpErr err = pcb_output_segment(
                 pcb, output_helper, *snd_buf_cur, fin, rem_wnd, &seg_seqlen);
             
@@ -521,7 +522,7 @@ public:
             // Reduce the CWND (RFC 5681 section 4.1).
             // Also reset cwnd_acked to avoid old accumulated value
             // from causing an undesired cwnd increase later.
-            SeqType initial_cwnd = TcpUtils::calc_initial_cwnd(pcb->snd_mss);
+            TcpSeqInt initial_cwnd = TcpUtils::calc_initial_cwnd(pcb->snd_mss);
             if (con->m_v.cwnd >= initial_cwnd) {
                 con->m_v.cwnd = initial_cwnd;
                 pcb->setFlag(TcpPcbFlags::CWND_INIT);
@@ -629,7 +630,7 @@ public:
     // This is called from Input when something new is acked, before the
     // related state changes are made (snd_una, snd_wnd, snd_buf*, state
     // transition due to FIN acked).
-    static void pcb_output_handle_acked (TcpPcb *pcb, SeqType ack_num, SeqType acked)
+    static void pcb_output_handle_acked (TcpPcb *pcb, TcpSeqNum ack_num, TcpSeqInt acked)
     {
         AIPSTACK_ASSERT(pcb->state().canOutput())
         AIPSTACK_ASSERT(pcb_has_snd_outstanding(pcb))
@@ -645,7 +646,7 @@ public:
             // also have a Connection (see pcb_abandoned, pcb_start_rtt_measurement).
             AIPSTACK_ASSERT(con != nullptr)
             
-            if (seq_lt2(con->m_v.rtt_test_seq, ack_num)) {
+            if (con->m_v.rtt_test_seq.mod_lt(ack_num)) {
                 // Update the RTT variables and RTO.
                 pcb_end_rtt_measurement(pcb);
                 
@@ -672,7 +673,7 @@ public:
                 // Congestion avoidance.
                 if (!pcb->hasFlag(TcpPcbFlags::CWND_INCRD)) {
                     // Increment cwnd_acked.
-                    con->m_v.cwnd_acked = seq_add_sat(con->m_v.cwnd_acked, acked);
+                    AddToSat(con->m_v.cwnd_acked, acked);
                     
                     // If cwnd data has now been acked, increment cwnd and reset cwnd_acked,
                     // and inhibit such increments until the next RTT measurement completes.
@@ -693,14 +694,13 @@ public:
             AIPSTACK_ASSERT(pcb_has_snd_unacked(pcb))
             
             // If all data up to recover is being ACKed, exit fast recovery.
-            if (!pcb->hasFlag(TcpPcbFlags::RECOVER) || !seq_lt2(ack_num, con->m_v.recover)) {
+            if (!pcb->hasFlag(TcpPcbFlags::RECOVER) || !ack_num.mod_lt(con->m_v.recover)) {
                 // Deflate the CWND.
                 // Note, cwnd>=snd_mss is respected because ssthresh>=snd_mss.
-                SeqType flight_size = seq_diff(pcb->snd_nxt, ack_num);
+                TcpSeqInt flight_size = pcb->snd_nxt - ack_num;
                 AIPSTACK_ASSERT(con->m_v.ssthresh >= pcb->snd_mss)
                 con->m_v.cwnd = MinValue(con->m_v.ssthresh,
-                    seq_add(MaxValue(flight_size, SeqType(pcb->snd_mss)),
-                            pcb->snd_mss));
+                    TcpSeqInt(pcb->snd_mss + MaxValueU(flight_size, pcb->snd_mss)));
                 
                 // Reset num_dupack to indicate end of fast recovery.
                 pcb->num_dupack = 0;
@@ -711,13 +711,12 @@ public:
                 // Deflate CWND by the amount of data ACKed.
                 // Be careful to not bring CWND below snd_mss.
                 AIPSTACK_ASSERT(con->m_v.cwnd >= pcb->snd_mss)
-                con->m_v.cwnd -=
-                    MinValue(seq_diff(con->m_v.cwnd, pcb->snd_mss), acked);
+                con->m_v.cwnd -= MinValue(acked, con->m_v.cwnd - pcb->snd_mss);
                 
                 // If this ACK acknowledges at least snd_mss of data,
                 // add back snd_mss bytes to CWND.
                 if (acked >= pcb->snd_mss) {
-                    con->m_v.cwnd = seq_add_sat(con->m_v.cwnd, pcb->snd_mss);
+                    AddToSat(con->m_v.cwnd, pcb->snd_mss);
                 }
             }
         }
@@ -726,7 +725,7 @@ public:
         // leave recover behind snd_una, clear the recover flag to indicate
         // that recover is no longer valid and assumed <snd_una.
         if (AIPSTACK_UNLIKELY(pcb->hasFlag(TcpPcbFlags::RECOVER)) &&
-            con != nullptr && seq_lt2(con->m_v.recover, ack_num))
+            con != nullptr && con->m_v.recover.mod_lt(ack_num))
         {
             pcb->clearFlag(TcpPcbFlags::RECOVER);
         }
@@ -762,8 +761,9 @@ public:
             pcb_update_ssthresh_for_rtx(pcb);
             
             // Update cwnd.
-            SeqType three_mss = 3 * SeqType(pcb->snd_mss);
-            con->m_v.cwnd = seq_add_sat(con->m_v.ssthresh, three_mss);
+            TcpSeqInt cwnd = con->m_v.ssthresh;
+            AddToSat(cwnd, 3u * TcpSeqInt(pcb->snd_mss));
+            con->m_v.cwnd = cwnd;
             pcb->clearFlag(TcpPcbFlags::CWND_INIT);
             
             // Schedule output due to possible CWND increase.
@@ -781,7 +781,7 @@ public:
         
         if (AIPSTACK_LIKELY(pcb->con != nullptr)) {
             // Increment CWND by snd_mss.
-            pcb->con->m_v.cwnd = seq_add_sat(pcb->con->m_v.cwnd, pcb->snd_mss);
+            AddToSat(pcb->con->m_v.cwnd, pcb->snd_mss);
             
             // Schedule output due to possible CWND increase.
             pcb->setFlag(TcpPcbFlags::OUT_PENDING);
@@ -826,7 +826,7 @@ public:
         RttType base_rto = (var_part > RttTypeMax - con->m_v.srtt) ?
             RttTypeMax : (con->m_v.srtt + var_part);
         pcb->rto = MaxValue(Constants::MinRtxTime,
-                                      MinValue(Constants::MaxRtxTime, base_rto));
+            MinValue(Constants::MaxRtxTime, base_rto));
     }
     
     // This is called from the lower layers when sending failed but
@@ -936,7 +936,7 @@ public:
     
     // Update the snd_wnd to the given value.
     // NOTE: doDelayedTimerUpdate must be called after return.
-    static void pcb_update_snd_wnd (TcpPcb *pcb, SeqType new_snd_wnd)
+    static void pcb_update_snd_wnd (TcpPcb *pcb, TcpSeqInt new_snd_wnd)
     {
         AIPSTACK_ASSERT(pcb->state() !=
             OneOf(TcpStates::CLOSED, TcpStates::SYN_SENT, TcpStates::SYN_RCVD))
@@ -955,7 +955,7 @@ public:
         }
         
         // Check if the window has changed.
-        SeqType old_snd_wnd = con->m_v.snd_wnd;
+        TcpSeqInt old_snd_wnd = con->m_v.snd_wnd;
         if (new_snd_wnd == old_snd_wnd) {
             return;
         }
@@ -985,19 +985,19 @@ public:
     // This conforms to RFC 793 handling of segments not belonging to a known
     // connection.
     static void send_rst_reply (TcpProto *tcp, IpRxInfoIp4<StackArg> const &ip_info,
-                                TcpSegMeta const &tcp_meta, std::size_t tcp_data_len)
+        TcpSegMeta const &tcp_meta, std::size_t tcp_data_len)
     {
-        SeqType rst_seq_num;
+        TcpSeqNum rst_seq_num;
         bool rst_ack;
-        SeqType rst_ack_num;
+        TcpSeqNum rst_ack_num;
         if ((tcp_meta.flags & Tcp4Flags::Ack) != EnumZero) {
             rst_seq_num = tcp_meta.ack_num;
             rst_ack = false;
-            rst_ack_num = 0;
+            rst_ack_num = TcpSeqNum(0u);
         } else {
-            rst_seq_num = 0;
+            rst_seq_num = TcpSeqNum(0u);
             rst_ack = true;
-            rst_ack_num = tcp_meta.seq_num + SeqType(tcplen(tcp_meta.flags, tcp_data_len));
+            rst_ack_num = tcp_meta.seq_num + tcplen(tcp_meta.flags, tcp_data_len);
         }
         
         PcbKey key{ip_info.dst_addr, ip_info.src_addr,
@@ -1007,10 +1007,11 @@ public:
     
     AIPSTACK_NO_INLINE
     static void send_rst (TcpProto *tcp, PcbKey const &key,
-                          SeqType seq_num, bool ack, SeqType ack_num)
+                          TcpSeqNum seq_num, bool ack, TcpSeqNum ack_num)
     {
         Tcp4Flags flags = Tcp4Flags::Rst | (ack ? Tcp4Flags::Ack : Tcp4Flags(0));
-        send_tcp_nodata(tcp, key, seq_num, ack_num, 0, flags, nullptr, nullptr);
+        send_tcp_nodata(tcp, key, seq_num, ack_num,
+            /*window_size=*/0, flags, /*opts=*/nullptr, /*retryReq=*/nullptr);
     }
     
 private:
@@ -1053,8 +1054,7 @@ private:
     // inlined into pcb_output_active and should not be called from elsewhere.
     AIPSTACK_ALWAYS_INLINE
     static IpErr pcb_output_segment (TcpPcb *pcb, PcbOutputHelper &helper,
-                                     IpBufRef data, bool fin, SeqType rem_wnd,
-                                     SeqType *out_seg_seqlen)
+        IpBufRef data, bool fin, TcpSeqInt rem_wnd, TcpSeqInt *out_seg_seqlen)
     {
         AIPSTACK_ASSERT(pcb->state().canOutput())
         AIPSTACK_ASSERT(pcb->con != nullptr)
@@ -1070,8 +1070,7 @@ private:
         // - remaining data in the send buffer,
         // - remaining available window,
         // - maximum segment size.
-        data.tot_len = MinValueU(rem_data_len,
-                                           MinValueU(rem_wnd, pcb->snd_mss));
+        data.tot_len = MinValueU(rem_data_len, MinValueU(rem_wnd, pcb->snd_mss));
         
         // We always send the ACK flag, others may be added below.
         Tcp4Flags seg_flags = Tcp4Flags::Ack;
@@ -1097,7 +1096,7 @@ private:
         }
         
         // Calculate the sequence number.
-        SeqType seq_num = seq_add(pcb->snd_una, SeqType(offset));
+        TcpSeqNum seq_num = pcb->snd_una + offset;
         
         // Send the segment.
         IpErr err = helper.sendSegment(pcb, seq_num, seg_flags, data);
@@ -1107,9 +1106,9 @@ private:
         
         // Calculate the sequence length of the segment and set
         // the FIN_SENT flag if a FIN was sent.
-        SeqType seg_seqlen = SeqType(data.tot_len);
+        TcpSeqInt seg_seqlen = TcpSeqInt(data.tot_len);
         if (AIPSTACK_UNLIKELY((seg_flags & Tcp4Flags::Fin) != EnumZero)) {
-            seg_seqlen++;
+            seg_seqlen += 1u;
             pcb->setFlag(TcpPcbFlags::FIN_SENT);
         }
         
@@ -1119,17 +1118,16 @@ private:
         // Stop a round-trip-time measurement if we have retransmitted
         // a segment containing the associated sequence number.
         if (AIPSTACK_LIKELY(pcb->hasFlag(TcpPcbFlags::RTT_PENDING))) {
-            if (AIPSTACK_UNLIKELY(seq_diff(pcb->con->m_v.rtt_test_seq, seq_num) < seg_seqlen))
-            {
+            if (AIPSTACK_UNLIKELY(pcb->con->m_v.rtt_test_seq - seq_num < seg_seqlen)) {
                 pcb->clearFlag(TcpPcbFlags::RTT_PENDING);
             }
         }
         
         // Calculate the end sequence number of the sent segment.
-        SeqType seg_endseq = seq_add(seq_num, seg_seqlen);
+        TcpSeqNum seg_endseq = seq_num + seg_seqlen;
         
         // Did we send anything new?
-        if (AIPSTACK_LIKELY(seq_lt2(pcb->snd_nxt, seg_endseq))) {
+        if (AIPSTACK_LIKELY(pcb->snd_nxt.mod_lt(seg_endseq))) {
             // Start a round-trip-time measurement if not already started
             // and if we still have a Connection.
             if (!pcb->hasFlag(TcpPcbFlags::RTT_PENDING)) {
@@ -1155,8 +1153,9 @@ private:
 
         // Send a FIN segment.
         Tcp4Flags flags = Tcp4Flags::Ack|Tcp4Flags::Fin|Tcp4Flags::Psh;
-        IpErr err = send_tcp_nodata(pcb->tcp, *pcb, pcb->snd_una, pcb->rcv_nxt,
-                                    window_size, flags, nullptr, pcb);
+        IpErr err = send_tcp_nodata(pcb->tcp, *pcb,
+            /*seq_num=*/pcb->snd_una, /*ack_num=*/pcb->rcv_nxt,
+            window_size, flags, /*opts=*/nullptr, /*retryReq=*/pcb);
         
         // On success take note of what was sent.
         if (AIPSTACK_LIKELY(err == IpErr::SUCCESS)) {
@@ -1165,21 +1164,21 @@ private:
             
             // Bump snd_nxt if needed.
             if (pcb->snd_nxt == pcb->snd_una) {
-                pcb->snd_nxt++;
+                pcb->snd_nxt += 1u;
             }
         }   
 
         return err;     
     }
     
-    static void pcb_increase_cwnd_acked (TcpPcb *pcb, SeqType acked)
+    static void pcb_increase_cwnd_acked (TcpPcb *pcb, TcpSeqInt acked)
     {
         AIPSTACK_ASSERT(pcb->state().canOutput())
         AIPSTACK_ASSERT(pcb->con != nullptr)
         
         // Increase cwnd by acked but no more than snd_mss.
-        SeqType cwnd_inc = MinValueU(acked, pcb->snd_mss);
-        pcb->con->m_v.cwnd = seq_add_sat(pcb->con->m_v.cwnd, cwnd_inc);
+        TcpSeqInt cwnd_inc = MinValueU(acked, pcb->snd_mss);
+        AddToSat(pcb->con->m_v.cwnd, cwnd_inc);
         
         // No longer have initial CWND.
         pcb->clearFlag(TcpPcbFlags::CWND_INIT);
@@ -1191,8 +1190,8 @@ private:
         AIPSTACK_ASSERT(pcb->state().canOutput())
         AIPSTACK_ASSERT(pcb->con != nullptr)
         
-        SeqType half_flight_size = seq_diff(pcb->snd_nxt, pcb->snd_una) / 2;
-        SeqType two_smss = 2 * SeqType(pcb->snd_mss);
+        TcpSeqInt half_flight_size = (pcb->snd_nxt - pcb->snd_una) / 2u;
+        TcpSeqInt two_smss = 2u * TcpSeqInt(pcb->snd_mss);
         pcb->con->m_v.ssthresh = MaxValue(half_flight_size, two_smss);
     }
     
@@ -1231,7 +1230,8 @@ private:
             // things, to optimize sending multiple segments at a time.
         }
         
-        IpErr sendSegment (TcpPcb *pcb, SeqType seq_num, Tcp4Flags seg_flags, IpBufRef data)
+        IpErr sendSegment (TcpPcb *pcb,
+            TcpSeqNum seq_num, Tcp4Flags seg_flags, IpBufRef data)
         {
             // Reset the TxAllocHelper.
             dgram_alloc.reset(Tcp4Header::Size);
@@ -1252,7 +1252,7 @@ private:
             
             // Sequence number
             tcp_header.set(Tcp4Header::SeqNum(), seq_num);
-            chksum.addWord(WrapType<std::uint32_t>(), seq_num);
+            chksum.addWord(WrapType<TcpSeqInt>(), seq_num.value());
             
             // Offset+flags
             Tcp4Flags offset_flags = Tcp4EncodeOffset(5) | seg_flags;
@@ -1299,7 +1299,7 @@ private:
             
             // Acknowledgement
             tcp_header.set(Tcp4Header::AckNum(), pcb->rcv_nxt);
-            chksum.addWord(WrapType<std::uint32_t>(), pcb->rcv_nxt);
+            chksum.addWord(WrapType<TcpSeqInt>(), pcb->rcv_nxt.value());
             
             // Window size (update it first)
             std::uint16_t window_size = Input::pcb_ann_wnd(pcb);
@@ -1332,10 +1332,9 @@ private:
     };
     
     AIPSTACK_NO_INLINE
-    static IpErr send_tcp_nodata (
-        TcpProto *tcp, PcbKey const &key, SeqType seq_num, SeqType ack_num,
-        std::uint16_t window_size, Tcp4Flags flags, TcpOptions *opts,
-        IpSendRetryRequest *retryReq)
+    static IpErr send_tcp_nodata (TcpProto *tcp, PcbKey const &key,
+        TcpSeqNum seq_num, TcpSeqNum ack_num, std::uint16_t window_size,
+        Tcp4Flags flags, TcpOptions *opts, IpSendRetryRequest *retryReq)
     {
         // Compute length of TCP options.
         std::uint8_t opts_len = (opts != nullptr) ? TcpUtils::calc_options_len(*opts) : 0;
@@ -1364,10 +1363,10 @@ private:
         chksum_accum.addWord(WrapType<std::uint16_t>(), key.remote_port);
         
         tcp_header.set(Tcp4Header::SeqNum(),      seq_num);
-        chksum_accum.addWord(WrapType<std::uint32_t>(), seq_num);
+        chksum_accum.addWord(WrapType<TcpSeqInt>(), seq_num.value());
         
         tcp_header.set(Tcp4Header::AckNum(),      ack_num);
-        chksum_accum.addWord(WrapType<std::uint32_t>(), ack_num);
+        chksum_accum.addWord(WrapType<TcpSeqInt>(), ack_num.value());
         
         tcp_header.set(Tcp4Header::OffsetFlags(), offset_flags);
         chksum_accum.addWord(WrapType<std::uint16_t>(), AsUnderlying(offset_flags));
@@ -1391,7 +1390,8 @@ private:
         chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
         
         // Complete and write checksum.
-        std::uint16_t calc_chksum = chksum_accum.getChksum(dgram.hideHeader(Tcp4Header::Size));
+        std::uint16_t calc_chksum =
+            chksum_accum.getChksum(dgram.hideHeader(Tcp4Header::Size));
         tcp_header.set(Tcp4Header::Checksum(), calc_chksum);
         
         // Send the datagram.

@@ -35,7 +35,7 @@
 #include <aipstack/proto/Tcp4Proto.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/tcp/TcpUtils.h>
+#include <aipstack/tcp/TcpSeqNum.h>
 
 namespace AIpStack {
 
@@ -43,7 +43,6 @@ template <typename Arg>
 class IpTcpProto_constants
 {
     AIPSTACK_USE_TYPES(Arg, (PlatformImpl, StackArg))
-    AIPSTACK_USE_TYPES(TcpUtils, (SeqType))
 
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
@@ -76,13 +75,13 @@ public:
     static IpSendFlags const TcpIpSendFlags = IpSendFlags::DontFragmentFlag;
     
     // Maximum theoreticaly possible send and receive window.
-    static SeqType const MaxWindow = 0x3fffffff;
+    static TcpSeqInt const MaxWindow = 0x3fffffff;
     
     // Default window update threshold (overridable by setWindowUpdateThreshold).
-    static SeqType const DefaultWndAnnThreshold = 2700;
+    static TcpSeqInt const DefaultWndAnnThreshold = 2700;
     
     // How old at most an ACK may be to be considered acceptable (MAX.SND.WND in RFC 5961).
-    static SeqType const MaxAckBefore = 0xFFFF;
+    static TcpSeqInt const MaxAckBefore = 0xFFFF;
     
     // SYN_RCVD state timeout.
     static TimeType const SynRcvdTimeoutTicks     = 20.0  * Platform::TimeFreq;
@@ -130,7 +129,7 @@ public:
     
     // Minimum amount to extend the receive window when a PCB is
     // abandoned before the FIN has been received.
-    static SeqType const MinAbandonRcvWndIncr = TypeMax<std::uint16_t>();
+    static TcpSeqInt const MinAbandonRcvWndIncr = TypeMax<std::uint16_t>();
 };
 
 }

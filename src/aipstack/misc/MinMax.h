@@ -107,15 +107,15 @@ constexpr T AbsoluteDiff (T op1, T op2)
 #ifndef IN_DOXYGEN
 template <typename T1, typename T2>
 using MinValueURetType = std::conditional_t<
-    (std::numeric_limits<T1>::digits < std::numeric_limits<T2>::digits), T1, T2>;
+    (std::numeric_limits<T1>::digits <= std::numeric_limits<T2>::digits), T1, T2>;
 #endif
 
 /**
  * Return the smaller of two unsigned integers as the narrower type.
  * 
- * This deduces the return type to be the narrower type of `T1` and `T2`, or `T2` if they
- * are equally wide. This can be compared to @ref MinValue, where the operands and the
- * result all have the same type.
+ * This deduces the return type to be the narrower type of `T1` and `T2`, or `T1`
+ * if they are equally wide. This can be compared to @ref MinValue, where the
+ * operands and the result all have the same type.
  * 
  * Below is a typical use case where this is practical:
  * 
@@ -139,11 +139,57 @@ constexpr MinValueURetType<T1, T2> MinValueU (T1 op1, T2 op2)
     static_assert(std::is_unsigned<T2>::value, "Only unsigned allowed");
     using RetType = MinValueURetType<T1, T2>;
     
-    if (op1 < op2) {
-        return RetType(op1);
-    } else {
-        return RetType(op2);
-    }
+    return (op1 <= op2) ? RetType(op1) : RetType(op2);
+}
+
+#ifndef IN_DOXYGEN
+template <typename T1, typename T2>
+using MaxValueURetType = std::conditional_t<
+    (std::numeric_limits<T1>::digits >= std::numeric_limits<T2>::digits), T1, T2>;
+#endif
+
+/**
+ * Return the greater of two unsigned integers as the wider type.
+ * 
+ * This deduces the return type to be the wider type of `T1` and `T2`, or `T1` if
+ * they are equally wide. This can be compared to @ref MaxValue, where the
+ * operands and the result all have the same type.
+ * 
+ * @tparam T1 Type of first operand. Must be an unsigned integer type.
+ * @tparam T2 Type of second operand. Must be an unsigned integer type.
+ * @param op1 First operand.
+ * @param op2 Second operand.
+ * @return The greater operand, as the wider type (see description).
+ */
+template <typename T1, typename T2>
+constexpr MaxValueURetType<T1, T2> MaxValueU (T1 op1, T2 op2)
+{
+    static_assert(std::is_unsigned<T1>::value, "Only unsigned allowed");
+    static_assert(std::is_unsigned<T2>::value, "Only unsigned allowed");
+    using RetType = MaxValueURetType<T1, T2>;
+
+    return (op1 >= op2) ? RetType(op1) : RetType(op2);
+}
+
+/**
+ * Increment an unsigned integer passed by reference by the given amount,
+ * saturating if the result would overflow.
+ * 
+ * @tparam ValType Type of operand being incremented. Must be an unsigned
+ *         integer type.
+ * @tparam IncrType Type of operand specifying the amount to increment by.
+ *         Must be an unsigned integer type.
+ * @param val Reference to integer to be incremented.
+ * @param incr The amount to increment by.
+ */
+template <typename ValType, typename IncrType>
+constexpr void AddToSat (ValType &val, IncrType incr)
+{
+    static_assert(std::is_unsigned<ValType>::value, "Only unsigned allowed");
+    static_assert(std::is_unsigned<IncrType>::value, "Only unsigned allowed");
+
+    ValType remain = TypeMax<ValType>() - val;
+    val = (incr > remain) ? TypeMax<ValType>() : val + incr;
 }
 
 /** @} */

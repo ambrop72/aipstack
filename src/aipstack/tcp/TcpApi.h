@@ -27,7 +27,7 @@
 
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/tcp/TcpUtils.h>
+#include <aipstack/tcp/TcpSeqNum.h>
 #include <aipstack/tcp/TcpListener.h>
 #include <aipstack/tcp/TcpConnection.h>
 #include <aipstack/tcp/IpTcpProto_constants.h>
@@ -36,8 +36,6 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 template <typename> class IpTcpProto;
-template <typename> class TcpListener;
-template <typename> class TcpConnection;
 #endif
 
 template <typename Arg>
@@ -65,13 +63,11 @@ private:
     TcpApi (int);
 
 public:
-    using SeqType = TcpUtils::SeqType;
-
     using Listener = TcpListener<Arg>;
 
     using Connection = TcpConnection<Arg>;
     
-    static SeqType const MaxRcvWnd = Constants::MaxWindow;
+    static constexpr TcpSeqInt MaxRcvWnd = Constants::MaxWindow;
     
     inline PlatformFacade<typename Arg::PlatformImpl> platform () const
     {

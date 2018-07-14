@@ -30,11 +30,10 @@
 #include <algorithm>
 
 #include <aipstack/meta/ChooseInt.h>
-#include <aipstack/misc/Use.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/infra/Options.h>
 #include <aipstack/infra/Instance.h>
-#include <aipstack/tcp/TcpUtils.h>
+#include <aipstack/tcp/TcpSeqNum.h>
 
 namespace AIpStack {
 
@@ -49,9 +48,6 @@ namespace AIpStack {
 template <typename Arg>
 class TcpOosBuffer
 {
-    AIPSTACK_USE_TYPES(TcpUtils, (SeqType))
-    AIPSTACK_USE_VALS(TcpUtils, (seq_diff, seq_add, seq_lte, seq_lt))
-    
     static_assert(Arg::NumOosSegs > 0, "");
     using IndexType = ChooseIntForMax<Arg::NumOosSegs, false>;
     static IndexType const NumOosSegs = Arg::NumOosSegs;
@@ -60,23 +56,21 @@ class TcpOosBuffer
     // a FIN or an end marker.
     struct OosSeg {
         // First sequence number (for data segments).
-        SeqType start;
+        TcpSeqNum start;
         
         // One-past-last sequence number (for data segments).
-        SeqType end;
+        TcpSeqNum end;
         
         // Entry with start==end+1 marks the end of segments.
         // In reality only {1, 0} will be used but checking this
         // more general property is probably more efficient.
-        inline bool isEnd () const
-        {
-            return start == seq_add(end, 1);
+        inline bool isEnd () const {
+            return start == end + 1u;
         }
         
         // Make an end segment.
-        inline static OosSeg MakeEnd ()
-        {
-            return OosSeg{1, 0};
+        inline static OosSeg MakeEnd () {
+            return OosSeg{TcpSeqNum(1u), TcpSeqNum(0u)};
         }
         
         // Entry with start==end represents a FIN.
@@ -84,30 +78,26 @@ class TcpOosBuffer
         // plus 1. This simplifies algorithms because a FIN is not
         // considerded to touch any preceding segment, just as data
         // segments never touch each other.
-        inline bool isFin () const
-        {
+        inline bool isFin () const {
             return start == end;
         }
         
         // Get the FIN sequence number of a FIN segment.
         // It is only valid to call this on an isFin segment.
-        inline SeqType getFinSeq () const
-        {
-            return seq_diff(start, 1);
+        inline TcpSeqNum getFinSeq () const {
+            return start - 1u;
         }
         
         // Make a FIN segment, with the given FIN sequence number.
-        inline static OosSeg MakeFin (SeqType fin_seq)
-        {
-            SeqType seg_seq = seq_add(fin_seq, 1);
+        inline static OosSeg MakeFin (TcpSeqNum fin_seq) {
+            TcpSeqNum seg_seq = fin_seq + 1u;
             return OosSeg{seg_seq, seg_seq};
         }
         
         // Check if segment is an end of FIN.
         // This is supposed to be more efficient than isEnd||isFin.
-        inline bool isEndOrFin () const
-        {
-            return seq_diff(start, end) <= 1;
+        inline bool isEndOrFin () const {
+            return start - end <= 1u;
         }
     };
     
@@ -134,7 +124,7 @@ public:
      * 
      * @return Whether neither data nor FIN is buffered.
      */
-    inline bool isNothingBuffered ()
+    inline bool isNothingBuffered () const
     {
         // Check if the first element is an end segment.
         return m_ooseq[0].isEnd();
@@ -159,15 +149,15 @@ public:
      * @return True on success, false in case of FIN inconsistency
      *         (no updates done).
      */
-    bool updateForSegmentReceived (SeqType rcv_nxt, SeqType seg_start, std::size_t seg_datalen,
-                                   bool seg_fin, bool &need_ack)
+    bool updateForSegmentReceived (TcpSeqNum rcv_nxt, TcpSeqNum seg_start,
+        std::size_t seg_datalen, bool seg_fin, bool &need_ack)
     {
         // Initialize need_ack to whether the segment is out of sequence.
         // If the segment fills in a gap this will be set to true below.
         need_ack = seg_start != rcv_nxt;
         
         // Calculate sequence number for end of data.
-        SeqType seg_end = seq_add(seg_start, SeqType(seg_datalen));
+        TcpSeqNum seg_end = seg_start + seg_datalen;
         
         // Count the number of valid segments (this may include a FIN segment).
         IndexType num_ooseq = count_ooseq();
@@ -175,10 +165,10 @@ public:
         // Check for FIN-related inconsistencies.
         if (num_ooseq > 0 && m_ooseq[num_ooseq - 1].isFin()) {
             // Have a buffered FIN, get its sequence number.
-            SeqType fin_seq = m_ooseq[num_ooseq - 1].getFinSeq();
+            TcpSeqNum fin_seq = m_ooseq[num_ooseq - 1].getFinSeq();
             
             // Check if we just received data beyond the buffered FIN. (A)
-            if (seg_datalen > 0 && !seq_lte(seg_end, fin_seq, rcv_nxt)) {
+            if (seg_datalen > 0 && !rcv_nxt.ref_lte(seg_end, fin_seq)) {
                 return false;
             }
             
@@ -189,7 +179,7 @@ public:
         } else {
             // Check if we just received a FIN that is before already received data.
             if (seg_fin && num_ooseq > 0 &&
-                !seq_lte(m_ooseq[num_ooseq - 1].end, seg_end, rcv_nxt)) {
+                !rcv_nxt.ref_lte(m_ooseq[num_ooseq - 1].end, seg_end)) {
                 return false;
             }
         }
@@ -199,7 +189,7 @@ public:
             // Skip over segments strictly before this one.
             // Note: we would never skip over a FIN segment due to check (A) above.
             IndexType pos = 0;
-            while (pos < num_ooseq && seq_lt(m_ooseq[pos].end, seg_start, rcv_nxt)) {
+            while (pos < num_ooseq && rcv_nxt.ref_lt(m_ooseq[pos].end, seg_start)) {
                 pos++;
             }
             
@@ -209,7 +199,7 @@ public:
             // new segment with [pos] and possibly subsequent segments.
             // No special accomodation of FIN segments is needed because a FIN
             // appears with start==end equal to the FIN sequence number plus one.
-            if (pos == num_ooseq || seq_lt(seg_end, m_ooseq[pos].start, rcv_nxt)) {
+            if (pos == num_ooseq || rcv_nxt.ref_lt(seg_end, m_ooseq[pos].start)) {
                 // If all segment slots are used and we are not inserting to the end,
                 // release the last slot. This ensures that we can always accept
                 // in-sequence data, and not stall after all slots are exhausted.
@@ -226,8 +216,8 @@ public:
                 if (num_ooseq < NumOosSegs) {
                     if (pos < num_ooseq) {
                         need_ack = true;
-                        std::move_backward(&m_ooseq[pos],
-                                           &m_ooseq[num_ooseq], &m_ooseq[num_ooseq + 1]);
+                        std::move_backward(
+                            &m_ooseq[pos], &m_ooseq[num_ooseq], &m_ooseq[num_ooseq + 1]);
                     }
                     m_ooseq[pos] = OosSeg{seg_start, seg_end};
                     num_ooseq++;
@@ -241,13 +231,13 @@ public:
                 AIPSTACK_ASSERT(!m_ooseq[pos].isFin())
                 
                 // Extend the existing segment to the left if needed.
-                if (seq_lt(seg_start, m_ooseq[pos].start, rcv_nxt)) {
+                if (rcv_nxt.ref_lt(seg_start, m_ooseq[pos].start)) {
                     need_ack = true;
                     m_ooseq[pos].start = seg_start;
                 }
                 
                 // Extend the existing segment to the right if needed.
-                if (!seq_lte(seg_end, m_ooseq[pos].end, rcv_nxt)) {
+                if (!rcv_nxt.ref_lte(seg_end, m_ooseq[pos].end)) {
                     need_ack = true;
                     m_ooseq[pos].end = seg_end;
                     
@@ -255,7 +245,7 @@ public:
                     // that it now intersects or touches.
                     IndexType merge_pos = pos + 1;
                     while (merge_pos < num_ooseq &&
-                           !seq_lt(seg_end, m_ooseq[merge_pos].start, rcv_nxt))
+                           !rcv_nxt.ref_lt(seg_end, m_ooseq[merge_pos].start))
                     {
                         // Segment at [merge_pos] cannot be a FIN, for similar reasons that
                         // [pos] could not be above.
@@ -263,7 +253,7 @@ public:
                         
                         // If the extended segment [pos] extends no more than to the end of
                         // [merge_pos], then [merge_pos] is the last segment to be merged.
-                        if (seq_lte(seg_end, m_ooseq[merge_pos].end, rcv_nxt)) {
+                        if (rcv_nxt.ref_lte(seg_end, m_ooseq[merge_pos].end)) {
                             // Make sure [pos] includes the entire [merge_pos].
                             m_ooseq[pos].end = m_ooseq[merge_pos].end;
                             merge_pos++;
@@ -282,7 +272,7 @@ public:
                     if (num_merged > 0) {
                         if (merge_pos < num_ooseq) {
                             std::move(&m_ooseq[merge_pos],
-                                      &m_ooseq[num_ooseq], &m_ooseq[pos + 1]);
+                                &m_ooseq[num_ooseq], &m_ooseq[pos + 1]);
                         }
                         num_ooseq -= num_merged;
                     }
@@ -320,13 +310,13 @@ public:
      * @param fin This will be set to whether a FIN follows the shifted-out
      *            data (or follows rcv_nxt if there is no shifted-out data).
      */
-    void shiftAvailable (SeqType rcv_nxt, std::size_t &datalen, bool &fin)
+    void shiftAvailable (TcpSeqNum rcv_nxt, std::size_t &datalen, bool &fin)
     {
         // Check if we have a data segment starting at rcv_nxt.
         if (!m_ooseq[0].isEndOrFin() && m_ooseq[0].start == rcv_nxt) {
             // Return the data length to the caller.
-            SeqType seq_end = m_ooseq[0].end;
-            datalen = seq_diff(seq_end, m_ooseq[0].start);
+            TcpSeqNum seq_end = m_ooseq[0].end;
+            datalen = std::size_t(seq_end - m_ooseq[0].start);
             
             // Shift the segment out of the buffer.
             IndexType num_ooseq = count_ooseq();
@@ -340,7 +330,7 @@ public:
             // could immediately consume since there are always gaps
             // between segments.
             AIPSTACK_ASSERT(m_ooseq[0].isEndOrFin() ||
-                         !seq_lte(m_ooseq[0].start, seq_end, rcv_nxt))
+                            !rcv_nxt.ref_lte(m_ooseq[0].start, seq_end))
         } else {
             // Not returning any data.
             datalen = 0;
@@ -350,13 +340,13 @@ public:
         // Note: no need to check !isEnd because isFin implies !isEnd.
         // There is no need to consume the FIN.
         fin = m_ooseq[0].isFin() &&
-            m_ooseq[0].getFinSeq() == seq_add(rcv_nxt, SeqType(datalen));
+            m_ooseq[0].getFinSeq() == rcv_nxt + datalen;
     }
     
 private:
     // Return the number of out-of-sequence segments by counting
     // until an end marker is found or the end of segments is reached.
-    IndexType count_ooseq ()
+    IndexType count_ooseq () const
     {
         IndexType num_ooseq = 0;
         while (num_ooseq < NumOosSegs && !m_ooseq[num_ooseq].isEnd()) {

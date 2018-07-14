@@ -31,6 +31,7 @@
 #include <aipstack/infra/Struct.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/misc/EnumBitfieldUtils.h>
+#include <aipstack/tcp/TcpSeqNum.h>
 
 namespace AIpStack {
 
@@ -58,8 +59,8 @@ inline Tcp4Flags Tcp4EncodeOffset(std::uint8_t offset_words) {
 AIPSTACK_DEFINE_STRUCT(Tcp4Header,
     (SrcPort,     std::uint16_t)
     (DstPort,     std::uint16_t)
-    (SeqNum,      std::uint32_t)
-    (AckNum,      std::uint32_t)
+    (SeqNum,      TcpSeqNum)
+    (AckNum,      TcpSeqNum)
     (OffsetFlags, Tcp4Flags)
     (WindowSize,  std::uint16_t)
     (Checksum,    std::uint16_t)

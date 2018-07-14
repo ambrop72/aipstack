@@ -55,6 +55,7 @@
 #include <aipstack/platform/PlatformFacade.h>
 #include <aipstack/tcp/TcpUtils.h>
 #include <aipstack/tcp/TcpState.h>
+#include <aipstack/tcp/TcpSeqNum.h>
 #include <aipstack/tcp/TcpPcbFlags.h>
 #include <aipstack/tcp/TcpOosBuffer.h>
 #include <aipstack/tcp/TcpApi.h>
@@ -76,8 +77,7 @@ class IpTcpProto :
     private TcpApi<Arg>
 {
     AIPSTACK_USE_VALS(Arg::Params, (TcpTTL, NumTcpPcbs, NumOosSegs,
-                                    EphemeralPortFirst, EphemeralPortLast,
-                                    LinkWithArrayIndices))
+        EphemeralPortFirst, EphemeralPortLast, LinkWithArrayIndices))
     AIPSTACK_USE_TYPES(Arg::Params, (PcbIndexService))
     AIPSTACK_USE_TYPES(Arg, (PlatformImpl, StackArg))
     
@@ -100,7 +100,7 @@ class IpTcpProto :
     using Input = IpTcpProto_input<Arg>;
     using Output = IpTcpProto_output<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (TcpOptions, PcbKey, PcbKeyCompare, SeqType))
+    AIPSTACK_USE_TYPES(TcpUtils, (TcpOptions, PcbKey, PcbKeyCompare))
     AIPSTACK_USE_TYPES(Constants, (RttType))
     
     struct TcpPcb;
@@ -211,12 +211,12 @@ class IpTcpProto :
         };
         
         // Sender variables.
-        SeqType snd_una;
-        SeqType snd_nxt;
+        TcpSeqNum snd_una;
+        TcpSeqNum snd_nxt;
         
         // Receiver variables.
-        SeqType rcv_nxt;
-        SeqType rcv_ann_wnd; // ensured to fit in size_t (in case size_t is 16-bit)
+        TcpSeqNum rcv_nxt;
+        TcpSeqInt rcv_ann_wnd; // ensured to fit in size_t (in case size_t is 16-bit)
         
         // Round-trip-time and retransmission time management.
         typename IpTcpProto::TimeType rtt_test_time;
@@ -321,12 +321,14 @@ class IpTcpProto :
         }
         
         // Send retry callback.
-        void retrySending () override final { Output::pcb_send_retry(this); }
+        void retrySending () override final {
+            Output::pcb_send_retry(this);
+        }
     };
     
     // Define the hook accessor for the PCB index.
-    struct PcbIndexAccessor : public MemberAccessor<TcpPcb, typename PcbIndex::Node,
-                                                    &TcpPcb::index_hook> {};
+    struct PcbIndexAccessor : public MemberAccessor<
+        TcpPcb, typename PcbIndex::Node, &TcpPcb::index_hook> {};
     
 public:
     /**
@@ -580,7 +582,7 @@ private:
     
     // This is called from Connection::reset when the Connection
     // is abandoning the PCB.
-    static void pcb_abandoned (TcpPcb *pcb, bool rst_needed, SeqType rcv_ann_thres)
+    static void pcb_abandoned (TcpPcb *pcb, bool rst_needed, TcpSeqInt rcv_ann_thres)
     {
         AIPSTACK_ASSERT(pcb->state() == TcpStates::SYN_SENT || pcb->state().isActive())
         AIPSTACK_ASSERT(pcb->con == nullptr) // Connection just cleared it
@@ -652,9 +654,9 @@ private:
         return tcp->m_current_pcb == nullptr;
     }
     
-    inline SeqType make_iss ()
+    inline TcpSeqNum make_iss ()
     {
-        return SeqType(platform().getTime());
+        return TcpSeqNum(TcpSeqInt(platform().getTime()));
     }
     
     Listener * find_listener (Ip4Addr addr, PortNum port)
@@ -721,13 +723,14 @@ private:
         m_unrefed_pcbs_list.remove({*pcb, *this}, *this);
         
         // Generate an initial sequence number.
-        SeqType iss = make_iss();
+        TcpSeqNum iss = make_iss();
         
         // The initial receive window will be at least one for the SYN and
         // at most 16-bit wide since SYN segments have unscaled window.
         // NOTE: rcv_ann_wnd after SYN-ACKSYN reception (-1) fits into size_t
         // as required since user_rcv_wnd is size_t.
-        SeqType rcv_wnd = 1 + MinValueU(std::uint16_t(TypeMax<std::uint16_t>() - 1), user_rcv_wnd);
+        TcpSeqInt rcv_wnd = 1u +
+            MinValueU(std::uint16_t(TypeMax<std::uint16_t>() - 1), user_rcv_wnd);
         
         // Initialize most of the PCB.
         pcb->setState(TcpStates::SYN_SENT);
@@ -738,7 +741,7 @@ private:
         pcb->remote_addr = remote_addr;
         pcb->local_port = local_port;
         pcb->remote_port = remote_port;
-        pcb->rcv_nxt = 0; // it is sent in the SYN
+        pcb->rcv_nxt = TcpSeqNum(0u); // it is sent in the SYN
         pcb->rcv_ann_wnd = rcv_wnd;
         pcb->snd_una = iss;
         pcb->snd_nxt = iss;
@@ -768,8 +771,8 @@ private:
         return IpErr::SUCCESS;
     }
     
-    PortNum get_ephemeral_port (Ip4Addr local_addr,
-                                 Ip4Addr remote_addr, PortNum remote_port)
+    PortNum get_ephemeral_port (
+        Ip4Addr local_addr, Ip4Addr remote_addr, PortNum remote_port)
     {
         for (PortNum i : IntRange(NumEphemeralPorts)) {
             (void)i;
@@ -877,9 +880,8 @@ private:
     StructureRaiiWrapper<typename PcbIndex::Index> m_pcb_index_timewait;
     ResourceArray<TcpPcb, NumTcpPcbs> m_pcbs;
     
-    struct PcbArrayAccessor : public
-        MemberAccessor<IpTcpProto, ResourceArray<TcpPcb, NumTcpPcbs>,
-                       &IpTcpProto::m_pcbs> {};
+    struct PcbArrayAccessor : public MemberAccessor<
+        IpTcpProto, ResourceArray<TcpPcb, NumTcpPcbs>, &IpTcpProto::m_pcbs> {};
 };
 
 struct IpTcpProtoOptions {

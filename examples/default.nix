@@ -16,7 +16,7 @@ let
         "-Woverloaded-virtual" "-Wmissing-declarations" "-Wformat=2"
         "-Wdelete-non-virtual-dtor" "-Wformat-signedness" "-Wlogical-op"
         "-Wold-style-cast" "-Wundef" "-Wextra-semi" "-Wreserved-id-macro"
-        "-Wcast-align"
+        "-Wcast-align" "-Wno-tautological-constant-out-of-range-compare"
     ];
 
     optionalWarningsClang = [
