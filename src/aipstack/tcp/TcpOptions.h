@@ -30,6 +30,7 @@
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/EnumUtils.h>
+#include <aipstack/misc/EnumBitfieldUtils.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Struct.h>
 #include <aipstack/proto/Tcp4Proto.h>
@@ -37,14 +38,15 @@
 namespace AIpStack {
 
 // TCP options flags used in TcpOptions options field.
-struct TcpOptionFlags { enum : std::uint8_t {
+enum class TcpOptionFlags : std::uint8_t {
     MSS       = 1 << 0,
     WND_SCALE = 1 << 1,
-}; };
+};
+AIPSTACK_ENUM_BITFIELD_OPS(TcpOptionFlags)
 
 // Container for TCP options that we care about.
 struct TcpOptions {
-    std::uint8_t options;
+    TcpOptionFlags options;
     std::uint8_t wnd_scale;
     std::uint16_t mss;
 };
@@ -60,7 +62,7 @@ static constexpr std::size_t MaxTcpOptionsWriteLen =
 inline void ParseTcpOptions (IpBufRef buf, TcpOptions &out_opts)
 {
     // Clear options flags. Below we will set flags for options that we find.
-    out_opts.options = 0;
+    out_opts.options = TcpOptionFlags(0);
     
     while (buf.tot_len > 0) {
         // Read the option kind.
@@ -124,10 +126,10 @@ inline void ParseTcpOptions (IpBufRef buf, TcpOptions &out_opts)
 inline std::uint8_t CalcTcpOptionsLength (TcpOptions const &tcp_opts)
 {
     std::uint8_t opts_len = 0;
-    if ((tcp_opts.options & TcpOptionFlags::MSS) != 0) {
+    if ((tcp_opts.options & TcpOptionFlags::MSS) != EnumZero) {
         opts_len += TcpOptionWriteLen::MSS;
     }
-    if ((tcp_opts.options & TcpOptionFlags::WND_SCALE) != 0) {
+    if ((tcp_opts.options & TcpOptionFlags::WND_SCALE) != EnumZero) {
         opts_len += TcpOptionWriteLen::WndScale;
     }
     AIPSTACK_ASSERT(opts_len <= MaxTcpOptionsWriteLen)
@@ -137,14 +139,14 @@ inline std::uint8_t CalcTcpOptionsLength (TcpOptions const &tcp_opts)
 
 inline void WriteTcpOptions (TcpOptions const &tcp_opts, char *out)
 {
-    if ((tcp_opts.options & TcpOptionFlags::MSS) != 0) {
+    if ((tcp_opts.options & TcpOptionFlags::MSS) != EnumZero) {
         WriteSingleField<std::uint8_t >(out + 0, AsUnderlying(TcpOption::MSS));
         WriteSingleField<std::uint8_t >(out + 1, /*length=*/4);
         WriteSingleField<std::uint16_t>(out + 2, tcp_opts.mss);
         out += TcpOptionWriteLen::MSS;
     }
 
-    if ((tcp_opts.options & TcpOptionFlags::WND_SCALE) != 0) {
+    if ((tcp_opts.options & TcpOptionFlags::WND_SCALE) != EnumZero) {
         WriteSingleField<std::uint8_t>(out + 0, AsUnderlying(TcpOption::Nop));
         WriteSingleField<std::uint8_t>(out + 1, AsUnderlying(TcpOption::WndScale));
         WriteSingleField<std::uint8_t>(out + 2, /*length=*/3);

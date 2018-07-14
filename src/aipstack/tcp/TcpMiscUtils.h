@@ -57,7 +57,7 @@ bool CalcTcpSndMss (
     std::uint16_t iface_mss, TcpOptions const &tcp_opts, std::uint16_t *out_mss)
 {
     std::uint16_t req_mss =
-        ((tcp_opts.options & TcpOptionFlags::MSS) != 0) ? tcp_opts.mss : 536;
+        ((tcp_opts.options & TcpOptionFlags::MSS) != EnumZero) ? tcp_opts.mss : 536;
     std::uint16_t mss = MinValue(iface_mss, req_mss);
     if (mss < MinAllowedMss) {
         return false;

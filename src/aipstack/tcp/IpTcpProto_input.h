@@ -439,7 +439,7 @@ private:
             // being accepted).
             
             // Handle window scaling option.
-            if ((tcp->m_received_opts.options & TcpOptionFlags::WND_SCALE) != 0) {
+            if ((tcp->m_received_opts.options & TcpOptionFlags::WND_SCALE) != EnumZero) {
                 pcb->setFlag(TcpPcbFlags::WND_SCALE);
                 pcb->snd_wnd_shift =
                     MinValue(std::uint8_t(14), tcp->m_received_opts.wnd_scale);
@@ -860,7 +860,7 @@ private:
             
             // Handle the window scale option.
             AIPSTACK_ASSERT(pcb->snd_wnd_shift == 0)
-            if ((tcp->m_received_opts.options & TcpOptionFlags::WND_SCALE) != 0) {
+            if ((tcp->m_received_opts.options & TcpOptionFlags::WND_SCALE) != EnumZero) {
                 // Remote sent the window scale flag, so store the window scale
                 // value that they will be using. Note that the window size in
                 // this incoming segment has already been read above using

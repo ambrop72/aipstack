@@ -32,6 +32,7 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/MinMax.h>
+#include <aipstack/misc/EnumUtils.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Struct.h>
 
@@ -150,7 +151,7 @@ public:
     /**
      * Data type representing the exported state of a checksum calculation.
      */
-    enum State : std::uint32_t {};
+    enum class State : std::uint32_t {};
     
     /**
      * Construct the object to start a new checksum calculation.
@@ -165,8 +166,8 @@ public:
      * 
      * @param state The exported calculation state as returned by @ref getState.
      */
-    inline IpChksumAccumulator (State state)
-    : m_sum(state)
+    inline IpChksumAccumulator (State state) :
+        m_sum(AsUnderlying(state))
     {
     }
     
