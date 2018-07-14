@@ -46,6 +46,7 @@
 #include <aipstack/tcp/TcpState.h>
 #include <aipstack/tcp/TcpSeqNum.h>
 #include <aipstack/tcp/TcpPcbFlags.h>
+#include <aipstack/tcp/TcpOptions.h>
 
 namespace AIpStack {
 
@@ -58,7 +59,7 @@ class IpTcpProto_input
 {
     using TcpProto = IpTcpProto<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (TcpSegMeta, TcpOptions, OptionFlags))
+    AIPSTACK_USE_TYPES(TcpUtils, (TcpSegMeta))
     AIPSTACK_USE_VALS(TcpUtils, (tcplen))
     AIPSTACK_USE_TYPES(TcpProto, (Listener, Connection, TcpPcb, Output, Constants,
                                   AbrtTimer, RtxTimer, OutputTimer, StackArg))
@@ -440,7 +441,7 @@ private:
             // being accepted).
             
             // Handle window scaling option.
-            if ((tcp->m_received_opts.options & OptionFlags::WND_SCALE) != 0) {
+            if ((tcp->m_received_opts.options & TcpOptionFlags::WND_SCALE) != 0) {
                 pcb->setFlag(TcpPcbFlags::WND_SCALE);
                 pcb->snd_wnd_shift =
                     MinValue(std::uint8_t(14), tcp->m_received_opts.wnd_scale);
@@ -861,7 +862,7 @@ private:
             
             // Handle the window scale option.
             AIPSTACK_ASSERT(pcb->snd_wnd_shift == 0)
-            if ((tcp->m_received_opts.options & OptionFlags::WND_SCALE) != 0) {
+            if ((tcp->m_received_opts.options & TcpOptionFlags::WND_SCALE) != 0) {
                 // Remote sent the window scale flag, so store the window scale
                 // value that they will be using. Note that the window size in
                 // this incoming segment has already been read above using
@@ -1390,7 +1391,7 @@ private:
     {
         // Only parse if the options were not parsed already.
         if (tcp->m_received_opts_buf.node != nullptr) {
-            TcpUtils::parse_options(tcp->m_received_opts_buf, &tcp->m_received_opts);
+            ParseTcpOptions(tcp->m_received_opts_buf, tcp->m_received_opts);
             tcp->m_received_opts_buf.node = nullptr;
         }
     }

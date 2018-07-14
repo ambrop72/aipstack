@@ -53,7 +53,6 @@
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
 #include <aipstack/platform/PlatformFacade.h>
-#include <aipstack/tcp/TcpUtils.h>
 #include <aipstack/tcp/TcpState.h>
 #include <aipstack/tcp/TcpSeqNum.h>
 #include <aipstack/tcp/TcpPcbFlags.h>
@@ -63,6 +62,7 @@
 #include <aipstack/tcp/TcpConnection.h>
 #include <aipstack/tcp/TcpMultiTimer.h>
 #include <aipstack/tcp/TcpPcbKey.h>
+#include <aipstack/tcp/TcpOptions.h>
 #include <aipstack/tcp/IpTcpProto_constants.h>
 #include <aipstack/tcp/IpTcpProto_input.h>
 #include <aipstack/tcp/IpTcpProto_output.h>
@@ -101,7 +101,6 @@ class IpTcpProto :
     using Input = IpTcpProto_input<Arg>;
     using Output = IpTcpProto_output<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (TcpOptions))
     AIPSTACK_USE_TYPES(Constants, (RttType))
     
     struct TcpPcb;

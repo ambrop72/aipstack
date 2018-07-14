@@ -45,6 +45,7 @@
 #include <aipstack/tcp/TcpSeqNum.h>
 #include <aipstack/tcp/TcpPcbFlags.h>
 #include <aipstack/tcp/TcpPcbKey.h>
+#include <aipstack/tcp/TcpOptions.h>
 
 namespace AIpStack {
 
@@ -57,7 +58,7 @@ class IpTcpProto_output
 {
     using TcpProto = IpTcpProto<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (TcpSegMeta, OptionFlags, TcpOptions))
+    AIPSTACK_USE_TYPES(TcpUtils, (TcpSegMeta))
     AIPSTACK_USE_VALS(TcpUtils, (tcplen))
     AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Input, TimeType, Constants, OutputTimer,
                                   RtxTimer, StackArg, Connection))
@@ -81,14 +82,14 @@ public:
         
         // Include the MSS option.
         TcpOptions tcp_opts;
-        tcp_opts.options = OptionFlags::MSS;
+        tcp_opts.options = TcpOptionFlags::MSS;
         // The iface_mss is stored in a variable otherwise unused in this state.
         tcp_opts.mss = (pcb->state() == TcpStates::SYN_SENT) ?
             pcb->base_snd_mss : pcb->snd_mss;
         
         // Send the window scale option if needed.
         if (pcb->hasFlag(TcpPcbFlags::WND_SCALE)) {
-            tcp_opts.options |= OptionFlags::WND_SCALE;
+            tcp_opts.options |= TcpOptionFlags::WND_SCALE;
             tcp_opts.wnd_scale = pcb->rcv_wnd_shift;
         }
         
@@ -1339,10 +1340,10 @@ private:
         Tcp4Flags flags, TcpOptions *opts, IpSendRetryRequest *retryReq)
     {
         // Compute length of TCP options.
-        std::uint8_t opts_len = (opts != nullptr) ? TcpUtils::calc_options_len(*opts) : 0;
+        std::uint8_t opts_len = (opts != nullptr) ? CalcTcpOptionsLength(*opts) : 0;
         
         // Allocate memory for headers.
-        TxAllocHelper<Tcp4Header::Size+TcpUtils::MaxOptionsWriteLen, HeaderBeforeIp4Dgram>
+        TxAllocHelper<Tcp4Header::Size+MaxTcpOptionsWriteLen, HeaderBeforeIp4Dgram>
             dgram_alloc(Tcp4Header::Size+opts_len);
         
         // Caculate the offset+flags field.
@@ -1380,7 +1381,7 @@ private:
         
         // Write any TCP options.
         if (opts != nullptr) {
-            TcpUtils::write_options(*opts, dgram_alloc.getPtr() + Tcp4Header::Size);
+            WriteTcpOptions(*opts, dgram_alloc.getPtr() + Tcp4Header::Size);
         }
         
         // Construct the datagram reference including any data.
