@@ -27,7 +27,6 @@
 
 #include <cstdint>
 #include <cstddef>
-#include <limits>
 
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/proto/Tcp4Proto.h>
@@ -80,26 +79,6 @@ public:
         else {
             return 4u * TcpSeqInt(snd_mss);
         }
-    }
-    
-    /**
-     * Determine if x is in the half-open interval (start, start+length].
-     * IntType must be an unsigned integer type.
-     * 
-     * Note that the interval is understood in terms of modular
-     * arithmetic, so if a+b is not representable in this type
-     * the result may not be what you expect.
-     * 
-     * Thanks to Simon Stienen for this most efficient formula.
-     */
-    template <typename IntType>
-    inline static bool InOpenClosedIntervalStartLen (
-        IntType start, IntType length, IntType x)
-    {
-        static_assert(std::numeric_limits<IntType>::is_integer, "");
-        static_assert(!std::numeric_limits<IntType>::is_signed, "");
-        
-        return IntType(x + ~start) < length;
     }
 };
 

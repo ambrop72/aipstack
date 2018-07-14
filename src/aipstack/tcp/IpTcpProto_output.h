@@ -34,6 +34,7 @@
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/misc/EnumUtils.h>
+#include <aipstack/misc/IntervalUtils.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Chksum.h>
 #include <aipstack/infra/TxAllocHelper.h>
@@ -1094,7 +1095,7 @@ private:
         
         // Set the PSH flag if the push index is within this segment.
         std::size_t psh_index = pcb->con->m_v.snd_psh_index;
-        if (TcpUtils::InOpenClosedIntervalStartLen(offset, data.tot_len, psh_index)) {
+        if (InOpenClosedIntervalStartLen(offset, data.tot_len, psh_index)) {
             seg_flags |= Tcp4Flags::Psh;
         }
         
