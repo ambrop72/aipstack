@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Ambroz Bizjak
+ * Copyright (c) 2018 Ambroz Bizjak
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -22,8 +22,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AIPSTACK_TCP_UTILS_H
-#define AIPSTACK_TCP_UTILS_H
+#ifndef AIPSTACK_TCP_MISC_UTILS_H
+#define AIPSTACK_TCP_MISC_UTILS_H
 
 #include <cstdint>
 #include <cstddef>
@@ -36,51 +36,48 @@
 
 namespace AIpStack {
 
-class TcpUtils {
-public:
-    // Container for data in the TCP header (used both in RX and TX).
-    struct TcpSegMeta {
-        PortNum local_port;
-        PortNum remote_port;
-        TcpSeqNum seq_num;
-        TcpSeqNum ack_num;
-        std::uint16_t window_size;
-        Tcp4Flags flags;
-        TcpOptions *opts; // not used for RX (undefined), may be null for TX
-    };
-    
-    static inline std::size_t tcplen (Tcp4Flags flags, std::size_t tcp_data_len)
-    {
-        return tcp_data_len + ((flags & Tcp4Flags::SeqFlags) != EnumZero);
-    }
-
-    template <std::uint16_t MinAllowedMss>
-    static bool calc_snd_mss (std::uint16_t iface_mss,
-                              TcpOptions const &tcp_opts, std::uint16_t *out_mss)
-    {
-        std::uint16_t req_mss = ((tcp_opts.options & TcpOptionFlags::MSS) != 0) ?
-            tcp_opts.mss : 536;
-        std::uint16_t mss = MinValue(iface_mss, req_mss);
-        if (mss < MinAllowedMss) {
-            return false;
-        }
-        *out_mss = mss;
-        return true;
-    }
-    
-    static TcpSeqInt calc_initial_cwnd (std::uint16_t snd_mss)
-    {
-        if (snd_mss > 2190) {
-            return 2u * TcpSeqInt(snd_mss);
-        }
-        else if (snd_mss > 1095) {
-            return 3u * TcpSeqInt(snd_mss);
-        }
-        else {
-            return 4u * TcpSeqInt(snd_mss);
-        }
-    }
+// Container for data in the TCP header (used both in RX and TX).
+struct TcpSegMeta {
+    PortNum local_port;
+    PortNum remote_port;
+    TcpSeqNum seq_num;
+    TcpSeqNum ack_num;
+    std::uint16_t window_size;
+    Tcp4Flags flags;
+    TcpOptions *opts; // not used for RX (undefined), may be null for TX
 };
+
+inline std::size_t CalcTcpSeqLen (Tcp4Flags flags, std::size_t tcp_data_len)
+{
+    return tcp_data_len + ((flags & Tcp4Flags::SeqFlags) != EnumZero);
+}
+
+template <std::uint16_t MinAllowedMss>
+bool CalcTcpSndMss (
+    std::uint16_t iface_mss, TcpOptions const &tcp_opts, std::uint16_t *out_mss)
+{
+    std::uint16_t req_mss =
+        ((tcp_opts.options & TcpOptionFlags::MSS) != 0) ? tcp_opts.mss : 536;
+    std::uint16_t mss = MinValue(iface_mss, req_mss);
+    if (mss < MinAllowedMss) {
+        return false;
+    }
+    *out_mss = mss;
+    return true;
+}
+
+inline TcpSeqInt CalcInitialTcpCwnd (std::uint16_t snd_mss)
+{
+    if (snd_mss > 2190u) {
+        return 2u * TcpSeqInt(snd_mss);
+    }
+    else if (snd_mss > 1095u) {
+        return 3u * TcpSeqInt(snd_mss);
+    }
+    else {
+        return 4u * TcpSeqInt(snd_mss);
+    }
+}
 
 }
 

@@ -42,7 +42,7 @@
 #include <aipstack/proto/Icmp4Proto.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStack.h>
-#include <aipstack/tcp/TcpUtils.h>
+#include <aipstack/tcp/TcpMiscUtils.h>
 #include <aipstack/tcp/TcpState.h>
 #include <aipstack/tcp/TcpSeqNum.h>
 #include <aipstack/tcp/TcpPcbFlags.h>
@@ -59,8 +59,6 @@ class IpTcpProto_input
 {
     using TcpProto = IpTcpProto<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (TcpSegMeta))
-    AIPSTACK_USE_VALS(TcpUtils, (tcplen))
     AIPSTACK_USE_TYPES(TcpProto, (Listener, Connection, TcpPcb, Output, Constants,
                                   AbrtTimer, RtxTimer, OutputTimer, StackArg))
     AIPSTACK_USE_VALS(TcpProto, (pcb_aborted_in_callback))
@@ -358,7 +356,7 @@ public:
         // Initialize some variables.
         Connection *con = pcb->con;
         con->m_v.snd_wnd = snd_wnd;
-        con->m_v.cwnd = TcpUtils::calc_initial_cwnd(pcb->snd_mss);
+        con->m_v.cwnd = CalcInitialTcpCwnd(pcb->snd_mss);
         pcb->setFlag(TcpPcbFlags::CWND_INIT);
         con->m_v.ssthresh = Constants::MaxWindow;
         con->m_v.cwnd_acked = 0;
@@ -395,7 +393,7 @@ private:
             
             // Calculate the base_snd_mss.
             std::uint16_t base_snd_mss;
-            if (!TcpUtils::calc_snd_mss<Constants::MinAllowedMss>(
+            if (!CalcTcpSndMss<Constants::MinAllowedMss>(
                     iface_mss, tcp->m_received_opts, &base_snd_mss))
             {
                 goto refuse;
@@ -740,7 +738,7 @@ private:
                     continue_processing = true;
                 } else {
                     // SYN without ACK, we do not support this yet, send RST.
-                    std::size_t seqlen = tcplen(tcp_meta.flags, tcp_data.tot_len);
+                    std::size_t seqlen = CalcTcpSeqLen(tcp_meta.flags, tcp_data.tot_len);
                     Output::send_rst(pcb->tcp, *pcb, /*seq_num=*/TcpSeqNum(0),
                         /*ack=*/true, /*ack_num=*/ tcp_meta.seq_num + seqlen);
                 }
@@ -852,7 +850,7 @@ private:
             parse_received_opts(tcp);
             
             // Update the base_snd_mss based on the MSS option in this packet (if any).
-            if (!TcpUtils::calc_snd_mss<Constants::MinAllowedMss>(
+            if (!CalcTcpSndMss<Constants::MinAllowedMss>(
                 pcb->base_snd_mss, tcp->m_received_opts, &pcb->base_snd_mss))
             {
                 // Due to ESTABLISHED transition above, the RST will be an ACK.

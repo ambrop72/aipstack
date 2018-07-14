@@ -41,7 +41,7 @@
 #include <aipstack/infra/Err.h>
 #include <aipstack/proto/Tcp4Proto.h>
 #include <aipstack/ip/IpStack.h>
-#include <aipstack/tcp/TcpUtils.h>
+#include <aipstack/tcp/TcpMiscUtils.h>
 #include <aipstack/tcp/TcpState.h>
 #include <aipstack/tcp/TcpSeqNum.h>
 #include <aipstack/tcp/TcpPcbFlags.h>
@@ -59,8 +59,6 @@ class IpTcpProto_output
 {
     using TcpProto = IpTcpProto<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (TcpSegMeta))
-    AIPSTACK_USE_VALS(TcpUtils, (tcplen))
     AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Input, TimeType, Constants, OutputTimer,
                                   RtxTimer, StackArg, Connection))
     AIPSTACK_USE_TYPES(Constants, (RttType, RttNextType))
@@ -525,7 +523,7 @@ public:
             // Reduce the CWND (RFC 5681 section 4.1).
             // Also reset cwnd_acked to avoid old accumulated value
             // from causing an undesired cwnd increase later.
-            TcpSeqInt initial_cwnd = TcpUtils::calc_initial_cwnd(pcb->snd_mss);
+            TcpSeqInt initial_cwnd = CalcInitialTcpCwnd(pcb->snd_mss);
             if (con->m_v.cwnd >= initial_cwnd) {
                 con->m_v.cwnd = initial_cwnd;
                 pcb->setFlag(TcpPcbFlags::CWND_INIT);
@@ -862,7 +860,7 @@ public:
         std::uint16_t snd_mss = MinValue(pcb->base_snd_mss, mtu_mss);
         
         // This snd_mss cannot be less than MinAllowedMss:
-        // - base_snd_mss was explicitly checked in TcpUtils::calc_snd_mss.
+        // - base_snd_mss was explicitly checked in CalcTcpSndMss.
         // - mtu-Ip4TcpHeaderSize cannot be less because
         //   MinAllowedMss==MinMTU-Ip4TcpHeaderSize.
         AIPSTACK_ASSERT(snd_mss >= Constants::MinAllowedMss)
@@ -912,7 +910,7 @@ public:
         
         if (pcb->hasFlag(TcpPcbFlags::CWND_INIT)) {
             // Recalculate initial CWND (RFC 5681 page 5).
-            con->m_v.cwnd = TcpUtils::calc_initial_cwnd(pcb->snd_mss);
+            con->m_v.cwnd = CalcInitialTcpCwnd(pcb->snd_mss);
         } else {
             // The standards do not require updating cwnd for the new snd_mss,
             // but we have to make sure that cwnd does not become less than snd_mss.
@@ -1000,7 +998,7 @@ public:
         } else {
             rst_seq_num = TcpSeqNum(0u);
             rst_ack = true;
-            rst_ack_num = tcp_meta.seq_num + tcplen(tcp_meta.flags, tcp_data_len);
+            rst_ack_num = tcp_meta.seq_num + CalcTcpSeqLen(tcp_meta.flags, tcp_data_len);
         }
         
         TcpPcbKey key{
