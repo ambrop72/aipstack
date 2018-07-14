@@ -62,6 +62,7 @@
 #include <aipstack/tcp/TcpListener.h>
 #include <aipstack/tcp/TcpConnection.h>
 #include <aipstack/tcp/TcpMultiTimer.h>
+#include <aipstack/tcp/TcpPcbKey.h>
 #include <aipstack/tcp/IpTcpProto_constants.h>
 #include <aipstack/tcp/IpTcpProto_input.h>
 #include <aipstack/tcp/IpTcpProto_output.h>
@@ -100,7 +101,7 @@ class IpTcpProto :
     using Input = IpTcpProto_input<Arg>;
     using Output = IpTcpProto_output<Arg>;
     
-    AIPSTACK_USE_TYPES(TcpUtils, (TcpOptions, PcbKey, PcbKeyCompare))
+    AIPSTACK_USE_TYPES(TcpUtils, (TcpOptions))
     AIPSTACK_USE_TYPES(Constants, (RttType))
     
     struct TcpPcb;
@@ -124,7 +125,7 @@ class IpTcpProto :
     
     // Instantiate the PCB index.
     struct PcbIndexAccessor;
-    using PcbIndexLookupKeyArg = PcbKey const &;
+    using PcbIndexLookupKeyArg = TcpPcbKey const &;
     struct PcbIndexKeyFuncs;
     AIPSTACK_MAKE_INSTANCE(PcbIndex, (PcbIndexService::template Index<
         PcbIndexAccessor, PcbIndexLookupKeyArg, PcbIndexKeyFuncs, PcbLinkModel,
@@ -168,7 +169,7 @@ class IpTcpProto :
         // PCB timers.
         public PcbMultiTimer,
         // Local/remote IP address and port
-        public PcbKey
+        public TcpPcbKey
     {
         using PcbMultiTimer::platform;
         
@@ -806,7 +807,7 @@ private:
     }
     
     // Find a PCB by address tuple.
-    TcpPcb * find_pcb (PcbKey const &key)
+    TcpPcb * find_pcb (TcpPcbKey const &key)
     {
         // Look in the active index first.
         TcpPcb *pcb = m_pcb_index_active.findEntry(key, *this);
@@ -841,11 +842,11 @@ private:
     
     // This is used by the two PCB indexes to obtain the keys
     // defining the ordering of the PCBs and compare keys.
-    // The key comparison functions are inherited from PcbKeyCompare.
-    struct PcbIndexKeyFuncs : public PcbKeyCompare {
-        inline static PcbKey const & GetKeyOfEntry (TcpPcb const &pcb)
+    // The key comparison functions are inherited from TcpPcbKeyCompare.
+    struct PcbIndexKeyFuncs : public TcpPcbKeyCompare {
+        inline static TcpPcbKey const & GetKeyOfEntry (TcpPcb const &pcb)
         {
-            // TcpPcb inherits PcbKey so just return pcb.
+            // TcpPcb inherits TcpPcbKey so just return pcb.
             return pcb;
         }
     };

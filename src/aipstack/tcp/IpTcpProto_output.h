@@ -44,6 +44,7 @@
 #include <aipstack/tcp/TcpState.h>
 #include <aipstack/tcp/TcpSeqNum.h>
 #include <aipstack/tcp/TcpPcbFlags.h>
+#include <aipstack/tcp/TcpPcbKey.h>
 
 namespace AIpStack {
 
@@ -59,7 +60,7 @@ class IpTcpProto_output
     AIPSTACK_USE_TYPES(TcpUtils, (TcpSegMeta, OptionFlags, TcpOptions))
     AIPSTACK_USE_VALS(TcpUtils, (tcplen))
     AIPSTACK_USE_TYPES(TcpProto, (TcpPcb, Input, TimeType, Constants, OutputTimer,
-                                  RtxTimer, StackArg, Connection, PcbKey))
+                                  RtxTimer, StackArg, Connection))
     AIPSTACK_USE_TYPES(Constants, (RttType, RttNextType))
     AIPSTACK_USE_VALS(IpStack<StackArg>, (HeaderBeforeIp4Dgram))
 
@@ -1000,14 +1001,15 @@ public:
             rst_ack_num = tcp_meta.seq_num + tcplen(tcp_meta.flags, tcp_data_len);
         }
         
-        PcbKey key{ip_info.dst_addr, ip_info.src_addr,
-                   tcp_meta.local_port, tcp_meta.remote_port};
+        TcpPcbKey key{
+            ip_info.dst_addr, ip_info.src_addr,
+            tcp_meta.local_port, tcp_meta.remote_port};
         send_rst(tcp, key, rst_seq_num, rst_ack, rst_ack_num);
     }
     
     AIPSTACK_NO_INLINE
-    static void send_rst (TcpProto *tcp, PcbKey const &key,
-                          TcpSeqNum seq_num, bool ack, TcpSeqNum ack_num)
+    static void send_rst (TcpProto *tcp,
+        TcpPcbKey const &key, TcpSeqNum seq_num, bool ack, TcpSeqNum ack_num)
     {
         Tcp4Flags flags = Tcp4Flags::Rst | (ack ? Tcp4Flags::Ack : Tcp4Flags(0));
         send_tcp_nodata(tcp, key, seq_num, ack_num,
@@ -1332,7 +1334,7 @@ private:
     };
     
     AIPSTACK_NO_INLINE
-    static IpErr send_tcp_nodata (TcpProto *tcp, PcbKey const &key,
+    static IpErr send_tcp_nodata (TcpProto *tcp, TcpPcbKey const &key,
         TcpSeqNum seq_num, TcpSeqNum ack_num, std::uint16_t window_size,
         Tcp4Flags flags, TcpOptions *opts, IpSendRetryRequest *retryReq)
     {
