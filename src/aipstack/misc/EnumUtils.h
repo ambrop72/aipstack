@@ -40,6 +40,88 @@ namespace AIpStack {
  */
 
 /**
+ * An empty class which represents a zero value for any enum type.
+ * 
+ * This class provides a template conversion operator to any enum type
+ * which returns an enum with zero value. Additionally, `==` and `!=` operators
+ * are available for comparing an enum type and @ref Enum0Type (in any order).
+ * 
+ * This class should be used via the @ref Enum0 constant which is an easily
+ * accessible value of @ref Enum0Type type.
+ */
+class Enum0Type {
+public:
+    /**
+     * Conversion operator to a zero value of any enum type.
+     * 
+     * @tparam EnumType Target enum type (restricted to enum types using SFINAE).
+     * @return `EnumType(0)`
+     */
+    template <typename EnumType,
+        typename = std::enable_if_t<std::is_enum<EnumType>::value>>
+    inline constexpr operator EnumType () const {
+        return EnumType(0);
+    }
+};
+
+/**
+ * Check if an enum value is equal to zero.
+ * 
+ * @tparam EnumType Type of enum operand (restricted to enum types using SFINAE).
+ * @param e Enum value.
+ * @return `e == EnumType(0)`
+ */
+template <typename EnumType,
+    typename = std::enable_if_t<std::is_enum<EnumType>::value>>
+inline constexpr bool operator== (EnumType e, Enum0Type) {
+    return e == EnumType(0);
+}
+
+/**
+ * Check if an enum value is equal to zero.
+ * 
+ * @tparam EnumType Type of enum operand (restricted to enum types using SFINAE).
+ * @param e Enum value.
+ * @return `e == EnumType(0)`
+ */
+template <typename EnumType,
+    typename = std::enable_if_t<std::is_enum<EnumType>::value>>
+inline constexpr bool operator== (Enum0Type, EnumType e) {
+    return e == EnumType(0);
+}
+
+/**
+ * Check if an enum value is different from zero.
+ * 
+ * @tparam EnumType Type of enum operand (restricted to enum types using SFINAE).
+ * @param e Enum value.
+ * @return `e != EnumType(0)`
+ */
+template <typename EnumType,
+    typename = std::enable_if_t<std::is_enum<EnumType>::value>>
+inline constexpr bool operator!= (EnumType e, Enum0Type) {
+    return e != EnumType(0);
+}
+
+/**
+ * Check if an enum value is different from zero.
+ * 
+ * @tparam EnumType Type of enum operand (restricted to enum types using SFINAE).
+ * @param e Enum value.
+ * @return `e != EnumType(0)`
+ */
+template <typename EnumType,
+    typename = std::enable_if_t<std::is_enum<EnumType>::value>>
+inline constexpr bool operator!= (Enum0Type, EnumType e) {
+    return e != EnumType(0);
+}
+
+/**
+ * An @ref Enum0Type value for convenience.
+ */
+static constexpr Enum0Type Enum0 = Enum0Type();
+
+/**
  * Convert an enum to its underlying type.
  * 
  * @tparam EnumType Enum type.

@@ -41,19 +41,6 @@ namespace AIpStack {
  * @{
  */
 
-/**
- * Dummy type used with `==` and `!=` operators for checking if a bitfield enum is zero.
- * 
- * Use the @ref Enum0 constant instead of constructing your own value.
- * See @ref AIPSTACK_ENUM_BITFIELD_OPS for details.
- */
-class Enum0Type {};
-
-/**
- * An @ref Enum0Type value for convenience.
- */
-static constexpr Enum0Type Enum0 = Enum0Type();
-
 #ifndef IN_DOXYGEN
 template <typename EnumType>
 class EnableEnumBitfield;
@@ -81,10 +68,18 @@ class EnableEnumBitfield;
  * `EnumType`, performing the corresponding operation on the underlying type:
  * `~`, `|`, `&`, `^`, `|=`, `&=`, `^=`.
  * 
- * Operators `==` and `!=` will be available for `EnumType` as the first and @ref
- * AIpStack::Enum0Type "Enum0Type" as the second operand. These will check if
- * the enum value is or is not zero respectively, and should be used with the @ref
- * AIpStack::Enum0 "Enum0" constant.
+ * The @ref AIpStack::Enum0 "Enum0" constant can be used to initialize bitfield
+ * (actually all) enums to zero and compare to zero, for example:
+ * 
+ * ```
+ * MyBitfield x = Enum0;
+ * if (x == Enum0) { ... }
+ * if (x != Enum0) { ... }
+ * ```
+ * 
+ * The @ref EnumBitfieldUtils.h header includes @ref EnumUtils.h so the latter
+ * does not need to be explicitly included in order to use @ref AIpStack::Enum0
+ * "Enum0".
  * 
  * @param EnumType Enum type to define operators for.
  */
@@ -148,18 +143,6 @@ inline constexpr EnumType & operator^= (EnumType &arg1, EnumType arg2)
 {
     arg1 = EnumType(AsUnderlying(arg1) ^ AsUnderlying(arg2));
     return arg1;
-}
-
-template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
-inline constexpr bool operator== (EnumType arg, Enum0Type)
-{
-    return AsUnderlying(arg) == 0;
-}
-
-template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
-inline constexpr bool operator!= (EnumType arg, Enum0Type)
-{
-    return AsUnderlying(arg) != 0;
 }
 
 #undef AIPSTACK_ENABLE_IF_ENUM_BITFIELD
