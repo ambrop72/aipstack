@@ -143,11 +143,11 @@ void TapDeviceLinux::handleFdEvents (AIpStack::EventLoopFdEvents events)
     AIPSTACK_ASSERT(m_active)
     
     do {
-        if ((events & AIpStack::EventLoopFdEvents::Error) != AIpStack::EnumZero) {
+        if ((events & AIpStack::EventLoopFdEvents::Error) != AIpStack::Enum0) {
             std::fprintf(stderr, "TapDeviceLinux: Error event. Stopping.\n");
             goto error;
         }
-        if ((events & AIpStack::EventLoopFdEvents::Hup) != AIpStack::EnumZero) {
+        if ((events & AIpStack::EventLoopFdEvents::Hup) != AIpStack::Enum0) {
             std::fprintf(stderr, "TapDeviceLinux: HUP event. Stopping.\n");
             goto error;
         }

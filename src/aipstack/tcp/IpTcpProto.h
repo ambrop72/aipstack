@@ -252,7 +252,7 @@ class IpTcpProto :
         
         // Convenience functions for flags.
         inline bool hasFlag (TcpPcbFlags flag) const {
-            return (TcpPcbFlags(flags) & flag) != EnumZero;
+            return (TcpPcbFlags(flags) & flag) != Enum0;
         }
         inline void setFlag (TcpPcbFlags flag) {
             flags = AsUnderlying(TcpPcbFlags(flags) | flag);
@@ -265,7 +265,7 @@ class IpTcpProto :
         inline bool hasAndClearFlag (TcpPcbFlags flag)
         {
             TcpPcbFlags the_flags = TcpPcbFlags(flags);
-            if ((the_flags & flag) != EnumZero) {
+            if ((the_flags & flag) != Enum0) {
                 flags = AsUnderlying(the_flags & ~flag);
                 return true;
             }

@@ -128,7 +128,7 @@ void SignalWatcherImplLinux::fdWatcherHandler(EventLoopFdEvents events)
     }
 
     SignalType signals = getCollector().SignalCollectorImplBase::baseGetSignals();
-    if ((sig & signals) == EnumZero) {
+    if ((sig & signals) == Enum0) {
         std::fprintf(stderr, "SignalWatcher: read signal number is not requested.\n");
         return;
     }

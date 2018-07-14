@@ -145,7 +145,7 @@ public:
         }
         
         // Reply with RST, unless this is an RST.
-        if ((tcp_meta.flags & Tcp4Flags::Rst) == EnumZero) {
+        if ((tcp_meta.flags & Tcp4Flags::Rst) == Enum0) {
             Output::send_rst_reply(tcp, ip_info, tcp_meta, tcp_data.tot_len);
         }
     }
@@ -439,7 +439,7 @@ private:
             // being accepted).
             
             // Handle window scaling option.
-            if ((tcp->m_received_opts.options & TcpOptionFlags::WND_SCALE) != EnumZero) {
+            if ((tcp->m_received_opts.options & TcpOptionFlags::WND_SCALE) != Enum0) {
                 pcb->setFlag(TcpPcbFlags::WND_SCALE);
                 pcb->snd_wnd_shift =
                     MinValue(std::uint8_t(14), tcp->m_received_opts.wnd_scale);
@@ -614,7 +614,7 @@ private:
             // At this point eff_rel_seq may be "negative" (very large) but that would
             // be resolved.
             eff_rel_seq = tcp_meta.seq_num - pcb->rcv_nxt;
-            seg_fin = (tcp_meta.flags & Tcp4Flags::Fin) != EnumZero;
+            seg_fin = (tcp_meta.flags & Tcp4Flags::Fin) != Enum0;
             
             // Sequence length of segment (data+FIN). Note that we cannot have
             // a SYN here, we would have bailed out at the top, except in SYN_SENT
@@ -703,13 +703,13 @@ private:
     {
         bool continue_processing = false;
         
-        if ((rst_syn_ack & Tcp4Flags::Rst) != EnumZero) {
+        if ((rst_syn_ack & Tcp4Flags::Rst) != Enum0) {
             // RST, handle as per RFC 5961.
             if (pcb->state() == TcpStates::SYN_SENT) {
                 // The RFC says the reset is acceptable if it acknowledges
                 // the SYN. But due to the possibility that we sent an empty
                 // ACK with seq_num==snd_una, accept also ack_num==snd_una.
-                if ((rst_syn_ack & Tcp4Flags::Ack) != EnumZero &&
+                if ((rst_syn_ack & Tcp4Flags::Ack) != Enum0 &&
                     pcb->snd_una.ref_lte(tcp_meta.ack_num, pcb->snd_nxt))
                 {
                     TcpProto::pcb_abort(pcb, false);
@@ -730,7 +730,7 @@ private:
                 }
             }
         }
-        else if ((rst_syn_ack & Tcp4Flags::Syn) != EnumZero) {
+        else if ((rst_syn_ack & Tcp4Flags::Syn) != Enum0) {
             if (pcb->state() == TcpStates::SYN_SENT) {
                 // Received a SYN in SYN-SENT state.
                 if (rst_syn_ack == (Tcp4Flags::Syn|Tcp4Flags::Ack)) {
@@ -798,7 +798,7 @@ private:
             proceed = false;
         }
         // If in SYN_SENT a SYN is not received, drop the segment silently.
-        else if (syn_sent && (tcp_meta.flags & Tcp4Flags::Syn) == EnumZero) {
+        else if (syn_sent && (tcp_meta.flags & Tcp4Flags::Syn) == Enum0) {
             proceed = false;
         }
         
@@ -860,7 +860,7 @@ private:
             
             // Handle the window scale option.
             AIPSTACK_ASSERT(pcb->snd_wnd_shift == 0)
-            if ((tcp->m_received_opts.options & TcpOptionFlags::WND_SCALE) != EnumZero) {
+            if ((tcp->m_received_opts.options & TcpOptionFlags::WND_SCALE) != Enum0) {
                 // Remote sent the window scale flag, so store the window scale
                 // value that they will be using. Note that the window size in
                 // this incoming segment has already been read above using
@@ -1110,7 +1110,7 @@ private:
             // Check conditions in such an order that we are typically
             // fast for segments which are not duplicate ACKs.
             if (AIPSTACK_UNLIKELY(orig_data_len == 0) &&
-                (tcp_meta.flags & Tcp4Flags::Fin) == EnumZero &&
+                (tcp_meta.flags & Tcp4Flags::Fin) == Enum0 &&
                 tcp_meta.ack_num == pcb->snd_una &&
                 pcb->state().canOutput() && Output::pcb_has_snd_unacked(pcb) &&
                 pcb->con != nullptr &&

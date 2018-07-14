@@ -86,7 +86,7 @@ SignalType signumToSignalType(int signum)
 void addSignalsToSet(SignalType signals, ::sigset_t &set)
 {
     #define AIPSTACK_ADD_SIGNALS_TO_SET_SIGNAL(sig, signum) \
-    if ((signals & sig) != EnumZero) { \
+    if ((signals & sig) != Enum0) { \
         ::sigaddset(&set, signum); \
     }
 

@@ -112,7 +112,7 @@ BOOL SignalCollectorImplWindows::consoleCtrlHandler (DWORD ctrlType)
             break;
     }
 
-    if ((sig & SignalCollectorImplBase::baseGetSignals()) == EnumZero) {
+    if ((sig & SignalCollectorImplBase::baseGetSignals()) == Enum0) {
         return false;
     }
 

@@ -368,7 +368,7 @@ void EventLoopFdWatcher::initFd (int fd, EventLoopFdEvents events)
 {
     AIPSTACK_ASSERT(m_watched_fd == -1)
     AIPSTACK_ASSERT(fd >= 0)
-    AIPSTACK_ASSERT((events & ~EventLoopFdEvents::All) == EnumZero)
+    AIPSTACK_ASSERT((events & ~EventLoopFdEvents::All) == Enum0)
 
     EventProviderFd::initFdImpl(fd, events);
 
@@ -380,7 +380,7 @@ void EventLoopFdWatcher::initFd (int fd, EventLoopFdEvents events)
 void EventLoopFdWatcher::updateEvents (EventLoopFdEvents events)
 {
     AIPSTACK_ASSERT(m_watched_fd >= 0)
-    AIPSTACK_ASSERT((events & ~EventLoopFdEvents::All) == EnumZero)
+    AIPSTACK_ASSERT((events & ~EventLoopFdEvents::All) == Enum0)
 
     EventProviderFd::updateEventsImpl(events);
 
@@ -408,7 +408,7 @@ void EventProviderFdBase::sanityCheck () const
 {
     auto &fd_watcher = static_cast<EventLoopFdWatcher const &>(*this);
     AIPSTACK_ASSERT(fd_watcher.m_watched_fd >= 0)
-    AIPSTACK_ASSERT((fd_watcher.m_events & ~EventLoopFdEvents::All) == EnumZero)    
+    AIPSTACK_ASSERT((fd_watcher.m_events & ~EventLoopFdEvents::All) == Enum0)    
 }
 
 int EventProviderFdBase::getFd () const

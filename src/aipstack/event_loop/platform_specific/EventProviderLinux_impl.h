@@ -53,10 +53,10 @@ namespace EventProviderLinuxPriv {
 inline std::uint32_t get_events_to_request (EventLoopFdEvents req_ev)
 {
     std::uint32_t epoll_ev = 0;
-    if ((req_ev & EventLoopFdEvents::Read) != EnumZero) {
+    if ((req_ev & EventLoopFdEvents::Read) != Enum0) {
         epoll_ev |= EPOLLIN;
     }
-    if ((req_ev & EventLoopFdEvents::Write) != EnumZero) {
+    if ((req_ev & EventLoopFdEvents::Write) != Enum0) {
         epoll_ev |= EPOLLOUT;
     }
     return epoll_ev;
@@ -66,10 +66,10 @@ inline EventLoopFdEvents get_events_to_report (
     std::uint32_t epoll_ev, EventLoopFdEvents req_ev)
 {
     EventLoopFdEvents events = EventLoopFdEvents();
-    if ((req_ev & EventLoopFdEvents::Read) != EnumZero && (epoll_ev & EPOLLIN) != 0) {
+    if ((req_ev & EventLoopFdEvents::Read) != Enum0 && (epoll_ev & EPOLLIN) != 0) {
         events |= EventLoopFdEvents::Read;
     }
-    if ((req_ev & EventLoopFdEvents::Write) != EnumZero && (epoll_ev & EPOLLOUT) != 0) {
+    if ((req_ev & EventLoopFdEvents::Write) != Enum0 && (epoll_ev & EPOLLOUT) != 0) {
         events |= EventLoopFdEvents::Write;
     }
     if ((epoll_ev & EPOLLERR) != 0) {
@@ -225,7 +225,7 @@ bool EventProviderLinux::dispatchEvents ()
             EventLoopFdEvents events =
                 get_events_to_report(ev->events, fd.EventProviderFdBase::getFdEvents());
 
-            if (events != EnumZero) {
+            if (events != Enum0) {
                 if (!fd.EventProviderFdBase::callFdEventHandler(events)) {
                     return false;
                 }

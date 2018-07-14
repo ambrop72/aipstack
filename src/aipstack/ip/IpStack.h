@@ -373,7 +373,7 @@ public:
     {
         AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>())
         AIPSTACK_ASSERT(dgram.offset >= Ip4Header::Size)
-        AIPSTACK_ASSERT((common.send_flags & ~IpSendFlags::AllFlags) == EnumZero)
+        AIPSTACK_ASSERT((common.send_flags & ~IpSendFlags::AllFlags) == Enum0)
 
         // Copy the flags into a variable as we may modify them below.
         IpSendFlags send_flags = common.send_flags;
@@ -404,7 +404,7 @@ public:
         
         if (AIPSTACK_UNLIKELY(pkt.tot_len > route_info.iface->getMtu())) {
             // Reject fragmentation?
-            if (AIPSTACK_UNLIKELY((send_flags & IpSendFlags::DontFragmentFlag) != EnumZero)) {
+            if (AIPSTACK_UNLIKELY((send_flags & IpSendFlags::DontFragmentFlag) != Enum0)) {
                 return IpErr::FRAG_NEEDED;
             }
             
@@ -452,7 +452,7 @@ public:
         
         // Send the packet to the driver.
         // Fast path is no fragmentation, this permits tail call optimization.
-        if (AIPSTACK_LIKELY((send_flags & IpFlagsToSendFlags(Ip4Flags::MF)) == EnumZero)) {
+        if (AIPSTACK_LIKELY((send_flags & IpFlagsToSendFlags(Ip4Flags::MF)) == Enum0)) {
             return route_info.iface->m_params.send_ip4_packet(
                 pkt, route_info.addr, retryReq);
         }
@@ -523,7 +523,7 @@ private:
                 frag_pkt, route_info.addr, retryReq);
             
             // If this was the last fragment or there was an error, return.
-            if ((send_flags & IpFlagsToSendFlags(Ip4Flags::MF)) == EnumZero ||
+            if ((send_flags & IpFlagsToSendFlags(Ip4Flags::MF)) == Enum0 ||
                 AIPSTACK_UNLIKELY(err != IpErr::SUCCESS))
             {
                 return err;
@@ -562,7 +562,7 @@ public:
     IpErr prepareSendIp4Dgram (
         char *header_end_ptr, IpSendPreparedIp4<Arg> &prep, Ip4CommonSendParams common)
     {
-        AIPSTACK_ASSERT((common.send_flags & ~IpSendFlags::AllFlags) == EnumZero)
+        AIPSTACK_ASSERT((common.send_flags & ~IpSendFlags::AllFlags) == Enum0)
         
         // Get routing information (fill in route_info).
         if (AIPSTACK_UNLIKELY(!routeIp4(common.addrs.remote_addr, prep.route_info))) {
@@ -664,7 +664,7 @@ private:
     inline static IpErr checkSendIp4Allowed (
         Ip4AddrPair const &addrs, IpSendFlags send_flags, Iface *iface)
     {
-        if (AIPSTACK_LIKELY((send_flags & IpSendFlags::AllowBroadcastFlag) == EnumZero)) {
+        if (AIPSTACK_LIKELY((send_flags & IpSendFlags::AllowBroadcastFlag) == Enum0)) {
             if (AIPSTACK_UNLIKELY(addrs.remote_addr.isAllOnes())) {
                 return IpErr::BCAST_REJECTED;
             }
@@ -676,7 +676,7 @@ private:
             }
         }
 
-        if (AIPSTACK_LIKELY((send_flags & IpSendFlags::AllowNonLocalSrc) == EnumZero)) {
+        if (AIPSTACK_LIKELY((send_flags & IpSendFlags::AllowNonLocalSrc) == Enum0)) {
             if (AIPSTACK_UNLIKELY(!iface->m_have_addr ||
                                   addrs.local_addr != iface->m_addr.addr))
             {
@@ -1021,7 +1021,7 @@ private:
         }
         
         // Check if the more-fragments flag is set or the fragment offset is nonzero.
-        if (AIPSTACK_UNLIKELY((flags_offset & (Ip4Flags::MF|Ip4Flags::OffsetMask)) != EnumZero)) {
+        if (AIPSTACK_UNLIKELY((flags_offset & (Ip4Flags::MF|Ip4Flags::OffsetMask)) != Enum0)) {
             // Only accept fragmented packets which are unicasts to the
             // incoming interface address. This is to prevent filling up
             // our reassembly buffers with irrelevant packets. Note that
@@ -1032,7 +1032,7 @@ private:
             }
             
             // Get the more-fragments flag and the fragment offset in bytes.
-            bool more_fragments = (flags_offset & Ip4Flags::MF) != EnumZero;
+            bool more_fragments = (flags_offset & Ip4Flags::MF) != Enum0;
             std::uint16_t fragment_offset =
                 std::uint16_t(flags_offset & Ip4Flags::OffsetMask) * 8;
             

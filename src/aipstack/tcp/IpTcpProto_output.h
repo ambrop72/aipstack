@@ -991,7 +991,7 @@ public:
         TcpSeqNum rst_seq_num;
         bool rst_ack;
         TcpSeqNum rst_ack_num;
-        if ((tcp_meta.flags & Tcp4Flags::Ack) != EnumZero) {
+        if ((tcp_meta.flags & Tcp4Flags::Ack) != Enum0) {
             rst_seq_num = tcp_meta.ack_num;
             rst_ack = false;
             rst_ack_num = TcpSeqNum(0u);
@@ -1109,7 +1109,7 @@ private:
         // Calculate the sequence length of the segment and set
         // the FIN_SENT flag if a FIN was sent.
         TcpSeqInt seg_seqlen = TcpSeqInt(data.tot_len);
-        if (AIPSTACK_UNLIKELY((seg_flags & Tcp4Flags::Fin) != EnumZero)) {
+        if (AIPSTACK_UNLIKELY((seg_flags & Tcp4Flags::Fin) != Enum0)) {
             seg_seqlen += 1u;
             pcb->setFlag(TcpPcbFlags::FIN_SENT);
         }

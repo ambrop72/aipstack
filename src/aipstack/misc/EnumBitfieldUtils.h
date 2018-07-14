@@ -44,15 +44,15 @@ namespace AIpStack {
 /**
  * Dummy type used with `==` and `!=` operators for checking if a bitfield enum is zero.
  * 
- * Use the @ref EnumZero constant instead of constructing your own value.
+ * Use the @ref Enum0 constant instead of constructing your own value.
  * See @ref AIPSTACK_ENUM_BITFIELD_OPS for details.
  */
-class EnumZeroType {};
+class Enum0Type {};
 
 /**
- * An @ref EnumZeroType value for convenience.
+ * An @ref Enum0Type value for convenience.
  */
-static constexpr EnumZeroType EnumZero = EnumZeroType();
+static constexpr Enum0Type Enum0 = Enum0Type();
 
 #ifndef IN_DOXYGEN
 template <typename EnumType>
@@ -82,9 +82,9 @@ class EnableEnumBitfield;
  * `~`, `|`, `&`, `^`, `|=`, `&=`, `^=`.
  * 
  * Operators `==` and `!=` will be available for `EnumType` as the first and @ref
- * AIpStack::EnumZeroType "EnumZeroType" as the second operand. These will check if
+ * AIpStack::Enum0Type "Enum0Type" as the second operand. These will check if
  * the enum value is or is not zero respectively, and should be used with the @ref
- * AIpStack::EnumZero "EnumZero" constant.
+ * AIpStack::Enum0 "Enum0" constant.
  * 
  * @param EnumType Enum type to define operators for.
  */
@@ -151,13 +151,13 @@ inline constexpr EnumType & operator^= (EnumType &arg1, EnumType arg2)
 }
 
 template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
-inline constexpr bool operator== (EnumType arg, EnumZeroType)
+inline constexpr bool operator== (EnumType arg, Enum0Type)
 {
     return AsUnderlying(arg) == 0;
 }
 
 template <typename EnumType, AIPSTACK_ENABLE_IF_ENUM_BITFIELD(EnumType)>
-inline constexpr bool operator!= (EnumType arg, EnumZeroType)
+inline constexpr bool operator!= (EnumType arg, Enum0Type)
 {
     return AsUnderlying(arg) != 0;
 }

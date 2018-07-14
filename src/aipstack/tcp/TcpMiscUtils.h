@@ -49,7 +49,7 @@ struct TcpSegMeta {
 
 inline std::size_t CalcTcpSeqLen (Tcp4Flags flags, std::size_t tcp_data_len)
 {
-    return tcp_data_len + ((flags & Tcp4Flags::SeqFlags) != EnumZero);
+    return tcp_data_len + ((flags & Tcp4Flags::SeqFlags) != Enum0);
 }
 
 template <std::uint16_t MinAllowedMss>
@@ -57,7 +57,7 @@ bool CalcTcpSndMss (
     std::uint16_t iface_mss, TcpOptions const &tcp_opts, std::uint16_t *out_mss)
 {
     std::uint16_t req_mss =
-        ((tcp_opts.options & TcpOptionFlags::MSS) != EnumZero) ? tcp_opts.mss : 536;
+        ((tcp_opts.options & TcpOptionFlags::MSS) != Enum0) ? tcp_opts.mss : 536;
     std::uint16_t mss = MinValue(iface_mss, req_mss);
     if (mss < MinAllowedMss) {
         return false;
