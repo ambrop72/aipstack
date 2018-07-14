@@ -829,12 +829,14 @@ EXCLUDE                = \
     src/aipstack/tcp/IpTcpProto_constants.h \
     src/aipstack/tcp/IpTcpProto_input.h \
     src/aipstack/tcp/IpTcpProto_output.h \
-    src/aipstack/tcp/TcpOosBuffer.h \
-    src/aipstack/tcp/TcpPcbFlags.h \
-    src/aipstack/tcp/TcpUtils.h \
-    src/aipstack/tcp/TcpState.h \
-    src/aipstack/tcp/TcpSeqNum.h \
+    src/aipstack/tcp/TcpMiscUtils.h \
     src/aipstack/tcp/TcpMultiTimer.h \
+    src/aipstack/tcp/TcpOosBuffer.h \
+    src/aipstack/tcp/TcpOptions.h \
+    src/aipstack/tcp/TcpPcbFlags.h \
+    src/aipstack/tcp/TcpPcbKey.h \
+    src/aipstack/tcp/TcpSeqNum.h \
+    src/aipstack/tcp/TcpState.h \
     src/aipstack/utils/TcpListenQueue.h \
     src/aipstack/utils/TcpRingBufferUtils.h \
     src/aipstack/misc/ExceptionUtils.h \
