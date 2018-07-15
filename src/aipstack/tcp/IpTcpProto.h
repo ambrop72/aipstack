@@ -879,10 +879,13 @@ private:
     StructureRaiiWrapper<typename PcbIndex::Index> m_pcb_index_active;
     StructureRaiiWrapper<typename PcbIndex::Index> m_pcb_index_timewait;
     ResourceArray<TcpPcb, NumTcpPcbs> m_pcbs;
-    
-    struct PcbArrayAccessor : public MemberAccessor<
-        IpTcpProto, ResourceArray<TcpPcb, NumTcpPcbs>, &IpTcpProto::m_pcbs> {};
 };
+
+#ifndef IN_DOXYGEN
+template <typename Arg>
+struct IpTcpProto<Arg>::PcbArrayAccessor : public MemberAccessor<
+    IpTcpProto, ResourceArray<TcpPcb, NumTcpPcbs>, &IpTcpProto::m_pcbs> {};
+#endif
 
 struct IpTcpProtoOptions {
     AIPSTACK_OPTION_DECL_VALUE(TcpTTL, std::uint8_t, 64)

@@ -189,11 +189,6 @@ private:
     StructureRaiiWrapper<MtuFreeList> m_mtu_free_list;
     MtuEntry m_mtu_entries[NumMtuEntries];
     
-    // Accessor for the m_mtu_entries array.
-    struct MtuEntriesAccessor : public
-        MemberAccessor<IpPathMtuCache, MtuEntry[NumMtuEntries],
-                       &IpPathMtuCache::m_mtu_entries> {};
-    
 public:
     IpPathMtuCache (PlatformFacade<PlatformImpl> platform, IpStack<StackArg> *ip_stack)
     :
@@ -597,6 +592,11 @@ private:
         }
     }
 };
+
+// Accessor for the m_mtu_entries array.
+template <typename Arg>
+struct IpPathMtuCache<Arg>::MtuEntriesAccessor : public MemberAccessor<
+    IpPathMtuCache, MtuEntry[NumMtuEntries], &IpPathMtuCache::m_mtu_entries> {};
 
 #endif
 
