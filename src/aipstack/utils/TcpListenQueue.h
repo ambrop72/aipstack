@@ -79,7 +79,7 @@ public:
             AIPSTACK_ASSERT(Connection::isInit())
             AIPSTACK_ASSERT(m_listener->m_queue_size > 0)
             
-            if (Connection::acceptConnection(*m_listener) != IpErr::SUCCESS) {
+            if (Connection::acceptConnection(m_listener->m_listener) != IpErr::SUCCESS) {
                 return;
             }
             
@@ -178,11 +178,11 @@ public:
         :
             m_established_handler(established_handler),
             m_listener(
-                AIPSTACK_BIND_MEMBER(&QueuedListener::establishedHandler, this)),
+                AIPSTACK_BIND_MEMBER_TN(&QueuedListener::establishedHandler, this)),
             m_dequeue_timer(platform,
-                AIPSTACK_BIND_MEMBER(&QueuedListener::dequeueTimerHandler, this)),
+                AIPSTACK_BIND_MEMBER_TN(&QueuedListener::dequeueTimerHandler, this)),
             m_timeout_timer(platform,
-                AIPSTACK_BIND_MEMBER(&QueuedListener::timeoutTimerHandler, this))
+                AIPSTACK_BIND_MEMBER_TN(&QueuedListener::timeoutTimerHandler, this))
         {}
         
         ~QueuedListener ()
@@ -257,7 +257,7 @@ public:
                 AIPSTACK_ASSERT(m_listener.hasAcceptPending())
                 
                 initial_rx_data = IpBufRef{};
-                return dst_con.acceptConnection(*this);
+                return dst_con.acceptConnection(m_listener);
             } else {
                 AIPSTACK_ASSERT(m_queued_to_accept != nullptr)
                 AIPSTACK_ASSERT(!m_queued_to_accept->Connection::isInit())
