@@ -111,6 +111,16 @@ public:
     }
 
     /**
+     * Get a pointer to the bytes of the stored MAC address.
+     * 
+     * @return Pointer to MAC address bytes within this object. It is
+     *         valid until this object is destructed or reassigned.
+     */
+    inline std::uint8_t const * dataPtr () const {
+        return m_value.data();
+    }
+
+    /**
      * Equal-to operator.
      * 
      * @param other The other address to compare.
