@@ -38,26 +38,6 @@ struct MemberAccessor {
     }
 };
 
-template <typename Object, typename Member>
-struct MakeMemberAccessorHelper {
-    template <Member Object::*MemberPtr>
-    using Make = MemberAccessor<Object, Member, MemberPtr>;
-};
-
-template <typename Object, typename Member>
-inline MakeMemberAccessorHelper<Object, Member> MakeMemberAccessorHelperFunc(Member Object::*memberPtr);
-
-template <typename Object, typename Member, typename Base, Member Base::*MemberPtr>
-struct MemberAccessorWithBase {
-    using ObjectType = Object;
-    using MemberType = Member;
-    
-    inline static MemberType & access (ObjectType &e)
-    {
-        return e.*MemberPtr;
-    }
-};
-
 template <typename Accessor1, typename Accessor2>
 struct ComposedAccessor {
     using ObjectType = typename Accessor1::ObjectType;
@@ -66,17 +46,6 @@ struct ComposedAccessor {
     inline static MemberType & access (ObjectType &e)
     {
         return Accessor2::access(Accessor1::access(e));
-    }
-};
-
-template <typename Object, typename Member>
-struct BaseClassAccessor {
-    using ObjectType = Object;
-    using MemberType = Member;
-    
-    inline static MemberType & access (ObjectType &e)
-    {
-        return e;
     }
 };
 
