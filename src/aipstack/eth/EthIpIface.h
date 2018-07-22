@@ -959,13 +959,11 @@ private:
     TimeType m_timers_ref_time;
     EthHeader::Ref m_rx_eth_header;
     ArpEntry m_arp_entries[NumArpEntries];
+    
+    struct ArpEntriesAccessor :
+        public MemberAccessor<EthIpIface, ArpEntry[NumArpEntries],
+                              &EthIpIface::m_arp_entries> {};
 };
-
-#ifndef IN_DOXYGEN
-template <typename Arg>
-struct EthIpIface<Arg>::ArpEntriesAccessor : public MemberAccessor<
-    EthIpIface, ArpEntry[NumArpEntries], &EthIpIface::m_arp_entries> {};
-#endif
 
 /**
  * Static configuration options for @ref EthIpIface.
