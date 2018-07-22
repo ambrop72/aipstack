@@ -594,24 +594,9 @@ private:
 };
 
 // Accessor for the m_mtu_entries array.
-// Ideally we would use this:
-#if 0
 template <typename Arg>
 struct IpPathMtuCache<Arg>::MtuEntriesAccessor : public MemberAccessor<
     IpPathMtuCache, MtuEntry[NumMtuEntries], &IpPathMtuCache::m_mtu_entries> {};
-#else
-// But we use this manual definition to workaround what looks like a bug in Clang.
-template <typename Arg>
-struct IpPathMtuCache<Arg>::MtuEntriesAccessor {
-    using ObjectType = IpPathMtuCache;
-    using MemberType = MtuEntry[NumMtuEntries];
-    
-    inline static MemberType & access (ObjectType &e)
-    {
-        return e.m_mtu_entries;
-    }
-};
-#endif
 
 #endif
 
