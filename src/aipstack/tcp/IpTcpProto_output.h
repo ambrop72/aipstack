@@ -81,14 +81,14 @@ public:
         
         // Include the MSS option.
         TcpOptions tcp_opts;
-        tcp_opts.options = TcpOptionFlags::MSS;
+        tcp_opts.options = TcpOptionFlags::Mss;
         // The iface_mss is stored in a variable otherwise unused in this state.
         tcp_opts.mss = (pcb->state() == TcpStates::SYN_SENT) ?
             pcb->base_snd_mss : pcb->snd_mss;
         
         // Send the window scale option if needed.
         if (pcb->hasFlag(TcpPcbFlags::WndScale)) {
-            tcp_opts.options |= TcpOptionFlags::WND_SCALE;
+            tcp_opts.options |= TcpOptionFlags::WndScale;
             tcp_opts.wnd_scale = pcb->rcv_wnd_shift;
         }
         
