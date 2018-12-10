@@ -37,36 +37,36 @@ static constexpr int TcpPcbFlagsBits = 14;
 
 enum class TcpPcbFlags : TcpPcbFlagsBaseType {
     // ACK is needed; used in input processing
-    ACK_PENDING = TcpPcbFlagsBaseType(1) << 0,
+    AckPending = TcpPcbFlagsBaseType(1) << 0,
     // pcb_output_active/pcb_output_abandoned should be called at the end of
     // input processing. This flag must imply state().canOutput() and
     // pcb_has_snd_outstanding at the point in pcb_input where it is checked.
     // Any change that would break this implication must clear the flag.
-    OUT_PENDING = TcpPcbFlagsBaseType(1) << 1,
+    OutPending = TcpPcbFlagsBaseType(1) << 1,
     // A FIN was sent at least once and is included in snd_nxt
-    FIN_SENT    = TcpPcbFlagsBaseType(1) << 2,
+    FinSent    = TcpPcbFlagsBaseType(1) << 2,
     // A FIN is to queued for sending
-    FIN_PENDING = TcpPcbFlagsBaseType(1) << 3,
+    FinPending = TcpPcbFlagsBaseType(1) << 3,
     // Round-trip-time is being measured
-    RTT_PENDING = TcpPcbFlagsBaseType(1) << 4,
+    RttPending = TcpPcbFlagsBaseType(1) << 4,
     // Round-trip-time is not in initial state
-    RTT_VALID   = TcpPcbFlagsBaseType(1) << 5,
+    RttValid   = TcpPcbFlagsBaseType(1) << 5,
     // cwnd has been increaded by snd_mss this round-trip
-    CWND_INCRD  = TcpPcbFlagsBaseType(1) << 6,
+    CwndIncrd  = TcpPcbFlagsBaseType(1) << 6,
     // A segment has been retransmitted and not yet acked
-    RTX_ACTIVE  = TcpPcbFlagsBaseType(1) << 7,
+    RtxActive  = TcpPcbFlagsBaseType(1) << 7,
     // The recover variable valid (and >=snd_una)
-    RECOVER     = TcpPcbFlagsBaseType(1) << 8,
+    Recover    = TcpPcbFlagsBaseType(1) << 8,
     // If rtx_timer is running it is for idle timeout
-    IDLE_TIMER  = TcpPcbFlagsBaseType(1) << 9,
+    IdleTimer  = TcpPcbFlagsBaseType(1) << 9,
     // Window scaling is used
-    WND_SCALE   = TcpPcbFlagsBaseType(1) << 10,
+    WndScale   = TcpPcbFlagsBaseType(1) << 10,
     // Current cwnd is the initial cwnd
-    CWND_INIT   = TcpPcbFlagsBaseType(1) << 11,
+    CwndInit   = TcpPcbFlagsBaseType(1) << 11,
     // If OutputTimer is set it is for OutputRetry*Ticks
-    OUT_RETRY   = TcpPcbFlagsBaseType(1) << 12,
+    OutRetry   = TcpPcbFlagsBaseType(1) << 12,
     // rcv_ann_wnd needs update before sending a segment, implies con != nullptr
-    RCV_WND_UPD = TcpPcbFlagsBaseType(1) << 13,
+    RcvWndUpd  = TcpPcbFlagsBaseType(1) << 13,
     // NOTE: Currently no more bits are available, see TcpPcb::flags.
 };
 AIPSTACK_ENUM_BITFIELD(TcpPcbFlags)

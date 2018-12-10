@@ -498,8 +498,8 @@ private:
         pcb->tim(OutputTimer()).unset();
         pcb->tim(RtxTimer()).unset();
         
-        // Clear the OUT_PENDING flag due to its preconditions.
-        pcb->clearFlag(TcpPcbFlags::OUT_PENDING);
+        // Clear the OutPending flag due to its preconditions.
+        pcb->clearFlag(TcpPcbFlags::OutPending);
         
         // Start the TIME_WAIT timeout.
         pcb->tim(AbrtTimer()).setAfter(Constants::TimeWaitTimeTicks);
@@ -518,8 +518,8 @@ private:
         pcb->tim(OutputTimer()).unset();
         pcb->tim(RtxTimer()).unset();
         
-        // Clear the OUT_PENDING flag due to its preconditions.
-        pcb->clearFlag(TcpPcbFlags::OUT_PENDING);
+        // Clear the OutPending flag due to its preconditions.
+        pcb->clearFlag(TcpPcbFlags::OutPending);
         
         // Reset the MTU reference.
         if (pcb->con != nullptr) {
@@ -592,12 +592,12 @@ private:
         // This has not been done by Connection.
         tcp->m_unrefed_pcbs_list.append({*pcb, *tcp}, *tcp);
         
-        // Clear any RTT_PENDING flag since we've lost the variables
+        // Clear any RttPending flag since we've lost the variables
         // needed for RTT measurement.
-        pcb->clearFlag(TcpPcbFlags::RTT_PENDING);
+        pcb->clearFlag(TcpPcbFlags::RttPending);
         
-        // Clear RCV_WND_UPD flag since this flag must imply con != nullptr.
-        pcb->clearFlag(TcpPcbFlags::RCV_WND_UPD);
+        // Clear RcvWndUpd flag since this flag must imply con != nullptr.
+        pcb->clearFlag(TcpPcbFlags::RcvWndUpd);
         
         // Abort if in SYN_SENT state or some data is queued or some data was received but
         // not processed by the application. The pcb_abort() will decide whether to send an
@@ -608,8 +608,8 @@ private:
         
         // Make sure any idle timeout is stopped, because pcb_rtx_timer_handler
         // requires the connection to not be abandoned when the idle timeout expires.
-        if (pcb->hasFlag(TcpPcbFlags::IDLE_TIMER)) {
-            pcb->clearFlag(TcpPcbFlags::IDLE_TIMER);
+        if (pcb->hasFlag(TcpPcbFlags::IdleTimer)) {
+            pcb->clearFlag(TcpPcbFlags::IdleTimer);
             pcb->tim(RtxTimer()).unset();
         }
         
@@ -734,8 +734,8 @@ private:
         
         // Initialize most of the PCB.
         pcb->setState(TcpStates::SYN_SENT);
-        // WND_SCALE to send the window scale option
-        pcb->flags = AsUnderlying(TcpPcbFlags::WND_SCALE);
+        // WndScale to send the window scale option
+        pcb->flags = AsUnderlying(TcpPcbFlags::WndScale);
         pcb->con = con;
         pcb->local_addr = local_addr;
         pcb->remote_addr = remote_addr;

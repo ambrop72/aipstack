@@ -233,12 +233,12 @@ public:
         // Try to announce as much window as is available, even if a
         // window update would otherwise be inhibited due to rcv_ann_thres.
         if (AIPSTACK_LIKELY(pcb->state().isAcceptingData())) {
-            // For performance we only update rcv_ann_wnd if the RCV_WND_UPD
+            // For performance we only update rcv_ann_wnd if the RcvWndUpd
             // flag is set and we clear the flag when we do an update. Any
             // state change which may allow advertising more window will set
             // this flag.
-            if (pcb->hasAndClearFlag(TcpPcbFlags::RCV_WND_UPD)) {
-                // RCV_WND_UPD implies con != nullptr as needed by pcb_calc_wnd_update.
+            if (pcb->hasAndClearFlag(TcpPcbFlags::RcvWndUpd)) {
+                // RcvWndUpd implies con != nullptr as needed by pcb_calc_wnd_update.
                 AIPSTACK_ASSERT(pcb->con != nullptr)
                 
                 // Calculate how much window can be announced and bump rcv_ann_wnd.
@@ -281,7 +281,7 @@ public:
                 // clear the flag to inhibit a redundant recalculation
                 // in rcv_ann_wnd.
                 pcb->rcv_ann_wnd = ann_wnd;
-                pcb->clearFlag(TcpPcbFlags::RCV_WND_UPD);
+                pcb->clearFlag(TcpPcbFlags::RcvWndUpd);
                 
                 // Force an ACK.
                 Output::pcb_need_ack(pcb);
@@ -290,7 +290,7 @@ public:
             // able to announce more window, set the flag to make sure that
             // pcb_ann_wnd updates rcv_ann_wnd when the next segment is sent.
             else if (ann_wnd > pcb->rcv_ann_wnd) {
-                pcb->setFlag(TcpPcbFlags::RCV_WND_UPD);
+                pcb->setFlag(TcpPcbFlags::RcvWndUpd);
             }
         }
     }
@@ -333,16 +333,16 @@ public:
         // If this is the end of RTT measurement (there was no retransmission),
         // update the RTT vars and RTO based on the delay. Otherwise just reset RTO
         // to the initial value since it might have been increased in retransmissions.
-        if (pcb->hasFlag(TcpPcbFlags::RTT_PENDING)) {
+        if (pcb->hasFlag(TcpPcbFlags::RttPending)) {
             Output::pcb_end_rtt_measurement(pcb);
         } else {
             pcb->rto = Constants::InitialRtxTime;
         }
         
-        // Set the flag RCV_WND_UPD to make sure that pcb_ann_wnd updates rcv_ann_wnd
+        // Set the flag RcvWndUpd to make sure that pcb_ann_wnd updates rcv_ann_wnd
         // when the next segment is sent. This is done here instead of
         // pcb_input_syn_sent_rcvd_processing because it must imply pcb->con != nullptr.
-        pcb->setFlag(TcpPcbFlags::RCV_WND_UPD);
+        pcb->setFlag(TcpPcbFlags::RcvWndUpd);
         
         // Update snd_mss now that we have an updated base_snd_mss (SYN_SENT) or
         // the mss_ref has been setup (SYN_RCVD).
@@ -357,7 +357,7 @@ public:
         Connection *con = pcb->con;
         con->m_v.snd_wnd = snd_wnd;
         con->m_v.cwnd = CalcInitialTcpCwnd(pcb->snd_mss);
-        pcb->setFlag(TcpPcbFlags::CWND_INIT);
+        pcb->setFlag(TcpPcbFlags::CwndInit);
         con->m_v.ssthresh = Constants::MaxWindow;
         con->m_v.cwnd_acked = 0;
     }
@@ -440,7 +440,7 @@ private:
             
             // Handle window scaling option.
             if ((tcp->m_received_opts.options & TcpOptionFlags::WND_SCALE) != Enum0) {
-                pcb->setFlag(TcpPcbFlags::WND_SCALE);
+                pcb->setFlag(TcpPcbFlags::WndScale);
                 pcb->snd_wnd_shift =
                     MinValue(std::uint8_t(14), tcp->m_received_opts.wnd_scale);
                 pcb->rcv_wnd_shift = Constants::RcvWndShift;
@@ -544,13 +544,13 @@ private:
         }
         else if (pcb->state() == TcpStates::TIME_WAIT) {
             // Reply with an ACK and restart the timeout.
-            pcb->setFlag(TcpPcbFlags::ACK_PENDING);
+            pcb->setFlag(TcpPcbFlags::AckPending);
             pcb->tim(AbrtTimer()).setAfter(Constants::TimeWaitTimeTicks);
         }
         
         // Output if needed.
-        if (pcb->hasAndClearFlag(TcpPcbFlags::OUT_PENDING)) {
-            // These are implied by the OUT_PENDING flag.
+        if (pcb->hasAndClearFlag(TcpPcbFlags::OutPending)) {
+            // These are implied by the OutPending flag.
             AIPSTACK_ASSERT(pcb->state().canOutput())
             AIPSTACK_ASSERT(Output::pcb_has_snd_outstanding(pcb))
             
@@ -559,9 +559,9 @@ private:
         }
         
         // Send an empty ACK if desired.
-        // Note, ACK_PENDING will have been cleared above if pcb_output sent anything,
+        // Note, AckPending will have been cleared above if pcb_output sent anything,
         // in that case we don't need an empty ACK here.
-        if (pcb->hasAndClearFlag(TcpPcbFlags::ACK_PENDING)) {
+        if (pcb->hasAndClearFlag(TcpPcbFlags::AckPending)) {
             Output::pcb_send_empty_ack(pcb);
         }
     }
@@ -879,7 +879,7 @@ private:
             pcb_complete_established_transition(pcb, pmtu);
             
             // Make sure the ACK to the SYN-ACK is sent.
-            pcb->setFlag(TcpPcbFlags::ACK_PENDING);
+            pcb->setFlag(TcpPcbFlags::AckPending);
             
             // We have a Connection (if it went away the PCB would have been aborted).
             Connection *con = pcb->con;
@@ -888,7 +888,7 @@ private:
             
             // Make sure sending of any queued data starts.
             if (con->m_v.snd_buf.tot_len > 0) {
-                pcb->setFlag(TcpPcbFlags::OUT_PENDING);
+                pcb->setFlag(TcpPcbFlags::OutPending);
             }
             
             // If the application called closeSending already,
@@ -1091,14 +1091,14 @@ private:
                     // Schedule pcb_output_active/pcb_output_abandoned, so that the
                     // rtx_timer will be restarted if needed (for retransmission or
                     // window probe).
-                    pcb->setFlag(TcpPcbFlags::OUT_PENDING);
+                    pcb->setFlag(TcpPcbFlags::OutPending);
                 } else {
                     // Start the idle timeout.
                     pcb->tim(RtxTimer()).setAfter(Output::pcb_rto_time(pcb));
-                    pcb->setFlag(TcpPcbFlags::IDLE_TIMER);
+                    pcb->setFlag(TcpPcbFlags::IdleTimer);
                     
-                    // Clear the OUT_PENDING flag due to its preconditions.
-                    pcb->clearFlag(TcpPcbFlags::OUT_PENDING);
+                    // Clear the OutPending flag due to its preconditions.
+                    pcb->clearFlag(TcpPcbFlags::OutPending);
                     
                     // Stop the output timer due to assert in its handler.
                     pcb->tim(OutputTimer()).unset();
@@ -1218,7 +1218,7 @@ private:
             
             // If the ACK is needed, set the ACK-pending flag.
             if (need_ack) {
-                pcb->setFlag(TcpPcbFlags::ACK_PENDING);
+                pcb->setFlag(TcpPcbFlags::AckPending);
             }
             
             if (tcp_data.tot_len > 0) {
@@ -1282,7 +1282,7 @@ private:
         }
         
         // Make sure an ACK is sent.
-        pcb->setFlag(TcpPcbFlags::ACK_PENDING);
+        pcb->setFlag(TcpPcbFlags::AckPending);
         
         // Processing a FIN?
         if (AIPSTACK_UNLIKELY(rcv_seqlen > rcv_datalen)) {
@@ -1310,10 +1310,10 @@ private:
             
             // Due to window scaling the reduction of rcv_ann_wnd may permit announcing more
             // window, so set the flag which forces pcb_ann_wnd to update the window when a
-            // segment is sent. Note that RCV_WND_UPD must imply con != nullptr which is why
+            // segment is sent. Note that RcvWndUpd must imply con != nullptr which is why
             // this is here in this branch. Window updates after receiving FIN are
             // irrelevant so this is sufficient.
-            pcb->setFlag(TcpPcbFlags::RCV_WND_UPD);
+            pcb->setFlag(TcpPcbFlags::RcvWndUpd);
             
             // Give any data to the user.
             con->data_received(rcv_datalen);
