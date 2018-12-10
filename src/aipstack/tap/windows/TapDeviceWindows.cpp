@@ -144,15 +144,15 @@ TapDeviceWindows::~TapDeviceWindows ()
 IpErr TapDeviceWindows::sendFrame (IpBufRef frame)
 {
     if (frame.tot_len < EthHeader::Size) {
-        return IpErr::HW_ERROR;
+        return IpErr::HardwareError;
     }
     else if (frame.tot_len > m_frame_mtu) {
-        return IpErr::PKT_TOO_LARGE;
+        return IpErr::PacketTooLarge;
     }
     
     if (m_send_count >= NumSendUnits) {
         //std::fprintf(stderr, "TAP send: out of buffers\n");
-        return IpErr::BUFFER_FULL;
+        return IpErr::OutputBufferFull;
     }
     
     std::size_t unit_index = Modulo(NumSendUnits).add(m_send_first, m_send_count);
@@ -173,13 +173,13 @@ IpErr TapDeviceWindows::sendFrame (IpBufRef frame)
     if (!res && (error = ::GetLastError()) != ERROR_IO_PENDING) {
         std::fprintf(stderr, "TAP WriteFile failed (err=%u)!\n",
             (unsigned int)error);
-        return IpErr::HW_ERROR;
+        return IpErr::HardwareError;
     }
     
     send_unit.ioStarted();
     m_send_count++;
     
-    return IpErr::SUCCESS;
+    return IpErr::Success;
 }
 
 bool TapDeviceWindows::startRecv ()

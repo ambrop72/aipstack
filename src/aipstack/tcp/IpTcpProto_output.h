@@ -105,7 +105,7 @@ public:
         IpErr err = send_tcp_nodata(pcb->tcp, *pcb, pcb->snd_una, pcb->rcv_nxt,
                                     window_size, flags, &tcp_opts, pcb);
         
-        if (err == IpErr::SUCCESS) {
+        if (err == IpErr::Success) {
             // Have we sent the SYN for the first time?
             if (pcb->snd_nxt == pcb->snd_una) {
                 // Start a round-trip-time measurement.
@@ -328,11 +328,11 @@ public:
             IpErr err = pcb_output_segment(
                 pcb, output_helper, *snd_buf_cur, fin, rem_wnd, &seg_seqlen);
             
-            // If we got the FRAG_NEEDED error, make sure the Path MTU estimate
+            // If we got the FragmentationNeeded error, make sure the Path MTU estimate
             // does not exceed the interface MTU, to handle lowering of the
             // interface MTU. We don't retry sending immediately, this is a very
             // rare event anyway.
-            if (AIPSTACK_UNLIKELY(err == IpErr::FRAG_NEEDED)) {
+            if (AIPSTACK_UNLIKELY(err == IpErr::FragmentationNeeded)) {
                 pcb->tcp->m_stack->handleLocalPacketTooBig(pcb->remote_addr);
             }
             
@@ -343,7 +343,7 @@ public:
             }
             
             // If there was an error sending the segment, stop for now and retry later.
-            if (AIPSTACK_UNLIKELY(err != IpErr::SUCCESS)) {
+            if (AIPSTACK_UNLIKELY(err != IpErr::Success)) {
                 pcb_set_output_timer_for_retry(pcb, err);
                 break;
             }
@@ -430,7 +430,7 @@ public:
                 return;
             }
             
-            if (AIPSTACK_UNLIKELY(err != IpErr::SUCCESS)) {
+            if (AIPSTACK_UNLIKELY(err != IpErr::Success)) {
                 // There was an error sending the segment, stop for now and retry later.
                 pcb_set_output_timer_for_retry(pcb, err);
             } else {            
@@ -1046,7 +1046,7 @@ private:
         // Set the timer based on the error. Also set the flag OUT_RETRY which
         // allows pcb_set_output_timer_for_output to reset the timer it despite
         // being already set, avoiding undesired delays.
-        TimeType after = (err == IpErr::BUFFER_FULL) ?
+        TimeType after = (err == IpErr::OutputBufferFull) ?
             Constants::OutputRetryFullTicks : Constants::OutputRetryOtherTicks;
         pcb->tim(OutputTimer()).setAfter(after);
         pcb->setFlag(TcpPcbFlags::OUT_RETRY);
@@ -1102,7 +1102,7 @@ private:
         
         // Send the segment.
         IpErr err = helper.sendSegment(pcb, seq_num, seg_flags, data);
-        if (AIPSTACK_UNLIKELY(err != IpErr::SUCCESS)) {
+        if (AIPSTACK_UNLIKELY(err != IpErr::Success)) {
             return err;
         }
         
@@ -1140,7 +1140,7 @@ private:
             pcb->snd_nxt = seg_endseq;
         }
         
-        return IpErr::SUCCESS;
+        return IpErr::Success;
     }
 
     // This is exclusively for use from pcb_output_abandoned and for this
@@ -1160,7 +1160,7 @@ private:
             window_size, flags, /*opts=*/nullptr, /*retryReq=*/pcb);
         
         // On success take note of what was sent.
-        if (AIPSTACK_LIKELY(err == IpErr::SUCCESS)) {
+        if (AIPSTACK_LIKELY(err == IpErr::Success)) {
             // Set the FIN_SENT flag.
             pcb->setFlag(TcpPcbFlags::FIN_SENT);
             
@@ -1241,7 +1241,7 @@ private:
             // If this is the first tranamission, prepare common things.
             if (!prepared) {
                 IpErr err = prepareCommon(pcb);
-                if (AIPSTACK_UNLIKELY(err != IpErr::SUCCESS)) {
+                if (AIPSTACK_UNLIKELY(err != IpErr::Success)) {
                     return err;
                 }
             }
@@ -1323,13 +1323,13 @@ private:
             IpErr err = pcb->tcp->m_stack->prepareSendIp4Dgram(
                 dgram_alloc.getPtr(), ip_prep, Ip4CommonSendParams{
                     *pcb, TcpProto::TcpTTL, Ip4Protocol::Tcp, Constants::TcpIpSendFlags});
-            if (AIPSTACK_UNLIKELY(err != IpErr::SUCCESS)) {
+            if (AIPSTACK_UNLIKELY(err != IpErr::Success)) {
                 return err;
             }
             
             prepared = true;
             
-            return IpErr::SUCCESS;
+            return IpErr::Success;
         }
     };
     

@@ -220,7 +220,7 @@ public:
      * 
      * Note that to fully support Path MTU Discovery, the protocol handler
      * should also call @ref IpStack::handleLocalPacketTooBig when sending
-     * fails with the @ref IpErr::FRAG_NEEDED error, in order to handle
+     * fails with the @ref IpErr::FragmentationNeeded error, in order to handle
      * reduction of the interface MTU.
      * 
      * The following has already been checked/determined by the stack:

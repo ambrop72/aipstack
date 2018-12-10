@@ -108,14 +108,14 @@ std::size_t TapDeviceLinux::getMtu () const
 AIpStack::IpErr TapDeviceLinux::sendFrame (AIpStack::IpBufRef frame)
 {
     if (!m_active) {
-        return AIpStack::IpErr::HW_ERROR;
+        return AIpStack::IpErr::HardwareError;
     }
     
     if (frame.tot_len < AIpStack::EthHeader::Size) {
-        return AIpStack::IpErr::HW_ERROR;
+        return AIpStack::IpErr::HardwareError;
     }
     else if (frame.tot_len > m_frame_mtu) {
-        return AIpStack::IpErr::PKT_TOO_LARGE;
+        return AIpStack::IpErr::PacketTooLarge;
     }
     
     char *buffer = m_write_buffer.data();
@@ -127,15 +127,15 @@ AIpStack::IpErr TapDeviceLinux::sendFrame (AIpStack::IpBufRef frame)
     if (write_res < 0) {
         int error = errno;
         if (AIpStack::FileDescriptorWrapper::errIsEAGAINorEWOULDBLOCK(error)) {
-            return AIpStack::IpErr::BUFFER_FULL;
+            return AIpStack::IpErr::OutputBufferFull;
         }
-        return AIpStack::IpErr::HW_ERROR;
+        return AIpStack::IpErr::HardwareError;
     }
     if (std::size_t(write_res) != len) {
-        return AIpStack::IpErr::HW_ERROR;
+        return AIpStack::IpErr::HardwareError;
     }
     
-    return AIpStack::IpErr::SUCCESS;
+    return AIpStack::IpErr::Success;
 }
 
 void TapDeviceLinux::handleFdEvents (AIpStack::EventLoopFdEvents events)

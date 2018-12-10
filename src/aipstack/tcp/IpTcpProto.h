@@ -697,14 +697,14 @@ private:
         IpIface<StackArg> *iface;
         Ip4Addr local_addr;
         IpErr select_err = m_stack->selectLocalIp4Address(remote_addr, iface, local_addr);
-        if (select_err != IpErr::SUCCESS) {
+        if (select_err != IpErr::Success) {
             return select_err;
         }
         
         // Determine the local port.
         PortNum local_port = get_ephemeral_port(local_addr, remote_addr, remote_port);
         if (local_port == 0) {
-            return IpErr::NO_PORT_AVAIL;
+            return IpErr::NoPortAvailable;
         }
         
         // Calculate the MSS based on the interface MTU.
@@ -713,7 +713,7 @@ private:
         // Allocate the PCB.
         TcpPcb *pcb = allocate_pcb();
         if (pcb == nullptr) {
-            return IpErr::NO_PCB_AVAIL;
+            return IpErr::NoPcbAvailable;
         }
         
         // NOTE: If another error case is added after this, make sure
@@ -768,7 +768,7 @@ private:
         
         // Return the PCB.
         *out_pcb = pcb;
-        return IpErr::SUCCESS;
+        return IpErr::Success;
     }
     
     PortNum get_ephemeral_port (

@@ -247,7 +247,7 @@ public:
         
         m_udp->m_listeners_list.prepend(*this);
 
-        return IpErr::SUCCESS;
+        return IpErr::Success;
     }
 
 private:
@@ -357,18 +357,18 @@ public:
             IpIface<StackArg> *iface;
             IpErr select_err = udp.m_stack->selectLocalIp4Address(
                 m_params.key.remote_addr, iface, m_params.key.local_addr);
-            if (select_err != IpErr::SUCCESS) {
+            if (select_err != IpErr::Success) {
                 return select_err;
             }
         }
 
         if (m_params.key.local_port == 0) {
             if (!udp.get_ephemeral_port(m_params.key)) {
-                return IpErr::NO_PORT_AVAIL;
+                return IpErr::NoPortAvailable;
             }
         } else {
             if (!udp.m_associations_index.findEntry(m_params.key).isNull()) {
-                return IpErr::ADDR_IN_USE;
+                return IpErr::AddrInUse;
             }
         }
 
@@ -376,7 +376,7 @@ public:
 
         m_udp->m_associations_index.addEntry(*this);
 
-        return IpErr::SUCCESS;
+        return IpErr::Success;
     }
 
 private:

@@ -154,7 +154,7 @@ struct EthIfaceDriverParams {
  * 
  * This class internally maintains an ARP cache, which is interface-specific. Note that if
  * there is no useful ARP cache entry for an outgoing IP packet, this class will (typically)
- * return the @ref IpErr::ARP_QUERY error code from @ref
+ * return the @ref IpErr::ArpQueryInProgress error code from @ref
  * IpIfaceDriverParams::send_ip4_packet and start an ARP resolution process. It makes an
  * effort to inform the caller when the resolution is successful through the @ref
  * send-retry "send-retry" mechanism so that it can retry sending, but such notification
@@ -412,14 +412,14 @@ private:
         // Try to resolve the MAC address.
         MacAddr dst_mac;
         IpErr resolve_err = resolve_hw_addr(ip_addr, &dst_mac, retryReq);
-        if (AIPSTACK_UNLIKELY(resolve_err != IpErr::SUCCESS)) {
+        if (AIPSTACK_UNLIKELY(resolve_err != IpErr::Success)) {
             return resolve_err;
         }
         
         // Reveal the Ethernet header.
         IpBufRef frame;
         if (AIPSTACK_UNLIKELY(!pkt.revealHeader(EthHeader::Size, &frame))) {
-            return IpErr::NO_HEADER_SPACE;
+            return IpErr::NoHeaderSpace;
         }
         
         // Write the Ethernet header.
@@ -528,10 +528,10 @@ private:
                 // If this is a broadcast IP address, return the broadcast MAC address.
                 if (get_res == GetArpEntryRes::BroadcastAddr) {
                     *mac_addr = MacAddr::BroadcastAddr();
-                    return IpErr::SUCCESS;
+                    return IpErr::Success;
                 } else {
                     // Failure, cannot get MAC address.
-                    return IpErr::NO_HW_ROUTE;
+                    return IpErr::NoHardwareRoute;
                 }
             }
         }
@@ -559,7 +559,7 @@ private:
             
             // Success, return MAC address.
             *mac_addr = entry.mac_addr;
-            return IpErr::SUCCESS;
+            return IpErr::Success;
         } else {
             // If this is a Free entry, initialize it.
             if (entry.nud().state == ArpEntryState::Free) {
@@ -578,8 +578,8 @@ private:
             // Add a request to the retry list if a request is supplied.
             entry.retry_list.addRequest(retryReq);
             
-            // Return ARP_QUERY error.
-            return IpErr::ARP_QUERY;
+            // Return ArpQueryInProgress error.
+            return IpErr::ArpQueryInProgress;
         }
     }
     

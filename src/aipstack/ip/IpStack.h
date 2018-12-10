@@ -335,21 +335,21 @@ public:
      * 
      * This function internally uses @ref routeIp4 or @ref routeIp4ForceIface (depending
      * on whether iface is given) to determine the required routing information. If this
-     * fails, the error @ref IpErr::NO_IP_ROUTE will be returned.
+     * fails, the error @ref IpErr::NoIpRoute will be returned.
      * 
      * This function will perform IP fragmentation unless `common.send_flags` includes
      * @ref IpSendFlags::DontFragmentFlag. If fragmentation would be needed but this
-     * flag is set, the error @ref IpErr::FRAG_NEEDED will be returned. If sending one
-     * fragment fails, further fragments are not sent.
+     * flag is set, the error @ref IpErr::FragmentationNeeded will be returned. If sending
+     * one fragment fails, further fragments are not sent.
      * 
      * Each attempt to send a datagram will result in assignment of an identification
-     * number, except when the function fails with @ref IpErr::NO_IP_ROUTE or
-     * @ref IpErr::FRAG_NEEDED as noted above. Identification numbers are generated
+     * number, except when the function fails with @ref IpErr::NoIpRoute or
+     * @ref IpErr::FragmentationNeeded as noted above. Identification numbers are generated
      * sequentially and there is no attempt to track which numbers are in use.
      *
      * Sending to a local broadcast or all-ones address is only allowed if
      * `common.send_flags` includes @ref IpSendFlags::AllowBroadcastFlag. Otherwise
-     * sending will fail with the error @ref IpErr::BCAST_REJECTED.
+     * sending will fail with the error @ref IpErr::BroadcastRejected.
      * 
      * Sending using a source address which is not the address of the outgoing network
      * interface is only allowed if `common.send_flags` includes @ref
@@ -390,12 +390,12 @@ public:
             route_ok = routeIp4(common.addrs.remote_addr, route_info);
         }
         if (AIPSTACK_UNLIKELY(!route_ok)) {
-            return IpErr::NO_IP_ROUTE;
+            return IpErr::NoIpRoute;
         }
         
         // Check if sending is allowed.
         IpErr check_err = checkSendIp4Allowed(common.addrs, send_flags, route_info.iface);
-        if (AIPSTACK_UNLIKELY(check_err != IpErr::SUCCESS)) {
+        if (AIPSTACK_UNLIKELY(check_err != IpErr::Success)) {
             return check_err;
         }
 
@@ -405,7 +405,7 @@ public:
         if (AIPSTACK_UNLIKELY(pkt.tot_len > route_info.iface->getMtu())) {
             // Reject fragmentation?
             if (AIPSTACK_UNLIKELY((send_flags & IpSendFlags::DontFragmentFlag) != Enum0)) {
-                return IpErr::FRAG_NEEDED;
+                return IpErr::FragmentationNeeded;
             }
             
             // Calculate length of first fragment.
@@ -472,7 +472,7 @@ private:
         // Send the first fragment.
         IpErr err = route_info.iface->m_params.send_ip4_packet(
             pkt.subTo(pkt_send_len), route_info.addr, retryReq);
-        if (AIPSTACK_UNLIKELY(err != IpErr::SUCCESS)) {
+        if (AIPSTACK_UNLIKELY(err != IpErr::Success)) {
             return err;
         }
         
@@ -524,7 +524,7 @@ private:
             
             // If this was the last fragment or there was an error, return.
             if ((send_flags & IpFlagsToSendFlags(Ip4Flags::MF)) == Enum0 ||
-                AIPSTACK_UNLIKELY(err != IpErr::SUCCESS))
+                AIPSTACK_UNLIKELY(err != IpErr::Success))
             {
                 return err;
             }
@@ -566,13 +566,13 @@ public:
         
         // Get routing information (fill in route_info).
         if (AIPSTACK_UNLIKELY(!routeIp4(common.addrs.remote_addr, prep.route_info))) {
-            return IpErr::NO_IP_ROUTE;
+            return IpErr::NoIpRoute;
         }
         
         // Check if sending is allowed.
         IpErr check_err =
             checkSendIp4Allowed(common.addrs, common.send_flags, prep.route_info.iface);
-        if (AIPSTACK_UNLIKELY(check_err != IpErr::SUCCESS)) {
+        if (AIPSTACK_UNLIKELY(check_err != IpErr::Success)) {
             return check_err;
         }
 
@@ -601,7 +601,7 @@ public:
         // Save the partial header checksum.
         prep.partial_chksum_state = chksum.getState();
         
-        return IpErr::SUCCESS;
+        return IpErr::Success;
     }
     
     /**
@@ -611,7 +611,7 @@ public:
      * @ref prepareSendIp4Dgram call.
      * 
      * This function does not support fragmentation. If the packet would be too
-     * large, the error @ref IpErr::FRAG_NEEDED is returned.
+     * large, the error @ref IpErr::FragmentationNeeded is returned.
      * 
      * @param prep Structure with internal information that was filled in
      *             using @ref prepareSendIp4Dgram. Note that such information is
@@ -638,7 +638,7 @@ public:
         
         // This function does not support fragmentation.
         if (AIPSTACK_UNLIKELY(pkt.tot_len > prep.route_info.iface->getMtu())) {
-            return IpErr::FRAG_NEEDED;
+            return IpErr::FragmentationNeeded;
         }
         
         // Write remaining IP header fields and continue calculating header checksum...
@@ -666,12 +666,12 @@ private:
     {
         if (AIPSTACK_LIKELY((send_flags & IpSendFlags::AllowBroadcastFlag) == Enum0)) {
             if (AIPSTACK_UNLIKELY(addrs.remote_addr.isAllOnes())) {
-                return IpErr::BCAST_REJECTED;
+                return IpErr::BroadcastRejected;
             }
 
             if (AIPSTACK_LIKELY(iface->m_have_addr)) {
                 if (AIPSTACK_UNLIKELY(addrs.remote_addr == iface->m_addr.bcastaddr)) {
-                    return IpErr::BCAST_REJECTED;
+                    return IpErr::BroadcastRejected;
                 }
             }
         }
@@ -680,11 +680,11 @@ private:
             if (AIPSTACK_UNLIKELY(!iface->m_have_addr ||
                                   addrs.local_addr != iface->m_addr.addr))
             {
-                return IpErr::NONLOCAL_SRC;
+                return IpErr::NonLocalSrc;
             }
         }
 
-        return IpErr::SUCCESS;
+        return IpErr::Success;
     }
 
 public:
@@ -804,10 +804,10 @@ public:
      * 
      * This is like @ref handleIcmpPacketTooBig except that it only considers the
      * interface MTU. This should be called by a protocol handler when it is using
-     * Path MTU Discovery and sending fails with the @ref IpErr::FRAG_NEEDED error.
-     * The intent is to handle the case when the MTU of the interface through which
-     * the address is routed has changed, because this is a local issue and would
-     * not be detected via an ICMP message.
+     * Path MTU Discovery and sending fails with the @ref IpErr::FragmentationNeeded
+     * error. The intent is to handle the case when the MTU of the interface through
+     * which the address is routed has changed, because this is a local issue and
+     * would not be detected via an ICMP message.
      * 
      * If the Path MTU estimate was lowered, then all existing @ref IpMtuRef setup
      * for this address are notified (@ref IpMtuRef::pmtuChanged are called),
@@ -905,18 +905,18 @@ public:
         // Determine the local interface.
         IpRouteInfoIp4<Arg> route_info;
         if (!routeIp4(remote_addr, route_info)) {
-            return IpErr::NO_IP_ROUTE;
+            return IpErr::NoIpRoute;
         }
         
         // Determine the local IP address.
         IpIfaceIp4AddrSetting addr_setting = route_info.iface->getIp4Addr();
         if (!addr_setting.present) {
-            return IpErr::NO_IP_ROUTE;
+            return IpErr::NoIpRoute;
         }
 
         out_iface = route_info.iface;
         out_local_addr = addr_setting.addr;
-        return IpErr::SUCCESS;
+        return IpErr::Success;
     }
     
 private:

@@ -79,7 +79,7 @@ public:
             AIPSTACK_ASSERT(Connection::isInit())
             AIPSTACK_ASSERT(m_listener->m_queue_size > 0)
             
-            if (Connection::acceptConnection(m_listener->m_listener) != IpErr::SUCCESS) {
+            if (Connection::acceptConnection(m_listener->m_listener) != IpErr::Success) {
                 return;
             }
             
@@ -268,7 +268,7 @@ public:
                 
                 initial_rx_data = entry->get_received_data();
                 dst_con.moveConnection(entry);
-                return IpErr::SUCCESS;
+                return IpErr::Success;
             }
         }
         

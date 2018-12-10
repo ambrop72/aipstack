@@ -149,7 +149,7 @@ public:
         // Setup the MTU reference.
         std::uint16_t pmtu;
         if (!mtu_ref().setup(tcp->m_stack, pcb->remote_addr, nullptr, pmtu)) {
-            return IpErr::NO_IPMTU_AVAIL;
+            return IpErr::NoMtuEntryAvailable;
         }
         
         // Clear the m_accept_pcb link from the listener.
@@ -175,7 +175,7 @@ public:
         // Initialize certain sender variables.
         TcpConInput::pcb_complete_established_transition(pcb, pmtu);
         
-        return IpErr::SUCCESS;
+        return IpErr::Success;
     }
     
     /**
@@ -198,13 +198,13 @@ public:
         // Setup the MTU reference.
         std::uint16_t pmtu;
         if (!mtu_ref().setup(tcp.m_stack, args.addr, nullptr, pmtu)) {
-            return IpErr::NO_IPMTU_AVAIL;
+            return IpErr::NoMtuEntryAvailable;
         }
         
         // Create the PCB for the connection.
         TcpConPcb *pcb = nullptr;
         IpErr err = tcp.create_connection(this, args, pmtu, &pcb);
-        if (err != IpErr::SUCCESS) {
+        if (err != IpErr::Success) {
             mtu_ref().reset(tcp.m_stack);
             return err;
         }
@@ -217,7 +217,7 @@ public:
         // Initialize TcpConnection variables, set STARTED flag.
         setup_common_started();
         
-        return IpErr::SUCCESS;
+        return IpErr::Success;
     }
     
     /**

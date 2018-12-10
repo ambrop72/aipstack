@@ -127,7 +127,7 @@ private:
         createConnection(type, [&listener](TcpConnection &con) {
             // This is called from the BaseClient constructor to setup the connection.
             AIpStack::IpErr err = con.acceptConnection(listener);
-            if (err != AIpStack::IpErr::SUCCESS) {
+            if (err != AIpStack::IpErr::Success) {
                 throw std::runtime_error("TcpConnection::acceptConnection failed");
             }
         });
@@ -479,7 +479,7 @@ private:
                     // This is called from the BaseClient constructor to setup the
                     // connection.
                     AIpStack::IpErr err = con.startConnection(parent.tcp(), con_args);
-                    if (err != AIpStack::IpErr::SUCCESS) {
+                    if (err != AIpStack::IpErr::Success) {
                         throw std::runtime_error("TcpConnection::startConnection failed");
                     }
                 }));
