@@ -100,15 +100,15 @@
  * Assert that some expression is true.
  * 
  * If assertions are enabled (see the @ref assertions module description) then this is
- * equivalent to @ref AIPSTACK_ASSERT_FORCE, otherwise it does nothing (and does not
- * evaluate the expression).
+ * equivalent to @ref AIPSTACK_ASSERT_FORCE. If assertions are not enabled, then this
+ * does nothing, the expression is not evaluated but must still be valid.
  * 
- * This macro expands to a block construct which generally does not require a semicolon.
+ * This macro expands to a do-while-0 construct which requires a semicolon.
  * 
  * @param e Expression to assert. It is evaluated if and only if assertions are
- *          enabled.
+ *          enabled, but it must always be valid.
  */
-#define AIPSTACK_ASSERT(e) { implementation hidden }
+#define AIPSTACK_ASSERT(e) do { implementation hidden } while (0)
 
 #else
 
@@ -117,7 +117,7 @@
 #define AIPSTACK_ASSERT(e) AIPSTACK_ASSERT_FORCE(e)
 #else
 #define AIPSTACK_ASSERTIONS 0
-#define AIPSTACK_ASSERT(e) {}
+#define AIPSTACK_ASSERT(e) do { if (false) { if (e) { } } } while (0)
 #endif
 
 #endif
@@ -138,23 +138,24 @@
 /**
  * Evaluate an expression and invoke the assert-abort handler if the result is false.
  * 
- * This macro expands to a block construct which generally does not require a semicolon.
+ * This macro expands to a do-while-0 construct which requires a semicolon.
  * 
  * @param e Expression to evaluate, used as the condition of an `if` clause.
  */
-#define AIPSTACK_ASSERT_FORCE(e) { if (e) {} else AIPSTACK_ASSERT_ABORT(#e); }
+#define AIPSTACK_ASSERT_FORCE(e) do { if (e) {} else AIPSTACK_ASSERT_ABORT(#e); } while (0)
 
 /**
  * Evaluate an expression and invoke the assert-abort handler if the result is false.
  * 
  * This is like @ref AIPSTACK_ASSERT_FORCE but with a custom error message.
  * 
- * This macro expands to a block construct which generally does not require a semicolon.
+ * This macro expands to a do-while-0 construct which requires a semicolon.
  * 
  * @param e Expression to evaluate, used as the condition of an `if` clause.
  * @param msg Error message as `char const *`.
  */
-#define AIPSTACK_ASSERT_FORCE_MSG(e, msg) { if (e) {} else AIPSTACK_ASSERT_ABORT(msg); }
+#define AIPSTACK_ASSERT_FORCE_MSG(e, msg) \
+    do { if (e) {} else AIPSTACK_ASSERT_ABORT(msg); } while (0)
 
 #ifndef IN_DOXYGEN
 #if !AIPSTACK_HAS_EXTERNAL_ASSERT_HANDLER
