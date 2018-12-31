@@ -176,7 +176,7 @@ void EventLoop::prepare_timers_for_dispatch (EventLoopTime now)
     // Find all Pending timers which are expired with respect to 'now' and change their
     // state to Dispatch.
     m_timer_heap.findAllLesserOrEqual(now, [&](EventLoopTimer *tim) {
-        AIPSTACK_ASSERT(tim->m_state == OneOfHeapTimerStates())
+        AIPSTACK_ASSERT(tim->m_state == OneOfHeapTimerStates)
 
         if (tim->m_state == TimerState::Pending) {
             tim->m_state = TimerState::Dispatch;
@@ -198,7 +198,7 @@ void EventLoop::prepare_timers_for_dispatch (EventLoopTime now)
 bool EventLoop::dispatch_timers ()
 {
     while (EventLoopTimer *tim = m_timer_heap.first()) {
-        AIPSTACK_ASSERT(tim->m_state == OneOfHeapTimerStates())
+        AIPSTACK_ASSERT(tim->m_state == OneOfHeapTimerStates)
 
         if (tim->m_state != TimerState::Dispatch) {
             break;

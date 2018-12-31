@@ -54,7 +54,7 @@ template <
 class IpDhcpOptions
 {
     // Calculates option size for given option data size.
-    static constexpr std::size_t OptSize (std::size_t data_size)
+    static constexpr std::size_t OptSizeForSize (std::size_t data_size)
     {
         return DhcpOptionHeader::Size + data_size;
     }
@@ -62,10 +62,7 @@ class IpDhcpOptions
     // Calculates the size of a DHCP option.
     // OptDataType is the payload type declared with AIPSTACK_DEFINE_STRUCT.
     template <typename OptDataType>
-    static constexpr std::size_t OptSize ()
-    {
-        return OptSize(OptDataType::Size);
-    }
+    inline static constexpr std::size_t OptSizeForType = OptSizeForSize(OptDataType::Size);
     
     // Possible regions where options can be located from.
     enum class OptionRegion {Options, File, Sname};
@@ -77,21 +74,21 @@ public:
     // Maximum size of options that we could possibly transmit.
     inline static constexpr std::size_t MaxOptionsSendSize =
         // DHCP message type
-        OptSize<DhcpOptMsgType>() +
+        OptSizeForType<DhcpOptMsgType> +
         // requested IP address
-        OptSize<DhcpOptAddr>() +
+        OptSizeForType<DhcpOptAddr> +
         // DHCP server identifier
-        OptSize<DhcpOptServerId>() +
+        OptSizeForType<DhcpOptServerId> +
         // maximum message size
-        OptSize<DhcpOptMaxMsgSize>() +
+        OptSizeForType<DhcpOptMaxMsgSize> +
         // parameter request list
-        OptSize(ParameterRequestListSize) +
+        OptSizeForSize(ParameterRequestListSize) +
         // client identifier
-        OptSize(MaxClientIdSize) +
+        OptSizeForSize(MaxClientIdSize) +
         // vendor class identifier
-        OptSize(MaxVendorClassIdSize) +
+        OptSizeForSize(MaxVendorClassIdSize) +
         // message
-        OptSize(MaxMessageSize) +
+        OptSizeForSize(MaxMessageSize) +
         // end
         1;
     

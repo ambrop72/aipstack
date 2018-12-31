@@ -178,9 +178,8 @@ class EventLoop :
         Pending    = 2
     };
 
-    inline static constexpr auto OneOfHeapTimerStates () {
-        return OneOf(TimerState::Dispatch, TimerState::Pending);
-    }
+    inline static constexpr auto OneOfHeapTimerStates =
+        OneOf(TimerState::Dispatch, TimerState::Pending);
 
     AIPSTACK_USE_TYPES(EventLoopPriv, (AsyncSignalNode, AsyncSignalList))
 
