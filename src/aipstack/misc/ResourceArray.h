@@ -176,7 +176,7 @@ namespace ResourceArrayPrivate {
             })
         }
         
-        template <typename... Args>
+        template <typename ...Args>
         ArrayBase (ResourceArrayInitSame, Args const & ... args)
         {
             std::size_t i;
@@ -288,7 +288,7 @@ public:
      *        element). Note that they are given by and passed to element constructors by
      *        const reference.
      */
-    template <typename... Args>
+    template <typename ...Args>
     ResourceArray (ResourceArrayInitSame, Args const & ... args) :
         ResourceArrayPrivate::ArrayBase<Elem, Size>(ResourceArrayInitSame(), args...),
         ResourceArrayPrivate::DefaultConstructMixin<std::is_default_constructible<Elem>::value>(ResourceArrayPrivate::DefaultConstructMixinArg())

@@ -892,7 +892,7 @@ struct IpTcpProtoOptions {
     AIPSTACK_OPTION_DECL_VALUE(LinkWithArrayIndices, bool, true)
 };
 
-template <typename... Options>
+template <typename ...Options>
 class IpTcpProtoService {
     template <typename> friend class IpTcpProto;
     template <typename> friend class TcpConnection;

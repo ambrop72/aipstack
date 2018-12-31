@@ -41,7 +41,7 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <typename... Ts>
+template <typename ...Ts>
 struct MakeTypeListHelper;
 
 template <>
@@ -49,14 +49,14 @@ struct MakeTypeListHelper<> {
     typedef EmptyTypeList Type;
 };
 
-template <typename T, typename... Ts>
+template <typename T, typename ...Ts>
 struct MakeTypeListHelper<T, Ts...> {
     typedef ConsTypeList<T, typename MakeTypeListHelper<Ts...>::Type> Type;
 };
 
 #endif
 
-template <typename... Ts>
+template <typename ...Ts>
 using MakeTypeList =
 #ifdef IN_DOXYGEN
 implementation_hidden;

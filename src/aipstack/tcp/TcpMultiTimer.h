@@ -82,7 +82,7 @@ private:
     }
 };
 
-template <typename PlatformImpl, typename Derived, typename UserData, typename... TimerIds>
+template <typename PlatformImpl, typename Derived, typename UserData, typename ...TimerIds>
 class TcpMultiTimer :
     private TcpMultiTimerOne<PlatformImpl,
         TcpMultiTimer<PlatformImpl, Derived, UserData, TimerIds...>, TimerIds>...,

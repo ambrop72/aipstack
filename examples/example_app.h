@@ -508,7 +508,7 @@ struct ExampleAppOptions {
     AIPSTACK_OPTION_DECL_VALUE(WindowUpdateThresDiv, int, 8)
 };
 
-template <typename... Options>
+template <typename ...Options>
 class ExampleAppService {
     template <typename>
     friend class ExampleApp;

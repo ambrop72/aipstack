@@ -37,7 +37,7 @@
  * configured using the @ref configuration module:
  * 
  * ```
- * template <typename... Options>
+ * template <typename ...Options>
  * class MyClass {
  *     AIPSTACK_OPTION_CONFIG_VALUE(MyClassOptions, Option1)
  * public:
@@ -73,7 +73,7 @@
  *     void function(NestedClass n);
  * };
  * 
- * template <typename... Options>
+ * template <typename ...Options>
  * class MyClassService {
  *     AIPSTACK_OPTION_CONFIG_VALUE(MyClassOptions, Option1)
  *     

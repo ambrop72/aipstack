@@ -360,7 +360,7 @@ struct TcpOosBufferServiceOptions {
     AIPSTACK_OPTION_DECL_VALUE(NumOosSegs, std::size_t, 4)
 };
 
-template <typename... Options>
+template <typename ...Options>
 class TcpOosBufferService {
     template <typename>
     friend class TcpOosBuffer;

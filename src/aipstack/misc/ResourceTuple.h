@@ -57,7 +57,7 @@ namespace ResourceTuplePrivate {
     public:
         InheritElemHelper () = default;
         
-        template <typename... Args>
+        template <typename ...Args>
         inline InheritElemHelper (ResourceTupleInitSame, Args && ... args) :
             m_elem(std::forward<Args>(args)...)
         {
@@ -67,21 +67,21 @@ namespace ResourceTuplePrivate {
     template <typename ElemsSequence, typename IndicesSequence>
     class InheritAllHelper;
     
-    template <typename... Elems, std::size_t... Indices>
+    template <typename ...Elems, std::size_t... Indices>
     class InheritAllHelper<std::tuple<Elems...>, std::index_sequence<Indices...>> :
         public InheritElemHelper<Elems, Indices>...
     {
     public:
         InheritAllHelper () = default;
         
-        template <typename... Args>
+        template <typename ...Args>
         inline InheritAllHelper (ResourceTupleInitSame, Args const & ... args) :
             InheritElemHelper<Elems, Indices>{ResourceTupleInitSame(), args...}...
         {
         }
     };
     
-    template <typename... Elems>
+    template <typename ...Elems>
     using InheritAllAlias = InheritAllHelper<
         std::tuple<Elems...>, std::make_index_sequence<sizeof...(Elems)>>;
 }
@@ -97,7 +97,7 @@ namespace ResourceTuplePrivate {
  * 
  * @tparam Elems Types of tuple elements.
  */
-template <typename... Elems>
+template <typename ...Elems>
 class ResourceTuple
 #ifndef IN_DOXYGEN
     :private ResourceTuplePrivate::InheritAllAlias<Elems...>
@@ -132,7 +132,7 @@ public:
      *        element). Note that they are given by and passed to element constructors by
      *        const reference.
      */
-    template <typename... Args>
+    template <typename ...Args>
     ResourceTuple (ResourceTupleInitSame, Args const & ... args) :
         InheritAll(ResourceTupleInitSame(), args...)
     {

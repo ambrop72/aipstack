@@ -1027,7 +1027,7 @@ struct EthIpIfaceOptions {
  * 
  * @tparam Options Assignments of options defined in @ref EthIpIfaceOptions.
  */
-template <typename... Options>
+template <typename ...Options>
 class EthIpIfaceService {
     template <typename>
     friend class EthIpIface;

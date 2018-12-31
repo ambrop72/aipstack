@@ -40,7 +40,7 @@ namespace AIpStack {
 template <typename, typename>
 struct TypeSequenceFromListHelper;
 
-template <typename List, typename... Indices>
+template <typename List, typename ...Indices>
 struct TypeSequenceFromListHelper<List, TypeSequence<Indices...>> {
 #ifdef _MSC_VER
     template <int Index>

@@ -634,7 +634,7 @@ struct IpPathMtuCacheOptions {
  * 
  * @tparam Options Assignments of options defined in @ref IpPathMtuCacheOptions.
  */
-template <typename... Options>
+template <typename ...Options>
 class IpPathMtuCacheService {
     template <typename>
     friend class IpPathMtuCache;

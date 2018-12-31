@@ -1317,7 +1317,7 @@ struct IpStackOptions {
  * 
  * @tparam Options Assignments of options defined in @ref IpStackOptions.
  */
-template <typename... Options>
+template <typename ...Options>
 class IpStackService {
     template <typename>
     friend class IpStack;

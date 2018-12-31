@@ -100,7 +100,7 @@ public:
      * @param args No arguments (static platform implementation) or a pointer to
      *        Impl (non-static platform implementation).
      */
-    template <typename... Args>
+    template <typename ...Args>
     inline PlatformRef (Args && ... args) :
         Base(std::forward<Args>(args)...)
     {
@@ -488,7 +488,7 @@ private:
     template <typename Func>
     using RetType = GetReturnType<Func>;
     
-    template <typename Func, typename... Args>
+    template <typename Func, typename ...Args>
     inline RetType<Func> callImpl (Func Impl::*func_ptr, Args && ... args) const
     {
         static_assert(!Impl::ImplIsStatic);
@@ -496,19 +496,19 @@ private:
         return (impl->*func_ptr)(std::forward<Args>(args)...);
     }
     
-    template <typename Func, typename... Args>
+    template <typename Func, typename ...Args>
     inline RetType<Func> callImpl (Func *func_ptr, Args && ... args) const
     {
         return (*func_ptr)(std::forward<Args>(args)...);
     }
     
-    template <typename Obj, typename Func, typename... Args>
+    template <typename Obj, typename Func, typename ...Args>
     inline static RetType<Func> callObj (Func Obj::*func_ptr, Obj &obj, Args && ... args)
     {
         return (obj.*func_ptr)(std::forward<Args>(args)...);
     }
     
-    template <typename Obj, typename Func, typename... Args>
+    template <typename Obj, typename Func, typename ...Args>
     inline static RetType<Func> callObj (
         Func Obj::*func_ptr, Obj const &obj, Args && ... args)
     {

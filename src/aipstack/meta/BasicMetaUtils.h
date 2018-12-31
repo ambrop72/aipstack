@@ -71,12 +71,12 @@ using VoidFor = void;
 template <typename Func>
 struct GetReturnTypeHelper;
 
-template <typename Ret, typename... Args>
+template <typename Ret, typename ...Args>
 struct GetReturnTypeHelper<Ret(Args...)> {
     using Result = Ret;
 };
 
-template <typename Ret, typename... Args>
+template <typename Ret, typename ...Args>
 struct GetReturnTypeHelper<Ret(Args...)const> {
     using Result = Ret;
 };

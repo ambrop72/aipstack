@@ -67,7 +67,7 @@ namespace AIpStack {
  * example is shown below.
  *
  * ```
- * template <typename... Options>
+ * template <typename ...Options>
  * class MyModule {
  * public:
  *     AIPSTACK_OPTION_CONFIG_TYPE(MyModuleOptions, ExampleTypeOption)
@@ -99,7 +99,7 @@ namespace AIpStack {
 #ifndef IN_DOXYGEN
 
 namespace OptionsPrivate {
-    template <typename Derived, typename DefaultValue, typename... Options>
+    template <typename Derived, typename DefaultValue, typename ...Options>
     using GetValue = TypeDictGetOrDefault<
         TypeListReverse<MakeTypeList<Options...>>, Derived, DefaultValue
     >;
@@ -130,7 +130,7 @@ public:
     using Is = TypeDictEntry<Derived, WrapValue<ValueType, Value>>;
     
 #ifndef IN_DOXYGEN
-    template <typename... Options>
+    template <typename ...Options>
     struct Config {
         inline static constexpr ValueType Value = OptionsPrivate::GetValue<
             Derived, WrapValue<ValueType, DefaultValue>, Options...>::Value;
@@ -160,7 +160,7 @@ public:
     using Is = TypeDictEntry<Derived, Value>;
     
 #ifndef IN_DOXYGEN
-    template <typename... Options>
+    template <typename ...Options>
     struct Config {
         using Value = OptionsPrivate::GetValue<Derived, DefaultValue, Options...>;
     };

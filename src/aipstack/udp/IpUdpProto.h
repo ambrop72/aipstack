@@ -685,7 +685,7 @@ struct IpUdpProtoOptions {
     AIPSTACK_OPTION_DECL_TYPE(UdpIndexService, void)
 };
 
-template <typename... Options>
+template <typename ...Options>
 class IpUdpProtoService {
     template <typename> friend class IpUdpProto;
     template <typename> friend class UdpApi;

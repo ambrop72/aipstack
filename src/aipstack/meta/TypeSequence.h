@@ -34,7 +34,7 @@ namespace AIpStack {
  * @{
  */
 
-template <typename... Types>
+template <typename ...Types>
 struct TypeSequence {};
 
 #ifndef IN_DOXYGEN
@@ -42,7 +42,7 @@ struct TypeSequence {};
 template <typename, typename>
 struct TypeSequenceMakeIntConcatHelper;
 
-template <typename... Ints1, typename... Ints2>
+template <typename ...Ints1, typename ...Ints2>
 struct TypeSequenceMakeIntConcatHelper<TypeSequence<Ints1...>, TypeSequence<Ints2...>> {
     using Result = TypeSequence<Ints1..., Ints2...>;
 };
