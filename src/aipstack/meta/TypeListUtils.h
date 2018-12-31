@@ -58,11 +58,11 @@ struct MakeTypeListHelper<T, Ts...> {
 
 template<typename ...Ts>
 using MakeTypeList =
-#ifdef IN_DOXYGEN
-implementation_hidden;
-#else
-typename MakeTypeListHelper<Ts...>::Type;
-#endif
+    #ifdef IN_DOXYGEN
+    implementation_hidden;
+    #else
+    typename MakeTypeListHelper<Ts...>::Type;
+    #endif
 
 #ifndef IN_DOXYGEN
 
@@ -83,11 +83,11 @@ struct MapTypeListHelper<ConsTypeList<Head, Tail>, Func> {
 
 template<typename List, typename Func>
 using MapTypeList =
-#ifdef IN_DOXYGEN
-implementation_hidden;
-#else
-typename MapTypeListHelper<List, Func>::Type;
-#endif
+    #ifdef IN_DOXYGEN
+    implementation_hidden;
+    #else
+    typename MapTypeListHelper<List, Func>::Type;
+    #endif
 
 #ifndef IN_DOXYGEN
 
@@ -109,12 +109,12 @@ namespace Private {
 #endif
 
 template<typename List>
-using TypeListLength =
-#ifdef IN_DOXYGEN
-implementation_hidden;
-#else
-Private::TypeListLengthHelper<List>;
-#endif
+inline constexpr int TypeListLength =
+    #ifdef IN_DOXYGEN
+    implementation_hidden;
+    #else
+    Private::TypeListLengthHelper<List>::Value;
+    #endif
 
 #ifndef IN_DOXYGEN
 
@@ -135,11 +135,11 @@ struct TypeListReverseHelper<ConsTypeList<Head, Tail>, Reversed> {
 
 template<typename List>
 using TypeListReverse =
-#ifdef IN_DOXYGEN
-implementation_hidden;
-#else
-typename TypeListReverseHelper<List, EmptyTypeList>::Type;
-#endif
+    #ifdef IN_DOXYGEN
+    implementation_hidden;
+    #else
+    typename TypeListReverseHelper<List, EmptyTypeList>::Type;
+    #endif
 
 #ifndef IN_DOXYGEN
 
@@ -162,11 +162,11 @@ namespace Private {
 
 template<typename List, int Index>
 using TypeListGet =
-#ifdef IN_DOXYGEN
-implementation_hidden;
-#else
-typename Private::TypeListGetHelper<List, Index>::Result;
-#endif
+    #ifdef IN_DOXYGEN
+    implementation_hidden;
+    #else
+    typename Private::TypeListGetHelper<List, Index>::Result;
+    #endif
 
 #ifndef IN_DOXYGEN
 
@@ -194,23 +194,24 @@ namespace Private {
 
 template<typename List, typename Value>
 using TypeListFind =
-#ifdef IN_DOXYGEN
-implementation_hidden;
-#else
-typename Private::TypeListFindHelper<List, Value, 0>::Result;
-#endif
+    #ifdef IN_DOXYGEN
+    implementation_hidden;
+    #else
+    typename Private::TypeListFindHelper<List, Value, 0>::Result;
+    #endif
 
 template<typename List, typename Value>
-using TypeListIndex = typename TypeListFind<List, Value>::Result;
+inline constexpr int TypeListIndex = TypeListFind<List, Value>::Result::Value;
 
 template<typename List, typename Func, typename FuncValue>
 using TypeListFindMapped = TypeListFind<MapTypeList<List, Func>, FuncValue>;
 
 template<typename List, typename Func, typename FuncValue>
-using TypeListIndexMapped = typename TypeListFindMapped<List, Func, FuncValue>::Result;
+inline constexpr int TypeListIndexMapped =
+    TypeListFindMapped<List, Func, FuncValue>::Result;
 
 template<typename List, typename Func, typename FuncValue>
-using TypeListGetMapped = TypeListGet<List, TypeListIndexMapped<List, Func, FuncValue>::Value>;
+using TypeListGetMapped = TypeListGet<List, TypeListIndexMapped<List, Func, FuncValue>>;
 
 #ifndef IN_DOXYGEN
 
@@ -237,25 +238,26 @@ namespace SequenceListPrivate {
  */
 template<int Count, int Start=0>
 using SequenceList =
-#ifdef IN_DOXYGEN
-implementation_hidden;
-#else
-typename SequenceListPrivate::SequenceListHelper<Count, Start>::Type;
-#endif
+    #ifdef IN_DOXYGEN
+    implementation_hidden;
+    #else
+    typename SequenceListPrivate::SequenceListHelper<Count, Start>::Type;
+    #endif
 
 /**
  * Create a list of ElemTemplate\<index\> for index from
  * 0 up to Count exclusive.
  */
 template<int Count, template<int> typename ElemTemplate>
-using IndexElemListCount = MapTypeList<SequenceList<Count>, ValueTemplateFunc<int, ElemTemplate>>;
+using IndexElemListCount =
+    MapTypeList<SequenceList<Count>, ValueTemplateFunc<int, ElemTemplate>>;
 
 /**
  * Create a list of ElemTemplate\<index\> for index from
  * 0 up to the length of List exclusive.
  */
 template<typename List, template<int> typename ElemTemplate>
-using IndexElemList = IndexElemListCount<TypeListLength<List>::Value, ElemTemplate>;
+using IndexElemList = IndexElemListCount<TypeListLength<List>, ElemTemplate>;
 
 /** @} */
 

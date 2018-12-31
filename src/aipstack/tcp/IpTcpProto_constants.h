@@ -124,7 +124,7 @@ public:
     
     // Number of bits needed to represent the maximum supported duplicate ACK count.
     inline static constexpr int DupAckBits =
-        BitsInInt<FastRtxDupAcks + MaxAdditionaDupAcks>::Value;
+        BitsInInt<FastRtxDupAcks + MaxAdditionaDupAcks>;
     
     // Window scale shift count to send and use in outgoing ACKs.
     inline static constexpr std::uint8_t RcvWndShift = 6;

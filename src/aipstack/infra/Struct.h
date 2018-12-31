@@ -265,10 +265,10 @@ class StructBase {
     };
     
     template<typename Field, typename This=StructBase>
-    using GetFieldInfo = FieldInfo<TypeListIndex<Fields<This>, Field>::Value, void>;
+    using GetFieldInfo = FieldInfo<TypeListIndex<Fields<This>, Field>, void>;
     
     template<typename This=StructBase>
-    using LastFieldInfo = FieldInfo<TypeListLength<Fields<This>>::Value-1, void>;
+    using LastFieldInfo = FieldInfo<TypeListLength<Fields<This>> - 1, void>;
     
 public:
     class Ref;
@@ -671,7 +671,7 @@ public:
 
 template<typename Type>
 struct StructTypeHandler<Type,
-    std::enable_if_t<BinaryReadWriteSupportsType<GetSameOrEnumBaseType<Type>>()>>
+    std::enable_if_t<BinaryReadWriteSupportsType<GetSameOrEnumBaseType<Type>>>>
 {
     using Handler = AIpStack::StructBinaryTypeHandler<Type>;
 };
@@ -735,12 +735,12 @@ public:
 };
 
 template<typename T>
-using StructIsByteType = WrapBool<
-    std::is_same_v<T, char> || std::is_same_v<T, unsigned char>>;
+inline constexpr bool StructIsByteType = 
+    std::is_same_v<T, char> || std::is_same_v<T, unsigned char>;
 
 template<typename ElemType, std::size_t Length>
 class StructByteArrayTypeHandler {
-    static_assert(StructIsByteType<ElemType>::Value);
+    static_assert(StructIsByteType<ElemType>);
     
 public:
     inline static constexpr std::size_t FieldSize = Length * sizeof(ElemType);
@@ -768,7 +768,7 @@ public:
 
 template<typename ElemFieldType, std::size_t Length>
 using StructSelectArrayTypeHandler = std::conditional_t<
-    StructIsByteType<ElemFieldType>::Value,
+    StructIsByteType<ElemFieldType>,
     StructByteArrayTypeHandler<ElemFieldType, Length>,
     StructArrayTypeHandler<ElemFieldType, Length>
 >;

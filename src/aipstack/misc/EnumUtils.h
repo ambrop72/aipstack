@@ -140,12 +140,12 @@ inline constexpr std::underlying_type_t<EnumType> AsUnderlying (EnumType e)
 namespace EnumUtilsPrivate {
     template<bool IsEnum, typename Type, typename BaseType>
     struct EnumWithBaseTypeHelper {
-        inline static constexpr bool IsEnumWithBaseType = false;
+        inline static constexpr bool Value = false;
     };
     
     template<typename Type, typename BaseType>
     struct EnumWithBaseTypeHelper<true, Type, BaseType> {
-        inline static constexpr bool IsEnumWithBaseType =
+        inline static constexpr bool Value =
             std::is_same_v<std::underlying_type_t<Type>, BaseType>;
     };
     
@@ -165,38 +165,36 @@ namespace EnumUtilsPrivate {
 /**
  * Check if a type is an enum type with the specified underlying type.
  * 
- * The result is @ref WrapBool<true> if `Type` is an enum type with underlying type
- * `BaseType`, otherwise the result is @ref WrapBool<false>.
+ * The result is true if and only if `Type` is an enum type with underlying type
+ * `BaseType`.
  * 
  * @tparam Type Type to check.
  * @tparam BaseType Underlying type to check for.
  */
 template<typename Type, typename BaseType>
-using IsEnumWithBaseType = WrapBool<
+inline constexpr bool IsEnumWithBaseType =
     #ifdef IN_DOXYGEN
-    implementation_hidden
+    implementation_hidden;
     #else
-    EnumUtilsPrivate::EnumWithBaseTypeHelper<std::is_enum_v<Type>, Type, BaseType>::IsEnumWithBaseType
+    EnumUtilsPrivate::EnumWithBaseTypeHelper<std::is_enum_v<Type>, Type, BaseType>::Value;
     #endif
->;
 
 /**
  * Check if a type is the specified type or an enum type with that underlying type.
  * 
- * The result is @ref WrapBool<true> if `Type` is `BaseType` or an enum type with underlying
- * type `BaseType`, otherwise the result is @ref WrapBool<false>.
+ * The result is true if and only if `Type` is `BaseType` or an enum type with
+ * underlying type `BaseType`.
  * 
  * @tparam Type Type to check.
  * @tparam BaseType Type or underlying type to check for.
  */
 template<typename Type, typename BaseType>
-using IsSameOrEnumWithBaseType = WrapBool<
+inline constexpr bool IsSameOrEnumWithBaseType =
     #ifdef IN_DOXYGEN
-    implementation_hidden
+    implementation_hidden;
     #else
-    std::is_same_v<Type, BaseType> || IsEnumWithBaseType<Type, BaseType>::Value
+    std::is_same_v<Type, BaseType> || IsEnumWithBaseType<Type, BaseType>;
     #endif
->;
 
 /**
  * Get the underlying type of an enum type or if not an enum the type itself.
@@ -207,7 +205,8 @@ using IsSameOrEnumWithBaseType = WrapBool<
  * @tparam Type Type for which to get the same or underlying type.
  */
 template<typename Type>
-using GetSameOrEnumBaseType = typename EnumUtilsPrivate::GetSameOrBaseTypeHelper<std::is_enum_v<Type>, Type>::ResultType;
+using GetSameOrEnumBaseType = typename EnumUtilsPrivate::
+    GetSameOrBaseTypeHelper<std::is_enum_v<Type>, Type>::ResultType;
 
 /** @} */
 

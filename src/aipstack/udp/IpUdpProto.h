@@ -697,7 +697,7 @@ class IpUdpProtoService {
     
 public:
     // This tells IpStack which IP protocol we receive packets for.
-    using IpProtocolNumber = WrapValue<Ip4Protocol, Ip4Protocol::Udp>;
+    inline static constexpr Ip4Protocol IpProtocolNumber = Ip4Protocol::Udp;
     
 #ifndef IN_DOXYGEN
     template<typename PlatformImpl_, typename StackArg_>

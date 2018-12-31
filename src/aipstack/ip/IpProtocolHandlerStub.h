@@ -27,7 +27,6 @@
 
 #include <cstdint>
 
-#include <aipstack/meta/BasicMetaUtils.h>
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/infra/Instance.h>
@@ -272,11 +271,10 @@ struct IpProtocolHandlerStubService {
     /**
      * The IP protocol number of the protocol handler.
      * 
-     * This type alias must appear so that the stack knows which protocol
-     * number the handler is responsible for. The type alias should be for a
-     * @ref WrapValue type using uint8_t as the value type.
+     * This constant must appear so that the stack knows which protocol number
+     * the handler is responsible for.
      */
-    using IpProtocolNumber = WrapValue<Ip4Protocol, Ip4Protocol(99)>;
+    inline static constexpr Ip4Protocol IpProtocolNumber = Ip4Protocol(99);
     
     /**
      * Template through which the @ref IpStack instantiates the service.

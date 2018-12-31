@@ -31,7 +31,6 @@
 
 #include <aipstack/infra/Instance.h>
 #include <aipstack/meta/ChooseInt.h>
-#include <aipstack/meta/BasicMetaUtils.h>
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Use.h>
@@ -907,7 +906,7 @@ class IpTcpProtoService {
     
 public:
     // This tells IpStack which IP protocol we receive packets for.
-    using IpProtocolNumber = WrapValue<Ip4Protocol, Ip4Protocol::Tcp>;
+    inline static constexpr Ip4Protocol IpProtocolNumber = Ip4Protocol::Tcp;
     
 #ifndef IN_DOXYGEN
     template<typename PlatformImpl_, typename StackArg_>

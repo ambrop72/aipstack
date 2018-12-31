@@ -163,7 +163,8 @@ private:
         using ProtocolService = TypeListGet<ProtocolServicesList, ProtocolIndex>;
         
         // Expose the protocol number.
-        using IpProtocolNumber = typename ProtocolService::IpProtocolNumber;
+        inline static constexpr Ip4Protocol IpProtocolNumber =
+            ProtocolService::IpProtocolNumber;
         
         // Instantiate the protocol.
         AIPSTACK_MAKE_INSTANCE(Protocol, (
@@ -178,7 +179,7 @@ private:
     using ProtocolHelpersList =
         IndexElemList<ProtocolServicesList, ProtocolHelper>;
     
-    inline static constexpr int NumProtocols = TypeListLength<ProtocolHelpersList>::Value;
+    inline static constexpr int NumProtocols = TypeListLength<ProtocolHelpersList>;
     
     // Create a list of the instantiated protocols, for the tuple.
     template<typename Helper>
@@ -324,7 +325,7 @@ public:
     inline ProtoApi<GetProtoArg<ProtoApi>> & getProtoApi ()
     {
         using Protocol = typename GetProtoApiHelper<ProtoApi>::Protocol;
-        constexpr int ProtocolIndex = TypeListIndex<ProtocolsList, Protocol>::Value;
+        constexpr int ProtocolIndex = TypeListIndex<ProtocolsList, Protocol>;
         return m_protocols.template get<ProtocolIndex>().getApi();
     }
 
@@ -1074,7 +1075,7 @@ private:
         bool not_handled = ListForBreak<ProtocolHelpersList>(
             [&] AIPSTACK_TL(Helper,
         {
-            if (ip_info.proto == Helper::IpProtocolNumber::Value) {
+            if (ip_info.proto == Helper::IpProtocolNumber) {
                 Helper::get(ip_info.iface->m_stack)->recvIp4Dgram(
                     static_cast<IpRxInfoIp4<Arg> const &>(ip_info),
                     static_cast<IpBufRef>(dgram));
@@ -1241,7 +1242,7 @@ private:
         
         // Dispatch based on the protocol.
         ListForBreak<ProtocolHelpersList>([&] AIPSTACK_TL(Helper, {
-            if (ip_info.proto == Helper::IpProtocolNumber::Value) {
+            if (ip_info.proto == Helper::IpProtocolNumber) {
                 Helper::get(this)->handleIp4DestUnreach(
                     static_cast<Ip4DestUnreachMeta const &>(du_meta),
                     static_cast<IpRxInfoIp4<Arg> const &>(ip_info),

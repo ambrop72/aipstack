@@ -103,7 +103,7 @@ class TcpMultiTimer :
     template<typename TimerId>
     static constexpr int TimerIndex (TimerId)
     {
-        return TypeListIndex<TimerIdsList, TimerId>::Value;
+        return TypeListIndex<TimerIdsList, TimerId>;
     }
     
     template<typename TimerId>

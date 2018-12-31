@@ -58,11 +58,11 @@ struct TypeSequenceFromListHelper<List, TypeSequence<Indices...>> {
 
 template<typename List>
 using TypeSequenceFromList =
-#ifdef IN_DOXYGEN
-implementation_hidden;
-#else
-typename TypeSequenceFromListHelper<List, TypeSequenceMakeInt<TypeListLength<List>::Value>>::Result;
-#endif
+    #ifdef IN_DOXYGEN
+    implementation_hidden;
+    #else
+    typename TypeSequenceFromListHelper<List, TypeSequenceMakeInt<TypeListLength<List>>>::Result;
+    #endif
 
 /** @} */
 

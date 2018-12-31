@@ -36,33 +36,35 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template<int Base, std::uintmax_t N>
-struct DigitsInInt {
-    inline static constexpr int Value = 1 + DigitsInInt<Base, N / Base>::Value;
-};
+namespace BitsInIntPrivate {
+    template<int Base, std::uintmax_t N>
+    struct DigitsInInt {
+        inline static constexpr int Value = 1 + DigitsInInt<Base, N / Base>::Value;
+    };
 
-template<int Base>
-struct DigitsInInt<Base, 0> {
-    inline static constexpr int Value = 0;
-};
+    template<int Base>
+    struct DigitsInInt<Base, 0> {
+        inline static constexpr int Value = 0;
+    };
+}
 
 #endif
 
 template<std::uintmax_t N>
-using BitsInInt =
-#ifdef IN_DOXYGEN
-implementation_hidden;
-#else
-DigitsInInt<2, N>;
-#endif
+inline constexpr int BitsInInt =
+    #ifdef IN_DOXYGEN
+    implementation_hidden;
+    #else
+    BitsInIntPrivate::DigitsInInt<2, N>::Value;
+    #endif
 
 template<std::uintmax_t N>
-using HexDigitsInInt =
-#ifdef IN_DOXYGEN
-implementation_hidden;
-#else
-DigitsInInt<16, N>;
-#endif
+inline constexpr int HexDigitsInInt =
+    #ifdef IN_DOXYGEN
+    implementation_hidden;
+    #else
+    BitsInIntPrivate::DigitsInInt<16, N>::Value;
+    #endif
 
 /** @} */
 

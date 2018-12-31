@@ -70,7 +70,7 @@ typename ChooseIntHelper<NumBits, Signed>::Result;
 #endif
 
 template<std::uintmax_t N, bool Signed = false>
-using ChooseIntForMax = ChooseInt<BitsInInt<N>::Value, Signed>;
+using ChooseIntForMax = ChooseInt<BitsInInt<N>, Signed>;
 
 /** @} */
 
