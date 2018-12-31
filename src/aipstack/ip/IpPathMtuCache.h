@@ -493,7 +493,6 @@ private:
         AIPSTACK_ASSERT(mtu_entry.state == EntryState::Referenced);
         AIPSTACK_ASSERT(mtu_entry.mtu >= MinMTU);
         AIPSTACK_ASSERT(mtu_entry.first_ref.link != nullptr);
-        (void)mtu_entry;
     }
     
     void timerHandler ()

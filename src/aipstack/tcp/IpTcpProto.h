@@ -410,7 +410,6 @@ private:
         AIPSTACK_ASSERT(pcb->tcp == this);
         AIPSTACK_ASSERT(pcb->state() == TcpStates::CLOSED);
         AIPSTACK_ASSERT(pcb->con == nullptr);
-        (void)pcb;
     }
     
     inline static void pcb_abort (TcpPcb *pcb)

@@ -208,7 +208,6 @@ bool TapDeviceWindows::startRecv ()
 void TapDeviceWindows::sendCompleted (IoUnit &send_unit)
 {
     std::size_t index = &send_unit - &m_send_units[0];
-    (void)index;
     AIPSTACK_ASSERT(index >= 0 && index < NumSendUnits);
     AIPSTACK_ASSERT(Modulo(NumSendUnits).sub(index, m_send_first) < m_send_count);
     

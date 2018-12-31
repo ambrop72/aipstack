@@ -294,7 +294,6 @@ public:
     inline static bool isRemoved (Ref e, State st = State())
     {
         AIPSTACK_ASSERT(!e.isNull());
-        (void)st;
         
         return ac(e).next.isNull();
     }

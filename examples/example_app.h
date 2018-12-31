@@ -215,7 +215,6 @@ private:
             
             std::size_t removed = m_parent->m_clients.erase(this);
             AIPSTACK_ASSERT(removed == 1);
-            (void)removed;
         }
 
         inline ExampleApp & parent () const { return *m_parent; }
