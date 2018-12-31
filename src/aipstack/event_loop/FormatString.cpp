@@ -42,7 +42,7 @@ namespace {
 std::string formatString (char const *fmt, ...)
 {
     std::size_t fmt_len = std::strlen(fmt);
-    if (fmt_len > TypeMax<std::size_t>() - FormatSizeHint) {
+    if (fmt_len > TypeMax<std::size_t> - FormatSizeHint) {
         throw std::bad_alloc();
     }
     std::size_t initial_size = fmt_len + FormatSizeHint;
@@ -50,7 +50,7 @@ std::string formatString (char const *fmt, ...)
     std::string str(initial_size, '\0');
 
     while (true) {
-        if (str.size() > TypeMax<int>()) {
+        if (str.size() > TypeMax<int>) {
             throw std::bad_alloc();
         }
 
@@ -76,7 +76,7 @@ std::string formatString (char const *fmt, ...)
         // in the check below.
         using CT = decltype(false ? print_bytes : std::size_t());
 
-        if (CT(print_bytes) > CT(TypeMax<std::size_t>() - 1)) {
+        if (CT(print_bytes) > CT(TypeMax<std::size_t> - 1)) {
             throw std::bad_alloc();
         }
 

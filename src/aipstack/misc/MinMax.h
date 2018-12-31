@@ -39,28 +39,21 @@ namespace AIpStack {
  */
 
 /**
- * Return the minimum value representable in an arithmetic type.
+ * The minimum value representable in an arithmetic type.
  *
  * @tparam T Arithmetic type.
- * @return Minimum representable value.
  */
 template <typename T>
-constexpr T TypeMin ()
-{
-    return std::numeric_limits<T>::min();
-}
+inline constexpr T TypeMin = std::numeric_limits<T>::min();
 
 /**
- * Return the maximum value representable in an arithmetic type.
+ * The maximum value representable in an arithmetic type.
  *
  * @tparam T Arithmetic type.
  * @return Maximum representable value.
  */
 template <typename T>
-constexpr T TypeMax ()
-{
-    return std::numeric_limits<T>::max();
-}
+inline constexpr T TypeMax = std::numeric_limits<T>::max();
 
 /**
  * Return the smaller of two numbers (typically integers).
@@ -123,7 +116,7 @@ using MinValueURetType = std::conditional_t<
  * // We have a value which we want to limit to no more than fits into std::uint16_t.
  * std::uint32_t a = ...;
  * // Use MinValueU and assign the result to uint16_t (no cast needed).
- * std::uint16_t b = MinValueU(a, TypeMax<std::uint16_t>());
+ * std::uint16_t b = MinValueU(a, TypeMax<std::uint16_t>);
  * ```
  * 
  * @tparam T1 Type of first operand. Must be an unsigned integer type.
@@ -188,8 +181,8 @@ constexpr void AddToSat (ValType &val, IncrType incr)
     static_assert(std::is_unsigned<ValType>::value, "Only unsigned allowed");
     static_assert(std::is_unsigned<IncrType>::value, "Only unsigned allowed");
 
-    ValType remain = TypeMax<ValType>() - val;
-    val = (incr > remain) ? TypeMax<ValType>() : val + incr;
+    ValType remain = TypeMax<ValType> - val;
+    val = (incr > remain) ? TypeMax<ValType> : val + incr;
 }
 
 /** @} */

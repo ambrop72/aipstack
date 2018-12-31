@@ -114,7 +114,7 @@ public:
     
     // Maximum retransmission time (need care not to overflow RttType).
     inline static constexpr RttType MaxRtxTime =
-        MinValue(double(TypeMax<RttType>()), 60. * RttTimeFreq);
+        MinValue(double(TypeMax<RttType>), 60. * RttTimeFreq);
     
     // Number of duplicate ACKs to trigger fast retransmit/recovery.
     inline static constexpr std::uint8_t FastRtxDupAcks = 3;
@@ -132,7 +132,7 @@ public:
     
     // Minimum amount to extend the receive window when a PCB is
     // abandoned before the FIN has been received.
-    inline static constexpr TcpSeqInt MinAbandonRcvWndIncr = TypeMax<std::uint16_t>();
+    inline static constexpr TcpSeqInt MinAbandonRcvWndIncr = TypeMax<std::uint16_t>;
 };
 
 }

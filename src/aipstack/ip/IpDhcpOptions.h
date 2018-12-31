@@ -456,7 +456,7 @@ private:
         
         // Write option payload using payload_func and receive its size.
         std::size_t opt_len = payload_func(opt_writeptr + DhcpOptionHeader::Size);
-        AIPSTACK_ASSERT(opt_len <= TypeMax<std::uint8_t>())
+        AIPSTACK_ASSERT(opt_len <= TypeMax<std::uint8_t>)
         
         // Set the payload size in the header.
         oh.set(DhcpOptionHeader::OptLen(), std::uint8_t(opt_len));

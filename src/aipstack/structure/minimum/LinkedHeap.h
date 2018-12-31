@@ -103,7 +103,7 @@ public:
     void insert (Ref node, State st = State())
     {
         AIPSTACK_ASSERT(m_root.isNull() || m_count > 0)
-        AIPSTACK_ASSERT(m_root.isNull() || m_count < TypeMax<SizeType>())
+        AIPSTACK_ASSERT(m_root.isNull() || m_count < TypeMax<SizeType>)
         
         std::int8_t child_dir;
         Ref child;

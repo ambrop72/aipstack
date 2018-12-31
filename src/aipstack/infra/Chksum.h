@@ -269,7 +269,7 @@ public:
 private:
     inline void foldOnce ()
     {
-        m_sum = (m_sum & TypeMax<std::uint16_t>()) + (m_sum >> 16);
+        m_sum = (m_sum & TypeMax<std::uint16_t>) + (m_sum >> 16);
     }
     
     inline static std::uint32_t swapBytes (std::uint32_t x)

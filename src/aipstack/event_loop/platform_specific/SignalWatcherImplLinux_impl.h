@@ -114,7 +114,7 @@ void SignalWatcherImplLinux::fdWatcherHandler(EventLoopFdEvents events)
 
     AIPSTACK_ASSERT(bytes == sizeof(siginfo))
 
-    if (siginfo.ssi_signo > TypeMax<int>()) {
+    if (siginfo.ssi_signo > TypeMax<int>) {
         std::fprintf(stderr,
             "SignalWatcher: read signal number is out of range for int.\n");
         return;

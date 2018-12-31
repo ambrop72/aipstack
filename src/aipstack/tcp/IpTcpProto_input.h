@@ -260,7 +260,7 @@ public:
         //   than the maximum window that can be advertised (see
         //   max_rcv_wnd_ann), and could only be decreased upon
         //   receiving ACKs.
-        AIPSTACK_ASSERT(hdr_wnd <= TypeMax<std::uint16_t>())
+        AIPSTACK_ASSERT(hdr_wnd <= TypeMax<std::uint16_t>)
         
         return std::uint16_t(hdr_wnd);
     }
@@ -304,8 +304,8 @@ public:
         
         // Make sure it fits in std::size_t (relevant if std::size_t is 16-bit),
         // to ensure the invariant that rcv_ann_wnd always fits in std::size_t.
-        if (TypeMax<std::size_t>() < TypeMax<TcpSeqInt>()) {
-            min_window = MinValueU(min_window, TypeMax<std::size_t>());
+        if (TypeMax<std::size_t> < TypeMax<TcpSeqInt>) {
+            min_window = MinValueU(min_window, TypeMax<std::size_t>);
         }
         
         // Round up to the nearest window that can be advertised.
@@ -412,8 +412,8 @@ private:
             // SYN-ACK segments have unscaled window.
             // NOTE: rcv_ann_wnd fits into size_t as required since m_initial_rcv_wnd
             // also does (Listener::setInitialReceiveWindow).
-            AIPSTACK_ASSERT(lis->m_initial_rcv_wnd <= TypeMax<std::size_t>())
-            TcpSeqInt rcv_wnd = MinValueU(lis->m_initial_rcv_wnd, TypeMax<std::uint16_t>());
+            AIPSTACK_ASSERT(lis->m_initial_rcv_wnd <= TypeMax<std::size_t>)
+            TcpSeqInt rcv_wnd = MinValueU(lis->m_initial_rcv_wnd, TypeMax<std::uint16_t>);
             
             // Initialize most of the PCB.
             pcb->setState(TcpStates::SYN_RCVD);
@@ -447,7 +447,7 @@ private:
             }
             
             // Increment the listener's PCB count.
-            AIPSTACK_ASSERT(lis->m_num_pcbs < TypeMax<int>())
+            AIPSTACK_ASSERT(lis->m_num_pcbs < TypeMax<int>)
             lis->m_num_pcbs++;
             
             // Add the PCB to the active index.
@@ -994,7 +994,7 @@ private:
             
             // Calculate the amount of acknowledged data (without ACK of FIN).
             TcpSeqInt data_acked_seq = acked - fin_acked;
-            AIPSTACK_ASSERT(data_acked_seq <= TypeMax<std::size_t>())
+            AIPSTACK_ASSERT(data_acked_seq <= TypeMax<std::size_t>)
             std::size_t data_acked = data_acked_seq;
             
             if (AIPSTACK_LIKELY(data_acked > 0)) {
@@ -1158,9 +1158,9 @@ private:
         // We only get here if the segment fits into the receive window, this is assured
         // by pcb_input_basic_processing. It is also ensured that pcb->rcv_ann_wnd fits
         // into std::size_t and we need this to avoid oveflows in buffer space checks below.
-        if (TypeMax<std::size_t>() < TypeMax<TcpSeqInt>()) {
-            AIPSTACK_ASSERT(eff_rel_seq <= TypeMax<std::size_t>())
-            AIPSTACK_ASSERT(tcp_data.tot_len <= TypeMax<std::size_t>() - eff_rel_seq)
+        if (TypeMax<std::size_t> < TypeMax<TcpSeqInt>) {
+            AIPSTACK_ASSERT(eff_rel_seq <= TypeMax<std::size_t>)
+            AIPSTACK_ASSERT(tcp_data.tot_len <= TypeMax<std::size_t> - eff_rel_seq)
         }
         
         Connection *con = pcb->con;
@@ -1357,7 +1357,7 @@ private:
     // with respect to window scaling.
     static TcpSeqInt max_rcv_wnd_ann (TcpPcb *pcb)
     {
-        return TcpSeqInt(TypeMax<std::uint16_t>()) << pcb->rcv_wnd_shift;
+        return TcpSeqInt(TypeMax<std::uint16_t>) << pcb->rcv_wnd_shift;
     }
     
     // Calculate how much window would be announced if sent an ACK now.

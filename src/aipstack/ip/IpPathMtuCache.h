@@ -93,7 +93,7 @@ class IpPathMtuCache :
     
     // Array index type for MTU entries and null value.
     using MtuIndexType = ChooseIntForMax<NumMtuEntries, false>;
-    inline static constexpr MtuIndexType MtuIndexNull = TypeMax<MtuIndexType>();
+    inline static constexpr MtuIndexType MtuIndexNull = TypeMax<MtuIndexType>;
     
     // Link model for MTU entries: array indices.
     struct MtuEntriesAccessor;

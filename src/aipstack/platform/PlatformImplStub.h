@@ -136,7 +136,7 @@ public:
      * original type representing time is signed and its values are being converted
      * to unsigned as required for @ref TimeType.
      */
-    inline static constexpr TimeType RelativeTimeLimit = TypeMax<TimeType>();
+    inline static constexpr TimeType RelativeTimeLimit = TypeMax<TimeType>;
     
     /**
      * Get the current time in ticks.

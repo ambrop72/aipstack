@@ -315,7 +315,7 @@ public:
             } else {
                 auto index = state.getEntryIndex(*m_ptr);
                 AIPSTACK_ASSERT(index >= 0)
-                AIPSTACK_ASSERT(index <= TypeMax<IndexType>())
+                AIPSTACK_ASSERT(index <= TypeMax<IndexType>)
                 return IndexType(index);
             }
         }

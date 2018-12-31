@@ -372,7 +372,7 @@ public:
     IpErr sendIp4Dgram (IpBufRef dgram, IpIface<Arg> *iface, IpSendRetryRequest *retryReq,
                         Ip4CommonSendParams common)
     {
-        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>())
+        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>)
         AIPSTACK_ASSERT(dgram.offset >= Ip4Header::Size)
         AIPSTACK_ASSERT((common.send_flags & ~IpSendFlags::AllFlags) == Enum0)
 
@@ -631,7 +631,7 @@ public:
     IpErr sendIp4DgramFast (IpSendPreparedIp4<Arg> const &prep, IpBufRef dgram,
                             IpSendRetryRequest *retryReq)
     {
-        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>())
+        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>)
         AIPSTACK_ASSERT(dgram.offset >= Ip4Header::Size)
         
         // Reveal IP header.
@@ -819,7 +819,7 @@ public:
      */
     inline bool handleLocalPacketTooBig (Ip4Addr remote_addr)
     {
-        return m_path_mtu_cache.handlePacketTooBig(remote_addr, TypeMax<std::uint16_t>());
+        return m_path_mtu_cache.handlePacketTooBig(remote_addr, TypeMax<std::uint16_t>);
     }
     
     /**

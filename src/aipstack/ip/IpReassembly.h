@@ -83,7 +83,7 @@ class IpReassembly :
     static_assert(MaxReassTimeSeconds >= 5);
     
     // Null link value in HoleDescriptor lists.
-    inline static constexpr std::uint16_t ReassNullLink = TypeMax<std::uint16_t>();
+    inline static constexpr std::uint16_t ReassNullLink = TypeMax<std::uint16_t>;
     
     // Hole descriptor structure, placed at the beginning of a hole.
     AIPSTACK_DEFINE_STRUCT(HoleDescriptor,
@@ -92,7 +92,7 @@ class IpReassembly :
     )
     
     // We need to be able to put a hole descriptor after the reassembled data.
-    static_assert(MaxReassSize <= TypeMax<std::uint16_t>() - HoleDescriptor::Size);
+    static_assert(MaxReassSize <= TypeMax<std::uint16_t> - HoleDescriptor::Size);
     
     // The size of the reassembly buffers, with additional space for a hole descriptor
     // at the end.
@@ -181,7 +181,7 @@ public:
         std::uint8_t ttl, Ip4Protocol proto, bool more_fragments,
         std::uint16_t fragment_offset, char const *header, IpBufRef &dgram)
     {
-        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>())
+        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>)
         AIPSTACK_ASSERT(more_fragments || fragment_offset > 0)
         
         // Sanity check data length.

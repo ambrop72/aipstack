@@ -147,7 +147,7 @@ public:
         IpStack<StackArg>::HeaderBeforeIp4Dgram + Udp4Header::Size;
 
     inline static constexpr std::size_t MaxUdpDataLenIp4 =
-        TypeMax<std::uint16_t>() - Udp4Header::Size;
+        TypeMax<std::uint16_t> - Udp4Header::Size;
 
     IpErr sendUdpIp4Packet (Ip4AddrPair const &addrs, UdpTxInfo<Arg> const &udp_info,
                             IpBufRef udp_data, IpIface<StackArg> *iface,
@@ -174,7 +174,7 @@ public:
         chksum_accum.addWord(WrapType<std::uint16_t>(), std::uint16_t(dgram.tot_len));
         std::uint16_t checksum = chksum_accum.getChksum(dgram);
         if (checksum == 0) {
-            checksum = TypeMax<std::uint16_t>();
+            checksum = TypeMax<std::uint16_t>;
         }
         udp_header.set(Udp4Header::Checksum(), checksum);
         

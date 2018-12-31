@@ -267,7 +267,7 @@ class IpDhcpClient final :
     // (start of renewal, lease timeout), multiple timer expirations
     // are used with keeping track of leftover seconds.
     inline static constexpr std::uint32_t MaxTimerSeconds = MinValueU(
-        TypeMax<std::uint32_t>(),
+        TypeMax<std::uint32_t>,
         Platform::WorkingTimeSpanTicks / TimeType(Platform::TimeFreq));
     
     static_assert(MaxTimerSeconds >= 255);
@@ -472,7 +472,7 @@ private:
     inline static std::uint32_t TicksToSec (TimeType ticks)
     {
         TimeType sec_timetype = ticks / TimeType(Platform::TimeFreq);
-        return MinValueU(sec_timetype, TypeMax<std::uint32_t>());
+        return MinValueU(sec_timetype, TypeMax<std::uint32_t>);
     }
     
     // Shortcut to last timer set time.

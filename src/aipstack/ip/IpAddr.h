@@ -225,7 +225,7 @@ public:
      * @return Address with the maximum value.
      */
     inline static constexpr Ip4Addr AllOnesAddr () {
-        return Ip4Addr(TypeMax<ValueInt>());
+        return Ip4Addr(TypeMax<ValueInt>);
     }
     
     /**
@@ -299,7 +299,7 @@ public:
      * @return Whether the value is the maximum value.
      */
     inline constexpr bool isAllOnes () const {
-        return value() == TypeMax<ValueInt>();
+        return value() == TypeMax<ValueInt>;
     }
     
     /**

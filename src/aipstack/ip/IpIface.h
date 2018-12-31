@@ -82,7 +82,7 @@ private:
     IpIface (IpStack<Arg> *stack, IpIfaceDriverParams const &params) :
         m_stack(stack),
         m_params(params),
-        m_ip_mtu(MinValueU(TypeMax<std::uint16_t>(), params.ip_mtu)),
+        m_ip_mtu(MinValueU(TypeMax<std::uint16_t>, params.ip_mtu)),
         m_have_addr(false),
         m_have_gateway(false)
     {

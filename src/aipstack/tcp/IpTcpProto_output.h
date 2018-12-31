@@ -64,7 +64,7 @@ class IpTcpProto_output
     AIPSTACK_USE_TYPES(Constants, (RttType, RttNextType))
     AIPSTACK_USE_VALS(IpStack<StackArg>, (HeaderBeforeIp4Dgram))
 
-    inline static constexpr RttType RttTypeMax = TypeMax<RttType>();
+    inline static constexpr RttType RttTypeMax = TypeMax<RttType>;
     
 public:
     // Check if our FIN has been ACKed.
@@ -94,7 +94,7 @@ public:
         
         // The SYN and SYN-ACK must always have non-scaled window size.
         // For justification of assert see see create_connection, listen_input.
-        AIPSTACK_ASSERT(pcb->rcv_ann_wnd <= TypeMax<std::uint16_t>())
+        AIPSTACK_ASSERT(pcb->rcv_ann_wnd <= TypeMax<std::uint16_t>)
         std::uint16_t window_size = std::uint16_t(pcb->rcv_ann_wnd);
         
         // Send SYN or SYN-ACK flags depending on the state.

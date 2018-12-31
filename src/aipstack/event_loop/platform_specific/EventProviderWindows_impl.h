@@ -103,9 +103,9 @@ void EventProviderWindows::waitForEvents (EventLoopTime wait_time)
             // clamp to 1.
             due_file_time.QuadPart = 1;
         }
-        else if (unix_time > TypeMax<LONGLONG>() - UnixToFileTimeOffset) {
+        else if (unix_time > TypeMax<LONGLONG> - UnixToFileTimeOffset) {
             // There would have been an integer overflow, clamp to MAX_LONGLONG.
-            due_file_time.QuadPart = TypeMax<LONGLONG>();
+            due_file_time.QuadPart = TypeMax<LONGLONG>;
         }
         else {
             // Normal case, add offset.

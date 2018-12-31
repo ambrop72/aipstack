@@ -190,7 +190,7 @@ class EthIpIface final :
     
     // Get an unsigned integer type sufficient for ARP entry indexes and null value.
     using ArpEntryIndexType = ChooseIntForMax<NumArpEntries, false>;
-    inline static constexpr ArpEntryIndexType ArpEntryNull = TypeMax<ArpEntryIndexType>();
+    inline static constexpr ArpEntryIndexType ArpEntryNull = TypeMax<ArpEntryIndexType>;
     
     // Number of ARP resolution attempts in the Query and Refreshing states.
     inline static constexpr std::uint8_t ArpQueryAttempts = 3;

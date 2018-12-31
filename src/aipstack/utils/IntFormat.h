@@ -74,9 +74,9 @@ namespace Private {
     {
         if (std::is_signed<T>::value) {
             using UT = std::make_unsigned_t<T>;
-            return 1 + IntegerFormatLenUnsigned<UT>(UT(-UT(TypeMin<T>())));
+            return 1 + IntegerFormatLenUnsigned<UT>(UT(-UT(TypeMin<T>)));
         } else {
-            return IntegerFormatLenUnsigned<T>(TypeMax<T>());
+            return IntegerFormatLenUnsigned<T>(TypeMax<T>);
         }
     }
 }
@@ -167,7 +167,7 @@ bool ParseInteger (MemRef str, T &out_value)
         }
     }
 
-    UT ulimit = isNegative ? UT(-UT(TypeMin<T>())) : TypeMax<T>();
+    UT ulimit = isNegative ? UT(-UT(TypeMin<T>)) : TypeMax<T>;
     UT ulimit_10 = ulimit / 10;
 
     UT uvalue = 0;

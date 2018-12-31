@@ -95,7 +95,7 @@ class TimerQueue
     
     // Get the TimeType value for the most singificant bit.
     // This is also exactly half of the TimeType type range.
-    inline static constexpr TimeType TimeMsb = (TypeMax<TimeType>() / 2) + 1;
+    inline static constexpr TimeType TimeMsb = (TypeMax<TimeType> / 2) + 1;
     
     // Maximum time in the future (relative to the reference time) that
     // getFirstTime returns. This limit avoids problems if we have timers

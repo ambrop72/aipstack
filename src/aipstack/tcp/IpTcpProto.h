@@ -731,7 +731,7 @@ private:
         // NOTE: rcv_ann_wnd after SYN-ACKSYN reception (-1) fits into size_t
         // as required since user_rcv_wnd is size_t.
         TcpSeqInt rcv_wnd = 1u +
-            MinValueU(std::uint16_t(TypeMax<std::uint16_t>() - 1), user_rcv_wnd);
+            MinValueU(std::uint16_t(TypeMax<std::uint16_t> - 1), user_rcv_wnd);
         
         // Initialize most of the PCB.
         pcb->setState(TcpStates::SYN_SENT);

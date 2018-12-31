@@ -377,7 +377,7 @@ public:
             ann_wnd -= 1u;
         }
         
-        AIPSTACK_ASSERT(ann_wnd <= TypeMax<std::size_t>())
+        AIPSTACK_ASSERT(ann_wnd <= TypeMax<std::size_t>)
         return std::size_t(ann_wnd);
     }
     
@@ -412,7 +412,7 @@ public:
     void extendRecvBuf (std::size_t amount)
     {
         assert_started();
-        AIPSTACK_ASSERT(amount <= TypeMax<std::size_t>() - m_v.rcv_buf.tot_len)
+        AIPSTACK_ASSERT(amount <= TypeMax<std::size_t> - m_v.rcv_buf.tot_len)
         
         // Extend the receive buffer.
         m_v.rcv_buf.tot_len += amount;
@@ -509,7 +509,7 @@ public:
     void extendSendBuf (std::size_t amount)
     {
         assert_sending();
-        AIPSTACK_ASSERT(amount <= TypeMax<std::size_t>() - m_v.snd_buf.tot_len)
+        AIPSTACK_ASSERT(amount <= TypeMax<std::size_t> - m_v.snd_buf.tot_len)
         AIPSTACK_ASSERT(m_v.snd_buf_cur.tot_len <= m_v.snd_buf.tot_len)
         
         // Increment the amount of data in the send buffer.
