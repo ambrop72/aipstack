@@ -239,7 +239,7 @@ public:
      */
     static Ip4Addr PrefixMask (std::size_t prefix_bits)
     {
-        AIPSTACK_ASSERT(prefix_bits <= Bits)
+        AIPSTACK_ASSERT(prefix_bits <= Bits);
         
         return
             (prefix_bits == 0) ? ZeroAddr() :

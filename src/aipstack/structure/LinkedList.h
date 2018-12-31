@@ -92,7 +92,7 @@ public:
     template <bool Enable = WithLast, typename = std::enable_if_t<Enable>>
     inline Ref lastNotEmpty (State st = State()) const
     {
-        AIPSTACK_ASSERT(!m_first.isNull())
+        AIPSTACK_ASSERT(!m_first.isNull());
         
         return this->m_last.ref(st);
     }
@@ -104,8 +104,8 @@ public:
     
     inline Ref prevNotFirst (Ref e, State st = State()) const
     {
-        AIPSTACK_ASSERT(!m_first.isNull())
-        AIPSTACK_ASSERT(!(e.link(st) == m_first))
+        AIPSTACK_ASSERT(!m_first.isNull());
+        AIPSTACK_ASSERT(!(e.link(st) == m_first));
         
         return ac(e).prev.ref(st);
     }
@@ -162,7 +162,7 @@ public:
     
     inline void removeFirst (State st = State())
     {
-        AIPSTACK_ASSERT(!m_first.isNull())
+        AIPSTACK_ASSERT(!m_first.isNull());
         
         m_first = ac(m_first.ref(st)).next;
     }
@@ -210,7 +210,7 @@ public:
     
     inline static void initLonely (Ref e, State st = State())
     {
-        AIPSTACK_ASSERT(!e.isNull())
+        AIPSTACK_ASSERT(!e.isNull());
         
         ac(e).prev = e.link(st);
         ac(e).next = e.link(st);
@@ -218,15 +218,15 @@ public:
 
     inline static bool isLonely (Ref e, State st = State())
     {
-        AIPSTACK_ASSERT(!e.isNull())
+        AIPSTACK_ASSERT(!e.isNull());
 
         return ac(e).next == e.link(st);
     }
     
     static void initAfter (Ref e, Ref other, State st = State())
     {
-        AIPSTACK_ASSERT(!e.isNull())
-        AIPSTACK_ASSERT(!other.isNull())
+        AIPSTACK_ASSERT(!e.isNull());
+        AIPSTACK_ASSERT(!other.isNull());
         
         ac(e).prev = other.link(st);
         ac(e).next = ac(other).next;
@@ -236,8 +236,8 @@ public:
     
     static void initBefore (Ref e, Ref other, State st = State())
     {
-        AIPSTACK_ASSERT(!e.isNull())
-        AIPSTACK_ASSERT(!other.isNull())
+        AIPSTACK_ASSERT(!e.isNull());
+        AIPSTACK_ASSERT(!other.isNull());
         
         ac(e).next = other.link(st);
         ac(e).prev = ac(other).prev;
@@ -247,9 +247,9 @@ public:
     
     static void moveOtherNodesBefore (Ref e, Ref other, State st = State())
     {
-        AIPSTACK_ASSERT(!e.isNull())
-        AIPSTACK_ASSERT(!other.isNull())
-        AIPSTACK_ASSERT(!(ac(e).next == other.link(st)))
+        AIPSTACK_ASSERT(!e.isNull());
+        AIPSTACK_ASSERT(!other.isNull());
+        AIPSTACK_ASSERT(!(ac(e).next == other.link(st)));
 
         ac(ac(other).prev.ref(st)).next = ac(e).next;
         ac(ac(e).next.ref(st)).prev = ac(other).prev;
@@ -263,7 +263,7 @@ public:
     
     static void remove (Ref e, State st = State())
     {
-        AIPSTACK_ASSERT(!e.isNull())
+        AIPSTACK_ASSERT(!e.isNull());
         
         ac(ac(e).prev.ref(st)).next = ac(e).next;
         ac(ac(e).next.ref(st)).prev = ac(e).prev;
@@ -271,21 +271,21 @@ public:
     
     inline static Ref prev (Ref e, State st = State())
     {
-        AIPSTACK_ASSERT(!e.isNull())
+        AIPSTACK_ASSERT(!e.isNull());
         
         return ac(e).prev.ref(st);
     }
     
     inline static Ref next (Ref e, State st = State())
     {
-        AIPSTACK_ASSERT(!e.isNull())
+        AIPSTACK_ASSERT(!e.isNull());
         
         return ac(e).next.ref(st);
     }
     
     inline static void markRemoved (Ref e, State st = State())
     {
-        AIPSTACK_ASSERT(!e.isNull())
+        AIPSTACK_ASSERT(!e.isNull());
         (void)st;
         
         ac(e).next = Link::null();
@@ -293,7 +293,7 @@ public:
     
     inline static bool isRemoved (Ref e, State st = State())
     {
-        AIPSTACK_ASSERT(!e.isNull())
+        AIPSTACK_ASSERT(!e.isNull());
         (void)st;
         
         return ac(e).next.isNull();

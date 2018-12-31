@@ -186,8 +186,8 @@ class IpTcpProto :
         
         inline ~TcpPcb ()
         {
-            AIPSTACK_ASSERT(state() != TcpStates::SYN_RCVD)
-            AIPSTACK_ASSERT(con == nullptr)
+            AIPSTACK_ASSERT(state() != TcpStates::SYN_RCVD);
+            AIPSTACK_ASSERT(con == nullptr);
         }
         
         // Node for the PCB index.
@@ -343,7 +343,7 @@ public:
         m_next_ephemeral_port(EphemeralPortFirst),
         m_pcbs(ResourceArrayInitSame(), args.platform, this)
     {
-        AIPSTACK_ASSERT(args.stack != nullptr)
+        AIPSTACK_ASSERT(args.stack != nullptr);
     }
     
     /**
@@ -354,8 +354,8 @@ public:
      */
     ~IpTcpProto ()
     {
-        AIPSTACK_ASSERT(m_listeners_list.isEmpty())
-        AIPSTACK_ASSERT(m_current_pcb == nullptr)
+        AIPSTACK_ASSERT(m_listeners_list.isEmpty());
+        AIPSTACK_ASSERT(m_current_pcb == nullptr);
     }
     
     inline TcpApi<Arg> & getApi ()
@@ -389,7 +389,7 @@ private:
         
         // Get a PCB to use.
         TcpPcb *pcb = m_unrefed_pcbs_list.lastNotEmpty(*this);
-        AIPSTACK_ASSERT(pcb_is_in_unreferenced_list(pcb))
+        AIPSTACK_ASSERT(pcb_is_in_unreferenced_list(pcb));
         
         // Abort the PCB if it's not closed.
         if (pcb->state() != TcpStates::CLOSED) {
@@ -403,13 +403,13 @@ private:
     
     void pcb_assert_closed (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(!pcb->tim(AbrtTimer()).isSet())
-        AIPSTACK_ASSERT(!pcb->tim(OutputTimer()).isSet())
-        AIPSTACK_ASSERT(!pcb->tim(RtxTimer()).isSet())
-        AIPSTACK_ASSERT(!pcb->IpSendRetryRequest::isActive())
-        AIPSTACK_ASSERT(pcb->tcp == this)
-        AIPSTACK_ASSERT(pcb->state() == TcpStates::CLOSED)
-        AIPSTACK_ASSERT(pcb->con == nullptr)
+        AIPSTACK_ASSERT(!pcb->tim(AbrtTimer()).isSet());
+        AIPSTACK_ASSERT(!pcb->tim(OutputTimer()).isSet());
+        AIPSTACK_ASSERT(!pcb->tim(RtxTimer()).isSet());
+        AIPSTACK_ASSERT(!pcb->IpSendRetryRequest::isActive());
+        AIPSTACK_ASSERT(pcb->tcp == this);
+        AIPSTACK_ASSERT(pcb->state() == TcpStates::CLOSED);
+        AIPSTACK_ASSERT(pcb->con == nullptr);
         (void)pcb;
     }
     
@@ -425,7 +425,7 @@ private:
     
     static void pcb_abort (TcpPcb *pcb, bool send_rst)
     {
-        AIPSTACK_ASSERT(pcb->state() != TcpStates::CLOSED)
+        AIPSTACK_ASSERT(pcb->state() != TcpStates::CLOSED);
         IpTcpProto *tcp = pcb->tcp;
         
         // Send RST if desired.
@@ -475,7 +475,7 @@ private:
     static void pcb_go_to_time_wait (TcpPcb *pcb)
     {
         AIPSTACK_ASSERT(pcb->state() !=
-            OneOf(TcpStates::CLOSED, TcpStates::SYN_RCVD, TcpStates::TIME_WAIT))
+            OneOf(TcpStates::CLOSED, TcpStates::SYN_RCVD, TcpStates::TIME_WAIT));
         
         // Disassociate any Connection. This will call the
         // connectionAborted callback if we do have a Connection.
@@ -510,7 +510,7 @@ private:
     // We are okay because this is only called from pcb_input.
     static void pcb_go_to_fin_wait_2 (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state() == TcpStates::FIN_WAIT_1)
+        AIPSTACK_ASSERT(pcb->state() == TcpStates::FIN_WAIT_1);
         
         // Change state.
         pcb->setState(TcpStates::FIN_WAIT_2);
@@ -530,7 +530,7 @@ private:
     
     static void pcb_unlink_con (TcpPcb *pcb, bool closing)
     {
-        AIPSTACK_ASSERT(pcb->state() != OneOf(TcpStates::CLOSED, TcpStates::SYN_RCVD))
+        AIPSTACK_ASSERT(pcb->state() != OneOf(TcpStates::CLOSED, TcpStates::SYN_RCVD));
         
         if (pcb->con != nullptr) {
             // Inform the connection object about the aborting.
@@ -538,11 +538,11 @@ private:
             // PCBs, which protects it from being aborted by allocate_pcb
             // during this callback.
             Connection *con = pcb->con;
-            AIPSTACK_ASSERT(con->m_v.pcb == pcb)
+            AIPSTACK_ASSERT(con->m_v.pcb == pcb);
             con->pcb_aborted();
             
             // The pcb->con has been cleared by con->pcb_aborted().
-            AIPSTACK_ASSERT(pcb->con == nullptr)
+            AIPSTACK_ASSERT(pcb->con == nullptr);
             
             // Add the PCB to the list of unreferenced PCBs.
             IpTcpProto *tcp = pcb->tcp;
@@ -556,13 +556,13 @@ private:
     
     static void pcb_unlink_lis (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state() == TcpStates::SYN_RCVD)
-        AIPSTACK_ASSERT(pcb->lis != nullptr)
+        AIPSTACK_ASSERT(pcb->state() == TcpStates::SYN_RCVD);
+        AIPSTACK_ASSERT(pcb->lis != nullptr);
         
         Listener *lis = pcb->lis;
         
         // Decrement the listener's PCB count.
-        AIPSTACK_ASSERT(lis->m_num_pcbs > 0)
+        AIPSTACK_ASSERT(lis->m_num_pcbs > 0);
         lis->m_num_pcbs--;
         
         // Is this a PCB which is being accepted?
@@ -585,8 +585,8 @@ private:
     // is abandoning the PCB.
     static void pcb_abandoned (TcpPcb *pcb, bool rst_needed, TcpSeqInt rcv_ann_thres)
     {
-        AIPSTACK_ASSERT(pcb->state() == TcpStates::SYN_SENT || pcb->state().isActive())
-        AIPSTACK_ASSERT(pcb->con == nullptr) // Connection just cleared it
+        AIPSTACK_ASSERT(pcb->state() == TcpStates::SYN_SENT || pcb->state().isActive());
+        AIPSTACK_ASSERT(pcb->con == nullptr); // Connection just cleared it
         IpTcpProto *tcp = pcb->tcp;
         
         // Add the PCB to the unreferenced PCBs list.
@@ -633,7 +633,7 @@ private:
     
     static void pcb_abrt_timer_handler (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state() != TcpStates::CLOSED)
+        AIPSTACK_ASSERT(pcb->state() != TcpStates::CLOSED);
         
         // Abort the PCB.
         pcb_abort(pcb);
@@ -651,7 +651,7 @@ private:
         // while in input processing. If the PCB was aborted or even
         // reused, the tcp pointer must still be valid.
         IpTcpProto *tcp = pcb->tcp;
-        AIPSTACK_ASSERT(tcp->m_current_pcb == pcb || tcp->m_current_pcb == nullptr)
+        AIPSTACK_ASSERT(tcp->m_current_pcb == pcb || tcp->m_current_pcb == nullptr);
         return tcp->m_current_pcb == nullptr;
     }
     
@@ -665,7 +665,7 @@ private:
         for (Listener *lis = m_listeners_list.first();
              lis != nullptr; lis = m_listeners_list.next(*lis))
         {
-            AIPSTACK_ASSERT(lis->m_listening)
+            AIPSTACK_ASSERT(lis->m_listening);
             if (lis->m_addr == addr && lis->m_port == port) {
                 return lis;
             }
@@ -686,9 +686,9 @@ private:
     IpErr create_connection (Connection *con, TcpStartConnectionArgs<Arg> const &args,
                              std::uint16_t pmtu, TcpPcb **out_pcb)
     {
-        AIPSTACK_ASSERT(con != nullptr)
-        AIPSTACK_ASSERT(con->mtu_ref().isSetup())
-        AIPSTACK_ASSERT(out_pcb != nullptr)
+        AIPSTACK_ASSERT(con != nullptr);
+        AIPSTACK_ASSERT(con->mtu_ref().isSetup());
+        AIPSTACK_ASSERT(out_pcb != nullptr);
 
         Ip4Addr remote_addr = args.addr;
         PortNum remote_port = args.port;
@@ -798,7 +798,7 @@ private:
     
     void move_unrefed_pcb_to_front (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb_is_in_unreferenced_list(pcb))
+        AIPSTACK_ASSERT(pcb_is_in_unreferenced_list(pcb));
         
         if (pcb != m_unrefed_pcbs_list.first(*this)) {
             m_unrefed_pcbs_list.remove({*pcb, *this}, *this);
@@ -812,12 +812,12 @@ private:
         // Look in the active index first.
         TcpPcb *pcb = m_pcb_index_active.findEntry(key, *this);
         AIPSTACK_ASSERT(pcb == nullptr ||
-                        pcb->state() != OneOf(TcpStates::CLOSED, TcpStates::TIME_WAIT))
+            pcb->state() != OneOf(TcpStates::CLOSED, TcpStates::TIME_WAIT));
         
         // If not found, look in the time-wait index.
         if (AIPSTACK_UNLIKELY(pcb == nullptr)) {
             pcb = m_pcb_index_timewait.findEntry(key, *this);
-            AIPSTACK_ASSERT(pcb == nullptr || pcb->state() == TcpStates::TIME_WAIT)
+            AIPSTACK_ASSERT(pcb == nullptr || pcb->state() == TcpStates::TIME_WAIT);
         }
         
         return pcb;
@@ -830,7 +830,7 @@ private:
         for (Listener *lis = m_listeners_list.first();
              lis != nullptr; lis = m_listeners_list.next(*lis))
         {
-            AIPSTACK_ASSERT(lis->m_listening)
+            AIPSTACK_ASSERT(lis->m_listening);
             if (lis->m_port == local_port &&
                 (lis->m_addr == local_addr || lis->m_addr.isZero()))
             {

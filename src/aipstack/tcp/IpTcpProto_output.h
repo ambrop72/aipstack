@@ -77,7 +77,7 @@ public:
     AIPSTACK_NO_INLINE
     static void pcb_send_syn (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state() == OneOf(TcpStates::SYN_SENT, TcpStates::SYN_RCVD))
+        AIPSTACK_ASSERT(pcb->state() == OneOf(TcpStates::SYN_SENT, TcpStates::SYN_RCVD));
         
         // Include the MSS option.
         TcpOptions tcp_opts;
@@ -94,7 +94,7 @@ public:
         
         // The SYN and SYN-ACK must always have non-scaled window size.
         // For justification of assert see see create_connection, listen_input.
-        AIPSTACK_ASSERT(pcb->rcv_ann_wnd <= TypeMax<std::uint16_t>)
+        AIPSTACK_ASSERT(pcb->rcv_ann_wnd <= TypeMax<std::uint16_t>);
         std::uint16_t window_size = std::uint16_t(pcb->rcv_ann_wnd);
         
         // Send SYN or SYN-ACK flags depending on the state.
@@ -142,7 +142,7 @@ public:
     
     static void pcb_need_ack (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state() != TcpStates::CLOSED)
+        AIPSTACK_ASSERT(pcb->state() != TcpStates::CLOSED);
         
         // If we're in input processing just set a flag that ACK is
         // needed which will be picked up at the end, otherwise send
@@ -156,9 +156,9 @@ public:
     
     static void pcb_snd_buf_extended (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state() == TcpStates::SYN_SENT || pcb->state().isSndOpen())
+        AIPSTACK_ASSERT(pcb->state() == TcpStates::SYN_SENT || pcb->state().isSndOpen());
         AIPSTACK_ASSERT(pcb->state() == TcpStates::SYN_SENT ||
-                            pcb_has_snd_outstanding(pcb))
+            pcb_has_snd_outstanding(pcb));
         
         if (AIPSTACK_LIKELY(pcb->state() != TcpStates::SYN_SENT)) {
             // Set the output timer.
@@ -171,17 +171,17 @@ public:
     
     static void pcb_end_sending (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state().isSndOpen())
+        AIPSTACK_ASSERT(pcb->state().isSndOpen());
         // If sending was closed without abandoning the connection, the push
         // index must have been set to the end of the send buffer.
         AIPSTACK_ASSERT(pcb->con == nullptr ||
-            pcb->con->m_v.snd_psh_index == pcb->con->m_v.snd_buf.tot_len)
+            pcb->con->m_v.snd_psh_index == pcb->con->m_v.snd_buf.tot_len);
         
         // Make the appropriate state transition.
         if (pcb->state() == TcpStates::ESTABLISHED) {
             pcb->setState(TcpStates::FIN_WAIT_1);
         } else {
-            AIPSTACK_ASSERT(pcb->state() == TcpStates::CLOSE_WAIT)
+            AIPSTACK_ASSERT(pcb->state() == TcpStates::CLOSE_WAIT);
             pcb->setState(TcpStates::LAST_ACK);
         }
         
@@ -194,8 +194,8 @@ public:
     
     static void pcb_push_output (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
-        AIPSTACK_ASSERT(pcb_has_snd_outstanding(pcb))
+        AIPSTACK_ASSERT(pcb->state().canOutput());
+        AIPSTACK_ASSERT(pcb_has_snd_outstanding(pcb));
         
         // Schedule a call to pcb_output soon.
         if (pcb->inInputProcessing()) {
@@ -212,7 +212,7 @@ public:
     // Check if there is any unacknowledged or unsent data or FIN.
     static bool pcb_has_snd_outstanding (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
+        AIPSTACK_ASSERT(pcb->state().canOutput());
         
         // If sending was close, FIN is outstanding.
         if (AIPSTACK_UNLIKELY(!pcb->state().isSndOpen())) {
@@ -222,7 +222,7 @@ public:
         // PCB must still have a Connection, if not sending would
         // have been closed not open.
         Connection *con = pcb->con;
-        AIPSTACK_ASSERT(con != nullptr)
+        AIPSTACK_ASSERT(con != nullptr);
         
         // Check whether there is any data in the send buffer.
         return con->m_v.snd_buf.tot_len > 0;
@@ -233,7 +233,7 @@ public:
     // snd_una!=snd_nxt due to requeuing in pcb_rtx_timer_handler.
     static bool pcb_has_snd_unacked (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
+        AIPSTACK_ASSERT(pcb->state().canOutput());
         
         Connection *con = pcb->con;
         return
@@ -256,9 +256,9 @@ public:
     AIPSTACK_NO_INLINE
     static void pcb_output_active (TcpPcb *pcb, bool rtx_or_window_probe)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
-        AIPSTACK_ASSERT(pcb_has_snd_outstanding(pcb))
-        AIPSTACK_ASSERT(pcb->con != nullptr)
+        AIPSTACK_ASSERT(pcb->state().canOutput());
+        AIPSTACK_ASSERT(pcb_has_snd_outstanding(pcb));
+        AIPSTACK_ASSERT(pcb->con != nullptr);
         
         Connection *con = pcb->con;
         
@@ -286,9 +286,9 @@ public:
             // be true, pcb_output_segment will be called once and then this
             // function will return.
         } else {
-            AIPSTACK_ASSERT(con->m_v.cwnd >= pcb->snd_mss)
-            AIPSTACK_ASSERT(con->m_v.snd_buf_cur.tot_len <= con->m_v.snd_buf.tot_len)
-            AIPSTACK_ASSERT(con->m_v.snd_psh_index <= con->m_v.snd_buf.tot_len)
+            AIPSTACK_ASSERT(con->m_v.cwnd >= pcb->snd_mss);
+            AIPSTACK_ASSERT(con->m_v.snd_buf_cur.tot_len <= con->m_v.snd_buf.tot_len);
+            AIPSTACK_ASSERT(con->m_v.snd_psh_index <= con->m_v.snd_buf.tot_len);
             
             // Use and update real snd_buf_cur.
             snd_buf_cur = &con->m_v.snd_buf_cur;
@@ -350,15 +350,15 @@ public:
             
             // If we were successful we must have sent something and not more
             // than the window allowed or more than we had to send.
-            AIPSTACK_ASSERT(seg_seqlen > 0)
-            AIPSTACK_ASSERT(seg_seqlen <= rem_wnd)
-            AIPSTACK_ASSERT(seg_seqlen <= snd_buf_cur->tot_len + fin)
+            AIPSTACK_ASSERT(seg_seqlen > 0);
+            AIPSTACK_ASSERT(seg_seqlen <= rem_wnd);
+            AIPSTACK_ASSERT(seg_seqlen <= snd_buf_cur->tot_len + fin);
             
             // Check sent sequence length to see if a FIN was sent.
             std::size_t data_sent;
             if (AIPSTACK_UNLIKELY(seg_seqlen > snd_buf_cur->tot_len)) {
                 // FIN was sent, we must still have FinPending.
-                AIPSTACK_ASSERT(pcb->hasFlag(TcpPcbFlags::FinPending))
+                AIPSTACK_ASSERT(pcb->hasFlag(TcpPcbFlags::FinPending));
                 
                 // All remaining data was sent.
                 data_sent = snd_buf_cur->tot_len;
@@ -413,11 +413,11 @@ public:
     AIPSTACK_NO_INLINE
     static void pcb_output_abandoned (TcpPcb *pcb, bool rtx_or_window_probe)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
-        AIPSTACK_ASSERT(pcb->con == nullptr)
+        AIPSTACK_ASSERT(pcb->state().canOutput());
+        AIPSTACK_ASSERT(pcb->con == nullptr);
         // below are implied by con == nullptr, see also pcb_abandoned
-        AIPSTACK_ASSERT(!pcb->state().isSndOpen())
-        AIPSTACK_ASSERT(!pcb->hasFlag(TcpPcbFlags::IdleTimer))
+        AIPSTACK_ASSERT(!pcb->state().isSndOpen());
+        AIPSTACK_ASSERT(!pcb->hasFlag(TcpPcbFlags::IdleTimer));
         
         // Send a FIN if rtx_or_window_probe or one is queued.
         if (rtx_or_window_probe || pcb->hasFlag(TcpPcbFlags::FinPending)) {
@@ -457,8 +457,8 @@ public:
      */
     inline static void pcb_output (TcpPcb *pcb, bool rtx_or_window_probe)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
-        AIPSTACK_ASSERT(pcb_has_snd_outstanding(pcb))
+        AIPSTACK_ASSERT(pcb->state().canOutput());
+        AIPSTACK_ASSERT(pcb_has_snd_outstanding(pcb));
         
         if (AIPSTACK_LIKELY(pcb->con != nullptr)) {
             pcb_output_active(pcb, rtx_or_window_probe);
@@ -492,7 +492,7 @@ public:
         // This timer is only for SYN_SENT, SYN_RCVD and canOutput()
         // states. In any change to another state the timer would be stopped.
         AIPSTACK_ASSERT(pcb->state() == OneOf(TcpStates::SYN_SENT, TcpStates::SYN_RCVD) ||
-                        pcb->state().canOutput())
+            pcb->state().canOutput());
         
         // Is this an idle timeout?
         if (pcb->hasFlag(TcpPcbFlags::IdleTimer)) {
@@ -509,9 +509,9 @@ public:
             // 2) pcb->con != nullptr could only be invalidated when the connection is
             //    abandoned, and pcb_abandoned would stop the idle timeout.
             
-            AIPSTACK_ASSERT(pcb->state().canOutput())
-            AIPSTACK_ASSERT(!pcb_has_snd_unacked(pcb))
-            AIPSTACK_ASSERT(pcb->con != nullptr)
+            AIPSTACK_ASSERT(pcb->state().canOutput());
+            AIPSTACK_ASSERT(!pcb_has_snd_unacked(pcb));
+            AIPSTACK_ASSERT(pcb->con != nullptr);
             
             // Clear the IdleTimer flag. This is not strictly necessarily but is mostly
             // cosmetical and for a minor performance gain in pcb_output_active where it
@@ -541,7 +541,7 @@ public:
         // We must have something outstanding to be sent or acked.
         // This was the case when we were sent and if that changed
         // the timer would have been unset.
-        AIPSTACK_ASSERT(syn_sent_rcvd || pcb_has_snd_outstanding(pcb))
+        AIPSTACK_ASSERT(syn_sent_rcvd || pcb_has_snd_outstanding(pcb));
         
         // Check for spurious timer expiration after timer is no longer
         // needed (no unacked data and no zero window).
@@ -614,7 +614,7 @@ public:
     
     static void pcb_requeue_everything (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
+        AIPSTACK_ASSERT(pcb->state().canOutput());
         
         // Requeue data.
         Connection *con = pcb->con;
@@ -633,8 +633,8 @@ public:
     // transition due to FIN acked).
     static void pcb_output_handle_acked (TcpPcb *pcb, TcpSeqNum ack_num, TcpSeqInt acked)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
-        AIPSTACK_ASSERT(pcb_has_snd_outstanding(pcb))
+        AIPSTACK_ASSERT(pcb->state().canOutput());
+        AIPSTACK_ASSERT(pcb_has_snd_outstanding(pcb));
         
         // Clear the RtxActive flag since any retransmission has now been acked.
         pcb->clearFlag(TcpPcbFlags::RtxActive);
@@ -645,7 +645,7 @@ public:
         if (pcb->hasFlag(TcpPcbFlags::RttPending)) {
             // If we have RttPending outside of SYN_SENT/SYN_RCVD we must
             // also have a Connection (see pcb_abandoned, pcb_start_rtt_measurement).
-            AIPSTACK_ASSERT(con != nullptr)
+            AIPSTACK_ASSERT(con != nullptr);
             
             if (con->m_v.rtt_test_seq.mod_lt(ack_num)) {
                 // Update the RTT variables and RTO.
@@ -692,14 +692,14 @@ public:
             // and this must still be true. Because when all unkacked data is
             // ACKed we would exit fast recovery, just below (the condition
             // below is implied then because recover<=snd_nxt).
-            AIPSTACK_ASSERT(pcb_has_snd_unacked(pcb))
+            AIPSTACK_ASSERT(pcb_has_snd_unacked(pcb));
             
             // If all data up to recover is being ACKed, exit fast recovery.
             if (!pcb->hasFlag(TcpPcbFlags::Recover) || !ack_num.mod_lt(con->m_v.recover)) {
                 // Deflate the CWND.
                 // Note, cwnd>=snd_mss is respected because ssthresh>=snd_mss.
                 TcpSeqInt flight_size = pcb->snd_nxt - ack_num;
-                AIPSTACK_ASSERT(con->m_v.ssthresh >= pcb->snd_mss)
+                AIPSTACK_ASSERT(con->m_v.ssthresh >= pcb->snd_mss);
                 con->m_v.cwnd = MinValue(con->m_v.ssthresh,
                     TcpSeqInt(pcb->snd_mss + MaxValueU(flight_size, pcb->snd_mss)));
                 
@@ -711,7 +711,7 @@ public:
                 
                 // Deflate CWND by the amount of data ACKed.
                 // Be careful to not bring CWND below snd_mss.
-                AIPSTACK_ASSERT(con->m_v.cwnd >= pcb->snd_mss)
+                AIPSTACK_ASSERT(con->m_v.cwnd >= pcb->snd_mss);
                 con->m_v.cwnd -= MinValue(acked, con->m_v.cwnd - pcb->snd_mss);
                 
                 // If this ACK acknowledges at least snd_mss of data,
@@ -736,9 +736,9 @@ public:
     // reached FastRtxDupAcks, the fast recovery threshold.
     static void pcb_fast_rtx_dup_acks_received (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
-        AIPSTACK_ASSERT(pcb_has_snd_unacked(pcb))
-        AIPSTACK_ASSERT(pcb->num_dupack == Constants::FastRtxDupAcks)
+        AIPSTACK_ASSERT(pcb->state().canOutput());
+        AIPSTACK_ASSERT(pcb_has_snd_unacked(pcb));
+        AIPSTACK_ASSERT(pcb->num_dupack == Constants::FastRtxDupAcks);
         
         // If we have recover (>=snd_nxt), we must not enter fast recovery.
         // In that case we must decrement num_dupack by one, to indicate that
@@ -776,9 +776,9 @@ public:
     // received while already in fast recovery.
     static void pcb_extra_dup_ack_received (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
-        AIPSTACK_ASSERT(pcb_has_snd_unacked(pcb))
-        AIPSTACK_ASSERT(pcb->num_dupack > Constants::FastRtxDupAcks)
+        AIPSTACK_ASSERT(pcb->state().canOutput());
+        AIPSTACK_ASSERT(pcb_has_snd_unacked(pcb));
+        AIPSTACK_ASSERT(pcb->num_dupack > Constants::FastRtxDupAcks);
         
         if (AIPSTACK_LIKELY(pcb->con != nullptr)) {
             // Increment CWND by snd_mss.
@@ -796,8 +796,8 @@ public:
     
     static void pcb_end_rtt_measurement (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->hasFlag(TcpPcbFlags::RttPending))
-        AIPSTACK_ASSERT(pcb->con != nullptr)
+        AIPSTACK_ASSERT(pcb->hasFlag(TcpPcbFlags::RttPending));
+        AIPSTACK_ASSERT(pcb->con != nullptr);
         
         // Clear the flag to indicate end of RTT measurement.
         pcb->clearFlag(TcpPcbFlags::RttPending);
@@ -835,7 +835,7 @@ public:
     // retry after ARP resolution completes.
     static void pcb_send_retry (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state() != TcpStates::CLOSED)
+        AIPSTACK_ASSERT(pcb->state() != TcpStates::CLOSED);
         
         if (pcb->state() == OneOf(TcpStates::SYN_SENT, TcpStates::SYN_RCVD)) {
             // Retry sending SYN or SYN-ACK.
@@ -853,7 +853,7 @@ public:
     // Calculate snd_mss based on the current MtuRef information.
     static std::uint16_t pcb_calc_snd_mss_from_pmtu (TcpPcb *pcb, std::uint16_t pmtu)
     {
-        AIPSTACK_ASSERT(pmtu >= IpStack<StackArg>::MinMTU)
+        AIPSTACK_ASSERT(pmtu >= IpStack<StackArg>::MinMTU);
         
         // Calculate the snd_mss from the MTU, bound to no more than base_snd_mss.
         std::uint16_t mtu_mss = pmtu - Ip4TcpHeaderSize;
@@ -863,7 +863,7 @@ public:
         // - base_snd_mss was explicitly checked in CalcTcpSndMss.
         // - mtu-Ip4TcpHeaderSize cannot be less because
         //   MinAllowedMss==MinMTU-Ip4TcpHeaderSize.
-        AIPSTACK_ASSERT(snd_mss >= Constants::MinAllowedMss)
+        AIPSTACK_ASSERT(snd_mss >= Constants::MinAllowedMss);
         
         return snd_mss;
     }
@@ -874,9 +874,9 @@ public:
     static void pcb_pmtu_changed (TcpPcb *pcb, std::uint16_t pmtu)
     {
         AIPSTACK_ASSERT(pcb->state() !=
-            OneOf(TcpStates::CLOSED, TcpStates::SYN_RCVD, TcpStates::TIME_WAIT))
-        AIPSTACK_ASSERT(pcb->con != nullptr)
-        AIPSTACK_ASSERT(pcb->con->mtu_ref().isSetup())
+            OneOf(TcpStates::CLOSED, TcpStates::SYN_RCVD, TcpStates::TIME_WAIT));
+        AIPSTACK_ASSERT(pcb->con != nullptr);
+        AIPSTACK_ASSERT(pcb->con->mtu_ref().isSetup());
         
         // In SYN_SENT, just update the PMTU temporarily stuffed in snd_mss.
         if (pcb->state() == TcpStates::SYN_SENT) {
@@ -940,9 +940,9 @@ public:
     static void pcb_update_snd_wnd (TcpPcb *pcb, TcpSeqInt new_snd_wnd)
     {
         AIPSTACK_ASSERT(pcb->state() !=
-            OneOf(TcpStates::CLOSED, TcpStates::SYN_SENT, TcpStates::SYN_RCVD))
+            OneOf(TcpStates::CLOSED, TcpStates::SYN_SENT, TcpStates::SYN_RCVD));
         // With maximum snd_wnd_shift=14, MaxWindow or more cannot be reported.
-        AIPSTACK_ASSERT(new_snd_wnd <= Constants::MaxWindow)
+        AIPSTACK_ASSERT(new_snd_wnd <= Constants::MaxWindow);
         
         // If the connection has been abandoned we no longer keep snd_wnd.
         Connection *con = pcb->con;
@@ -1023,8 +1023,8 @@ private:
     // NOTE: doDelayedTimerUpdate must be called after return.
     static void pcb_set_output_timer_for_output (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
-        AIPSTACK_ASSERT(pcb_has_snd_outstanding(pcb))
+        AIPSTACK_ASSERT(pcb->state().canOutput());
+        AIPSTACK_ASSERT(pcb_has_snd_outstanding(pcb));
         
         // If the OutRetry flag is set, clear it and ensure that
         // the OutputTimer is stopped before the check below.
@@ -1058,12 +1058,12 @@ private:
     static IpErr pcb_output_segment (TcpPcb *pcb, PcbOutputHelper &helper,
         IpBufRef data, bool fin, TcpSeqInt rem_wnd, TcpSeqInt *out_seg_seqlen)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
-        AIPSTACK_ASSERT(pcb->con != nullptr)
-        AIPSTACK_ASSERT(data.tot_len <= pcb->con->m_v.snd_buf.tot_len)
-        AIPSTACK_ASSERT(!fin || !pcb->state().isSndOpen())
-        AIPSTACK_ASSERT(data.tot_len > 0 || fin)
-        AIPSTACK_ASSERT(rem_wnd > 0)
+        AIPSTACK_ASSERT(pcb->state().canOutput());
+        AIPSTACK_ASSERT(pcb->con != nullptr);
+        AIPSTACK_ASSERT(data.tot_len <= pcb->con->m_v.snd_buf.tot_len);
+        AIPSTACK_ASSERT(!fin || !pcb->state().isSndOpen());
+        AIPSTACK_ASSERT(data.tot_len > 0 || fin);
+        AIPSTACK_ASSERT(rem_wnd > 0);
         
         std::size_t rem_data_len = data.tot_len;
         
@@ -1147,8 +1147,8 @@ private:
     // reason requires the PCB to abandoned, to keep things simple.
     static IpErr pcb_output_empty_fin_segment (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
-        AIPSTACK_ASSERT(pcb->con == nullptr)
+        AIPSTACK_ASSERT(pcb->state().canOutput());
+        AIPSTACK_ASSERT(pcb->con == nullptr);
         
         // Get the windows size to announce.
         std::uint16_t window_size = Input::pcb_ann_wnd(pcb);
@@ -1175,8 +1175,8 @@ private:
     
     static void pcb_increase_cwnd_acked (TcpPcb *pcb, TcpSeqInt acked)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
-        AIPSTACK_ASSERT(pcb->con != nullptr)
+        AIPSTACK_ASSERT(pcb->state().canOutput());
+        AIPSTACK_ASSERT(pcb->con != nullptr);
         
         // Increase cwnd by acked but no more than snd_mss.
         TcpSeqInt cwnd_inc = MinValueU(acked, pcb->snd_mss);
@@ -1189,8 +1189,8 @@ private:
     // Sets sshthresh according to RFC 5681 equation (4).
     static void pcb_update_ssthresh_for_rtx (TcpPcb *pcb)
     {
-        AIPSTACK_ASSERT(pcb->state().canOutput())
-        AIPSTACK_ASSERT(pcb->con != nullptr)
+        AIPSTACK_ASSERT(pcb->state().canOutput());
+        AIPSTACK_ASSERT(pcb->con != nullptr);
         
         TcpSeqInt half_flight_size = (pcb->snd_nxt - pcb->snd_una) / 2u;
         TcpSeqInt two_smss = 2u * TcpSeqInt(pcb->snd_mss);
@@ -1200,9 +1200,9 @@ private:
     static void pcb_start_rtt_measurement (TcpPcb *pcb, bool syn)
     {
         AIPSTACK_ASSERT(!syn ||
-            pcb->state() == OneOf(TcpStates::SYN_SENT, TcpStates::SYN_RCVD))
-        AIPSTACK_ASSERT(syn || pcb->state().canOutput())
-        AIPSTACK_ASSERT(syn || pcb->con != nullptr)
+            pcb->state() == OneOf(TcpStates::SYN_SENT, TcpStates::SYN_RCVD));
+        AIPSTACK_ASSERT(syn || pcb->state().canOutput());
+        AIPSTACK_ASSERT(syn || pcb->con != nullptr);
         
         // Set the flag, remember the time.
         pcb->setFlag(TcpPcbFlags::RttPending);

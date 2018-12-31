@@ -222,7 +222,7 @@ public:
      */
     inline void addEvenBytes (char const *ptr, std::size_t num_bytes)
     {
-        AIPSTACK_ASSERT(num_bytes % 2 == 0)
+        AIPSTACK_ASSERT(num_bytes % 2 == 0);
         
         char const *endptr = ptr + num_bytes;
         while (ptr < endptr) {

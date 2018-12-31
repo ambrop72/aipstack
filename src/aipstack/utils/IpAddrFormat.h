@@ -90,7 +90,7 @@ inline char * FormatIpAddr (char *out_str, Ip4Addr addr)
 AIPSTACK_OPTIMIZE_SIZE
 inline bool ParseIpAddr (MemRef str, Ip4Addr &out_addr)
 {
-    AIPSTACK_ASSERT(str.ptr != nullptr)
+    AIPSTACK_ASSERT(str.ptr != nullptr);
 
     using UChar = unsigned char;
 

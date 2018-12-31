@@ -157,7 +157,7 @@ private:
             std::fprintf(stderr, "ERROR: could not create client: %s\n", ex.what());
         }
         catch (...) {
-            AIPSTACK_ASSERT(false)
+            AIPSTACK_ASSERT(false);
         }
     }
 
@@ -214,7 +214,7 @@ private:
             TcpConnection::reset(have_unprocessed_data);
             
             std::size_t removed = m_parent->m_clients.erase(this);
-            AIPSTACK_ASSERT(removed == 1)
+            AIPSTACK_ASSERT(removed == 1);
             (void)removed;
         }
 
@@ -338,10 +338,10 @@ private:
         
         void processReceived ()
         {
-            AIPSTACK_ASSERT(m_state == State::RecvLine)
+            AIPSTACK_ASSERT(m_state == State::RecvLine);
             
             while (true) {
-                AIPSTACK_ASSERT(m_rx_line_len <= MaxRxLineLen)
+                AIPSTACK_ASSERT(m_rx_line_len <= MaxRxLineLen);
                 
                 // Get the range of received data.
                 AIpStack::IpBufRef rx_data = m_rx_ring_buf.getReadRange(*this);

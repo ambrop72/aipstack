@@ -369,7 +369,7 @@ public:
         m_vendor_class_id(opts.vendor_class_id)
     {
         // We only support Ethernet interfaces.
-        AIPSTACK_ASSERT(iface->getHwType() == IpHwType::Ethernet)
+        AIPSTACK_ASSERT(iface->getHwType() == IpHwType::Ethernet);
         
         // Start listening for incoming DHCP UDP packets.
         UdpListenParams<UdpArg> listen_params;
@@ -427,7 +427,7 @@ public:
      */
     inline LeaseInfo const & getLeaseInfoMustHaveLease () const
     {
-        AIPSTACK_ASSERT(hasLease())
+        AIPSTACK_ASSERT(hasLease());
         
         return m_info;
     }
@@ -458,7 +458,7 @@ private:
     // Convert seconds to ticks, requires seconds <= MaxTimerSeconds.
     inline static TimeType SecToTicks (std::uint32_t seconds)
     {
-        AIPSTACK_ASSERT(seconds <= MaxTimerSeconds)
+        AIPSTACK_ASSERT(seconds <= MaxTimerSeconds);
         return SecToTicksNoAssert(seconds);
     }
     
@@ -660,7 +660,7 @@ private:
         // future. We anyway check how much time has actually passed and we
         // may also skip one or more states if more has passed than expected.
         
-        AIPSTACK_ASSERT(m_lease_time_passed <= m_info.lease_time_s)
+        AIPSTACK_ASSERT(m_lease_time_passed <= m_info.lease_time_s);
         
         TimeType now = platform().getTime();
         
@@ -927,7 +927,7 @@ private:
                 // This check effectively means that the timer is still set for the
                 // first expiration as set in request_in_renewing_or_rebinding and
                 // not for a subsequent expiration due to needing a large delay.
-                AIPSTACK_ASSERT(m_lease_time_passed >= m_request_send_time_passed)
+                AIPSTACK_ASSERT(m_lease_time_passed >= m_request_send_time_passed);
                 if (m_lease_time_passed - m_request_send_time_passed > MaxTimerSeconds) {
                     // Ignore the ACK. This should not be a problem because
                     // an ACK really should not arrive that long (MaxTimerSeconds)
@@ -1000,7 +1000,7 @@ private:
     
     void arpInfoReceived (Ip4Addr ip_addr, MacAddr mac_addr)
     {
-        AIPSTACK_ASSERT(m_state == DhcpState::Checking)
+        AIPSTACK_ASSERT(m_state == DhcpState::Checking);
         (void)mac_addr;
         
         // Is this an ARP message from the IP address we are checking?
@@ -1155,8 +1155,8 @@ private:
     
     void go_bound ()
     {
-        AIPSTACK_ASSERT(m_state == OneOf(DhcpState::Checking, DhcpState::Renewing,
-                                      DhcpState::Rebinding, DhcpState::Rebooting))
+        AIPSTACK_ASSERT(m_state == OneOf(DhcpState::Checking,
+            DhcpState::Renewing, DhcpState::Rebinding, DhcpState::Rebooting));
         
         bool had_lease = hasLease();
         TimeType now = platform().getTime();
@@ -1236,7 +1236,7 @@ private:
     // Send a DHCP discover message.
     void send_discover ()
     {
-        AIPSTACK_ASSERT(m_state == DhcpState::Selecting)
+        AIPSTACK_ASSERT(m_state == DhcpState::Selecting);
         
         DhcpSendOptions send_opts;
         send_dhcp_message(DhcpMessageType::Discover, send_opts,
@@ -1246,8 +1246,8 @@ private:
     // Send a DHCP request message.
     void send_request ()
     {
-        AIPSTACK_ASSERT(m_state == OneOf(DhcpState::Requesting, DhcpState::Renewing,
-                                      DhcpState::Rebinding, DhcpState::Rebooting))
+        AIPSTACK_ASSERT(m_state == OneOf(DhcpState::Requesting,
+            DhcpState::Renewing, DhcpState::Rebinding, DhcpState::Rebooting));
         
         DhcpSendOptions send_opts;
         Ip4Addr ciaddr = Ip4Addr::ZeroAddr();
@@ -1274,7 +1274,7 @@ private:
     
     void send_decline ()
     {
-        AIPSTACK_ASSERT(m_state == DhcpState::Checking)
+        AIPSTACK_ASSERT(m_state == DhcpState::Checking);
         
         DhcpSendOptions send_opts;
         
@@ -1341,7 +1341,7 @@ private:
         
         // Calculate the UDP data length.
         std::size_t data_len = std::size_t(opt_endptr - dgram_alloc.getPtr());
-        AIPSTACK_ASSERT(data_len <= MaxDhcpSendMsgSize)
+        AIPSTACK_ASSERT(data_len <= MaxDhcpSendMsgSize);
         
         // Construct the UDP data reference.
         dgram_alloc.changeSize(data_len);

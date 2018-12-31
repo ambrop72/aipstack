@@ -144,7 +144,7 @@ template <typename T, typename = std::enable_if_t<IsInteger<T>>>
 AIPSTACK_OPTIMIZE_SIZE
 bool ParseInteger (MemRef str, T &out_value)
 {
-    AIPSTACK_ASSERT(str.ptr != nullptr)
+    AIPSTACK_ASSERT(str.ptr != nullptr);
 
     using UChar = unsigned char;
     using UT = std::make_unsigned_t<T>;

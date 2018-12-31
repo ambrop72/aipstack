@@ -117,7 +117,7 @@ EventProviderLinux::~EventProviderLinux ()
 
 void EventProviderLinux::waitForEvents (EventLoopTime wait_time)
 {
-    AIPSTACK_ASSERT(m_cur_epoll_event == m_num_epoll_events)
+    AIPSTACK_ASSERT(m_cur_epoll_event == m_num_epoll_events);
     
     namespace chrono = std::chrono;
     using Period = EventLoopTime::period;
@@ -178,7 +178,7 @@ void EventProviderLinux::waitForEvents (EventLoopTime wait_time)
         }
     }
 
-    AIPSTACK_ASSERT(wait_res <= MaxEpollEvents)
+    AIPSTACK_ASSERT(wait_res <= MaxEpollEvents);
 
     m_cur_epoll_event = 0;
     m_num_epoll_events = wait_res;

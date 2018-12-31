@@ -160,7 +160,7 @@ public:
      */
     inline int operator* () const
     {
-        AIPSTACK_ASSERT(m_fd >= 0)
+        AIPSTACK_ASSERT(m_fd >= 0);
         return m_fd;
     }
 
@@ -184,7 +184,7 @@ public:
      */
     void setNonblocking ()
     {
-        AIPSTACK_ASSERT(m_fd >= 0)
+        AIPSTACK_ASSERT(m_fd >= 0);
 
         int flags = ::fcntl(m_fd, F_GETFL, 0);
         if (flags < 0) {

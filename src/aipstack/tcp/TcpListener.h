@@ -157,7 +157,7 @@ public:
      */
     TcpApi<Arg> & getApi () const
     {
-        AIPSTACK_ASSERT(isListening())
+        AIPSTACK_ASSERT(isListening());
         
         return *m_tcp;
     }
@@ -172,8 +172,8 @@ public:
      */
     bool startListening (TcpApi<Arg> &api, TcpListenParams const &params)
     {
-        AIPSTACK_ASSERT(!m_listening)
-        AIPSTACK_ASSERT(params.max_pcbs > 0)
+        AIPSTACK_ASSERT(!m_listening);
+        AIPSTACK_ASSERT(params.max_pcbs > 0);
         
         TcpProto &tcp = api.proto();
         

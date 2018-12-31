@@ -115,8 +115,8 @@ public:
      */
     inline void reset (std::size_t size)
     {
-        AIPSTACK_ASSERT(size <= MaxSize)
-        AIPSTACK_ASSERT(m_node.ptr == m_data)
+        AIPSTACK_ASSERT(size <= MaxSize);
+        AIPSTACK_ASSERT(m_node.ptr == m_data);
         
         m_node.len = HeaderBefore + size;
         m_node.next = nullptr;
@@ -148,9 +148,9 @@ public:
      */
     inline void changeSize (std::size_t size)
     {
-        AIPSTACK_ASSERT(isInitialized())
-        AIPSTACK_ASSERT(m_node.next == nullptr)
-        AIPSTACK_ASSERT(size <= MaxSize)
+        AIPSTACK_ASSERT(isInitialized());
+        AIPSTACK_ASSERT(m_node.next == nullptr);
+        AIPSTACK_ASSERT(size <= MaxSize);
         
         m_node.len = HeaderBefore + size;
         m_tot_len = size;
@@ -173,10 +173,10 @@ public:
      */
     inline void setNext (IpBufNode const *next_node, std::size_t next_len)
     {
-        AIPSTACK_ASSERT(isInitialized())
-        AIPSTACK_ASSERT(m_node.next == nullptr)
-        AIPSTACK_ASSERT(m_node.len == HeaderBefore + m_tot_len)
-        AIPSTACK_ASSERT(next_node != nullptr)
+        AIPSTACK_ASSERT(isInitialized());
+        AIPSTACK_ASSERT(m_node.next == nullptr);
+        AIPSTACK_ASSERT(m_node.len == HeaderBefore + m_tot_len);
+        AIPSTACK_ASSERT(next_node != nullptr);
         
         m_node.next = next_node;
         m_tot_len += next_len;
@@ -211,7 +211,7 @@ public:
      */
     inline IpBufRef getBufRef ()
     {
-        AIPSTACK_ASSERT(isInitialized())
+        AIPSTACK_ASSERT(isInitialized());
         
         return IpBufRef{&m_node, HeaderBefore, m_tot_len};
     }

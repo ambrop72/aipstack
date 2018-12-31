@@ -108,8 +108,8 @@ struct MemRef {
      */
     inline char at (std::size_t pos) const
     {
-        AIPSTACK_ASSERT(ptr)
-        AIPSTACK_ASSERT(pos < len)
+        AIPSTACK_ASSERT(ptr);
+        AIPSTACK_ASSERT(pos < len);
         
         return ptr[pos];
     }
@@ -126,8 +126,8 @@ struct MemRef {
      */
     inline MemRef subFrom (std::size_t offset) const
     {
-        AIPSTACK_ASSERT(ptr)
-        AIPSTACK_ASSERT(offset <= len)
+        AIPSTACK_ASSERT(ptr);
+        AIPSTACK_ASSERT(offset <= len);
         
         return MemRef(ptr + offset, len - offset);
     }
@@ -144,8 +144,8 @@ struct MemRef {
      */
     inline MemRef subTo (std::size_t offset) const
     {
-        AIPSTACK_ASSERT(ptr)
-        AIPSTACK_ASSERT(offset <= len)
+        AIPSTACK_ASSERT(ptr);
+        AIPSTACK_ASSERT(offset <= len);
         
         return MemRef(ptr, offset);
     }
@@ -162,8 +162,8 @@ struct MemRef {
      */
     inline bool equalTo (MemRef other) const
     {
-        AIPSTACK_ASSERT(ptr)
-        AIPSTACK_ASSERT(other.ptr)
+        AIPSTACK_ASSERT(ptr);
+        AIPSTACK_ASSERT(other.ptr);
         
         return len == other.len && !std::memcmp(ptr, other.ptr, len);
     }

@@ -73,7 +73,7 @@ EventProviderWindows::~EventProviderWindows ()
 
 void EventProviderWindows::waitForEvents (EventLoopTime wait_time)
 {
-    AIPSTACK_ASSERT(m_cur_iocp_event == m_num_iocp_events)
+    AIPSTACK_ASSERT(m_cur_iocp_event == m_num_iocp_events);
 
     // We assume that std::system_clock which EventLoop timestamps are based on has
     // 100us period. This means that conversion to time needed by SetWaitableTimer
@@ -145,7 +145,7 @@ void EventProviderWindows::waitForEvents (EventLoopTime wait_time)
         }
     }
 
-    AIPSTACK_ASSERT(num_events <= MaxIocpEvents)
+    AIPSTACK_ASSERT(num_events <= MaxIocpEvents);
 
     m_cur_iocp_event = 0;
     m_num_iocp_events = num_events;
@@ -157,7 +157,7 @@ bool EventProviderWindows::dispatchEvents ()
         OVERLAPPED_ENTRY &event = m_iocp_events[m_cur_iocp_event++];
 
         if (event.lpCompletionKey == (ULONG_PTR)&m_async_signal_overlapped) {
-            AIPSTACK_ASSERT(event.lpOverlapped == &m_async_signal_overlapped)
+            AIPSTACK_ASSERT(event.lpOverlapped == &m_async_signal_overlapped);
 
             if (!EventProviderBase::dispatchAsyncSignals()) {
                 return false;

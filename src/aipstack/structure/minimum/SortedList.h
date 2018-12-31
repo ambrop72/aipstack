@@ -120,7 +120,7 @@ public:
     
     void remove (Ref node, State st = State())
     {
-        AIPSTACK_ASSERT(!m_list.isEmpty())
+        AIPSTACK_ASSERT(!m_list.isEmpty());
         
         m_list.remove(node, st);
         
@@ -129,7 +129,7 @@ public:
     
     void fixup (Ref node, State st = State())
     {
-        AIPSTACK_ASSERT(!m_list.isEmpty())
+        AIPSTACK_ASSERT(!m_list.isEmpty());
         
         bool need_fixup = false;
         Ref after_node;
@@ -189,7 +189,7 @@ public:
     template <typename KeyType>
     Ref findNextLesserOrEqual (KeyType key, Ref node, State st = State())
     {
-        AIPSTACK_ASSERT(!node.isNull())
+        AIPSTACK_ASSERT(!node.isNull());
         
         return next_lesser_or_equal(st, key, m_list.next(node, st));
     }
@@ -210,7 +210,7 @@ public:
         
         Ref next_node = m_list.next(node, st);
         while (!next_node.isNull()) {
-            AIPSTACK_ASSERT_FORCE(Compare::compareEntries(st, node, next_node) <= 0)
+            AIPSTACK_ASSERT_FORCE(Compare::compareEntries(st, node, next_node) <= 0);
             node = next_node;
             next_node = m_list.next(node, st);
         }

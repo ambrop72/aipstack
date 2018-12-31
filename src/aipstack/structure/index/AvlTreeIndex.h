@@ -133,7 +133,7 @@ public:
         inline void addEntry (Ref e, State st = State())
         {
             bool inserted = m_tree.insert(e, nullptr, st);
-            AIPSTACK_ASSERT(inserted)
+            AIPSTACK_ASSERT(inserted);
             (void)inserted;
         }
         
@@ -147,7 +147,7 @@ public:
         {
             Ref entry = m_tree.template lookup<LookupKeyArg>(key, st);
             AIPSTACK_ASSERT(entry.isNull() ||
-                KeyFuncs::KeysAreEqual(key, KeyFuncs::GetKeyOfEntry(*entry)))
+                KeyFuncs::KeysAreEqual(key, KeyFuncs::GetKeyOfEntry(*entry)));
             return entry;
         }
         
@@ -163,7 +163,7 @@ public:
                 // the smallest entry greater than `key` (cmpKeyEntry<0). In our case it
                 // cannot be an exact match since MultiKeyFuncs never considers a lookup
                 // key equal to an entry.
-                AIPSTACK_ASSERT(cmpKeyEntry != 0)
+                AIPSTACK_ASSERT(cmpKeyEntry != 0);
 
                 // If we got an entry that is less than `key`, advance to the next entry in
                 // order to obtain the smallest entry greater than `key` (if any).

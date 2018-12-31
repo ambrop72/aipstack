@@ -314,10 +314,10 @@ public:
         }),
         m_timer(platform_, AIPSTACK_BIND_MEMBER_TN(&EthIpIface::timerHandler, this))
     {
-        AIPSTACK_ASSERT(params.eth_mtu >= EthHeader::Size)
-        AIPSTACK_ASSERT(params.mac_addr != nullptr)
-        AIPSTACK_ASSERT(params.send_frame)
-        AIPSTACK_ASSERT(params.get_eth_state)
+        AIPSTACK_ASSERT(params.eth_mtu >= EthHeader::Size);
+        AIPSTACK_ASSERT(params.mac_addr != nullptr);
+        AIPSTACK_ASSERT(params.send_frame);
+        AIPSTACK_ASSERT(params.get_eth_state);
         
         // Initialize ARP entries...
         for (auto &e : m_arp_entries) {
@@ -516,7 +516,7 @@ private:
         
         if (AIPSTACK_LIKELY(!entry_ref.isNull() && (*entry_ref).ip_addr == ip_addr)) {
             // Fast path, the first used entry is a match.
-            AIPSTACK_ASSERT((*entry_ref).nud().state != ArpEntryState::Free)
+            AIPSTACK_ASSERT((*entry_ref).nud().state != ArpEntryState::Free);
             
             // Make sure the entry is hard as get_arp_entry would do below.
             (*entry_ref).nud().weak = false;
@@ -547,8 +547,8 @@ private:
                 // Valid state in the if. We have a Valid entry and the timer is also
                 // not active (needed by set_entry_timer) since attempts_left==0 implies
                 // that it has expired already
-                AIPSTACK_ASSERT(entry.nud().state == ArpEntryState::Valid)
-                AIPSTACK_ASSERT(!entry.nud().timer_active)
+                AIPSTACK_ASSERT(entry.nud().state == ArpEntryState::Valid);
+                AIPSTACK_ASSERT(!entry.nud().timer_active);
                 
                 // Go to Refreshing state, start timeout, send first unicast request.
                 entry.nud().state = ArpEntryState::Refreshing;
@@ -565,7 +565,7 @@ private:
             // If this is a Free entry, initialize it.
             if (entry.nud().state == ArpEntryState::Free) {
                 // Timer is not active for Free entries (needed by set_entry_timer).
-                AIPSTACK_ASSERT(!entry.nud().timer_active)
+                AIPSTACK_ASSERT(!entry.nud().timer_active);
                 
                 // Go to Query state, start timeout, send first broadcast request.
                 // NOTE: Entry is already inserted to m_used_entries_list.
@@ -645,7 +645,7 @@ private:
         
         while (!entry_ref.isNull()) {
             ArpEntry &entry = *entry_ref;
-            AIPSTACK_ASSERT(entry.nud().state != ArpEntryState::Free)
+            AIPSTACK_ASSERT(entry.nud().state != ArpEntryState::Free);
             
             if (entry.ip_addr == ip_addr) {
                 break;
@@ -702,9 +702,9 @@ private:
             
             if (!entry_ref.isNull()) {
                 // Got a Free entry.
-                AIPSTACK_ASSERT((*entry_ref).nud().state == ArpEntryState::Free)
-                AIPSTACK_ASSERT(!(*entry_ref).nud().timer_active)
-                AIPSTACK_ASSERT(!(*entry_ref).retry_list.hasRequests())
+                AIPSTACK_ASSERT((*entry_ref).nud().state == ArpEntryState::Free);
+                AIPSTACK_ASSERT(!(*entry_ref).nud().timer_active);
+                AIPSTACK_ASSERT(!(*entry_ref).retry_list.hasRequests());
                 
                 // Move the entry from the free list to the used list.
                 m_free_entries_list.removeFirst(*this);
@@ -724,7 +724,7 @@ private:
                 
                 // Get the entry to be recycled.
                 entry_ref = use_weak ? last_weak_entry_ref : last_hard_entry_ref;
-                AIPSTACK_ASSERT(!entry_ref.isNull())
+                AIPSTACK_ASSERT(!entry_ref.isNull());
                 
                 // Reset the entry, but keep it in the used list.
                 reset_arp_entry(*entry_ref, true);
@@ -753,7 +753,7 @@ private:
     // NOTE: update_timer is needed after this.
     void reset_arp_entry (ArpEntry &entry, bool leave_in_used_list)
     {
-        AIPSTACK_ASSERT(entry.nud().state != ArpEntryState::Free)
+        AIPSTACK_ASSERT(entry.nud().state != ArpEntryState::Free);
         
         // Make sure the entry timeout is not active.
         clear_entry_timer(entry);
@@ -805,10 +805,10 @@ private:
     // Set tne ARP entry timeout based on the entry state and attempts_left.
     void set_entry_timer (ArpEntry &entry)
     {
-        AIPSTACK_ASSERT(!entry.nud().timer_active)
-        AIPSTACK_ASSERT(entry.nud().state == one_of_timer_entry_states())
+        AIPSTACK_ASSERT(!entry.nud().timer_active);
+        AIPSTACK_ASSERT(entry.nud().state == one_of_timer_entry_states());
         AIPSTACK_ASSERT(entry.nud().state != ArpEntryState::Valid ||
-                     entry.nud().attempts_left == 1)
+            entry.nud().attempts_left == 1);
         
         // Determine the relative timeout...
         TimeType timeout;
@@ -819,7 +819,7 @@ private:
             // Query or Refreshing entry, compute timeout with exponential backoff.
             std::uint8_t attempts = (entry.nud().state == ArpEntryState::Query) ?
                 ArpQueryAttempts : ArpRefreshAttempts;
-            AIPSTACK_ASSERT(entry.nud().attempts_left <= attempts)
+            AIPSTACK_ASSERT(entry.nud().attempts_left <= attempts);
             timeout = ArpBaseResponseTimeoutTicks << (attempts - entry.nud().attempts_left);
         }
         
@@ -871,8 +871,8 @@ private:
         ArpEntryRef timer_ref;
         while (!(timer_ref = m_timer_queue.removeExpired(*this)).isNull()) {
             ArpEntry &entry = *timer_ref;
-            AIPSTACK_ASSERT(entry.nud().timer_active)
-            AIPSTACK_ASSERT(entry.nud().state == one_of_timer_entry_states())
+            AIPSTACK_ASSERT(entry.nud().timer_active);
+            AIPSTACK_ASSERT(entry.nud().state == one_of_timer_entry_states());
             
             // Clear the timer_active flag since the entry has just been removed
             // from the timer queue.
@@ -888,8 +888,8 @@ private:
     
     void handle_entry_timeout (ArpEntry &entry)
     {
-        AIPSTACK_ASSERT(entry.nud().state != ArpEntryState::Free)
-        AIPSTACK_ASSERT(!entry.nud().timer_active)
+        AIPSTACK_ASSERT(entry.nud().state != ArpEntryState::Free);
+        AIPSTACK_ASSERT(!entry.nud().timer_active);
         
         // Check if the IP address is still consistent with the interface
         // address settings. If not, reset the ARP entry.
@@ -906,7 +906,7 @@ private:
             case ArpEntryState::Query: {
                 // Query state: Decrement attempts_left then either reset the entry
                 // in case of last attempt, else retransmit the broadcast query.
-                AIPSTACK_ASSERT(entry.nud().attempts_left > 0)
+                AIPSTACK_ASSERT(entry.nud().attempts_left > 0);
                 
                 entry.nud().attempts_left--;
                 if (entry.nud().attempts_left == 0) {
@@ -921,7 +921,7 @@ private:
             case ArpEntryState::Valid: {
                 // Valid state: Set attempts_left to 0 to consider the entry expired.
                 // Upon next use the entry it will go to Refreshing state.
-                AIPSTACK_ASSERT(entry.nud().attempts_left == 1)
+                AIPSTACK_ASSERT(entry.nud().attempts_left == 1);
                 
                 entry.nud().attempts_left = 0;
             } break;
@@ -930,7 +930,7 @@ private:
                 // Refreshing state: Decrement attempts_left then either move
                 // the entry to Query state (and send the first broadcast query),
                 // else retransmit the unicast query.
-                AIPSTACK_ASSERT(entry.nud().attempts_left > 0)
+                AIPSTACK_ASSERT(entry.nud().attempts_left > 0);
                 
                 entry.nud().attempts_left--;
                 if (entry.nud().attempts_left == 0) {

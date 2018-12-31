@@ -155,8 +155,8 @@ struct IpBufRef {
      */
     inline char * getChunkPtr () const
     {
-        AIPSTACK_ASSERT(node != nullptr)
-        AIPSTACK_ASSERT(offset <= node->len)
+        AIPSTACK_ASSERT(node != nullptr);
+        AIPSTACK_ASSERT(offset <= node->len);
         
         return node->ptr + offset;
     }
@@ -168,8 +168,8 @@ struct IpBufRef {
      */
     inline std::size_t getChunkLength () const
     {
-        AIPSTACK_ASSERT(node != nullptr)
-        AIPSTACK_ASSERT(offset <= node->len)
+        AIPSTACK_ASSERT(node != nullptr);
+        AIPSTACK_ASSERT(offset <= node->len);
         
         return MinValue(tot_len, std::size_t(node->len - offset));
     }
@@ -186,15 +186,15 @@ struct IpBufRef {
      */
     bool nextChunk ()
     {
-        AIPSTACK_ASSERT(node != nullptr)
-        AIPSTACK_ASSERT(offset <= node->len)
+        AIPSTACK_ASSERT(node != nullptr);
+        AIPSTACK_ASSERT(offset <= node->len);
         
         tot_len -= MinValue(tot_len, std::size_t(node->len - offset));
         node = node->next;
         offset = 0;
         
         bool more = (tot_len > 0);
-        AIPSTACK_ASSERT(!more || node != nullptr)
+        AIPSTACK_ASSERT(!more || node != nullptr);
         
         return more;
     }
@@ -239,7 +239,7 @@ struct IpBufRef {
      */
     inline IpBufRef revealHeaderMust (std::size_t amount) const
     {
-        AIPSTACK_ASSERT(amount <= offset)
+        AIPSTACK_ASSERT(amount <= offset);
         
         return IpBufRef {
             node,
@@ -257,8 +257,8 @@ struct IpBufRef {
      */
     inline bool hasHeader (std::size_t amount) const
     {
-        AIPSTACK_ASSERT(node != nullptr)
-        AIPSTACK_ASSERT(offset <= node->len)
+        AIPSTACK_ASSERT(node != nullptr);
+        AIPSTACK_ASSERT(offset <= node->len);
         
         return tot_len >= amount && node->len - offset >= amount;
     }
@@ -274,10 +274,10 @@ struct IpBufRef {
      */
     inline IpBufRef hideHeader (std::size_t amount) const
     {
-        AIPSTACK_ASSERT(node != nullptr)
-        AIPSTACK_ASSERT(offset <= node->len)
-        AIPSTACK_ASSERT(amount <= node->len - offset)
-        AIPSTACK_ASSERT(amount <= tot_len)
+        AIPSTACK_ASSERT(node != nullptr);
+        AIPSTACK_ASSERT(offset <= node->len);
+        AIPSTACK_ASSERT(amount <= node->len - offset);
+        AIPSTACK_ASSERT(amount <= tot_len);
         
         return IpBufRef {
             node,
@@ -296,8 +296,8 @@ struct IpBufRef {
      */
     inline IpBufNode toNode () const
     {
-        AIPSTACK_ASSERT(node != nullptr)
-        AIPSTACK_ASSERT(offset <= node->len)
+        AIPSTACK_ASSERT(node != nullptr);
+        AIPSTACK_ASSERT(offset <= node->len);
         
         return IpBufNode {
             node->ptr + offset,
@@ -339,10 +339,10 @@ struct IpBufRef {
     IpBufRef subHeaderToContinuedBy (std::size_t header_len, IpBufNode const *cont,
                                      std::size_t total_len, IpBufNode *out_node) const
     {
-        AIPSTACK_ASSERT(node != nullptr)
-        AIPSTACK_ASSERT(offset <= node->len)
-        AIPSTACK_ASSERT(header_len <= node->len - offset)
-        AIPSTACK_ASSERT(total_len >= header_len)
+        AIPSTACK_ASSERT(node != nullptr);
+        AIPSTACK_ASSERT(offset <= node->len);
+        AIPSTACK_ASSERT(header_len <= node->len - offset);
+        AIPSTACK_ASSERT(total_len >= header_len);
         
         *out_node = IpBufNode{node->ptr, std::size_t(offset + header_len), cont};
         return IpBufRef{out_node, offset, total_len};
@@ -431,7 +431,7 @@ struct IpBufRef {
      */
     char takeByte ()
     {
-        AIPSTACK_ASSERT(tot_len > 0)
+        AIPSTACK_ASSERT(tot_len > 0);
         
         char ch = 0;
         processBytes(1, [&](char *data, std::size_t len) {
@@ -524,7 +524,7 @@ struct IpBufRef {
             return false;
         }
 
-        AIPSTACK_ASSERT(copy_ref.tot_len == tot_len - prefix.len)
+        AIPSTACK_ASSERT(copy_ref.tot_len == tot_len - prefix.len);
 
         remainder = copy_ref;
         return true;
@@ -559,11 +559,11 @@ struct IpBufRef {
     template <typename Func>
     void processBytes (std::size_t amount, Func func)
     {
-        AIPSTACK_ASSERT(node != nullptr)
-        AIPSTACK_ASSERT(amount <= tot_len)
+        AIPSTACK_ASSERT(node != nullptr);
+        AIPSTACK_ASSERT(amount <= tot_len);
         
         while (true) {
-            AIPSTACK_ASSERT(offset <= node->len)
+            AIPSTACK_ASSERT(offset <= node->len);
             std::size_t rem_in_buf = node->len - offset;
             
             if (rem_in_buf > 0) {
@@ -579,14 +579,14 @@ struct IpBufRef {
                 
                 if (take < rem_in_buf || node->next == nullptr) {
                     offset += take;
-                    AIPSTACK_ASSERT(amount == take)
+                    AIPSTACK_ASSERT(amount == take);
                     return;
                 }
                 
                 amount -= take;
             } else {
                 if (node->next == nullptr) {
-                    AIPSTACK_ASSERT(amount == 0)
+                    AIPSTACK_ASSERT(amount == 0);
                     return;
                 }
             }
@@ -639,14 +639,14 @@ struct IpBufRef {
     template <typename Func>
     bool processBytesInterruptible (std::size_t max_amount, Func func)
     {
-        AIPSTACK_ASSERT(node != nullptr)
+        AIPSTACK_ASSERT(node != nullptr);
         
         std::size_t amount = MinValue(max_amount, tot_len);
         
         bool interrupted = false;
 
         while (true) {
-            AIPSTACK_ASSERT(offset <= node->len)
+            AIPSTACK_ASSERT(offset <= node->len);
             std::size_t rem_in_buf = node->len - offset;
             
             if (rem_in_buf > 0) {
@@ -658,7 +658,7 @@ struct IpBufRef {
 
                 std::size_t take = max_take;
                 interrupted = func(node->ptr + offset, static_cast<std::size_t &>(take));
-                AIPSTACK_ASSERT(take <= max_take)
+                AIPSTACK_ASSERT(take <= max_take);
 
                 tot_len -= take;
                 amount -= take;
@@ -673,7 +673,7 @@ struct IpBufRef {
                 }
             } else {
                 if (node->next == nullptr) {
-                    AIPSTACK_ASSERT(amount == 0)
+                    AIPSTACK_ASSERT(amount == 0);
                     break;
                 }
             }
@@ -699,7 +699,7 @@ struct IpBufRef {
      */
     inline IpBufRef subTo (std::size_t new_tot_len) const
     {
-        AIPSTACK_ASSERT(new_tot_len <= tot_len)
+        AIPSTACK_ASSERT(new_tot_len <= tot_len);
         
         return IpBufRef {
             node,

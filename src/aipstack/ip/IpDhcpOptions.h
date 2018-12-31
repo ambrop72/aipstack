@@ -146,7 +146,7 @@ public:
     // Parse DHCP options from a buffer into DhcpRecvOptions.
     static bool parseOptions (IpBufRef dhcp_header2, IpBufRef data, DhcpRecvOptions &opts)
     {
-        AIPSTACK_ASSERT(dhcp_header2.tot_len == DhcpHeader2::Size)
+        AIPSTACK_ASSERT(dhcp_header2.tot_len == DhcpHeader2::Size);
         
         // Clear all the "have" fields.
         opts.have = typename DhcpRecvOptions::Have{};
@@ -319,7 +319,7 @@ private:
                               DhcpRecvOptions &opts, OptionRegion region,
                               DhcpOptionOverload &option_overload)
     {
-        AIPSTACK_ASSERT(data.tot_len >= opt_len)
+        AIPSTACK_ASSERT(data.tot_len >= opt_len);
         
         // Handle different options.
         switch (opt_type) {
@@ -453,7 +453,7 @@ private:
         
         // Write option payload using payload_func and receive its size.
         std::size_t opt_len = payload_func(opt_writeptr + DhcpOptionHeader::Size);
-        AIPSTACK_ASSERT(opt_len <= TypeMax<std::uint8_t>)
+        AIPSTACK_ASSERT(opt_len <= TypeMax<std::uint8_t>);
         
         // Set the payload size in the header.
         oh.set(DhcpOptionHeader::OptLen(), std::uint8_t(opt_len));

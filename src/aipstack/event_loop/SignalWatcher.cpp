@@ -36,7 +36,7 @@ SignalCollector::SignalCollector (SignalType signals) :
 
 SignalCollector::~SignalCollector ()
 {
-    AIPSTACK_ASSERT(m_collector_watcher == nullptr)
+    AIPSTACK_ASSERT(m_collector_watcher == nullptr);
 }
 
 SignalWatcherMembers::SignalWatcherMembers (
@@ -56,7 +56,7 @@ SignalWatcherMembers::SignalWatcherMembers (
 
 SignalWatcherMembers::~SignalWatcherMembers ()
 {
-    AIPSTACK_ASSERT(m_collector.m_collector_watcher == static_cast<SignalWatcher *>(this))
+    AIPSTACK_ASSERT(m_collector.m_collector_watcher == static_cast<SignalWatcher *>(this));
     m_collector.m_collector_watcher = nullptr;
 }
 

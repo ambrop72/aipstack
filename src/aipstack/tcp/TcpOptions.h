@@ -132,8 +132,8 @@ inline std::uint8_t CalcTcpOptionsLength (TcpOptions const &tcp_opts)
     if ((tcp_opts.options & TcpOptionFlags::WndScale) != Enum0) {
         opts_len += TcpOptionWriteLen::WndScale;
     }
-    AIPSTACK_ASSERT(opts_len <= MaxTcpOptionsWriteLen)
-    AIPSTACK_ASSERT(opts_len % 4 == 0) // caller needs padding to 4-byte alignment
+    AIPSTACK_ASSERT(opts_len <= MaxTcpOptionsWriteLen);
+    AIPSTACK_ASSERT(opts_len % 4 == 0); // caller needs padding to 4-byte alignment
     return opts_len;
 }
 

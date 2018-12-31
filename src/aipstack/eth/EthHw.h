@@ -180,7 +180,7 @@ private:
 void EthHwIface::notifyEthArpObserver (
     EthArpObserver &observer, Ip4Addr ip_addr, MacAddr mac_addr)
 {
-    AIPSTACK_ASSERT(observer.isActive())
+    AIPSTACK_ASSERT(observer.isActive());
 
     observer.m_handler(ip_addr, mac_addr);
 }

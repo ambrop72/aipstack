@@ -181,8 +181,8 @@ public:
         std::uint8_t ttl, Ip4Protocol proto, bool more_fragments,
         std::uint16_t fragment_offset, char const *header, IpBufRef &dgram)
     {
-        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>)
-        AIPSTACK_ASSERT(more_fragments || fragment_offset > 0)
+        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>);
+        AIPSTACK_ASSERT(more_fragments || fragment_offset > 0);
         
         // Sanity check data length.
         if (dgram.tot_len == 0) {
@@ -254,8 +254,8 @@ public:
             std::uint8_t num_holes = 0;
             do {
                 AIPSTACK_ASSERT(prev_hole_offset == ReassNullLink ||
-                             hole_offset_valid(prev_hole_offset))
-                AIPSTACK_ASSERT(hole_offset_valid(hole_offset))
+                    hole_offset_valid(prev_hole_offset));
+                AIPSTACK_ASSERT(hole_offset_valid(hole_offset));
                 
                 // Get the hole info.
                 auto hole = HoleDescriptor::MakeRef(reass->data + hole_offset);
@@ -264,7 +264,7 @@ public:
                     hole.get(typename HoleDescriptor::NextHoleOffset());
                 
                 // Calculate the hole end.
-                AIPSTACK_ASSERT(hole_size <= ReassBufferSize - hole_offset)
+                AIPSTACK_ASSERT(hole_size <= ReassBufferSize - hole_offset);
                 std::uint16_t hole_end = hole_offset + hole_size;
                 
                 // If this is the last fragment, sanity check that the hole offset
@@ -337,7 +337,7 @@ public:
             
             // It is not possible that there are no more holes due to
             // the final HoleDescriptor::Size bytes that cannot be filled.
-            AIPSTACK_ASSERT(reass->first_hole_offset != ReassNullLink)
+            AIPSTACK_ASSERT(reass->first_hole_offset != ReassNullLink);
             
             // Copy the fragment data into the reassembly buffer.
             IpBufRef dgram_tmp = dgram;
@@ -358,13 +358,13 @@ public:
             // Consider that when we first got a !more_fragments fragment, we would have
             // aborted if there was any existing data buffered beyond data_length or if
             // we later received a fragment with data beyond that.
-            AIPSTACK_ASSERT(reass->first_hole_offset == reass->data_length)
+            AIPSTACK_ASSERT(reass->first_hole_offset == reass->data_length);
 #if AIPSTACK_ASSERTIONS
             auto hole = HoleDescriptor::MakeRef(reass->data + reass->first_hole_offset);
             std::uint16_t hole_size        = hole.get(typename HoleDescriptor::HoleSize());
             std::uint16_t next_hole_offset = hole.get(typename HoleDescriptor::NextHoleOffset());
-            AIPSTACK_ASSERT(hole_size == ReassBufferSize - reass->first_hole_offset)
-            AIPSTACK_ASSERT(next_hole_offset == ReassNullLink)
+            AIPSTACK_ASSERT(hole_size == ReassBufferSize - reass->first_hole_offset);
+            AIPSTACK_ASSERT(next_hole_offset == ReassNullLink);
 #endif
             
             // Invalidate the reassembly entry.
@@ -447,7 +447,7 @@ private:
     
     static void reass_link_prev (ReassEntry *reass, std::uint16_t prev_hole_offset, std::uint16_t hole_offset)
     {
-        AIPSTACK_ASSERT(prev_hole_offset == ReassNullLink || hole_offset_valid(prev_hole_offset))
+        AIPSTACK_ASSERT(prev_hole_offset == ReassNullLink || hole_offset_valid(prev_hole_offset));
         
         if (prev_hole_offset == ReassNullLink) {
             reass->first_hole_offset = hole_offset;

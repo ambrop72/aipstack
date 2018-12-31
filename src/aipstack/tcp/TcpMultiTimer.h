@@ -193,7 +193,7 @@ private:
     void timerHandler ()
     {
         // Any delayed update must have been applied before returning to event loop.
-        AIPSTACK_ASSERT((m_state & DirtyBit) == 0)
+        AIPSTACK_ASSERT((m_state & DirtyBit) == 0);
         
         TimeType set_time = Timer::getSetTime();
         
@@ -212,7 +212,7 @@ private:
             return true;
         }));
         
-        AIPSTACK_ASSERT(!not_handled)
+        AIPSTACK_ASSERT(!not_handled);
         (void)not_handled;
     }
 };

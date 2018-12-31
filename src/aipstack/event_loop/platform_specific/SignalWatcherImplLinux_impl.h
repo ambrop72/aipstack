@@ -112,7 +112,7 @@ void SignalWatcherImplLinux::fdWatcherHandler(EventLoopFdEvents events)
         return;
     }
 
-    AIPSTACK_ASSERT(bytes == sizeof(siginfo))
+    AIPSTACK_ASSERT(bytes == sizeof(siginfo));
 
     if (siginfo.ssi_signo > TypeMax<int>) {
         std::fprintf(stderr,

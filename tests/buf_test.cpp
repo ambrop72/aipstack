@@ -54,33 +54,33 @@ void test_with_offset(std::size_t off)
     // startsWith tests
 
     IpBufRef rem1;
-    AIPSTACK_ASSERT_FORCE(all.startsWith("0", rem1) == true)
-    AIPSTACK_ASSERT_FORCE(rem1.offset == Mod.add(off, 1))
-    AIPSTACK_ASSERT_FORCE(rem1.tot_len == Mod.modulus() - 1)
+    AIPSTACK_ASSERT_FORCE(all.startsWith("0", rem1) == true);
+    AIPSTACK_ASSERT_FORCE(rem1.offset == Mod.add(off, 1));
+    AIPSTACK_ASSERT_FORCE(rem1.tot_len == Mod.modulus() - 1);
 
     IpBufRef rem2;
-    AIPSTACK_ASSERT_FORCE(all.startsWith("0123", rem2) == true)
-    AIPSTACK_ASSERT_FORCE(rem2.offset == Mod.add(off, 4))
-    AIPSTACK_ASSERT_FORCE(rem2.tot_len == Mod.modulus() - 4)
+    AIPSTACK_ASSERT_FORCE(all.startsWith("0123", rem2) == true);
+    AIPSTACK_ASSERT_FORCE(rem2.offset == Mod.add(off, 4));
+    AIPSTACK_ASSERT_FORCE(rem2.tot_len == Mod.modulus() - 4);
 
     IpBufRef rem3;
-    AIPSTACK_ASSERT_FORCE(all.startsWith("0123456789", rem3) == true)
-    AIPSTACK_ASSERT_FORCE(rem3.offset == Mod.add(off, 10))
-    AIPSTACK_ASSERT_FORCE(rem3.tot_len == Mod.modulus() - 10)
+    AIPSTACK_ASSERT_FORCE(all.startsWith("0123456789", rem3) == true);
+    AIPSTACK_ASSERT_FORCE(rem3.offset == Mod.add(off, 10));
+    AIPSTACK_ASSERT_FORCE(rem3.tot_len == Mod.modulus() - 10);
 
     IpBufRef rem4;
-    AIPSTACK_ASSERT_FORCE(all.startsWith("01234567890", rem4) == false)
+    AIPSTACK_ASSERT_FORCE(all.startsWith("01234567890", rem4) == false);
 
     IpBufRef rem5;
-    AIPSTACK_ASSERT_FORCE(all.startsWith("0123456X", rem5) == false)
+    AIPSTACK_ASSERT_FORCE(all.startsWith("0123456X", rem5) == false);
 
     IpBufRef rem6;
-    AIPSTACK_ASSERT_FORCE(all.startsWith("X123456", rem6) == false)
+    AIPSTACK_ASSERT_FORCE(all.startsWith("X123456", rem6) == false);
 
     IpBufRef rem7;
-    AIPSTACK_ASSERT_FORCE(all.startsWith(AIpStack::MemRef(), rem7) == true)
-    AIPSTACK_ASSERT_FORCE(rem7.offset == all.offset)
-    AIPSTACK_ASSERT_FORCE(rem7.tot_len == all.tot_len)
+    AIPSTACK_ASSERT_FORCE(all.startsWith(AIpStack::MemRef(), rem7) == true);
+    AIPSTACK_ASSERT_FORCE(rem7.offset == all.offset);
+    AIPSTACK_ASSERT_FORCE(rem7.tot_len == all.tot_len);
 }
 
 }

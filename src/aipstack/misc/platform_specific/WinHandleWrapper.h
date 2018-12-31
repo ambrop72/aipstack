@@ -154,7 +154,7 @@ public:
      */
     inline HANDLE operator* () const
     {
-        AIPSTACK_ASSERT(handleIsValid(m_handle))
+        AIPSTACK_ASSERT(handleIsValid(m_handle));
         return m_handle;
     }
 

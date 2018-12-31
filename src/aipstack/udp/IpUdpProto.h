@@ -153,8 +153,8 @@ public:
                             IpBufRef udp_data, IpIface<StackArg> *iface,
                             IpSendRetryRequest *retryReq, IpSendFlags send_flags)
     {
-        AIPSTACK_ASSERT(udp_data.tot_len <= MaxUdpDataLenIp4)
-        AIPSTACK_ASSERT(udp_data.offset >= Ip4Header::Size + Udp4Header::Size)
+        AIPSTACK_ASSERT(udp_data.tot_len <= MaxUdpDataLenIp4);
+        AIPSTACK_ASSERT(udp_data.offset >= Ip4Header::Size + Udp4Header::Size);
 
         // Reveal the UDP header.
         IpBufRef dgram = udp_data.revealHeaderMust(Udp4Header::Size);
@@ -227,21 +227,21 @@ public:
 
     UdpApi<Arg> & getUdp () const
     {
-        AIPSTACK_ASSERT(isListening())
+        AIPSTACK_ASSERT(isListening());
 
         return *m_udp;
     }
 
     UdpListenParams<Arg> const & getListenParams () const
     {
-        AIPSTACK_ASSERT(isListening())
+        AIPSTACK_ASSERT(isListening());
 
         return m_params;
     }
 
     IpErr startListening (UdpApi<Arg> &udp, UdpListenParams<Arg> const &params)
     {
-        AIPSTACK_ASSERT(!isListening())
+        AIPSTACK_ASSERT(!isListening());
 
         m_udp = &udp.proto();
         m_params = params;
@@ -257,7 +257,7 @@ private:
         bool dst_is_iface_addr) const
     {
         AIPSTACK_ASSERT(dst_is_iface_addr ==
-                        ip_info.iface->ip4AddrIsLocalAddr(ip_info.dst_addr))
+            ip_info.iface->ip4AddrIsLocalAddr(ip_info.dst_addr));
 
         if (m_params.port != 0 && udp_info.dst_port != m_params.port) {
             return false;
@@ -333,21 +333,21 @@ public:
 
     UdpApi<Arg> & getApi () const
     {
-        AIPSTACK_ASSERT(isAssociated())
+        AIPSTACK_ASSERT(isAssociated());
 
         return *m_udp;
     }
 
     UdpAssociationParams<Arg> const & getAssociationParams () const
     {
-        AIPSTACK_ASSERT(isAssociated())
+        AIPSTACK_ASSERT(isAssociated());
 
         return m_params;
     }
 
     IpErr associate (UdpApi<Arg> &api, UdpAssociationParams<Arg> const &params)
     {
-        AIPSTACK_ASSERT(!isAssociated())
+        AIPSTACK_ASSERT(!isAssociated());
 
         IpUdpProto<Arg> &udp = api.proto();
 
@@ -457,9 +457,9 @@ public:
 
     ~IpUdpProto ()
     {
-        AIPSTACK_ASSERT(m_listeners_list.isEmpty())
-        AIPSTACK_ASSERT(m_associations_index.isEmpty())
-        AIPSTACK_ASSERT(m_next_listener == nullptr)
+        AIPSTACK_ASSERT(m_listeners_list.isEmpty());
+        AIPSTACK_ASSERT(m_associations_index.isEmpty());
+        AIPSTACK_ASSERT(m_next_listener == nullptr);
     }
 
     inline UdpApi<Arg> & getApi ()
@@ -529,7 +529,7 @@ public:
         UdpAssociation<Arg> *assoc = m_associations_index.findEntry(assoc_key);
 
         if (assoc != nullptr) do {
-            AIPSTACK_ASSERT(assoc->m_udp == this)
+            AIPSTACK_ASSERT(assoc->m_udp == this);
 
             // Check any accept_nonlocal_dst requirement.
             if (!assoc->m_params.accept_nonlocal_dst && !dst_is_iface_addr) {
@@ -563,7 +563,7 @@ public:
         // Look for listeners which match the incoming packet.
         // NOTE: `lis` must be properly adjusted at the end of each iteration!
         for (UdpListener<Arg> *lis = m_listeners_list.first(); lis != nullptr;) {
-            AIPSTACK_ASSERT(lis->m_udp == this)
+            AIPSTACK_ASSERT(lis->m_udp == this);
             
             // Check if the listener matches, if not skip it.
             if (!lis->incomingPacketMatches(ip_info, udp_info, dst_is_iface_addr)) {
@@ -580,7 +580,7 @@ public:
             // In case the following callback resets (or destructs) the next listener,
             // UdpListener::reset() will advance m_next_listener so that we can safely
             // continue iterating.
-            AIPSTACK_ASSERT(m_next_listener == nullptr)
+            AIPSTACK_ASSERT(m_next_listener == nullptr);
             m_next_listener = m_listeners_list.next(*lis);
 
             // Pass the packet to the listener.

@@ -76,8 +76,8 @@ public:
         
         void accept_connection ()
         {
-            AIPSTACK_ASSERT(Connection::isInit())
-            AIPSTACK_ASSERT(m_listener->m_queue_size > 0)
+            AIPSTACK_ASSERT(Connection::isInit());
+            AIPSTACK_ASSERT(m_listener->m_queue_size > 0);
             
             if (Connection::acceptConnection(m_listener->m_listener) != IpErr::Success) {
                 return;
@@ -94,7 +94,7 @@ public:
         
         void reset_connection ()
         {
-            AIPSTACK_ASSERT(!Connection::isInit())
+            AIPSTACK_ASSERT(!Connection::isInit());
             
             Connection::reset();
             
@@ -106,10 +106,10 @@ public:
         
         IpBufRef get_received_data ()
         {
-            AIPSTACK_ASSERT(!Connection::isInit())
+            AIPSTACK_ASSERT(!Connection::isInit());
             
             std::size_t rx_buf_len = Connection::getRecvBuf().tot_len;
-            AIPSTACK_ASSERT(rx_buf_len <= RxBufferSize)
+            AIPSTACK_ASSERT(rx_buf_len <= RxBufferSize);
             std::size_t rx_len = RxBufferSize - rx_buf_len;
             return IpBufRef{&m_rx_buf_node, 0, rx_len};
         }
@@ -117,14 +117,14 @@ public:
     private:
         void connectionAborted () override final
         {
-            AIPSTACK_ASSERT(!Connection::isInit())
+            AIPSTACK_ASSERT(!Connection::isInit());
             
             reset_connection();
         }
         
         void dataReceived (std::size_t amount) override final
         {
-            AIPSTACK_ASSERT(!Connection::isInit())
+            AIPSTACK_ASSERT(!Connection::isInit());
             
             // If we get a FIN without any data, abandon the connection.
             if (amount == 0 && Connection::getRecvBuf().tot_len == RxBufferSize) {
@@ -146,7 +146,7 @@ public:
         
         void dataSent (std::size_t) override final
         {
-            AIPSTACK_ASSERT(false) // nothing was sent so this cannot be called
+            AIPSTACK_ASSERT(false); // nothing was sent so this cannot be called
         }
         
     private:
@@ -200,10 +200,10 @@ public:
         
         bool startListening (TcpApi<TcpArg> &tcp, TcpListenParams const &params, ListenQueueParams const &q_params)
         {
-            AIPSTACK_ASSERT(!m_listener.isListening())
-            AIPSTACK_ASSERT(q_params.queue_size >= 0)
-            AIPSTACK_ASSERT(q_params.queue_size == 0 || q_params.queue_entries != nullptr)
-            AIPSTACK_ASSERT(q_params.queue_size == 0 || q_params.min_rcv_buf_size >= RxBufferSize)
+            AIPSTACK_ASSERT(!m_listener.isListening());
+            AIPSTACK_ASSERT(q_params.queue_size >= 0);
+            AIPSTACK_ASSERT(q_params.queue_size == 0 || q_params.queue_entries != nullptr);
+            AIPSTACK_ASSERT(q_params.queue_size == 0 || q_params.min_rcv_buf_size >= RxBufferSize);
             
             // Start listening.
             if (!m_listener.startListening(tcp, params)) {
@@ -230,7 +230,7 @@ public:
         
         void scheduleDequeue ()
         {
-            AIPSTACK_ASSERT(m_listener.isListening())
+            AIPSTACK_ASSERT(m_listener.isListening());
             
             if (m_queue_size > 0) {
                 m_dequeue_timer.setNow();
@@ -250,18 +250,18 @@ public:
         //   dataReceived(0) callback.
         IpErr acceptConnection (TcpConnection<TcpArg> &dst_con, IpBufRef &initial_rx_data)
         {
-            AIPSTACK_ASSERT(m_listener.isListening())
-            AIPSTACK_ASSERT(dst_con.isInit())
+            AIPSTACK_ASSERT(m_listener.isListening());
+            AIPSTACK_ASSERT(dst_con.isInit());
             
             if (m_queue_size == 0) {
-                AIPSTACK_ASSERT(m_listener.hasAcceptPending())
+                AIPSTACK_ASSERT(m_listener.hasAcceptPending());
                 
                 initial_rx_data = IpBufRef{};
                 return dst_con.acceptConnection(m_listener);
             } else {
-                AIPSTACK_ASSERT(m_queued_to_accept != nullptr)
-                AIPSTACK_ASSERT(!m_queued_to_accept->Connection::isInit())
-                AIPSTACK_ASSERT(m_queued_to_accept->m_ready)
+                AIPSTACK_ASSERT(m_queued_to_accept != nullptr);
+                AIPSTACK_ASSERT(!m_queued_to_accept->Connection::isInit());
+                AIPSTACK_ASSERT(m_queued_to_accept->m_ready);
                 
                 ListenQueueEntry *entry = m_queued_to_accept;
                 m_queued_to_accept = nullptr;
@@ -275,8 +275,8 @@ public:
     private:
         void establishedHandler ()
         {
-            AIPSTACK_ASSERT(m_listener.isListening())
-            AIPSTACK_ASSERT(m_listener.hasAcceptPending())
+            AIPSTACK_ASSERT(m_listener.isListening());
+            AIPSTACK_ASSERT(m_listener.hasAcceptPending());
             
             if (m_queue_size == 0) {
                 // Call the accept callback so the user can call acceptConnection.
@@ -302,14 +302,14 @@ public:
         
         void dispatch_connections ()
         {
-            AIPSTACK_ASSERT(m_listener.isListening())
-            AIPSTACK_ASSERT(m_queue_size > 0)
-            AIPSTACK_ASSERT(m_queued_to_accept == nullptr)
+            AIPSTACK_ASSERT(m_listener.isListening());
+            AIPSTACK_ASSERT(m_queue_size > 0);
+            AIPSTACK_ASSERT(m_queued_to_accept == nullptr);
             
             // Try to dispatch the oldest ready connections.
             while (ListenQueueEntry *entry = find_oldest(true)) {
-                AIPSTACK_ASSERT(!entry->Connection::isInit())
-                AIPSTACK_ASSERT(entry->m_ready)
+                AIPSTACK_ASSERT(!entry->Connection::isInit());
+                AIPSTACK_ASSERT(entry->m_ready);
                 
                 // Call the accept handler, while publishing the connection.
                 m_queued_to_accept = entry;
@@ -325,8 +325,8 @@ public:
         
         void update_timeout ()
         {
-            AIPSTACK_ASSERT(m_listener.isListening())
-            AIPSTACK_ASSERT(m_queue_size > 0)
+            AIPSTACK_ASSERT(m_listener.isListening());
+            AIPSTACK_ASSERT(m_queue_size > 0);
             
             ListenQueueEntry *entry = find_oldest(false);
             
@@ -340,16 +340,16 @@ public:
         
         void timeoutTimerHandler ()
         {
-            AIPSTACK_ASSERT(m_listener.isListening())
-            AIPSTACK_ASSERT(m_queue_size > 0)
+            AIPSTACK_ASSERT(m_listener.isListening());
+            AIPSTACK_ASSERT(m_queue_size > 0);
             
             // We must have a non-ready connection since we keep the timeout
             // always updated to expire for the oldest non-ready connection
             // (or not expire if there is none).
             ListenQueueEntry *entry = find_oldest(false);
-            AIPSTACK_ASSERT(entry != nullptr)
-            AIPSTACK_ASSERT(!entry->Connection::isInit())
-            AIPSTACK_ASSERT(!entry->m_ready)
+            AIPSTACK_ASSERT(entry != nullptr);
+            AIPSTACK_ASSERT(!entry->Connection::isInit());
+            AIPSTACK_ASSERT(!entry->m_ready);
             
             // Reset the oldest non-ready connection.
             entry->reset_connection();

@@ -43,9 +43,9 @@ class SendRingBuffer {
 public:
     void setup (TcpConnection<TcpArg> &con, char *buf, std::size_t buf_size)
     {
-        AIPSTACK_ASSERT(buf != nullptr)
-        AIPSTACK_ASSERT(buf_size > 0)
-        AIPSTACK_ASSERT(buf_size >= con.getSendBuf().tot_len)
+        AIPSTACK_ASSERT(buf != nullptr);
+        AIPSTACK_ASSERT(buf_size > 0);
+        AIPSTACK_ASSERT(buf_size >= con.getSendBuf().tot_len);
         
         m_buf_node = IpBufNode{buf, buf_size, &m_buf_node};
         
@@ -67,8 +67,8 @@ public:
         
         // Assert that the range is valid for the circular buffer. The less in the second
         // assertion is due to guaranteed eager advancement to subsequent buffer nodes.
-        AIPSTACK_ASSERT(send_buf.tot_len <= getModulo().modulus())
-        AIPSTACK_ASSERT(send_buf.offset < getModulo().modulus())
+        AIPSTACK_ASSERT(send_buf.tot_len <= getModulo().modulus());
+        AIPSTACK_ASSERT(send_buf.offset < getModulo().modulus());
 
         // The range of free space for writing data is the complement of the range of
         // buffered outgoing data.
@@ -80,7 +80,7 @@ public:
     
     inline void provideData (TcpConnection<TcpArg> &con, std::size_t amount)
     {
-        AIPSTACK_ASSERT(amount <= getWriteRange(con).tot_len)
+        AIPSTACK_ASSERT(amount <= getWriteRange(con).tot_len);
         
         con.extendSendBuf(amount);
     }
@@ -104,11 +104,11 @@ public:
     void setup (TcpConnection<TcpArg> &con, char *buf, std::size_t buf_size, int wnd_upd_div,
                 IpBufRef initial_rx_data = IpBufRef{})
     {
-        AIPSTACK_ASSERT(buf != nullptr)
-        AIPSTACK_ASSERT(buf_size > 0)
-        AIPSTACK_ASSERT(wnd_upd_div >= 2)
-        AIPSTACK_ASSERT(initial_rx_data.tot_len <= buf_size)
-        AIPSTACK_ASSERT(buf_size - initial_rx_data.tot_len >= con.getRecvBuf().tot_len)
+        AIPSTACK_ASSERT(buf != nullptr);
+        AIPSTACK_ASSERT(buf_size > 0);
+        AIPSTACK_ASSERT(wnd_upd_div >= 2);
+        AIPSTACK_ASSERT(initial_rx_data.tot_len <= buf_size);
+        AIPSTACK_ASSERT(buf_size - initial_rx_data.tot_len >= con.getRecvBuf().tot_len);
         
         m_buf_node = IpBufNode{buf, buf_size, &m_buf_node};
         
@@ -136,8 +136,8 @@ public:
         
         // Assert that the range is valid for the circular buffer. The less in the second
         // assertion is due to guaranteed eager advancement to subsequent buffer nodes.
-        AIPSTACK_ASSERT(recv_buf.tot_len <= getModulo().modulus())
-        AIPSTACK_ASSERT(recv_buf.offset < getModulo().modulus())
+        AIPSTACK_ASSERT(recv_buf.tot_len <= getModulo().modulus());
+        AIPSTACK_ASSERT(recv_buf.offset < getModulo().modulus());
         
         // The range of used space with received data is the complement of the range of
         // available space for received data.
@@ -149,7 +149,7 @@ public:
     
     inline void consumeData (TcpConnection<TcpArg> &con, std::size_t amount)
     {
-        AIPSTACK_ASSERT(amount <= getReadRange(con).tot_len)
+        AIPSTACK_ASSERT(amount <= getReadRange(con).tot_len);
         
         con.extendRecvBuf(amount);
     }
@@ -157,8 +157,8 @@ public:
     void updateMirrorAfterReceived (
         TcpConnection<TcpArg> &con, std::size_t mirror_size, std::size_t amount)
     {
-        AIPSTACK_ASSERT(mirror_size >= 0)
-        AIPSTACK_ASSERT(mirror_size <= getModulo().modulus())
+        AIPSTACK_ASSERT(mirror_size >= 0);
+        AIPSTACK_ASSERT(mirror_size <= getModulo().modulus());
         
         if (AIPSTACK_UNLIKELY(amount == 0)) {
             return;
@@ -167,8 +167,8 @@ public:
         Modulo mod = getModulo();
 
         IpBufRef recv_buf = con.getRecvBuf();
-        AIPSTACK_ASSERT(recv_buf.tot_len + amount <= mod.modulus())
-        AIPSTACK_ASSERT(recv_buf.offset < mod.modulus())
+        AIPSTACK_ASSERT(recv_buf.tot_len + amount <= mod.modulus());
+        AIPSTACK_ASSERT(recv_buf.offset < mod.modulus());
 
         // Calculate the offset in the buffer to which new data was written and
         // the number of bytes wrap-around.

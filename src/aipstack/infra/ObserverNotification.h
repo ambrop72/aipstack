@@ -90,7 +90,7 @@ public:
         void reset ()
         {
             for (ListNode *node = m_first; node != nullptr; node = node->m_next) {
-                AIPSTACK_ASSERT(node->m_prev != nullptr)
+                AIPSTACK_ASSERT(node->m_prev != nullptr);
                 node->m_prev = nullptr;
             }
             m_first = nullptr;
@@ -142,7 +142,7 @@ public:
                     
                     m_observer->m_prev = nullptr;
                     
-                    AIPSTACK_ASSERT(*m_temp_node.m_prev == m_observer)
+                    AIPSTACK_ASSERT(*m_temp_node.m_prev == m_observer);
                     *m_temp_node.m_prev = &m_temp_node;
                 } else {
                     m_temp_node.m_prev = &m_observer->m_next;
@@ -151,7 +151,7 @@ public:
                 }
                 
                 if (m_temp_node.m_next != nullptr) {
-                    AIPSTACK_ASSERT(m_temp_node.m_next->m_prev == &m_observer->m_next)
+                    AIPSTACK_ASSERT(m_temp_node.m_next->m_prev == &m_observer->m_next);
                     m_temp_node.m_next->m_prev = &m_temp_node.m_next;
                 }
                 
@@ -180,7 +180,7 @@ public:
             node.m_prev = &m_first;
             node.m_next = m_first;
             if (node.m_next != nullptr) {
-                AIPSTACK_ASSERT(node.m_next->m_prev == &m_first)
+                AIPSTACK_ASSERT(node.m_next->m_prev == &m_first);
                 node.m_next->m_prev = &node.m_next;
             }
             m_first = &node;
@@ -188,10 +188,10 @@ public:
         
         inline static void remove_node (ListNode &node)
         {
-            AIPSTACK_ASSERT(*node.m_prev == &node)
+            AIPSTACK_ASSERT(*node.m_prev == &node);
             *node.m_prev = node.m_next;
             if (node.m_next != nullptr) {
-                AIPSTACK_ASSERT(node.m_next->m_prev == &node.m_next)
+                AIPSTACK_ASSERT(node.m_next->m_prev == &node.m_next);
                 node.m_next->m_prev = node.m_prev;
             }
         }
@@ -230,7 +230,7 @@ public:
     protected:
         void observeBase (BaseObservable &observable)
         {
-            AIPSTACK_ASSERT(!isActive())
+            AIPSTACK_ASSERT(!isActive());
             
             observable.prepend_node(*this);
         }

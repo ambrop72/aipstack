@@ -139,9 +139,9 @@ public:
     IpErr acceptConnection (TcpListener<Arg> &lis)
     {
         assert_init();
-        AIPSTACK_ASSERT(lis.m_accept_pcb != nullptr)
-        AIPSTACK_ASSERT(lis.m_accept_pcb->state() == TcpStates::SYN_RCVD)
-        AIPSTACK_ASSERT(lis.m_accept_pcb->lis == &lis)
+        AIPSTACK_ASSERT(lis.m_accept_pcb != nullptr);
+        AIPSTACK_ASSERT(lis.m_accept_pcb->state() == TcpStates::SYN_RCVD);
+        AIPSTACK_ASSERT(lis.m_accept_pcb->lis == &lis);
         
         TcpConPcb *pcb = lis.m_accept_pcb;
         TcpConProto *tcp = pcb->tcp;
@@ -156,7 +156,7 @@ public:
         lis.m_accept_pcb = nullptr;
         
         // Decrement the listener's PCB count.
-        AIPSTACK_ASSERT(lis.m_num_pcbs > 0)
+        AIPSTACK_ASSERT(lis.m_num_pcbs > 0);
         lis.m_num_pcbs--;
         
         // Note that the PCB has already been removed from the list of
@@ -210,8 +210,8 @@ public:
         }
         
         // Remember the PCB (the link to us already exists).
-        AIPSTACK_ASSERT(pcb != nullptr)
-        AIPSTACK_ASSERT(pcb->con == this)
+        AIPSTACK_ASSERT(pcb != nullptr);
+        AIPSTACK_ASSERT(pcb->con == this);
         m_v.pcb = pcb;
         
         // Initialize TcpConnection variables, set STARTED flag.
@@ -270,7 +270,7 @@ public:
      */
     TcpApi<Arg> & getApi () const
     {
-        AIPSTACK_ASSERT(isConnected())
+        AIPSTACK_ASSERT(isConnected());
         
         return *m_v.pcb->tcp;
     }
@@ -282,7 +282,7 @@ public:
      */
     std::uint16_t getLocalPort () const
     {
-        AIPSTACK_ASSERT(isConnected())
+        AIPSTACK_ASSERT(isConnected());
         
         return m_v.pcb->local_port;
     }
@@ -294,7 +294,7 @@ public:
      */
     std::uint16_t getRemotePort () const
     {
-        AIPSTACK_ASSERT(isConnected())
+        AIPSTACK_ASSERT(isConnected());
         
         return m_v.pcb->remote_port;
     }
@@ -306,7 +306,7 @@ public:
      */
     Ip4Addr getLocalIp4Addr () const
     {
-        AIPSTACK_ASSERT(isConnected())
+        AIPSTACK_ASSERT(isConnected());
         
         return m_v.pcb->local_addr;
     }
@@ -318,7 +318,7 @@ public:
      */
     Ip4Addr getRemoteIp4Addr () const
     {
-        AIPSTACK_ASSERT(isConnected())
+        AIPSTACK_ASSERT(isConnected());
         
         return m_v.pcb->remote_addr;
     }
@@ -334,8 +334,8 @@ public:
     void setWindowUpdateThreshold (TcpSeqInt rcv_ann_thres)
     {
         assert_started();
-        AIPSTACK_ASSERT(rcv_ann_thres > 0)
-        AIPSTACK_ASSERT(rcv_ann_thres <= TcpConConstants::MaxWindow)
+        AIPSTACK_ASSERT(rcv_ann_thres > 0);
+        AIPSTACK_ASSERT(rcv_ann_thres <= TcpConConstants::MaxWindow);
         
         m_v.rcv_ann_thres = rcv_ann_thres;
     }
@@ -349,7 +349,7 @@ public:
      */
     void setProportionalWindowUpdateThreshold (std::size_t buffer_size, int div)
     {
-        AIPSTACK_ASSERT(div >= 2)
+        AIPSTACK_ASSERT(div >= 2);
         using UInt = unsigned int;
         
         TcpSeqInt max_rx_window = MinValueU(buffer_size, TcpApi<Arg>::MaxRcvWnd);
@@ -373,11 +373,11 @@ public:
         // In SYN_SENT we subtract one because one was added
         // by create_connection for receiving the SYN.
         if (m_v.pcb->state() == TcpStates::SYN_SENT) {
-            AIPSTACK_ASSERT(ann_wnd > 0)
+            AIPSTACK_ASSERT(ann_wnd > 0);
             ann_wnd -= 1u;
         }
         
-        AIPSTACK_ASSERT(ann_wnd <= TypeMax<std::size_t>)
+        AIPSTACK_ASSERT(ann_wnd <= TypeMax<std::size_t>);
         return std::size_t(ann_wnd);
     }
     
@@ -394,7 +394,7 @@ public:
     void setRecvBuf (IpBufRef rcv_buf)
     {
         assert_started();
-        AIPSTACK_ASSERT(rcv_buf.tot_len >= m_v.rcv_buf.tot_len)
+        AIPSTACK_ASSERT(rcv_buf.tot_len >= m_v.rcv_buf.tot_len);
         
         // Set the receive buffer.
         m_v.rcv_buf = rcv_buf;
@@ -412,7 +412,7 @@ public:
     void extendRecvBuf (std::size_t amount)
     {
         assert_started();
-        AIPSTACK_ASSERT(amount <= TypeMax<std::size_t> - m_v.rcv_buf.tot_len)
+        AIPSTACK_ASSERT(amount <= TypeMax<std::size_t> - m_v.rcv_buf.tot_len);
         
         // Extend the receive buffer.
         m_v.rcv_buf.tot_len += amount;
@@ -481,8 +481,8 @@ public:
     void setSendBuf (IpBufRef snd_buf)
     {
         assert_sending();
-        AIPSTACK_ASSERT(snd_buf.tot_len >= m_v.snd_buf.tot_len)
-        AIPSTACK_ASSERT(m_v.snd_buf_cur.tot_len <= m_v.snd_buf.tot_len)
+        AIPSTACK_ASSERT(snd_buf.tot_len >= m_v.snd_buf.tot_len);
+        AIPSTACK_ASSERT(m_v.snd_buf_cur.tot_len <= m_v.snd_buf.tot_len);
         
         // Calculate the send offset and check if the send buffer is being extended.
         std::size_t snd_offset = m_v.snd_buf.tot_len - m_v.snd_buf_cur.tot_len;
@@ -509,8 +509,8 @@ public:
     void extendSendBuf (std::size_t amount)
     {
         assert_sending();
-        AIPSTACK_ASSERT(amount <= TypeMax<std::size_t> - m_v.snd_buf.tot_len)
-        AIPSTACK_ASSERT(m_v.snd_buf_cur.tot_len <= m_v.snd_buf.tot_len)
+        AIPSTACK_ASSERT(amount <= TypeMax<std::size_t> - m_v.snd_buf.tot_len);
+        AIPSTACK_ASSERT(m_v.snd_buf_cur.tot_len <= m_v.snd_buf.tot_len);
         
         // Increment the amount of data in the send buffer.
         m_v.snd_buf.tot_len += amount;
@@ -662,32 +662,31 @@ private:
     void assert_init () const
     {
         AIPSTACK_ASSERT(!m_v.started && !m_v.snd_closed &&
-                        !m_v.end_sent && !m_v.end_received)
-        AIPSTACK_ASSERT(m_v.pcb == nullptr)
+            !m_v.end_sent && !m_v.end_received);
+        AIPSTACK_ASSERT(m_v.pcb == nullptr);
     }
     
     void assert_started () const
     {
-        AIPSTACK_ASSERT(m_v.started)
+        AIPSTACK_ASSERT(m_v.started);
         AIPSTACK_ASSERT(m_v.pcb == nullptr ||
-                        m_v.pcb->state() == TcpStates::SYN_SENT ||
-                        m_v.pcb->state().isActive())
-        AIPSTACK_ASSERT(m_v.pcb == nullptr || m_v.pcb->con == this)
+            m_v.pcb->state() == TcpStates::SYN_SENT || m_v.pcb->state().isActive());
+        AIPSTACK_ASSERT(m_v.pcb == nullptr || m_v.pcb->con == this);
         AIPSTACK_ASSERT(m_v.pcb == nullptr ||
-                        m_v.pcb->state() == TcpStates::SYN_SENT ||
-                        m_v.pcb->state().isSndOpen() == !m_v.snd_closed)
+            m_v.pcb->state() == TcpStates::SYN_SENT ||
+            m_v.pcb->state().isSndOpen() == !m_v.snd_closed);
     }
     
     void assert_connected () const
     {
         assert_started();
-        AIPSTACK_ASSERT(m_v.pcb != nullptr)
+        AIPSTACK_ASSERT(m_v.pcb != nullptr);
     }
     
     void assert_sending () const
     {
         assert_started();
-        AIPSTACK_ASSERT(!m_v.snd_closed)
+        AIPSTACK_ASSERT(!m_v.snd_closed);
     }
     
     void setup_common_started ()
@@ -743,8 +742,8 @@ private:
     void data_sent (std::size_t amount)
     {
         assert_connected();
-        AIPSTACK_ASSERT(!m_v.end_sent)
-        AIPSTACK_ASSERT(amount > 0)
+        AIPSTACK_ASSERT(!m_v.end_sent);
+        AIPSTACK_ASSERT(amount > 0);
         
         // Call the application callback.
         dataSent(amount);
@@ -753,8 +752,8 @@ private:
     void end_sent ()
     {
         assert_connected();
-        AIPSTACK_ASSERT(!m_v.end_sent)
-        AIPSTACK_ASSERT(m_v.snd_closed)
+        AIPSTACK_ASSERT(!m_v.end_sent);
+        AIPSTACK_ASSERT(m_v.snd_closed);
         
         // Remember that end was sent.
         m_v.end_sent = true;
@@ -766,8 +765,8 @@ private:
     void data_received (std::size_t amount)
     {
         assert_connected();
-        AIPSTACK_ASSERT(!m_v.end_received)
-        AIPSTACK_ASSERT(amount > 0)
+        AIPSTACK_ASSERT(!m_v.end_received);
+        AIPSTACK_ASSERT(amount > 0);
         
         // Call the application callback.
         dataReceived(amount);
@@ -776,7 +775,7 @@ private:
     void end_received ()
     {
         assert_connected();
-        AIPSTACK_ASSERT(!m_v.end_received)
+        AIPSTACK_ASSERT(!m_v.end_received);
         
         // Remember that end was received.
         m_v.end_received = true;

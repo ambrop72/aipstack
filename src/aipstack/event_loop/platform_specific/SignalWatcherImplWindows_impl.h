@@ -80,7 +80,7 @@ SignalCollectorImplWindows::~SignalCollectorImplWindows ()
 
     {
         std::lock_guard<std::mutex> lock(signal_collector_global_mutex);
-        AIPSTACK_ASSERT(signal_collector_instance == this)
+        AIPSTACK_ASSERT(signal_collector_instance == this);
         signal_collector_instance = nullptr;
     }
 }
@@ -88,7 +88,7 @@ SignalCollectorImplWindows::~SignalCollectorImplWindows ()
 BOOL SignalCollectorImplWindows::consoleCtrlHandlerTrampoline (DWORD ctrlType)
 {
     SignalCollectorImplWindows *inst = signal_collector_instance;
-    AIPSTACK_ASSERT(inst != nullptr)
+    AIPSTACK_ASSERT(inst != nullptr);
 
     return inst->consoleCtrlHandler(ctrlType);
 }
@@ -142,7 +142,7 @@ SignalWatcherImplWindows::SignalWatcherImplWindows () :
 
     {
         std::lock_guard<std::mutex> lock(collector.m_mutex);
-        AIPSTACK_ASSERT(collector.m_watcher == nullptr)
+        AIPSTACK_ASSERT(collector.m_watcher == nullptr);
         collector.m_watcher = this;
     }
 
@@ -155,7 +155,7 @@ SignalWatcherImplWindows::~SignalWatcherImplWindows ()
 
     {
         std::lock_guard<std::mutex> lock(collector.m_mutex);
-        AIPSTACK_ASSERT(collector.m_watcher == this)
+        AIPSTACK_ASSERT(collector.m_watcher == this);
         collector.m_watcher = nullptr;
     }
 }

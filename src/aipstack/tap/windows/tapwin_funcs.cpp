@@ -43,8 +43,8 @@ namespace AIpStack {
 static bool split_string (std::string const &str, char const *sep,
                           std::size_t num_fields, std::vector<std::string> &out)
 {
-    AIPSTACK_ASSERT(num_fields > 0)
-    AIPSTACK_ASSERT(std::strlen(sep) > 0)
+    AIPSTACK_ASSERT(num_fields > 0);
+    AIPSTACK_ASSERT(std::strlen(sep) > 0);
     
     std::size_t str_pos = 0;
     
@@ -92,13 +92,13 @@ public:
     ~HkeyWrapper ()
     {
         if (m_have) {
-            AIPSTACK_ASSERT_FORCE(RegCloseKey(m_hkey) == ERROR_SUCCESS)
+            AIPSTACK_ASSERT_FORCE(RegCloseKey(m_hkey) == ERROR_SUCCESS);
         }
     }
     
     HKEY get () const
     {
-        AIPSTACK_ASSERT(m_have)
+        AIPSTACK_ASSERT(m_have);
         
         return m_hkey;
     }
@@ -106,7 +106,7 @@ public:
     template <typename Func>
     bool open (Func func)
     {
-        AIPSTACK_ASSERT(!m_have)
+        AIPSTACK_ASSERT(!m_have);
         
         bool res = func(&m_hkey);
         if (res) {

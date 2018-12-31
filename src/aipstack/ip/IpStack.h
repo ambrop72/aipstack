@@ -279,7 +279,7 @@ public:
      */
     ~IpStack ()
     {
-        AIPSTACK_ASSERT(m_iface_list.isEmpty())
+        AIPSTACK_ASSERT(m_iface_list.isEmpty());
     }
     
     /**
@@ -372,9 +372,9 @@ public:
     IpErr sendIp4Dgram (IpBufRef dgram, IpIface<Arg> *iface, IpSendRetryRequest *retryReq,
                         Ip4CommonSendParams common)
     {
-        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>)
-        AIPSTACK_ASSERT(dgram.offset >= Ip4Header::Size)
-        AIPSTACK_ASSERT((common.send_flags & ~IpSendFlags::AllFlags) == Enum0)
+        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>);
+        AIPSTACK_ASSERT(dgram.offset >= Ip4Header::Size);
+        AIPSTACK_ASSERT((common.send_flags & ~IpSendFlags::AllFlags) == Enum0);
 
         // Copy the flags into a variable as we may modify them below.
         IpSendFlags send_flags = common.send_flags;
@@ -488,7 +488,7 @@ private:
         while (true) {
             // We must send fragments such that the fragment offset is a multiple of 8.
             // This is achieved by Ip4RoundFragLen.
-            AIPSTACK_ASSERT(fragment_offset % 8 == 0)
+            AIPSTACK_ASSERT(fragment_offset % 8 == 0);
             
             // If this is the last fragment, calculate its length and clear
             // the MoreFragments flag. Otherwise pkt_send_len is still correct
@@ -563,7 +563,7 @@ public:
     IpErr prepareSendIp4Dgram (
         char *header_end_ptr, IpSendPreparedIp4<Arg> &prep, Ip4CommonSendParams common)
     {
-        AIPSTACK_ASSERT((common.send_flags & ~IpSendFlags::AllFlags) == Enum0)
+        AIPSTACK_ASSERT((common.send_flags & ~IpSendFlags::AllFlags) == Enum0);
         
         // Get routing information (fill in route_info).
         if (AIPSTACK_UNLIKELY(!routeIp4(common.addrs.remote_addr, prep.route_info))) {
@@ -631,8 +631,8 @@ public:
     IpErr sendIp4DgramFast (IpSendPreparedIp4<Arg> const &prep, IpBufRef dgram,
                             IpSendRetryRequest *retryReq)
     {
-        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>)
-        AIPSTACK_ASSERT(dgram.offset >= Ip4Header::Size)
+        AIPSTACK_ASSERT(dgram.tot_len <= TypeMax<std::uint16_t>);
+        AIPSTACK_ASSERT(dgram.offset >= Ip4Header::Size);
         
         // Reveal IP header.
         IpBufRef pkt = dgram.revealHeaderMust(Ip4Header::Size);
@@ -763,7 +763,7 @@ public:
     bool routeIp4ForceIface (Ip4Addr dst_addr, IpIface<Arg> *iface,
                              IpRouteInfoIp4<Arg> &route_info)
     {
-        AIPSTACK_ASSERT(iface != nullptr)
+        AIPSTACK_ASSERT(iface != nullptr);
         
         if (dst_addr.isAllOnes() || iface->ip4AddrIsLocal(dst_addr)) {
             route_info.addr = dst_addr;
@@ -868,7 +868,7 @@ public:
     IpErr sendIp4DestUnreach (IpRxInfoIp4<Arg> const &rx_ip_info, IpBufRef rx_dgram,
                               Ip4DestUnreachMeta const &du_meta)
     {
-        AIPSTACK_ASSERT(rx_dgram.offset >= rx_ip_info.header_len)
+        AIPSTACK_ASSERT(rx_dgram.offset >= rx_ip_info.header_len);
 
         // Build the Ip4AddrPair with IP addresses for sending.
         Ip4AddrPair addrs = {rx_ip_info.dst_addr, rx_ip_info.src_addr};
@@ -1154,7 +1154,7 @@ private:
     void sendIcmp4EchoReply (
         Icmp4RestType rest, IpBufRef data, Ip4Addr dst_addr, Iface *iface)
     {
-        AIPSTACK_ASSERT(iface != nullptr)
+        AIPSTACK_ASSERT(iface != nullptr);
 
         // Can only reply when we have an address assigned.
         if (AIPSTACK_UNLIKELY(!iface->m_have_addr)) {

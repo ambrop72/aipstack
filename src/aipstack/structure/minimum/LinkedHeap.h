@@ -102,8 +102,8 @@ public:
     AIPSTACK_OPTIMIZE_SIZE
     void insert (Ref node, State st = State())
     {
-        AIPSTACK_ASSERT(m_root.isNull() || m_count > 0)
-        AIPSTACK_ASSERT(m_root.isNull() || m_count < TypeMax<SizeType>)
+        AIPSTACK_ASSERT(m_root.isNull() || m_count > 0);
+        AIPSTACK_ASSERT(m_root.isNull() || m_count < TypeMax<SizeType>);
         
         std::int8_t child_dir;
         Ref child;
@@ -131,7 +131,7 @@ public:
                     bit >>= 1;
                     bool next_dir = (new_count & bit) != 0;
                     
-                    AIPSTACK_ASSERT(!ac(cur).link[next_dir].isNull())
+                    AIPSTACK_ASSERT(!ac(cur).link[next_dir].isNull());
                     cur = ac(cur).link[next_dir].ref(st);
                 }
                 
@@ -139,10 +139,10 @@ public:
             } else {
                 cur = m_last.ref(st);
                 Ref parent = ac(cur).parent.ref(st);
-                AIPSTACK_ASSERT(!parent.isNull())
+                AIPSTACK_ASSERT(!parent.isNull());
                 
                 while (cur.link(st) == ac(parent).link[1]) {
-                    AIPSTACK_ASSERT(!ac(cur).parent.isNull())
+                    AIPSTACK_ASSERT(!ac(cur).parent.isNull());
                     cur = parent;
                     parent = ac(cur).parent.ref(st);
                 }
@@ -161,8 +161,8 @@ public:
             }
             
             Ref parent = cur;
-            AIPSTACK_ASSERT(ac(parent).link[dir].isNull())
-            AIPSTACK_ASSERT(ac(parent).link[1].isNull())
+            AIPSTACK_ASSERT(ac(parent).link[dir].isNull());
+            AIPSTACK_ASSERT(ac(parent).link[1].isNull());
             
             if (Compare::compareEntries(st, parent, node) <= 0) {
                 ac(parent).link[dir] = node.link(st);
@@ -195,8 +195,8 @@ public:
     AIPSTACK_OPTIMIZE_SIZE
     void remove (Ref node, State st = State())
     {
-        AIPSTACK_ASSERT(!m_root.isNull())
-        AIPSTACK_ASSERT(m_count > 0)
+        AIPSTACK_ASSERT(!m_root.isNull());
+        AIPSTACK_ASSERT(m_count > 0);
         
         if (AIPSTACK_UNLIKELY(m_count == 1)) {
             m_root = Link::null();
@@ -218,34 +218,34 @@ public:
                     bit >>= 1;
                     bool next_dir = (new_count & bit) != 0;
                     
-                    AIPSTACK_ASSERT(!ac(cur).link[next_dir].isNull())
+                    AIPSTACK_ASSERT(!ac(cur).link[next_dir].isNull());
                     cur = ac(cur).link[next_dir].ref(st);
                 }
             } else {
                 cur = m_last.ref(st);
                 Ref parent = ac(cur).parent.ref(st);
-                AIPSTACK_ASSERT(!parent.isNull())
+                AIPSTACK_ASSERT(!parent.isNull());
                 
                 bool dir = cur.link(st) == ac(parent).link[1];
                 ac(parent).link[dir] = Link::null();
                 
                 if (dir) {
-                    AIPSTACK_ASSERT(!ac(parent).link[0].isNull())
+                    AIPSTACK_ASSERT(!ac(parent).link[0].isNull());
                     cur = ac(parent).link[0].ref(st);
                     
-                    AIPSTACK_ASSERT(ac(cur).link[0].isNull())
-                    AIPSTACK_ASSERT(ac(cur).link[1].isNull())
+                    AIPSTACK_ASSERT(ac(cur).link[0].isNull());
+                    AIPSTACK_ASSERT(ac(cur).link[1].isNull());
                 } else {
                     do {
                         cur = parent;
-                        AIPSTACK_ASSERT(!ac(cur).parent.isNull())
+                        AIPSTACK_ASSERT(!ac(cur).parent.isNull());
                         parent = ac(cur).parent.ref(st);
                     } while (cur.link(st) == ac(parent).link[0]);
                     
-                    AIPSTACK_ASSERT(!ac(parent).link[0].isNull())
+                    AIPSTACK_ASSERT(!ac(parent).link[0].isNull());
                     cur = ac(parent).link[0].ref(st);
                     
-                    AIPSTACK_ASSERT(!ac(cur).link[1].isNull())
+                    AIPSTACK_ASSERT(!ac(cur).link[1].isNull());
                     do {
                         cur = ac(cur).link[1].ref(st);
                     } while (!ac(cur).link[1].isNull());
@@ -269,8 +269,8 @@ public:
     AIPSTACK_OPTIMIZE_SIZE
     void fixup (Ref node, State st = State())
     {
-        AIPSTACK_ASSERT(!m_root.isNull())
-        AIPSTACK_ASSERT(m_count > 0)
+        AIPSTACK_ASSERT(!m_root.isNull());
+        AIPSTACK_ASSERT(m_count > 0);
         
         if (AIPSTACK_LIKELY(m_count != 1)) {
             fixup_node(st, node, node);
@@ -301,7 +301,7 @@ public:
     AIPSTACK_OPTIMIZE_SIZE
     Ref findNextLesserOrEqual (KeyType key, Ref node, State st = State())
     {
-        AIPSTACK_ASSERT(!node.isNull())
+        AIPSTACK_ASSERT(!node.isNull());
         
         for (bool side : {false, true}) {
             Ref child = ac(node).link[side].ref(st);
@@ -314,7 +314,7 @@ public:
         
         while (!parent.isNull()) {
             if (!(node.link(st) == ac(parent).link[1])) {
-                AIPSTACK_ASSERT(node.link(st) == ac(parent).link[0])
+                AIPSTACK_ASSERT(node.link(st) == ac(parent).link[0]);
                 
                 Ref sibling = ac(parent).link[1].ref(st);
                 if (!sibling.isNull() && Compare::compareKeyEntry(st, key, sibling) >= 0) {
@@ -349,13 +349,13 @@ public:
         ad.prev_leaf = Link::null();
         ad.count = 0;
         
-        AIPSTACK_ASSERT_FORCE(!m_last.isNull())
-        AIPSTACK_ASSERT_FORCE(ac(m_root.ref(st)).parent.isNull())
+        AIPSTACK_ASSERT_FORCE(!m_last.isNull());
+        AIPSTACK_ASSERT_FORCE(ac(m_root.ref(st)).parent.isNull());
         
         assert_recurser(st, m_root.ref(st), ad, 0);
         
-        AIPSTACK_ASSERT_FORCE(ad.prev_leaf == m_last)
-        AIPSTACK_ASSERT_FORCE(ad.count == m_count)
+        AIPSTACK_ASSERT_FORCE(ad.prev_leaf == m_last);
+        AIPSTACK_ASSERT_FORCE(ad.count == m_count);
         
         int bits = 0;
         SizeType x = m_count;
@@ -363,7 +363,7 @@ public:
             x /= 2;
             bits++;
         }
-        AIPSTACK_ASSERT_FORCE(m_level_bit == (SizeType(1) << (bits - 1)))
+        AIPSTACK_ASSERT_FORCE(m_level_bit == (SizeType(1) << (bits - 1)));
     }
     
 private:
@@ -616,50 +616,50 @@ private:
             }
         } else {
             if (!ac(n).link[0].isNull()) {
-                AIPSTACK_ASSERT_FORCE(Compare::compareEntries(st, n, ac(n).link[0].ref(st)) <= 0)
-                AIPSTACK_ASSERT_FORCE(ac(ac(n).link[0].ref(st)).parent == n.link(st))
+                AIPSTACK_ASSERT_FORCE(Compare::compareEntries(st, n, ac(n).link[0].ref(st)) <= 0);
+                AIPSTACK_ASSERT_FORCE(ac(ac(n).link[0].ref(st)).parent == n.link(st));
                 assert_recurser(st, ac(n).link[0].ref(st), ad, level + 1);
             }
             if (!ac(n).link[1].isNull()) {
-                AIPSTACK_ASSERT_FORCE(Compare::compareEntries(st, n, ac(n).link[1].ref(st)) <= 0)
-                AIPSTACK_ASSERT_FORCE(ac(ac(n).link[1].ref(st)).parent == n.link(st))
+                AIPSTACK_ASSERT_FORCE(Compare::compareEntries(st, n, ac(n).link[1].ref(st)) <= 0);
+                AIPSTACK_ASSERT_FORCE(ac(ac(n).link[1].ref(st)).parent == n.link(st));
                 assert_recurser(st, ac(n).link[1].ref(st), ad, level + 1);
             }
         }
         
-        AIPSTACK_ASSERT_FORCE(ad.state == AssertState::Lowest || ad.state == AssertState::LowestEnd)
+        AIPSTACK_ASSERT_FORCE(ad.state == AssertState::Lowest || ad.state == AssertState::LowestEnd);
         
         if (level < ad.level - 1) {
-            AIPSTACK_ASSERT_FORCE(!ac(n).link[0].isNull() && !ac(n).link[1].isNull())
+            AIPSTACK_ASSERT_FORCE(!ac(n).link[0].isNull() && !ac(n).link[1].isNull());
         }
         else if (level == ad.level - 1) {
             switch (ad.state) {
                 case AssertState::Lowest:
                     if (ac(n).link[0].isNull()) {
                         ad.state = AssertState::LowestEnd;
-                        AIPSTACK_ASSERT_FORCE(ac(n).link[1].isNull())
-                        AIPSTACK_ASSERT_FORCE(ad.prev_leaf == m_last)
+                        AIPSTACK_ASSERT_FORCE(ac(n).link[1].isNull());
+                        AIPSTACK_ASSERT_FORCE(ad.prev_leaf == m_last);
                     } else {
                         if (ac(n).link[1].isNull()) {
                             ad.state = AssertState::LowestEnd;
-                            AIPSTACK_ASSERT_FORCE(ad.prev_leaf == m_last)
+                            AIPSTACK_ASSERT_FORCE(ad.prev_leaf == m_last);
                         }
                     }
                     break;
                 case AssertState::LowestEnd:
-                    AIPSTACK_ASSERT_FORCE(ac(n).link[0].isNull() && ac(n).link[1].isNull())
+                    AIPSTACK_ASSERT_FORCE(ac(n).link[0].isNull() && ac(n).link[1].isNull());
                     break;
                 default:
                     AIPSTACK_ASSERT(false);
             }
         }
         else if (level == ad.level) {
-            AIPSTACK_ASSERT_FORCE(ad.state == AssertState::Lowest)
-            AIPSTACK_ASSERT_FORCE(ac(n).link[0].isNull() && ac(n).link[1].isNull())
+            AIPSTACK_ASSERT_FORCE(ad.state == AssertState::Lowest);
+            AIPSTACK_ASSERT_FORCE(ac(n).link[0].isNull() && ac(n).link[1].isNull());
             ad.prev_leaf = n.link(st);
         }
         else {
-            AIPSTACK_ASSERT_FORCE(false)
+            AIPSTACK_ASSERT_FORCE(false);
         }
     }
 };

@@ -86,10 +86,10 @@ private:
         m_have_addr(false),
         m_have_gateway(false)
     {
-        AIPSTACK_ASSERT(stack != nullptr)
-        AIPSTACK_ASSERT(m_ip_mtu >= IpStack<Arg>::MinMTU)
-        AIPSTACK_ASSERT(params.send_ip4_packet)
-        AIPSTACK_ASSERT(params.get_state)
+        AIPSTACK_ASSERT(stack != nullptr);
+        AIPSTACK_ASSERT(m_ip_mtu >= IpStack<Arg>::MinMTU);
+        AIPSTACK_ASSERT(params.send_ip4_packet);
+        AIPSTACK_ASSERT(params.get_state);
         
         // Add the interface to the list of interfaces.
         m_stack->m_iface_list.prepend(*this);
@@ -97,7 +97,7 @@ private:
 
     ~IpIface ()
     {
-        AIPSTACK_ASSERT(m_listeners_list.isEmpty())
+        AIPSTACK_ASSERT(m_listeners_list.isEmpty());
         
         // Remove the interface from the list of interfaces.
         m_stack->m_iface_list.remove(*this);
@@ -119,7 +119,7 @@ public:
      */
     void setIp4Addr (IpIfaceIp4AddrSetting value)
     {
-        AIPSTACK_ASSERT(!value.present || value.prefix <= Ip4Addr::Bits)
+        AIPSTACK_ASSERT(!value.present || value.prefix <= Ip4Addr::Bits);
         
         m_have_addr = value.present;
 

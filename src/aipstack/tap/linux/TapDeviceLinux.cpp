@@ -140,7 +140,7 @@ AIpStack::IpErr TapDeviceLinux::sendFrame (AIpStack::IpBufRef frame)
 
 void TapDeviceLinux::handleFdEvents (AIpStack::EventLoopFdEvents events)
 {
-    AIPSTACK_ASSERT(m_active)
+    AIPSTACK_ASSERT(m_active);
     
     do {
         if ((events & AIpStack::EventLoopFdEvents::Error) != AIpStack::Enum0) {
@@ -166,7 +166,7 @@ void TapDeviceLinux::handleFdEvents (AIpStack::EventLoopFdEvents events)
             return;
         }
         
-        AIPSTACK_ASSERT(std::size_t(read_res) <= m_frame_mtu)
+        AIPSTACK_ASSERT(std::size_t(read_res) <= m_frame_mtu);
         
         AIpStack::IpBufNode node{
             m_read_buffer.data(),

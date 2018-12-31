@@ -228,7 +228,7 @@ public:
                 // seg_end > [pos].start - 1 which is equivalent to the consistency
                 // check (A) assuming [pos] is the FIN, therefore the check would
                 // have failed and we wouldn't be here.
-                AIPSTACK_ASSERT(!m_ooseq[pos].isFin())
+                AIPSTACK_ASSERT(!m_ooseq[pos].isFin());
                 
                 // Extend the existing segment to the left if needed.
                 if (rcv_nxt.ref_lt(seg_start, m_ooseq[pos].start)) {
@@ -249,7 +249,7 @@ public:
                     {
                         // Segment at [merge_pos] cannot be a FIN, for similar reasons that
                         // [pos] could not be above.
-                        AIPSTACK_ASSERT(!m_ooseq[merge_pos].isFin())
+                        AIPSTACK_ASSERT(!m_ooseq[merge_pos].isFin());
                         
                         // If the extended segment [pos] extends no more than to the end of
                         // [merge_pos], then [merge_pos] is the last segment to be merged.
@@ -292,7 +292,7 @@ public:
         if (num_ooseq < NumOosSegs) {
             m_ooseq[num_ooseq] = OosSeg::MakeEnd();
         }
-        AIPSTACK_ASSERT(num_ooseq == count_ooseq())
+        AIPSTACK_ASSERT(num_ooseq == count_ooseq());
         
         return true;
     }
@@ -330,7 +330,7 @@ public:
             // could immediately consume since there are always gaps
             // between segments.
             AIPSTACK_ASSERT(m_ooseq[0].isEndOrFin() ||
-                            !rcv_nxt.ref_lte(m_ooseq[0].start, seq_end))
+                            !rcv_nxt.ref_lte(m_ooseq[0].start, seq_end));
         } else {
             // Not returning any data.
             datalen = 0;

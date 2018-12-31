@@ -74,7 +74,7 @@ public:
     
     bool insert (Ref node, Ref *out_ref, State st = State())
     {
-        AIPSTACK_ASSERT(!node.isNull())
+        AIPSTACK_ASSERT(!node.isNull());
         
         if (m_root.isNull()) {
             m_root = node.link(st);
@@ -133,15 +133,15 @@ public:
     
     void remove (Ref node, State st = State())
     {
-        AIPSTACK_ASSERT(!node.isNull())
-        AIPSTACK_ASSERT(!m_root.isNull())
+        AIPSTACK_ASSERT(!node.isNull());
+        AIPSTACK_ASSERT(!m_root.isNull());
         
         if (!ac(node).child[0].isNull() && !ac(node).child[1].isNull()) {
             Ref max_node = subtree_max(st, ac(node).child[0].ref(st));
             swap_for_remove(st, node, max_node, ac(node).parent.ref(st), ac(max_node).parent.ref(st));
         }
         
-        AIPSTACK_ASSERT(ac(node).child[0].isNull() || ac(node).child[1].isNull())
+        AIPSTACK_ASSERT(ac(node).child[0].isNull() || ac(node).child[1].isNull());
         
         Ref paren = ac(node).parent.ref(st);
         Ref child = !ac(node).child[0].isNull() ? ac(node).child[0].ref(st) : ac(node).child[1].ref(st);
@@ -242,8 +242,8 @@ public:
     
     Ref next (Ref node, State st = State()) const
     {
-        AIPSTACK_ASSERT(!node.isNull())
-        AIPSTACK_ASSERT(!m_root.isNull())
+        AIPSTACK_ASSERT(!node.isNull());
+        AIPSTACK_ASSERT(!m_root.isNull());
         
         if (!ac(node).child[1].isNull()) {
             node = subtree_min(st, ac(node).child[1].ref(st));
@@ -261,8 +261,8 @@ public:
     
     Ref prev (Ref node, State st = State()) const
     {
-        AIPSTACK_ASSERT(!node.isNull())
-        AIPSTACK_ASSERT(!m_root.isNull())
+        AIPSTACK_ASSERT(!node.isNull());
+        AIPSTACK_ASSERT(!m_root.isNull());
         
         if (!ac(node).child[0].isNull()) {
             node = subtree_max(st, ac(node).child[0].ref(st));
@@ -291,8 +291,8 @@ private:
     
     void rebalance (State st, Ref node, bool side, std::int8_t deltac)
     {
-        AIPSTACK_ASSERT(deltac >= -1 && deltac <= 1)
-        AIPSTACK_ASSERT(ac(node).balance >= -1 && ac(node).balance <= 1)
+        AIPSTACK_ASSERT(deltac >= -1 && deltac <= 1);
+        AIPSTACK_ASSERT(ac(node).balance >= -1 && ac(node).balance <= 1);
         
         // if no subtree changed its height, no more rebalancing is needed
         if (deltac == 0) {
@@ -302,7 +302,7 @@ private:
         // calculate how much our height changed
         std::int8_t rel_balance = optneg(ac(node).balance, side);
         std::int8_t delta = std::max<std::int8_t>(deltac, rel_balance) - std::max<std::int8_t>(0, rel_balance);
-        AIPSTACK_ASSERT(delta >= -1 && delta <= 1)
+        AIPSTACK_ASSERT(delta >= -1 && delta <= 1);
         
         // update our balance factor
         ac(node).balance -= optneg(deltac, side);
@@ -322,7 +322,7 @@ private:
                 bsidef = -1;
             }
             
-            AIPSTACK_ASSERT(!ac(node).child[bside].isNull())
+            AIPSTACK_ASSERT(!ac(node).child[bside].isNull());
             child = ac(node).child[bside].ref(st);
             
             switch (ac(child).balance * bsidef) {
@@ -340,7 +340,7 @@ private:
                     node = child;
                     break;
                 case -1:
-                    AIPSTACK_ASSERT(!ac(child).child[!bside].isNull())
+                    AIPSTACK_ASSERT(!ac(child).child[!bside].isNull());
                     gchild = ac(child).child[!bside].ref(st);
                     rotate(st, child, bside, node);
                     rotate(st, node, !bside, ac(node).parent.ref(st));
@@ -355,7 +355,7 @@ private:
             }
         }
         
-        AIPSTACK_ASSERT(delta >= -1 && delta <= 1)
+        AIPSTACK_ASSERT(delta >= -1 && delta <= 1);
         // Transformations above preserve this. Proof:
         //     - if a child subtree gained 1 height and rebalancing was needed,
         //       it was the heavier subtree. Then delta was was originally 1, because
@@ -374,7 +374,7 @@ private:
     
     void rotate (State st, Ref r, bool dir, Ref r_parent)
     {
-        AIPSTACK_ASSERT(check_parent(st, r_parent, r))
+        AIPSTACK_ASSERT(check_parent(st, r_parent, r));
         Ref nr = ac(r).child[!dir].ref(st);
         
         ac(r).child[!dir] = ac(nr).child[dir];
@@ -393,7 +393,7 @@ private:
     
     static Ref subtree_min (State st, Ref n)
     {
-        AIPSTACK_ASSERT(!n.isNull())
+        AIPSTACK_ASSERT(!n.isNull());
         
         while (!ac(n).child[0].isNull()) {
             n = ac(n).child[0].ref(st);
@@ -403,7 +403,7 @@ private:
     
     static Ref subtree_max (State st, Ref n)
     {
-        AIPSTACK_ASSERT(!n.isNull())
+        AIPSTACK_ASSERT(!n.isNull());
         
         while (!ac(n).child[1].isNull()) {
             n = ac(n).child[1].ref(st);
@@ -413,8 +413,8 @@ private:
     
     void swap_for_remove (State st, Ref node, Ref enode, Ref node_parent, Ref enode_parent)
     {
-        AIPSTACK_ASSERT(check_parent(st, node_parent, node))
-        AIPSTACK_ASSERT(check_parent(st, enode_parent, enode))
+        AIPSTACK_ASSERT(check_parent(st, node_parent, node));
+        AIPSTACK_ASSERT(check_parent(st, enode_parent, enode));
         
         if (enode_parent.link(st) == node.link(st)) {
             // when the nodes are directly connected we need special handling
@@ -486,8 +486,8 @@ private:
     
     void replace_subtree (State st, Ref dest, Ref n, Ref dest_parent)
     {
-        AIPSTACK_ASSERT(!dest.isNull())
-        AIPSTACK_ASSERT(check_parent(st, dest_parent, dest))
+        AIPSTACK_ASSERT(!dest.isNull());
+        AIPSTACK_ASSERT(check_parent(st, dest_parent, dest));
         
         if (!dest_parent.isNull()) {
             ac(dest_parent).child[dest.link(st) == ac(dest_parent).child[1]] = n.link(st);
@@ -519,15 +519,15 @@ private:
     {
         if (!m_root.isNull()) {
             Ref root = m_root.ref(st);
-            AIPSTACK_ASSERT_FORCE(ac(root).parent.isNull())
+            AIPSTACK_ASSERT_FORCE(ac(root).parent.isNull());
             verify_recurser(st, root);
         }
     }
     
     int verify_recurser (State st, Ref n) const
     {
-        AIPSTACK_ASSERT_FORCE(ac(n).balance >= -1)
-        AIPSTACK_ASSERT_FORCE(ac(n).balance <= 1)
+        AIPSTACK_ASSERT_FORCE(ac(n).balance >= -1);
+        AIPSTACK_ASSERT_FORCE(ac(n).balance <= 1);
         
         int height_left = 0;
         int height_right = 0;
@@ -535,9 +535,9 @@ private:
         // check left subtree
         if (!ac(n).child[0].isNull()) {
             // check parent link
-            AIPSTACK_ASSERT_FORCE(ac(ac(n).child[0].ref(st)).parent == n.link(st))
+            AIPSTACK_ASSERT_FORCE(ac(ac(n).child[0].ref(st)).parent == n.link(st));
             // check binary search tree
-            AIPSTACK_ASSERT_FORCE(Compare::compareEntries(st, ac(n).child[0].ref(st), n) == -1)
+            AIPSTACK_ASSERT_FORCE(Compare::compareEntries(st, ac(n).child[0].ref(st), n) == -1);
             // recursively calculate height
             height_left = verify_recurser(st, ac(n).child[0].ref(st));
         }
@@ -545,15 +545,15 @@ private:
         // check right subtree
         if (!ac(n).child[1].isNull()) {
             // check parent link
-            AIPSTACK_ASSERT_FORCE(ac(ac(n).child[1].ref(st)).parent == n.link(st))
+            AIPSTACK_ASSERT_FORCE(ac(ac(n).child[1].ref(st)).parent == n.link(st));
             // check binary search tree
-            AIPSTACK_ASSERT_FORCE(Compare::compareEntries(st, ac(n).child[1].ref(st), n) == 1)
+            AIPSTACK_ASSERT_FORCE(Compare::compareEntries(st, ac(n).child[1].ref(st), n) == 1);
             // recursively calculate height
             height_right = verify_recurser(st, ac(n).child[1].ref(st));
         }
         
         // check balance factor
-        AIPSTACK_ASSERT_FORCE(ac(n).balance == height_right - height_left)
+        AIPSTACK_ASSERT_FORCE(ac(n).balance == height_right - height_left);
         
         return std::max(height_left, height_right) + 1;
     }

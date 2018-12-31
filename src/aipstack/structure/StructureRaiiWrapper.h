@@ -61,7 +61,7 @@ private:
     
     inline void destructAction (std::integral_constant<ActionType, ActionType::AssertEmpty>)
     {
-        AIPSTACK_ASSERT(StructureType::isEmpty())
+        AIPSTACK_ASSERT(StructureType::isEmpty());
     }
 };
 

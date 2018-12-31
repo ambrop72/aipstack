@@ -216,8 +216,8 @@ public:
         }
         
         MtuEntry &mtu_entry = *mtu_ref;
-        AIPSTACK_ASSERT(mtu_entry.state == OneOf(EntryState::Referenced, EntryState::Unused))
-        AIPSTACK_ASSERT(mtu_entry.remote_addr == remote_addr)
+        AIPSTACK_ASSERT(mtu_entry.state == OneOf(EntryState::Referenced, EntryState::Unused));
+        AIPSTACK_ASSERT(mtu_entry.remote_addr == remote_addr);
         
         // If the ICMP message does not include an MTU (mtu_info==0),
         // we assume the minimum PMTU that we allow. Generally we bump
@@ -296,14 +296,14 @@ public:
                     MtuRef &next_ref = get_ref_from_prev_link(NextLink::link);
                     prev_link_dst = next_ref.NextLink::self();
                 } else {
-                    AIPSTACK_ASSERT(PrevLink::link->link == PrevLink::self())
+                    AIPSTACK_ASSERT(PrevLink::link->link == PrevLink::self());
                     prev_link_dst = NextLink::link;
                 }
                 PrevLink::link->link = prev_link_dst;
                 
                 // Setup the link from the next to the previous node, if any.
                 if (NextLink::link != nullptr) {
-                    AIPSTACK_ASSERT(NextLink::link->link == NextLink::self())
+                    AIPSTACK_ASSERT(NextLink::link->link == NextLink::self());
                     NextLink::link->link = PrevLink::link;
                 }
             }
@@ -320,7 +320,7 @@ public:
         bool setup (IpPathMtuCache *cache, Ip4Addr remote_addr, IpIface<StackArg> *iface,
                     std::uint16_t &out_pmtu)
         {
-            AIPSTACK_ASSERT(!isSetup())
+            AIPSTACK_ASSERT(!isSetup());
             
             // Lookup this address in the index.
             MtuLinkModelRef mtu_ref = cache->m_mtu_index.findEntry(remote_addr, *cache);
@@ -345,12 +345,12 @@ public:
                     // Links to/from the head are setup below.
                 } else {
                     // Referenced mtu_entry, we need to insert this MtuRef.
-                    AIPSTACK_ASSERT(mtu_entry.state == EntryState::Referenced)
-                    AIPSTACK_ASSERT(mtu_entry.first_ref.link != nullptr)
+                    AIPSTACK_ASSERT(mtu_entry.state == EntryState::Referenced);
+                    AIPSTACK_ASSERT(mtu_entry.first_ref.link != nullptr);
                     
                     // Get the current first MtuRef which will become the second.
                     MtuRef &next_ref = get_ref_from_next_link(mtu_entry.first_ref.link);
-                    AIPSTACK_ASSERT(next_ref.PrevLink::link == mtu_entry.first_ref.self())
+                    AIPSTACK_ASSERT(next_ref.PrevLink::link == mtu_entry.first_ref.self());
                     
                     // Setup links between this and the former first MtuRef.
                     NextLink::link = next_ref.PrevLink::self();
@@ -379,7 +379,7 @@ public:
                 // An MtuEntry on the free list can be in Invalid or Unused state.
                 MtuEntry &mtu_entry = *mtu_ref;
                 AIPSTACK_ASSERT(mtu_entry.state ==
-                    OneOf(EntryState::Invalid, EntryState::Unused))
+                    OneOf(EntryState::Invalid, EntryState::Unused));
                 
                 // Remove the entry from the free list.
                 cache->m_mtu_free_list.removeFirst(*cache);
@@ -388,7 +388,7 @@ public:
                 // and needs to be removed before being re-inserted with a different
                 // address.
                 if (mtu_entry.state == EntryState::Unused) {
-                    AIPSTACK_ASSERT(mtu_entry.remote_addr != remote_addr)
+                    AIPSTACK_ASSERT(mtu_entry.remote_addr != remote_addr);
                     cache->m_mtu_index.removeEntry(mtu_ref, *cache);
                 }
                 
@@ -429,7 +429,7 @@ public:
         
         void moveFrom (MtuRef &src)
         {
-            AIPSTACK_ASSERT(!isSetup())
+            AIPSTACK_ASSERT(!isSetup());
             
             // If the source is not setup, nothing needs to be done.
             if (!src.isSetup()) {
@@ -444,13 +444,13 @@ public:
             if (PrevLink::link->link == src.NextLink::self()) {
                 PrevLink::link->link = NextLink::self();
             } else {
-                AIPSTACK_ASSERT(PrevLink::link->link == src.PrevLink::self())
+                AIPSTACK_ASSERT(PrevLink::link->link == src.PrevLink::self());
                 PrevLink::link->link = PrevLink::self();
             }
             
             // Fixup the link from next if any.
             if (NextLink::link != nullptr) {
-                AIPSTACK_ASSERT(NextLink::link->link == src.NextLink::self())
+                AIPSTACK_ASSERT(NextLink::link->link == src.NextLink::self());
                 NextLink::link->link = NextLink::self();
             }
             
@@ -461,7 +461,7 @@ public:
     protected:
         inline ~MtuRef ()
         {
-            AIPSTACK_ASSERT(PrevLink::link == nullptr)
+            AIPSTACK_ASSERT(PrevLink::link == nullptr);
         }
         
         // This is called when the PMTU changes.
@@ -490,9 +490,9 @@ private:
     
     inline static void assert_entry_referenced (MtuEntry &mtu_entry)
     {
-        AIPSTACK_ASSERT(mtu_entry.state == EntryState::Referenced)
-        AIPSTACK_ASSERT(mtu_entry.mtu >= MinMTU)
-        AIPSTACK_ASSERT(mtu_entry.first_ref.link != nullptr)
+        AIPSTACK_ASSERT(mtu_entry.state == EntryState::Referenced);
+        AIPSTACK_ASSERT(mtu_entry.mtu >= MinMTU);
+        AIPSTACK_ASSERT(mtu_entry.first_ref.link != nullptr);
         (void)mtu_entry;
     }
     
@@ -515,8 +515,8 @@ private:
     
     void update_mtu_entry_expiry (MtuEntry &mtu_entry)
     {
-        AIPSTACK_ASSERT(mtu_entry.state == OneOf(EntryState::Referenced, EntryState::Unused))
-        AIPSTACK_ASSERT(mtu_entry.minutes_old <= MtuTimeoutMinutes)
+        AIPSTACK_ASSERT(mtu_entry.state == OneOf(EntryState::Referenced, EntryState::Unused));
+        AIPSTACK_ASSERT(mtu_entry.minutes_old <= MtuTimeoutMinutes);
         
         // If the entry is not expired yet, just increment minutes_old.
         if (mtu_entry.minutes_old < MtuTimeoutMinutes) {
@@ -553,7 +553,7 @@ private:
     
     void invalidate_unused_entry (MtuEntry &mtu_entry)
     {
-        AIPSTACK_ASSERT(mtu_entry.state == EntryState::Unused)
+        AIPSTACK_ASSERT(mtu_entry.state == EntryState::Unused);
         
         // Remove the entry from the index.
         m_mtu_index.removeEntry({mtu_entry, *this}, *this);
@@ -570,7 +570,7 @@ private:
     
     void notify_pmtu_changed (MtuEntry &mtu_entry)
     {
-        AIPSTACK_ASSERT(mtu_entry.state == EntryState::Referenced)
+        AIPSTACK_ASSERT(mtu_entry.state == EntryState::Referenced);
         
         // Iterate over all the MtuRef referencing this entry and call
         // their pmtuChanged callbacks. The callbacks must not change
@@ -582,12 +582,12 @@ private:
         MtuRef *ref = &get_ref_from_next_link(mtu_entry.first_ref.link);
         
         while (true) {
-            AIPSTACK_ASSERT(ref->PrevLink::link != nullptr)
+            AIPSTACK_ASSERT(ref->PrevLink::link != nullptr);
             
             ref->pmtuChanged(pmtu);
             
-            AIPSTACK_ASSERT(mtu_entry.state == EntryState::Referenced)
-            AIPSTACK_ASSERT(ref->PrevLink::link != nullptr)
+            AIPSTACK_ASSERT(mtu_entry.state == EntryState::Referenced);
+            AIPSTACK_ASSERT(ref->PrevLink::link != nullptr);
             
             if (ref->NextLink::link == nullptr) {
                 break;

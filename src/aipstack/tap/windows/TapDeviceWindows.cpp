@@ -47,7 +47,7 @@ TapDeviceWindows::IoUnit::IoUnit (EventLoop &loop, TapDeviceWindows &parent) :
 void TapDeviceWindows::IoUnit::init (
     std::shared_ptr<WinHandleWrapper> device, std::size_t buffer_size)
 {
-    AIPSTACK_ASSERT(m_resource == nullptr)
+    AIPSTACK_ASSERT(m_resource == nullptr);
 
     m_iocp_notifier.prepare();
 
@@ -158,7 +158,7 @@ IpErr TapDeviceWindows::sendFrame (IpBufRef frame)
     std::size_t unit_index = Modulo(NumSendUnits).add(m_send_first, m_send_count);
     
     IoUnit &send_unit = m_send_units[unit_index];
-    AIPSTACK_ASSERT(!send_unit.m_iocp_notifier.isBusy())
+    AIPSTACK_ASSERT(!send_unit.m_iocp_notifier.isBusy());
     
     char *buffer = send_unit.m_resource->buffer.data();
     
@@ -185,7 +185,7 @@ IpErr TapDeviceWindows::sendFrame (IpBufRef frame)
 bool TapDeviceWindows::startRecv ()
 {
     IoUnit &recv_unit = m_recv_unit;
-    AIPSTACK_ASSERT(!recv_unit.m_iocp_notifier.isBusy())
+    AIPSTACK_ASSERT(!recv_unit.m_iocp_notifier.isBusy());
     
     char *buffer = recv_unit.m_resource->buffer.data();
     
@@ -209,8 +209,8 @@ void TapDeviceWindows::sendCompleted (IoUnit &send_unit)
 {
     std::size_t index = &send_unit - &m_send_units[0];
     (void)index;
-    AIPSTACK_ASSERT(index >= 0 && index < NumSendUnits)
-    AIPSTACK_ASSERT(Modulo(NumSendUnits).sub(index, m_send_first) < m_send_count)
+    AIPSTACK_ASSERT(index >= 0 && index < NumSendUnits);
+    AIPSTACK_ASSERT(Modulo(NumSendUnits).sub(index, m_send_first) < m_send_count);
     
     OVERLAPPED &olap = send_unit.m_iocp_notifier.getOverlapped();
     
@@ -219,8 +219,8 @@ void TapDeviceWindows::sendCompleted (IoUnit &send_unit)
         std::fprintf(stderr, "TAP WriteFile async failed (err=%u)!\n",
             (unsigned int)::GetLastError());
     } else {
-        AIPSTACK_ASSERT(bytes >= EthHeader::Size)
-        AIPSTACK_ASSERT(bytes <= m_frame_mtu)
+        AIPSTACK_ASSERT(bytes >= EthHeader::Size);
+        AIPSTACK_ASSERT(bytes <= m_frame_mtu);
     }
     
     while (m_send_count > 0 && !m_send_units[m_send_first].m_iocp_notifier.isBusy()) {
@@ -231,7 +231,7 @@ void TapDeviceWindows::sendCompleted (IoUnit &send_unit)
 
 void TapDeviceWindows::recvCompleted (IoUnit &recv_unit)
 {
-    AIPSTACK_ASSERT(&recv_unit == &m_recv_unit)
+    AIPSTACK_ASSERT(&recv_unit == &m_recv_unit);
 
     OVERLAPPED &olap = recv_unit.m_iocp_notifier.getOverlapped();
     
@@ -242,7 +242,7 @@ void TapDeviceWindows::recvCompleted (IoUnit &recv_unit)
         return;
     }
     
-    AIPSTACK_ASSERT(bytes <= m_frame_mtu)
+    AIPSTACK_ASSERT(bytes <= m_frame_mtu);
 
     char *buffer = recv_unit.m_resource->buffer.data();
     
