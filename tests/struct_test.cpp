@@ -27,6 +27,8 @@
 
 #include <aipstack/infra/Struct.h>
 
+namespace aipstack_struct_test {
+
 AIPSTACK_DEFINE_STRUCT(HeaderFoo,
     (FieldA, std::int8_t)
     (FieldB, std::int64_t)
@@ -46,8 +48,12 @@ void print(char const *data, std::size_t len)
     std::printf("\n");
 }
 
+}
+
 int main ()
 {
+    using namespace aipstack_struct_test;
+    
     // Create a FooHeader::Val (a type which contains data), set field values.
     HeaderFoo::Val foo;
     foo.set(HeaderFoo::FieldA(), 30);

@@ -35,7 +35,9 @@
 
 namespace AIpStack {
 
-static std::size_t const FormatSizeHint = 25;
+namespace {
+    constexpr std::size_t FormatSizeHint = 25;
+}
 
 std::string formatString (char const *fmt, ...)
 {

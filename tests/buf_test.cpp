@@ -7,7 +7,9 @@
 
 using namespace AIpStack;
 
-static constexpr Modulo Mod = Modulo(10);
+namespace aipstack_buf_test {
+
+constexpr Modulo Mod = Modulo(10);
 
 void test_with_offset(std::size_t off)
 {
@@ -81,8 +83,11 @@ void test_with_offset(std::size_t off)
     AIPSTACK_ASSERT_FORCE(rem7.tot_len == all.tot_len)
 }
 
+}
+
 int main (int argc, char *argv[])
 {
+    using namespace aipstack_buf_test;
     for (std::size_t i = 0; i < Mod.modulus(); i++) {
         test_with_offset(i);
     }

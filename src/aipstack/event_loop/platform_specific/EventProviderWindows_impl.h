@@ -87,7 +87,7 @@ void EventProviderWindows::waitForEvents (EventLoopTime wait_time)
 
     // Offset which needs to be added to std::system_clock time (Unix epoch) to
     // obtain time for use with SetWaitableTimer (1601 epoch). The unit is 100us.
-    LONGLONG const UnixToFileTimeOffset = 116444736000000000;
+    constexpr LONGLONG UnixToFileTimeOffset = 116444736000000000;
 
     if (wait_time != m_timer_time || m_force_timer_update) {
         m_force_timer_update = true;

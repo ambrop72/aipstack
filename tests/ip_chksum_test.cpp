@@ -13,14 +13,20 @@
 
 using namespace AIpStack;
 
+namespace aipstack_ip_chksum_test {
+
 using random_bytes_engine = std::independent_bits_engine<
     std::mt19937, std::numeric_limits<unsigned char>::digits, unsigned char>;
 
-static std::size_t const BufSize = 101;
-static int const Iterations = 10000000;
+constexpr std::size_t BufSize = 101;
+constexpr int Iterations = 10000000;
+
+}
 
 int main ()
 {
+    using namespace aipstack_ip_chksum_test;
+    
     std::random_device rd;
     random_bytes_engine rbe(rd());
     
