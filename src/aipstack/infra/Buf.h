@@ -434,8 +434,7 @@ struct IpBufRef {
         AIPSTACK_ASSERT(tot_len > 0);
         
         char ch = 0;
-        processBytes(1, [&](char *data, std::size_t len) {
-            (void)len;
+        processBytes(1, [&](char *data, [[maybe_unused]] std::size_t len) {
             ch = *data;
         });
         return ch;

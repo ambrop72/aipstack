@@ -621,12 +621,10 @@ public:
     }
 
     void handleIp4DestUnreach (
-        Ip4DestUnreachMeta const &du_meta, IpRxInfoIp4<StackArg> const &ip_info,
-        IpBufRef dgram_initial)
+        [[maybe_unused]] Ip4DestUnreachMeta const &du_meta,
+        [[maybe_unused]] IpRxInfoIp4<StackArg> const &ip_info,
+        [[maybe_unused]] IpBufRef dgram_initial)
     {
-        (void)du_meta;
-        (void)ip_info;
-        (void)dgram_initial;
     }
 
 private:
@@ -655,9 +653,7 @@ private:
 
     bool get_ephemeral_port (UdpAssociationKey &key)
     {
-        for (PortNum i : IntRange(NumEphemeralPorts)) {
-            (void)i;
-            
+        for ([[maybe_unused]] PortNum i : IntRange(NumEphemeralPorts)) {
             PortNum port = m_next_ephemeral_port;
             m_next_ephemeral_port = (port < EphemeralPortLast) ?
                 (port + 1) : EphemeralPortFirst;

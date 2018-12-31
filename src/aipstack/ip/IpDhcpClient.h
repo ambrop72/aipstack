@@ -998,10 +998,9 @@ private:
         }
     }
     
-    void arpInfoReceived (Ip4Addr ip_addr, MacAddr mac_addr)
+    void arpInfoReceived (Ip4Addr ip_addr, [[maybe_unused]] MacAddr mac_addr)
     {
         AIPSTACK_ASSERT(m_state == DhcpState::Checking);
-        (void)mac_addr;
         
         // Is this an ARP message from the IP address we are checking?
         if (ip_addr == m_info.ip_address) {

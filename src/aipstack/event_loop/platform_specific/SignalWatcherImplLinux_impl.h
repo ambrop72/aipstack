@@ -95,10 +95,8 @@ SignalCollectorImplLinux & SignalWatcherImplLinux::getCollector () const
     return static_cast<SignalCollectorImplLinux &>(SignalWatcherImplBase::getCollector());
 }
 
-void SignalWatcherImplLinux::fdWatcherHandler(EventLoopFdEvents events)
+void SignalWatcherImplLinux::fdWatcherHandler([[maybe_unused]] EventLoopFdEvents events)
 {
-    (void)events;
-
     struct signalfd_siginfo siginfo;
     auto bytes = ::read(*m_signalfd_fd, &siginfo, sizeof(siginfo));
 

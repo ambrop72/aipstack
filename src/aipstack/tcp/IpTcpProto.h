@@ -774,9 +774,7 @@ private:
     PortNum get_ephemeral_port (
         Ip4Addr local_addr, Ip4Addr remote_addr, PortNum remote_port)
     {
-        for (PortNum i : IntRange(NumEphemeralPorts)) {
-            (void)i;
-            
+        for ([[maybe_unused]] PortNum i : IntRange(NumEphemeralPorts)) {
             PortNum port = m_next_ephemeral_port;
             m_next_ephemeral_port = (port < EphemeralPortLast) ?
                 (port + 1) : EphemeralPortFirst;

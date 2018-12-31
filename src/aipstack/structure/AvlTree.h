@@ -506,9 +506,8 @@ private:
                (p.isNull() || c.link(st) == ac(p).child[0] || c.link(st) == ac(p).child[1]);
     }
     
-    void assert_tree (State st) const
+    void assert_tree ([[maybe_unused]] State st) const
     {
-        (void)st;
 #if AIPSTACK_AVL_TREE_VERIFY
         verify_tree(st);
 #endif

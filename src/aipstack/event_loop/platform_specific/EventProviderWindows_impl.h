@@ -195,11 +195,9 @@ void EventProviderWindows::timerApcCallbackTrampoline(
     return static_cast<EventProviderWindows *>(arg)->timerApcCallback(lowVal, highVal);
 }
 
-void EventProviderWindows::timerApcCallback(DWORD lowVal, DWORD highVal)
+void EventProviderWindows::timerApcCallback(
+    [[maybe_unused]] DWORD lowVal, [[maybe_unused]] DWORD highVal)
 {
-    (void)lowVal;
-    (void)highVal;
-
     m_force_timer_update = true;
 }
 

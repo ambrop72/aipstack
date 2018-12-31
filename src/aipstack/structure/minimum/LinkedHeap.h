@@ -329,9 +329,8 @@ public:
         return Ref::null();
     }
     
-    inline void assertValidHeap (State st = State())
+    inline void assertValidHeap ([[maybe_unused]] State st = State())
     {
-        (void)st;
 #if AIPSTACK_LINKED_HEAP_VERIFY
         verifyHeap(st);
 #endif

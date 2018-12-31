@@ -283,15 +283,14 @@ public:
         return ac(e).next.ref(st);
     }
     
-    inline static void markRemoved (Ref e, State st = State())
+    inline static void markRemoved (Ref e, [[maybe_unused]] State st = State())
     {
         AIPSTACK_ASSERT(!e.isNull());
-        (void)st;
         
         ac(e).next = Link::null();
     }
     
-    inline static bool isRemoved (Ref e, State st = State())
+    inline static bool isRemoved (Ref e, [[maybe_unused]] State st = State())
     {
         AIPSTACK_ASSERT(!e.isNull());
         

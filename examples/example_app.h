@@ -307,19 +307,15 @@ private:
         using BaseClient::log;
         
     private:
-        void dataReceived (std::size_t amount) override final
+        void dataReceived ([[maybe_unused]] std::size_t amount) override final
         {
-            (void)amount;
-
             if (m_state == State::RecvLine) {
                 return processReceived();
             }
         }
         
-        void dataSent (std::size_t amount) override final
+        void dataSent ([[maybe_unused]] std::size_t amount) override final
         {
-            (void)amount;
-            
             if (m_state == State::WaitRespBuf) {
                 // Re-try transferring the line to the send buffer.
                 if (writeResponse()) {

@@ -200,10 +200,10 @@ public:
      * @param dgram IP payload of the datagram. The referenced buffers
      *        must not be used outside of this function.
      */
-    void recvIp4Dgram (IpRxInfoIp4<StackArg> const &ip_info, IpBufRef dgram)
+    void recvIp4Dgram (
+        [[maybe_unused]] IpRxInfoIp4<StackArg> const &ip_info,
+        [[maybe_unused]] IpBufRef dgram)
     {
-        (void)ip_info;
-        (void)dgram;
     }
 
     /**
@@ -248,12 +248,10 @@ public:
      *        can be added if ever needed. 
      */
     void handleIp4DestUnreach (
-        Ip4DestUnreachMeta const &du_meta,
-        IpRxInfoIp4<StackArg> const &ip_info, IpBufRef dgram_initial)
+        [[maybe_unused]] Ip4DestUnreachMeta const &du_meta,
+        [[maybe_unused]] IpRxInfoIp4<StackArg> const &ip_info,
+        [[maybe_unused]] IpBufRef dgram_initial)
     {
-        (void)du_meta;
-        (void)ip_info;
-        (void)dgram_initial;
     }
     
 private:

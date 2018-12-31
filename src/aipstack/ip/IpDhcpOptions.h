@@ -402,8 +402,7 @@ private:
                     goto skip_data;
                 }
                 std::uint8_t num_servers = opt_len / DhcpOptAddr::Size;
-                for (auto server_index : IntRange(num_servers)) {
-                    (void)server_index;
+                for ([[maybe_unused]] auto server_index : IntRange(num_servers)) {
                     // Must consume all servers from data even if we can't save
                     // them.
                     DhcpOptAddr::Val val;
