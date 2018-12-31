@@ -214,16 +214,16 @@ public:
      */
     using TimeType = typename Impl::TimeType;
     
-    static_assert(std::is_integral<TimeType>::value, "");
-    static_assert(std::is_unsigned<TimeType>::value, "");
-    static_assert(std::numeric_limits<TimeType>::radix == 2, "");
+    static_assert(std::is_integral<TimeType>::value);
+    static_assert(std::is_unsigned<TimeType>::value);
+    static_assert(std::numeric_limits<TimeType>::radix == 2);
     
     /**
      * The number of bits in @ref TimeType.
      */
     inline static constexpr int TimeBits = std::numeric_limits<TimeType>::digits;
     
-    static_assert(TimeBits >= 32, "");
+    static_assert(TimeBits >= 32);
     
     /**
      * The frequency of the clock in Hz.
@@ -232,14 +232,14 @@ public:
      */
     inline static constexpr double TimeFreq = Impl::TimeFreq;
     
-    static_assert(TimeFreq >= 100.0, "");
+    static_assert(TimeFreq >= 100.0);
     
 private:
     inline static constexpr TimeType BaseRelativeTimeLimit =
         7 * (TimeType(1) << (TimeBits - 4));
     
     inline static constexpr TimeType ImplRelativeTimeLimit = Impl::RelativeTimeLimit;
-    static_assert(ImplRelativeTimeLimit > 0, "");
+    static_assert(ImplRelativeTimeLimit > 0);
     
 public:
     /**
@@ -264,7 +264,7 @@ public:
      */
     inline static constexpr double WorkingTimeSpanSec = WorkingTimeSpanTicks / TimeFreq;
     
-    static_assert(WorkingTimeSpanSec >= 600.0, "");
+    static_assert(WorkingTimeSpanSec >= 600.0);
     
     /**
      * The value of the most significant bit in @ref TimeType.
@@ -491,7 +491,7 @@ private:
     template <typename Func, typename... Args>
     inline RetType<Func> callImpl (Func Impl::*func_ptr, Args && ... args) const
     {
-        static_assert(!Impl::ImplIsStatic, "");
+        static_assert(!Impl::ImplIsStatic);
         Impl *impl = ref().platformImpl();
         return (impl->*func_ptr)(std::forward<Args>(args)...);
     }

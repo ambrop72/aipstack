@@ -76,11 +76,11 @@ class IpReassembly :
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
     
-    static_assert(MaxReassEntrys > 0, "");
-    static_assert(MaxReassSize >= Ip4RequiredRecvSize, "");
-    static_assert(MaxReassHoles >= 1, "");
-    static_assert(MaxReassHoles <= 250, ""); // important to prevent num_holes overflow
-    static_assert(MaxReassTimeSeconds >= 5, "");
+    static_assert(MaxReassEntrys > 0);
+    static_assert(MaxReassSize >= Ip4RequiredRecvSize);
+    static_assert(MaxReassHoles >= 1);
+    static_assert(MaxReassHoles <= 250); // important to prevent num_holes overflow
+    static_assert(MaxReassTimeSeconds >= 5);
     
     // Null link value in HoleDescriptor lists.
     inline static constexpr std::uint16_t ReassNullLink = TypeMax<std::uint16_t>();
@@ -92,7 +92,7 @@ class IpReassembly :
     )
     
     // We need to be able to put a hole descriptor after the reassembled data.
-    static_assert(MaxReassSize <= TypeMax<std::uint16_t>() - HoleDescriptor::Size, "");
+    static_assert(MaxReassSize <= TypeMax<std::uint16_t>() - HoleDescriptor::Size);
     
     // The size of the reassembly buffers, with additional space for a hole descriptor
     // at the end.
@@ -103,7 +103,7 @@ class IpReassembly :
     inline static constexpr TimeType ReassMaxExpirationTicks =
         MaxReassTimeSeconds * TimeType(Platform::TimeFreq);
     
-    static_assert(ReassMaxExpirationTicks <= Platform::WorkingTimeSpanTicks, "");
+    static_assert(ReassMaxExpirationTicks <= Platform::WorkingTimeSpanTicks);
     
     // Interval of the purge timer. Use as large as possible, we only need it to
     // expire before any expiration time becomes ambiguous due to clock wraparound.

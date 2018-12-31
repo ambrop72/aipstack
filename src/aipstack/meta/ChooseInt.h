@@ -43,7 +43,7 @@ namespace AIpStack {
 template <int NumBits, bool Signed>
 class ChooseIntHelper {
 public:
-    static_assert(NumBits > 0, "");
+    static_assert(NumBits > 0);
     static_assert((!Signed || NumBits < 64), "Too many bits (signed)");
     static_assert((!!Signed || NumBits <= 64), "Too many bits (unsigned).");
     

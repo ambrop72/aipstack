@@ -58,7 +58,7 @@ namespace Private {
     template <typename T>
     constexpr std::size_t IntegerFormatLenUnsigned (T value)
     {
-        static_assert(std::is_unsigned<T>::value, "");
+        static_assert(std::is_unsigned<T>::value);
 
         std::size_t len = 0;
         do {

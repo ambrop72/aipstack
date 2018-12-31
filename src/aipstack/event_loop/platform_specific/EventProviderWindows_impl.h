@@ -78,12 +78,12 @@ void EventProviderWindows::waitForEvents (EventLoopTime wait_time)
     // We assume that std::system_clock which EventLoop timestamps are based on has
     // 100us period. This means that conversion to time needed by SetWaitableTimer
     // only needs an offset (see below).
-    static_assert(EventLoopDuration::period::num == 1, "");
-    static_assert(EventLoopDuration::period::den == 10000000, "");
+    static_assert(EventLoopDuration::period::num == 1);
+    static_assert(EventLoopDuration::period::den == 10000000);
 
     // We assume that the system_clock uses a signed time representation. This is
     // needed to be able to do the clamping without complications (see below).
-    static_assert(std::is_signed<EventLoopDuration::rep>::value, "");
+    static_assert(std::is_signed<EventLoopDuration::rep>::value);
 
     // Offset which needs to be added to std::system_clock time (Unix epoch) to
     // obtain time for use with SetWaitableTimer (1601 epoch). The unit is 100us.

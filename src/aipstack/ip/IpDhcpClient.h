@@ -212,10 +212,10 @@ class IpDhcpClient final :
     using UdpArg = typename IpStack<StackArg>::template GetProtoArg<UdpApi>;
     AIPSTACK_USE_VALS(UdpApi<UdpArg>, (HeaderBeforeUdpData, MaxUdpDataLenIp4))
     
-    static_assert(Params::MaxDnsServers > 0 && Params::MaxDnsServers < 32, "");
-    static_assert(Params::XidReuseMax >= 1 && Params::XidReuseMax <= 5, "");
-    static_assert(Params::MaxRequests >= 1 && Params::MaxRequests <= 5, "");
-    static_assert(Params::MaxRebootRequests >= 1 && Params::MaxRebootRequests <= 5, "");
+    static_assert(Params::MaxDnsServers > 0 && Params::MaxDnsServers < 32);
+    static_assert(Params::XidReuseMax >= 1 && Params::XidReuseMax <= 5);
+    static_assert(Params::MaxRequests >= 1 && Params::MaxRequests <= 5);
+    static_assert(Params::MaxRebootRequests >= 1 && Params::MaxRebootRequests <= 5);
     static_assert(Params::BaseRtxTimeoutSeconds >= 1 &&
                   Params::BaseRtxTimeoutSeconds <= 4, "");
     static_assert(Params::MaxRtxTimeoutSeconds >= Params::BaseRtxTimeoutSeconds &&
@@ -226,7 +226,7 @@ class IpDhcpClient final :
                   Params::MinRenewRtxTimeoutSeconds <= 255, "");
     static_assert(Params::ArpResponseTimeoutSeconds >= 1 &&
                   Params::ArpResponseTimeoutSeconds <= 5, "");
-    static_assert(Params::NumArpQueries >= 1 && Params::NumArpQueries <= 10, "");
+    static_assert(Params::NumArpQueries >= 1 && Params::NumArpQueries <= 10);
 
     // Message text to include in the DECLINE response if the address
     // was not used due to an ARP response (defined outside of class).
@@ -270,7 +270,7 @@ class IpDhcpClient final :
         TypeMax<std::uint32_t>(),
         Platform::WorkingTimeSpanTicks / TimeType(Platform::TimeFreq));
     
-    static_assert(MaxTimerSeconds >= 255, "");
+    static_assert(MaxTimerSeconds >= 255);
     
     // Determines the default renewal time if the server did not specify it.
     static constexpr std::uint32_t DefaultRenewTimeForLeaseTime (std::uint32_t lease_time_s)
@@ -289,7 +289,7 @@ class IpDhcpClient final :
     inline static constexpr std::size_t MaxDhcpSendMsgSize =
         DhcpHeaderSize + Options::MaxOptionsSendSize;
 
-    static_assert(MaxDhcpSendMsgSize <= MaxUdpDataLenIp4, "");
+    static_assert(MaxDhcpSendMsgSize <= MaxUdpDataLenIp4);
     
 public:
     /**

@@ -48,13 +48,13 @@ class IpTcpProto_constants
     AIPSTACK_USE_TYPES(Platform, (TimeType))
 
     // Make sure the MinMTU permits an unfragmented TCP segment with some data.
-    static_assert(IpStack<StackArg>::MinMTU >= Ip4TcpHeaderSize + 32, "");
+    static_assert(IpStack<StackArg>::MinMTU >= Ip4TcpHeaderSize + 32);
     
 public:
     // For retransmission time calculations we right-shift the TimeType
     // to obtain granularity between 1ms and 2ms.
     inline static constexpr int RttShift = BitsInFloat(1e-3 * Platform::TimeFreq);
-    static_assert(RttShift >= 0, "");
+    static_assert(RttShift >= 0);
 
     // The resulting frequency of such right-shifted time.
     inline static constexpr double RttTimeFreq =
@@ -128,7 +128,7 @@ public:
     
     // Window scale shift count to send and use in outgoing ACKs.
     inline static constexpr std::uint8_t RcvWndShift = 6;
-    static_assert(RcvWndShift <= 14, "");
+    static_assert(RcvWndShift <= 14);
     
     // Minimum amount to extend the receive window when a PCB is
     // abandoned before the FIN has been received.

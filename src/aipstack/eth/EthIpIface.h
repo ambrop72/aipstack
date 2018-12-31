@@ -182,9 +182,9 @@ class EthIpIface final :
         EthHeader::Size + ArpIp4Header::Size;
     
     // Sanity check ARP table configuration.
-    static_assert(NumArpEntries > 0, "");
-    static_assert(ArpProtectCount >= 0, "");
-    static_assert(ArpProtectCount <= NumArpEntries, "");
+    static_assert(NumArpEntries > 0);
+    static_assert(ArpProtectCount >= 0);
+    static_assert(ArpProtectCount <= NumArpEntries);
     
     inline static constexpr int ArpNonProtectCount = NumArpEntries - ArpProtectCount;
     
@@ -197,8 +197,8 @@ class EthIpIface final :
     inline static constexpr std::uint8_t ArpRefreshAttempts = 2;
     
     // These need to fit in 4 bits available in ArpEntry::attempts_left.
-    static_assert(ArpQueryAttempts <= 15, "");
-    static_assert(ArpRefreshAttempts <= 15, "");
+    static_assert(ArpQueryAttempts <= 15);
+    static_assert(ArpRefreshAttempts <= 15);
     
     // Base ARP response timeout, doubled for each retransmission.
     inline static constexpr TimeType ArpBaseResponseTimeoutTicks = 1.0 * Platform::TimeFreq;

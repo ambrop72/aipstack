@@ -48,7 +48,7 @@ namespace AIpStack {
 template <typename Arg>
 class TcpOosBuffer
 {
-    static_assert(Arg::NumOosSegs > 0, "");
+    static_assert(Arg::NumOosSegs > 0);
     using IndexType = ChooseIntForMax<Arg::NumOosSegs, false>;
     inline static constexpr IndexType NumOosSegs = Arg::NumOosSegs;
     

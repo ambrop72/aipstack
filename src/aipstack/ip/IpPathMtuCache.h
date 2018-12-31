@@ -86,8 +86,8 @@ class IpPathMtuCache :
     
     AIPSTACK_USE_VALS(IpStack<StackArg>, (MinMTU))
     
-    static_assert(NumMtuEntries > 0, "");
-    static_assert(MtuTimeoutMinutes > 0, "");
+    static_assert(NumMtuEntries > 0);
+    static_assert(MtuTimeoutMinutes > 0);
     
     struct MtuEntry;
     

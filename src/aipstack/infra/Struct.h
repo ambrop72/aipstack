@@ -741,7 +741,7 @@ using StructIsByteType = WrapBool<
 
 template <typename ElemType, std::size_t Length>
 class StructByteArrayTypeHandler {
-    static_assert(StructIsByteType<ElemType>::Value, "");
+    static_assert(StructIsByteType<ElemType>::Value);
     
 public:
     inline static constexpr std::size_t FieldSize = Length * sizeof(ElemType);
@@ -805,7 +805,7 @@ struct StructRawField {};
 template <typename Type>
 class StructRawTypeHandler {
 public:
-    static_assert(std::is_trivial<Type>::value, "");
+    static_assert(std::is_trivial<Type>::value);
     
     inline static constexpr std::size_t FieldSize = sizeof(Type);
     

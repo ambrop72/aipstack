@@ -402,8 +402,8 @@ class IpUdpProto :
     AIPSTACK_USE_TYPES(Arg::Params, (UdpIndexService))
     AIPSTACK_USE_TYPES(Arg, (PlatformImpl, StackArg))
 
-    static_assert(EphemeralPortFirst > 0, "");
-    static_assert(EphemeralPortFirst <= EphemeralPortLast, "");
+    static_assert(EphemeralPortFirst > 0);
+    static_assert(EphemeralPortFirst <= EphemeralPortLast);
 
     using Platform = PlatformFacade<PlatformImpl>;
 

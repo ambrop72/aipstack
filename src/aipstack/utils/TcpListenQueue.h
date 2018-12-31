@@ -52,7 +52,7 @@ class TcpListenQueue {
     using Connection = TcpConnection<TcpArg>;
     using Listener = TcpListener<TcpArg>;
 
-    static_assert(RxBufferSize > 0, "");
+    static_assert(RxBufferSize > 0);
     
 public:
     class QueuedListener;

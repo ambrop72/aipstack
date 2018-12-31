@@ -85,10 +85,10 @@ class IpTcpProto :
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPE(Platform, TimeType)
     
-    static_assert(NumTcpPcbs > 0, "");
-    static_assert(NumOosSegs > 0 && NumOosSegs < 16, "");
-    static_assert(EphemeralPortFirst > 0, "");
-    static_assert(EphemeralPortFirst <= EphemeralPortLast, "");
+    static_assert(NumTcpPcbs > 0);
+    static_assert(NumOosSegs > 0 && NumOosSegs < 16);
+    static_assert(EphemeralPortFirst > 0);
+    static_assert(EphemeralPortFirst <= EphemeralPortLast);
     
     template <typename> friend class IpTcpProto_constants;
     template <typename> friend class IpTcpProto_input;

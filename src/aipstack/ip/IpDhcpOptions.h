@@ -287,7 +287,7 @@ public:
                     DhcpOptionType::Router,
                     DhcpOptionType::DomainNameServer,
                 };
-                static_assert(sizeof(opt) == ParameterRequestListSize, "");
+                static_assert(sizeof(opt) == ParameterRequestListSize);
                 std::memcpy(opt_data, opt, sizeof(opt));
                 return sizeof(opt);
             });

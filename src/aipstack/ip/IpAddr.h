@@ -261,7 +261,7 @@ public:
     template <std::size_t PrefixBits>
     static constexpr Ip4Addr PrefixMask ()
     {
-        static_assert(PrefixBits <= Bits, "");
+        static_assert(PrefixBits <= Bits);
         
         return
             (PrefixBits == 0) ? ZeroAddr() :
@@ -331,7 +331,7 @@ public:
      */
     template <std::size_t ByteIndex>
     inline constexpr std::uint8_t getByte () const {
-        static_assert(ByteIndex < Size, "");
+        static_assert(ByteIndex < Size);
 
         return (value() >> (8 * (Size - 1 - ByteIndex))) & 0xFF;
     }

@@ -128,7 +128,7 @@ namespace ResourceArrayPrivate {
         
         using Storage = std::aligned_storage_t<sizeof(Elem), alignof(Elem)>;
         
-        static_assert(sizeof(Storage) == sizeof(Elem), "");
+        static_assert(sizeof(Storage) == sizeof(Elem));
         
     private:
         Storage m_arr[Size];

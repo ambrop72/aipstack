@@ -289,8 +289,8 @@ private:
         inline static constexpr std::size_t TxBufSize = Params::LineParsingTxBufferSize;
         inline static constexpr std::size_t MaxRxLineLen = Params::LineParsingMaxRxLineLen;
         
-        static_assert(MaxRxLineLen <= RxBufSize, "");
-        static_assert(TxBufSize >= ResponsePrefixLen + MaxRxLineLen, "");
+        static_assert(MaxRxLineLen <= RxBufSize);
+        static_assert(TxBufSize >= ResponsePrefixLen + MaxRxLineLen);
         
         enum class State {RecvLine, WaitRespBuf, WaitFinSent};
         
