@@ -178,7 +178,7 @@ private:
     using ProtocolHelpersList =
         IndexElemList<ProtocolServicesList, ProtocolHelper>;
     
-    static int const NumProtocols = TypeListLength<ProtocolHelpersList>::Value;
+    inline static constexpr int NumProtocols = TypeListLength<ProtocolHelpersList>::Value;
     
     // Create a list of the instantiated protocols, for the tuple.
     template <typename Helper>
@@ -193,12 +193,12 @@ private:
     class GetProtoApiHelper {
         template <typename, typename = void>
         struct MatchApi {
-            static bool const Matches = false;
+            inline static constexpr bool Matches = false;
         };
 
         template <typename ProtoApiArg, typename Protocol, typename Dummy>
         struct MatchApi<ProtoApi<ProtoApiArg> & (Protocol::*) (), Dummy> {
-            static bool const Matches = true;
+            inline static constexpr bool Matches = true;
             using MatchArg = ProtoApiArg;
             using MatchProtocol = Protocol;
         };
@@ -239,7 +239,8 @@ public:
      * implementation to write the IP header and by lower-level protocol
      * implementations such as Ethernet for their own headers.
      */
-    static std::size_t const HeaderBeforeIp4Dgram = HeaderBeforeIp + Ip4Header::Size;
+    inline static constexpr std::size_t HeaderBeforeIp4Dgram =
+        HeaderBeforeIp + Ip4Header::Size;
     
     /**
      * Minimum permitted MTU and PMTU.
@@ -250,7 +251,7 @@ public:
      * need to be fragmented and the DF flag never needs to be turned off. Note that
      * Linux enforces a minimum of 552, this must be perfectly okay in practice.
      */
-    static std::uint16_t const MinMTU = 256;
+    inline static constexpr std::uint16_t MinMTU = 256;
     
     /**
      * Construct the IP stack.
@@ -323,7 +324,7 @@ public:
     inline ProtoApi<GetProtoArg<ProtoApi>> & getProtoApi ()
     {
         using Protocol = typename GetProtoApiHelper<ProtoApi>::Protocol;
-        static int const ProtocolIndex = TypeListIndex<ProtocolsList, Protocol>::Value;
+        constexpr int ProtocolIndex = TypeListIndex<ProtocolsList, Protocol>::Value;
         return m_protocols.template get<ProtocolIndex>().getApi();
     }
 

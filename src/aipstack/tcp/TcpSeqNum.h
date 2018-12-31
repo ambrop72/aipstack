@@ -37,10 +37,10 @@ using TcpSeqInt = std::uint32_t;
 
 class TcpSeqNum {
 public:
-    static constexpr std::size_t Size = 4;
+    inline static constexpr std::size_t Size = 4;
 
 private:
-    static constexpr TcpSeqInt MSB_Value = TcpSeqInt(1) << 31;
+    inline static constexpr TcpSeqInt MSB_Value = TcpSeqInt(1) << 31;
 
 private:
     TcpSeqInt m_value;

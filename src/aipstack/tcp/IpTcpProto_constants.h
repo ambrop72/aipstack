@@ -53,11 +53,12 @@ class IpTcpProto_constants
 public:
     // For retransmission time calculations we right-shift the TimeType
     // to obtain granularity between 1ms and 2ms.
-    static int const RttShift = BitsInFloat(1e-3 * Platform::TimeFreq);
+    inline static constexpr int RttShift = BitsInFloat(1e-3 * Platform::TimeFreq);
     static_assert(RttShift >= 0, "");
 
     // The resulting frequency of such right-shifted time.
-    static constexpr double RttTimeFreq = Platform::TimeFreq / PowerOfTwo<double>(RttShift);
+    inline static constexpr double RttTimeFreq =
+        Platform::TimeFreq / PowerOfTwo<double>(RttShift);
     
     // We store such scaled times in 16-bit variables. This gives us a range of at least 65
     // seconds.
@@ -68,68 +69,70 @@ public:
 
     // Don't allow the remote host to lower the MSS beyond this.
     // NOTE: pcb_calc_snd_mss_from_pmtu relies on this definition.
-    static std::uint16_t const MinAllowedMss = IpStack<StackArg>::MinMTU - Ip4TcpHeaderSize;
+    inline static constexpr std::uint16_t MinAllowedMss =
+        IpStack<StackArg>::MinMTU - Ip4TcpHeaderSize;
     
     // Common flags passed to IpStack::sendIp4Dgram.
     // We disable fragmentation of TCP segments sent by us, due to PMTUD.
-    static IpSendFlags const TcpIpSendFlags = IpSendFlags::DontFragmentFlag;
+    inline static constexpr IpSendFlags TcpIpSendFlags = IpSendFlags::DontFragmentFlag;
     
     // Maximum theoreticaly possible send and receive window.
-    static TcpSeqInt const MaxWindow = 0x3fffffff;
+    inline static constexpr TcpSeqInt MaxWindow = 0x3fffffff;
     
     // Default window update threshold (overridable by setWindowUpdateThreshold).
-    static TcpSeqInt const DefaultWndAnnThreshold = 2700;
+    inline static constexpr TcpSeqInt DefaultWndAnnThreshold = 2700;
     
     // How old at most an ACK may be to be considered acceptable (MAX.SND.WND in RFC 5961).
-    static TcpSeqInt const MaxAckBefore = 0xFFFF;
+    inline static constexpr TcpSeqInt MaxAckBefore = 0xFFFF;
     
     // SYN_RCVD state timeout.
-    static TimeType const SynRcvdTimeoutTicks     = 20.0  * Platform::TimeFreq;
+    inline static constexpr TimeType SynRcvdTimeoutTicks     = 20.0  * Platform::TimeFreq;
     
     // SYN_SENT state timeout.
-    static TimeType const SynSentTimeoutTicks     = 30.0  * Platform::TimeFreq;
+    inline static constexpr TimeType SynSentTimeoutTicks     = 30.0  * Platform::TimeFreq;
     
     // TIME_WAIT state timeout.
-    static TimeType const TimeWaitTimeTicks       = 120.0 * Platform::TimeFreq;
+    inline static constexpr TimeType TimeWaitTimeTicks       = 120.0 * Platform::TimeFreq;
     
     // Timeout to abort connection after it has been abandoned.
-    static TimeType const AbandonedTimeoutTicks   = 30.0  * Platform::TimeFreq;
+    inline static constexpr TimeType AbandonedTimeoutTicks   = 30.0  * Platform::TimeFreq;
     
     // Time after the send buffer is extended to calling pcb_output.
-    static TimeType const OutputTimerTicks        = 0.0005 * Platform::TimeFreq;
+    inline static constexpr TimeType OutputTimerTicks        = 0.0005 * Platform::TimeFreq;
     
     // Time to retry after sending failed with error IpErr::OutputBufferFull.
-    static TimeType const OutputRetryFullTicks    = 0.1 * Platform::TimeFreq;
+    inline static constexpr TimeType OutputRetryFullTicks    = 0.1 * Platform::TimeFreq;
     
     // Time to retry after sending failed with error other then IpErr::OutputBufferFull.
-    static TimeType const OutputRetryOtherTicks   = 2.0 * Platform::TimeFreq;
+    inline static constexpr TimeType OutputRetryOtherTicks   = 2.0 * Platform::TimeFreq;
     
     // Initial retransmission time, before any round-trip-time measurement.
-    static RttType const InitialRtxTime           = 1.0 * RttTimeFreq;
+    inline static constexpr RttType InitialRtxTime           = 1.0 * RttTimeFreq;
     
     // Minimum retransmission time.
-    static RttType const MinRtxTime               = 0.25 * RttTimeFreq;
+    inline static constexpr RttType MinRtxTime               = 0.25 * RttTimeFreq;
     
     // Maximum retransmission time (need care not to overflow RttType).
-    static RttType const MaxRtxTime =
+    inline static constexpr RttType MaxRtxTime =
         MinValue(double(TypeMax<RttType>()), 60. * RttTimeFreq);
     
     // Number of duplicate ACKs to trigger fast retransmit/recovery.
-    static std::uint8_t const FastRtxDupAcks = 3;
+    inline static constexpr std::uint8_t FastRtxDupAcks = 3;
     
     // Maximum number of additional duplicate ACKs that will result in CWND increase.
-    static std::uint8_t const MaxAdditionaDupAcks = 32;
+    inline static constexpr std::uint8_t MaxAdditionaDupAcks = 32;
     
     // Number of bits needed to represent the maximum supported duplicate ACK count.
-    static int const DupAckBits = BitsInInt<FastRtxDupAcks + MaxAdditionaDupAcks>::Value;
+    inline static constexpr int DupAckBits =
+        BitsInInt<FastRtxDupAcks + MaxAdditionaDupAcks>::Value;
     
     // Window scale shift count to send and use in outgoing ACKs.
-    static std::uint8_t const RcvWndShift = 6;
+    inline static constexpr std::uint8_t RcvWndShift = 6;
     static_assert(RcvWndShift <= 14, "");
     
     // Minimum amount to extend the receive window when a PCB is
     // abandoned before the FIN has been received.
-    static TcpSeqInt const MinAbandonRcvWndIncr = TypeMax<std::uint16_t>();
+    inline static constexpr TcpSeqInt MinAbandonRcvWndIncr = TypeMax<std::uint16_t>();
 };
 
 }

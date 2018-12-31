@@ -230,8 +230,9 @@ class IpDhcpClient final :
 
     // Message text to include in the DECLINE response if the address
     // was not used due to an ARP response (defined outside of class).
-    static constexpr char const DeclineMessageArpResponse[] = "ArpResponse";
-    static std::uint8_t const MaxMessageSize = sizeof(DeclineMessageArpResponse) - 1;
+    inline static constexpr char DeclineMessageArpResponse[] = "ArpResponse";
+    inline static constexpr std::uint8_t MaxMessageSize =
+        sizeof(DeclineMessageArpResponse) - 1;
     
     // Instatiate the options class with needed configuration.
     using Options = IpDhcpOptions<
@@ -265,7 +266,7 @@ class IpDhcpClient final :
     // due to limited span of TimeType. For possibly longer periods
     // (start of renewal, lease timeout), multiple timer expirations
     // are used with keeping track of leftover seconds.
-    static std::uint32_t const MaxTimerSeconds = MinValueU(
+    inline static constexpr std::uint32_t MaxTimerSeconds = MinValueU(
         TypeMax<std::uint32_t>(),
         Platform::WorkingTimeSpanTicks / TimeType(Platform::TimeFreq));
     
@@ -285,7 +286,7 @@ class IpDhcpClient final :
     }
     
     // Maximum UDP data size that we could possibly transmit.
-    static std::size_t const MaxDhcpSendMsgSize =
+    inline static constexpr std::size_t MaxDhcpSendMsgSize =
         DhcpHeaderSize + Options::MaxOptionsSendSize;
 
     static_assert(MaxDhcpSendMsgSize <= MaxUdpDataLenIp4, "");
@@ -1364,11 +1365,6 @@ private:
         m_xid = std::uint32_t(platform().getTime());
     }
 };
-
-#ifndef IN_DOXYGEN
-template <typename Arg>
-constexpr char const IpDhcpClient<Arg>::DeclineMessageArpResponse[];
-#endif
 
 /**
  * Static configuration options for @ref IpDhcpClientService.

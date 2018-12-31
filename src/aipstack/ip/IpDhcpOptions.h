@@ -71,11 +71,11 @@ class IpDhcpOptions
     enum class OptionRegion {Options, File, Sname};
     
     // Number of parameters requested in the "parameter request list" option.
-    static std::size_t const ParameterRequestListSize = 3;
+    inline static constexpr std::size_t ParameterRequestListSize = 3;
     
 public:
     // Maximum size of options that we could possibly transmit.
-    static std::size_t const MaxOptionsSendSize =
+    inline static constexpr std::size_t MaxOptionsSendSize =
         // DHCP message type
         OptSize<DhcpOptMsgType>() +
         // requested IP address

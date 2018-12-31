@@ -178,32 +178,33 @@ class EthIpIface final :
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType))
     
-    static std::size_t const EthArpPktSize = EthHeader::Size + ArpIp4Header::Size;
+    inline static constexpr std::size_t EthArpPktSize =
+        EthHeader::Size + ArpIp4Header::Size;
     
     // Sanity check ARP table configuration.
     static_assert(NumArpEntries > 0, "");
     static_assert(ArpProtectCount >= 0, "");
     static_assert(ArpProtectCount <= NumArpEntries, "");
     
-    static int const ArpNonProtectCount = NumArpEntries - ArpProtectCount;
+    inline static constexpr int ArpNonProtectCount = NumArpEntries - ArpProtectCount;
     
     // Get an unsigned integer type sufficient for ARP entry indexes and null value.
     using ArpEntryIndexType = ChooseIntForMax<NumArpEntries, false>;
-    static ArpEntryIndexType const ArpEntryNull = TypeMax<ArpEntryIndexType>();
+    inline static constexpr ArpEntryIndexType ArpEntryNull = TypeMax<ArpEntryIndexType>();
     
     // Number of ARP resolution attempts in the Query and Refreshing states.
-    static std::uint8_t const ArpQueryAttempts = 3;
-    static std::uint8_t const ArpRefreshAttempts = 2;
+    inline static constexpr std::uint8_t ArpQueryAttempts = 3;
+    inline static constexpr std::uint8_t ArpRefreshAttempts = 2;
     
     // These need to fit in 4 bits available in ArpEntry::attempts_left.
     static_assert(ArpQueryAttempts <= 15, "");
     static_assert(ArpRefreshAttempts <= 15, "");
     
     // Base ARP response timeout, doubled for each retransmission.
-    static TimeType const ArpBaseResponseTimeoutTicks = 1.0 * Platform::TimeFreq;
+    inline static constexpr TimeType ArpBaseResponseTimeoutTicks = 1.0 * Platform::TimeFreq;
     
     // Time after a Valid entry will go to Refreshing when used.
-    static TimeType const ArpValidTimeoutTicks = 60.0 * Platform::TimeFreq;
+    inline static constexpr TimeType ArpValidTimeoutTicks = 60.0 * Platform::TimeFreq;
     
     struct ArpEntry;
     struct ArpEntryTimerQueueNodeUserData;

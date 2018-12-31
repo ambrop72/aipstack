@@ -69,7 +69,7 @@ private:
     Link m_first;
     
 public:
-    static bool const WithLast = WithLast_;
+    inline static constexpr bool WithLast = WithLast_;
     
     using State = typename LinkModel::State;
     using Ref = typename LinkModel::Ref;

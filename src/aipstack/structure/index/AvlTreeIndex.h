@@ -237,7 +237,7 @@ public:
         using LookupKeyArg = LookupKeyArg_;
         using KeyFuncs = KeyFuncs_;
         using LinkModel = LinkModel_;
-        static bool const Duplicates = Duplicates_;
+        inline static constexpr bool Duplicates = Duplicates_;
         AIPSTACK_DEF_INSTANCE(Index, AvlTreeIndex)
     };
     #endif

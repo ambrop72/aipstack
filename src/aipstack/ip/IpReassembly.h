@@ -83,7 +83,7 @@ class IpReassembly :
     static_assert(MaxReassTimeSeconds >= 5, "");
     
     // Null link value in HoleDescriptor lists.
-    static std::uint16_t const ReassNullLink = TypeMax<std::uint16_t>();
+    inline static constexpr std::uint16_t ReassNullLink = TypeMax<std::uint16_t>();
     
     // Hole descriptor structure, placed at the beginning of a hole.
     AIPSTACK_DEFINE_STRUCT(HoleDescriptor,
@@ -96,17 +96,18 @@ class IpReassembly :
     
     // The size of the reassembly buffers, with additional space for a hole descriptor
     // at the end.
-    static std::uint16_t const ReassBufferSize = MaxReassSize + HoleDescriptor::Size;
+    inline static constexpr std::uint16_t ReassBufferSize =
+        MaxReassSize + HoleDescriptor::Size;
     
     // Maximum time that a reassembly entry can be valid.
-    static TimeType const ReassMaxExpirationTicks =
+    inline static constexpr TimeType ReassMaxExpirationTicks =
         MaxReassTimeSeconds * TimeType(Platform::TimeFreq);
     
     static_assert(ReassMaxExpirationTicks <= Platform::WorkingTimeSpanTicks, "");
     
     // Interval of the purge timer. Use as large as possible, we only need it to
     // expire before any expiration time becomes ambiguous due to clock wraparound.
-    static TimeType const PurgeTimerInterval = Platform::WorkingTimeSpanTicks;
+    inline static constexpr TimeType PurgeTimerInterval = Platform::WorkingTimeSpanTicks;
     
     struct ReassEntry {
         // Offset in data to the first hole, or ReassNullLink for free entry.

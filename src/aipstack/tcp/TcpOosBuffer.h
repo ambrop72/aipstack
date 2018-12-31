@@ -50,7 +50,7 @@ class TcpOosBuffer
 {
     static_assert(Arg::NumOosSegs > 0, "");
     using IndexType = ChooseIntForMax<Arg::NumOosSegs, false>;
-    static IndexType const NumOosSegs = Arg::NumOosSegs;
+    inline static constexpr IndexType NumOosSegs = Arg::NumOosSegs;
     
     // Represents one contiguous region of buffered data or
     // a FIN or an end marker.

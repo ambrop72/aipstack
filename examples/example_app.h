@@ -282,12 +282,12 @@ private:
     // It uses separate receive and send buffers.
     class LineParsingClient : public BaseClient
     {
-        static constexpr char const ResponsePrefix[] = "Line: ";
-        static std::size_t const ResponsePrefixLen = sizeof(ResponsePrefix) - 1;
+        inline static constexpr char ResponsePrefix[] = "Line: ";
+        inline static constexpr std::size_t ResponsePrefixLen = sizeof(ResponsePrefix) - 1;
         
-        static std::size_t const RxBufSize = Params::LineParsingRxBufferSize;
-        static std::size_t const TxBufSize = Params::LineParsingTxBufferSize;
-        static std::size_t const MaxRxLineLen = Params::LineParsingMaxRxLineLen;
+        inline static constexpr std::size_t RxBufSize = Params::LineParsingRxBufferSize;
+        inline static constexpr std::size_t TxBufSize = Params::LineParsingTxBufferSize;
+        inline static constexpr std::size_t MaxRxLineLen = Params::LineParsingMaxRxLineLen;
         
         static_assert(MaxRxLineLen <= RxBufSize, "");
         static_assert(TxBufSize >= ResponsePrefixLen + MaxRxLineLen, "");
@@ -501,9 +501,6 @@ private:
     TcpListener m_listener_command;
     std::unordered_map<BaseClient *, std::unique_ptr<BaseClient>> m_clients;
 };
-
-template <typename Arg>
-constexpr char const ExampleApp<Arg>::LineParsingClient::ResponsePrefix[];
 
 struct ExampleAppOptions {
     AIPSTACK_OPTION_DECL_VALUE(EchoPort, std::uint16_t, 2001)

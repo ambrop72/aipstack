@@ -62,12 +62,12 @@ public:
     /**
      * Size of an IPv4 address in bytes.
      */
-    static constexpr std::size_t Size = 4;
+    inline static constexpr std::size_t Size = 4;
     
     /**
      * Size of an IPv4 address in bits.
      */
-    static constexpr std::size_t Bits = 32;
+    inline static constexpr std::size_t Bits = 32;
 
     /**
      * Integer type used to represent the value of an IPv4 address.

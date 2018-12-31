@@ -68,7 +68,7 @@ namespace AIpStack {
  * Maximum size of callable objects that @ref Function<Ret(Args...)> "Function" can
  * store when using the Function(Callable) constructor.
  */
-static constexpr std::size_t FunctionStorageSize = sizeof(void *);
+inline constexpr std::size_t FunctionStorageSize = sizeof(void *);
 
 #ifndef IN_DOXYGEN
 template <typename>

@@ -47,7 +47,7 @@ namespace AIpStack {
 /**
  * Maximum number of characters that @ref FormatIpAddr may write.
  */
-static constexpr std::size_t MaxIp4AddrPrintLen = 15;
+inline constexpr std::size_t MaxIp4AddrPrintLen = 15;
 
 /**
  * Format an IPv4 address to dot-decimal representation.

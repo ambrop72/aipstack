@@ -73,7 +73,7 @@ class TxAllocHelperUninitialized {};
  */
 template <std::size_t MaxSize, std::size_t HeaderBefore>
 class TxAllocHelper {
-    static std::size_t const TotalMaxSize = HeaderBefore + MaxSize;
+    inline static constexpr std::size_t TotalMaxSize = HeaderBefore + MaxSize;
     
 public:
     /**

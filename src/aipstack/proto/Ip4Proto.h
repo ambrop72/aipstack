@@ -59,14 +59,14 @@ AIPSTACK_DEFINE_STRUCT(Ip4Header,
     (DstAddr,           Ip4Addr)
 )
 
-static int const Ip4VersionShift = 4;
-static std::uint8_t const Ip4IhlMask = 0xF;
+inline constexpr int Ip4VersionShift = 4;
+inline constexpr std::uint8_t Ip4IhlMask = 0xF;
 
-static std::size_t const Ip4MaxHeaderSize = 60;
+inline constexpr std::size_t Ip4MaxHeaderSize = 60;
 
 // The full datagram size which every internet destination must be
 // be able to receive either in one piece or in fragments (RFC 791 page 25).
-static std::uint16_t const Ip4RequiredRecvSize = 576;
+inline constexpr std::uint16_t Ip4RequiredRecvSize = 576;
 
 inline std::uint16_t Ip4RoundFragLen (std::uint8_t header_length, std::uint16_t mtu) {
     return header_length + (((mtu - header_length) / 8) * 8);

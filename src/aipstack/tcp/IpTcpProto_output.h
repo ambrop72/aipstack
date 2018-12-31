@@ -64,7 +64,7 @@ class IpTcpProto_output
     AIPSTACK_USE_TYPES(Constants, (RttType, RttNextType))
     AIPSTACK_USE_VALS(IpStack<StackArg>, (HeaderBeforeIp4Dgram))
 
-    static RttType const RttTypeMax = TypeMax<RttType>();
+    inline static constexpr RttType RttTypeMax = TypeMax<RttType>();
     
 public:
     // Check if our FIN has been ACKed.

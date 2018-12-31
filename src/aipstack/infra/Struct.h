@@ -69,7 +69,7 @@ namespace AIpStack {
  *      struct FieldA : public AIpStack::StructField<std::uint32_t> {};
  *      struct FieldB : public AIpStack::StructField<std::uint64_t> {};
  *      using StructFields = AIpStack::MakeTypeList<FieldA, FieldB>;
- *      static std::size_t const Size = MyHeader::GetStructSize();
+ *      inline static constexpr std::size_t Size = MyHeader::GetStructSize();
  * };
  * ```
  * 
@@ -155,7 +155,8 @@ namespace AIpStack {
  * defines the handler class for the field type(s).
  * 
  * The handler class must have the following definitions:
- * - `static std::size_t const FieldSize`: Number of bytes in the byte representation.
+ * - `inline static constexpr std::size_t FieldSize`: Number of bytes in the byte
+ *   representation.
  * - `using ValType`: Type alias defining the value type for the `get` and `set` operations.
  * - `static ValType get (char const *data)`: Function which decodes a byte representation
  *   into a value.
@@ -247,7 +248,7 @@ class StructBase {
     
     template <typename Dummy>
     struct FieldInfo<-1, Dummy> {
-        static std::size_t const PartialStructSize = 0;
+        inline static constexpr std::size_t PartialStructSize = 0;
     };
     
     template <int FieldIndex, typename Dummy>
@@ -257,8 +258,10 @@ class StructBase {
         
         using Handler = StructFieldHandler<typename Field::StructFieldType>;
         using ValType = typename Handler::ValType;
-        static std::size_t const FieldOffset = PrevFieldInfo::PartialStructSize;
-        static std::size_t const PartialStructSize = FieldOffset + Handler::FieldSize;
+        inline static constexpr std::size_t FieldOffset =
+            PrevFieldInfo::PartialStructSize;
+        inline static constexpr std::size_t PartialStructSize =
+            FieldOffset + Handler::FieldSize;
     };
     
     template <typename Field, typename This=StructBase>
@@ -618,7 +621,7 @@ struct StructName : public AIpStack::StructBase<StructName> { \
     using StructFields = AIpStack::MakeTypeList< \
         AIPSTACK_DEFINE_STRUCT_ADD_END(AIPSTACK_DEFINE_STRUCT_LIST_0 Fields) \
     >; \
-    static std::size_t const Size = StructName::GetStructSize(); \
+    inline static constexpr std::size_t Size = StructName::GetStructSize(); \
 };
 #endif
 
@@ -651,7 +654,7 @@ class StructBinaryTypeHandler {
     using Endian = BinaryBigEndian;
     
 public:
-    static std::size_t const FieldSize = sizeof(IntType);
+    inline static constexpr std::size_t FieldSize = sizeof(IntType);
     
     using ValType = Type;
     
@@ -676,7 +679,7 @@ struct StructTypeHandler<Type,
 template <typename StructType>
 class StructNestedTypeHandler {
 public:
-    static std::size_t const FieldSize = StructType::GetStructSize();
+    inline static constexpr std::size_t FieldSize = StructType::GetStructSize();
     
     using ValType = typename StructType::Val;
     using RefType = typename StructType::Ref;
@@ -698,7 +701,9 @@ public:
 };
 
 template <typename Type>
-struct StructTypeHandler<Type, std::enable_if_t<std::is_base_of<StructBase<Type>, Type>::value>> {
+struct StructTypeHandler<Type,
+    std::enable_if_t<std::is_base_of<StructBase<Type>, Type>::value>>
+{
     using Handler = StructNestedTypeHandler<Type>;
 };
 
@@ -708,7 +713,7 @@ class StructArrayTypeHandler {
     using ElemValType = typename ElemFieldHandler::ValType;
 
 public:
-    static std::size_t const FieldSize = Length * ElemFieldHandler::FieldSize;
+    inline static constexpr std::size_t FieldSize = Length * ElemFieldHandler::FieldSize;
     
     using ValType = std::array<ElemValType, Length>;
     
@@ -739,7 +744,7 @@ class StructByteArrayTypeHandler {
     static_assert(StructIsByteType<ElemType>::Value, "");
     
 public:
-    static std::size_t const FieldSize = Length * sizeof(ElemType);
+    inline static constexpr std::size_t FieldSize = Length * sizeof(ElemType);
     
     using ValType = std::array<ElemType, Length>;
     using RefType = ElemType *;
@@ -802,7 +807,7 @@ class StructRawTypeHandler {
 public:
     static_assert(std::is_trivial<Type>::value, "");
     
-    static std::size_t const FieldSize = sizeof(Type);
+    inline static constexpr std::size_t FieldSize = sizeof(Type);
     
     using ValType = Type;
     
@@ -852,7 +857,7 @@ class StructConventionalTypeHandler {
 public:
     #ifndef IN_DOXYGEN
 
-    static std::size_t const FieldSize = Type::Size;
+    inline static constexpr std::size_t FieldSize = Type::Size;
     
     using ValType = Type;
     

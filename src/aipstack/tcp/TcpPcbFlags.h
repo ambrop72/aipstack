@@ -33,7 +33,7 @@ namespace AIpStack {
 
 using TcpPcbFlagsBaseType = std::uint16_t;
 
-static constexpr int TcpPcbFlagsBits = 14;
+inline constexpr int TcpPcbFlagsBits = 14;
 
 enum class TcpPcbFlags : TcpPcbFlagsBaseType {
     // ACK is needed; used in input processing

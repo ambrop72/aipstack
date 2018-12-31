@@ -67,7 +67,7 @@ public:
 
     using Connection = TcpConnection<Arg>;
     
-    static constexpr TcpSeqInt MaxRcvWnd = Constants::MaxWindow;
+    inline static constexpr TcpSeqInt MaxRcvWnd = Constants::MaxWindow;
     
     inline PlatformFacade<typename Arg::PlatformImpl> platform () const
     {

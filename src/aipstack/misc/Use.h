@@ -41,7 +41,8 @@
  * @param namespace Scope which contains the type.
  * @param type_name Type in that scope to create an alias for.
  */
-#define AIPSTACK_USE_TYPE(namespace, type_name) using type_name = typename namespace::type_name;
+#define AIPSTACK_USE_TYPE(namespace, type_name) \
+    using type_name = typename namespace::type_name;
 
 /**
  * Expands to a variable definition which copies a value from another scope into this scope.
@@ -53,7 +54,8 @@
  * @param namespace Scope which contains the value.
  * @param value_name Name of variable in that scope to initialize this variable to.
  */
-#define AIPSTACK_USE_VAL(namespace, value_name) static constexpr auto value_name = namespace::value_name;
+#define AIPSTACK_USE_VAL(namespace, value_name) \
+    inline static constexpr auto value_name = namespace::value_name;
 
 #ifdef IN_DOXYGEN
 

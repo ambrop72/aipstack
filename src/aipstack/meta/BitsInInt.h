@@ -38,12 +38,12 @@ namespace AIpStack {
 
 template <int Base, std::uintmax_t N>
 struct DigitsInInt {
-    static const int Value = 1 + DigitsInInt<Base, N / Base>::Value;
+    inline static constexpr int Value = 1 + DigitsInInt<Base, N / Base>::Value;
 };
 
 template <int Base>
 struct DigitsInInt<Base, 0> {
-    static const int Value = 0;
+    inline static constexpr int Value = 0;
 };
 
 #endif

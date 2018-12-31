@@ -44,12 +44,12 @@ struct TypeDictEntry {
 
 template <typename TResult>
 struct TypeDictFound {
-    static bool const Found = true;
+    inline static constexpr bool Found = true;
     using Result = TResult;
 };
 
 struct TypeDictNotFound {
-    static bool const Found = false;
+    inline static constexpr bool Found = false;
 };
 
 #ifndef IN_DOXYGEN

@@ -78,7 +78,7 @@ public:
      * thread-local-variables). A non-static implementation is less efficient but
      * more flexibile in this respect.
      */
-    static bool const ImplIsStatic = false;
+    inline static constexpr bool ImplIsStatic = false;
     
     /**
      * Defines the unsigned integer type representing time in platform-defined units.
@@ -119,7 +119,7 @@ public:
      * EffectiveRelativeTimeLimit/TimeFreq >= 600 must hold, where
      * EffectiveRelativeTimeLimit is as described in @ref RelativeTimeLimit.
      */
-    static constexpr double TimeFreq = 1000.0;
+    inline static constexpr double TimeFreq = 1000.0;
     
     /**
      * Defines a relative time limit for timers to be respected by the stack.
@@ -136,7 +136,7 @@ public:
      * original type representing time is signed and its values are being converted
      * to unsigned as required for @ref TimeType.
      */
-    static constexpr TimeType RelativeTimeLimit = TypeMax<TimeType>();
+    inline static constexpr TimeType RelativeTimeLimit = TypeMax<TimeType>();
     
     /**
      * Get the current time in ticks.

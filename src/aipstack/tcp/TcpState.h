@@ -54,7 +54,7 @@ private:
     ValueType m_value;
 
 public:
-    static constexpr int Bits = 4;
+    inline static constexpr int Bits = 4;
 
     TcpState () = delete;
 
@@ -86,17 +86,17 @@ public:
 };
 
 namespace TcpStates {
-    static constexpr TcpState CLOSED               = TcpState(0b0101);
-    static constexpr TcpState SYN_SENT             = TcpState(0b1101);
-    static constexpr TcpState SYN_RCVD             = TcpState(0b1100);
-    static constexpr TcpState ESTABLISHED          = TcpState(0b0000);
-    static constexpr TcpState CLOSE_WAIT           = TcpState(0b0001);
-    static constexpr TcpState LAST_ACK             = TcpState(0b1000);
-    static constexpr TcpState FIN_WAIT_1           = TcpState(0b0010);
-    static constexpr TcpState FIN_WAIT_2           = TcpState(0b0100);
-    static constexpr TcpState FIN_WAIT_2_TIME_WAIT = TcpState(0b1111);
-    static constexpr TcpState CLOSING              = TcpState(0b1011);
-    static constexpr TcpState TIME_WAIT            = TcpState(0b1110);    
+    inline constexpr TcpState CLOSED               = TcpState(0b0101);
+    inline constexpr TcpState SYN_SENT             = TcpState(0b1101);
+    inline constexpr TcpState SYN_RCVD             = TcpState(0b1100);
+    inline constexpr TcpState ESTABLISHED          = TcpState(0b0000);
+    inline constexpr TcpState CLOSE_WAIT           = TcpState(0b0001);
+    inline constexpr TcpState LAST_ACK             = TcpState(0b1000);
+    inline constexpr TcpState FIN_WAIT_1           = TcpState(0b0010);
+    inline constexpr TcpState FIN_WAIT_2           = TcpState(0b0100);
+    inline constexpr TcpState FIN_WAIT_2_TIME_WAIT = TcpState(0b1111);
+    inline constexpr TcpState CLOSING              = TcpState(0b1011);
+    inline constexpr TcpState TIME_WAIT            = TcpState(0b1110);    
 }
 
 constexpr bool TcpState::isActive () const {

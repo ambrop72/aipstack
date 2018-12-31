@@ -93,7 +93,7 @@ class IpPathMtuCache :
     
     // Array index type for MTU entries and null value.
     using MtuIndexType = ChooseIntForMax<NumMtuEntries, false>;
-    static MtuIndexType const MtuIndexNull = TypeMax<MtuIndexType>();
+    inline static constexpr MtuIndexType MtuIndexNull = TypeMax<MtuIndexType>();
     
     // Link model for MTU entries: array indices.
     struct MtuEntriesAccessor;
@@ -119,7 +119,7 @@ public:
     
 private:
     // Timeout period for the MTU timer (one minute).
-    static TimeType const MtuTimerTicks = 60.0 * TimeType(Platform::TimeFreq);
+    inline static constexpr TimeType MtuTimerTicks = 60.0 * TimeType(Platform::TimeFreq);
     
     // MTU entry states.
     enum class EntryState {

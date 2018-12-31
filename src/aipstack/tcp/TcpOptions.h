@@ -52,11 +52,11 @@ struct TcpOptions {
 };
 
 namespace TcpOptionWriteLen {
-    static constexpr std::size_t MSS = 4;
-    static constexpr std::size_t WndScale = 4;
+    inline constexpr std::size_t MSS = 4;
+    inline constexpr std::size_t WndScale = 4;
 }
 
-static constexpr std::size_t MaxTcpOptionsWriteLen =
+inline constexpr std::size_t MaxTcpOptionsWriteLen =
     TcpOptionWriteLen::MSS + TcpOptionWriteLen::WndScale;
 
 inline void ParseTcpOptions (IpBufRef buf, TcpOptions &out_opts)

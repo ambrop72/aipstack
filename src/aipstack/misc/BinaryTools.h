@@ -53,12 +53,12 @@ namespace AIpStack {
 namespace BinaryToolsPrivate {
     template <typename T, bool IsIntegral>
     struct IntegerSupported {
-        static constexpr bool Value = std::numeric_limits<T>::radix == 2;
+        inline static constexpr bool Value = std::numeric_limits<T>::radix == 2;
     };
 
     template <typename T>
     struct IntegerSupported<T, false> {
-        static constexpr bool Value = false;
+        inline static constexpr bool Value = false;
     };
 }
 #endif
@@ -108,9 +108,9 @@ namespace BinaryToolsPrivate {
     
     template <typename T, bool BigEndian>
     struct ReadUnsigned {
-        static int const Bits = std::numeric_limits<T>::digits;
+        inline static constexpr int Bits = std::numeric_limits<T>::digits;
         static_assert(Bits % 8 == 0, "");
-        static int const Bytes = Bits / 8;
+        inline static constexpr int Bytes = Bits / 8;
         
         AIPSTACK_ALWAYS_INLINE AIPSTACK_UNROLL_LOOPS
         static T readInt (char const *src)
@@ -128,9 +128,9 @@ namespace BinaryToolsPrivate {
     
     template <typename T, bool BigEndian>
     struct WriteUnsigned {
-        static int const Bits = std::numeric_limits<T>::digits;
+        inline static constexpr int Bits = std::numeric_limits<T>::digits;
         static_assert(Bits % 8 == 0, "");
-        static int const Bytes = Bits / 8;
+        inline static constexpr int Bytes = Bits / 8;
         
         AIPSTACK_ALWAYS_INLINE AIPSTACK_UNROLL_LOOPS
         static void writeInt (T value, char *dst)
@@ -256,7 +256,7 @@ namespace BinaryToolsPrivate {
 
 template <bool BigEndian_>
 struct BinaryEndian {
-    static bool const BigEndian = BigEndian_;
+    inline static constexpr bool BigEndian = BigEndian_;
 };
 
 #endif

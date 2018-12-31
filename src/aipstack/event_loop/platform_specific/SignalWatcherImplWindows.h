@@ -45,7 +45,7 @@ class SignalCollectorImplWindows :
 {
     friend class SignalWatcherImplWindows;
 
-    static std::size_t const BufferSize = 32;
+    inline static constexpr std::size_t BufferSize = 32;
     
 public:
     SignalCollectorImplWindows ();

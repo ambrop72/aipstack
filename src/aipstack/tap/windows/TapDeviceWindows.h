@@ -44,7 +44,7 @@ namespace AIpStack {
 class TapDeviceWindows :
     private NonCopyable<TapDeviceWindows>
 {
-    static std::size_t const NumSendUnits = 16;
+    inline static constexpr std::size_t NumSendUnits = 16;
     
     struct IoResource {
         std::shared_ptr<WinHandleWrapper> device;

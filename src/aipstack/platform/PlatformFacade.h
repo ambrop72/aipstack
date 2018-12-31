@@ -221,7 +221,7 @@ public:
     /**
      * The number of bits in @ref TimeType.
      */
-    static int const TimeBits = std::numeric_limits<TimeType>::digits;
+    inline static constexpr int TimeBits = std::numeric_limits<TimeType>::digits;
     
     static_assert(TimeBits >= 32, "");
     
@@ -230,15 +230,15 @@ public:
      * 
      * See @ref PlatformImplStub::TimeFreq for details.
      */
-    static constexpr double TimeFreq = Impl::TimeFreq;
+    inline static constexpr double TimeFreq = Impl::TimeFreq;
     
     static_assert(TimeFreq >= 100.0, "");
     
 private:
-    static constexpr TimeType BaseRelativeTimeLimit =
+    inline static constexpr TimeType BaseRelativeTimeLimit =
         7 * (TimeType(1) << (TimeBits - 4));
     
-    static constexpr TimeType ImplRelativeTimeLimit = Impl::RelativeTimeLimit;
+    inline static constexpr TimeType ImplRelativeTimeLimit = Impl::RelativeTimeLimit;
     static_assert(ImplRelativeTimeLimit > 0, "");
     
 public:
@@ -249,7 +249,7 @@ public:
      * See @ref PlatformImplStub::TimeType and @ref PlatformImplStub::RelativeTimeLimit
      * for details.
      */
-    static TimeType const WorkingTimeSpanTicks =
+    inline static constexpr TimeType WorkingTimeSpanTicks =
         MinValue(BaseRelativeTimeLimit, ImplRelativeTimeLimit);
     
     /**
@@ -262,7 +262,7 @@ public:
      * greater than @ref WorkingTimeSpanTicks, because the latter is a pessimistic
      * estimate which will still accomodate such relatively small errors.
      */
-    static constexpr double WorkingTimeSpanSec = WorkingTimeSpanTicks / TimeFreq;
+    inline static constexpr double WorkingTimeSpanSec = WorkingTimeSpanTicks / TimeFreq;
     
     static_assert(WorkingTimeSpanSec >= 600.0, "");
     
@@ -271,7 +271,7 @@ public:
      * 
      * This may be useful for certain time calculations.
      */
-    static TimeType const TimeMSB = TimeType(1) << (TimeBits - 1);
+    inline static constexpr TimeType TimeMSB = TimeType(1) << (TimeBits - 1);
     
     /**
      * Get the current time in ticks.

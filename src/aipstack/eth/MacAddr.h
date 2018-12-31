@@ -57,7 +57,7 @@ public:
     /**
      * Size of a MAC address in bytes.
      */
-    static constexpr std::size_t Size = 6;
+    inline static constexpr std::size_t Size = 6;
 
     /**
      * The `std::array` type used to represent the value of a MAC address.

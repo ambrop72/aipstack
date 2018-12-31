@@ -97,12 +97,12 @@ namespace Private {
 
     template <>
     struct TypeListLengthHelper<EmptyTypeList> {
-        static const int Value = 0;
+        inline static constexpr int Value = 0;
     };
 
     template <typename Head, typename Tail>
     struct TypeListLengthHelper<ConsTypeList<Head, Tail>> {
-        static const int Value = 1 + TypeListLengthHelper<Tail>::Value;
+        inline static constexpr int Value = 1 + TypeListLengthHelper<Tail>::Value;
     };
 }
 

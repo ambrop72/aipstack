@@ -132,9 +132,8 @@ public:
 #ifndef IN_DOXYGEN
     template <typename... Options>
     struct Config {
-        static constexpr ValueType Value = OptionsPrivate::GetValue<
-            Derived, WrapValue<ValueType, DefaultValue>, Options...
-        >::Value;
+        inline static constexpr ValueType Value = OptionsPrivate::GetValue<
+            Derived, WrapValue<ValueType, DefaultValue>, Options...>::Value;
     };
 #endif
 };
@@ -201,7 +200,7 @@ class name : public AIpStack::ConfigOptionType<name, default> {};
  * @param name The name of the option as declared in the options class.
  */
 #define AIPSTACK_OPTION_CONFIG_VALUE(decls, name) \
-static constexpr auto name = decls::name::Config<Options...>::Value;
+inline static constexpr auto name = decls::name::Config<Options...>::Value;
 
 /**
  * Retrieve and expose the value of a "type" configuration option.

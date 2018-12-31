@@ -106,13 +106,14 @@ class IpTcpProto :
     struct TcpPcb;
     
     // Number of ephemeral ports.
-    static PortNum const NumEphemeralPorts = EphemeralPortLast - EphemeralPortFirst + 1;
+    inline static constexpr PortNum NumEphemeralPorts =
+        EphemeralPortLast - EphemeralPortFirst + 1;
     
     // Unsigned integer type usable as an index for the PCBs array.
     // We use the largest value of that type as null (which cannot
     // be a valid PCB index).
     using PcbIndexType = ChooseIntForMax<NumTcpPcbs, false>;
-    static PcbIndexType const PcbIndexNull = PcbIndexType(-1);
+    inline static constexpr PcbIndexType PcbIndexNull = PcbIndexType(-1);
     
     // Instantiate the out-of-sequence buffering.
     using OosBufferService = TcpOosBufferService<

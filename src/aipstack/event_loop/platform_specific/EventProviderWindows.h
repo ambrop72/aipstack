@@ -39,7 +39,7 @@ class EventProviderWindows :
     public EventProviderBase,
     private NonCopyable<EventProviderWindows>
 {
-    static int const MaxIocpEvents = 64;
+    inline static constexpr int MaxIocpEvents = 64;
 
 public:
     EventProviderWindows ();

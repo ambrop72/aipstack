@@ -119,7 +119,7 @@ inline constexpr bool operator!= (Enum0Type, EnumType e) {
 /**
  * An @ref Enum0Type value for convenience.
  */
-static constexpr Enum0Type Enum0 = Enum0Type();
+inline constexpr Enum0Type Enum0 = Enum0Type();
 
 /**
  * Convert an enum to its underlying type.
@@ -140,12 +140,12 @@ inline constexpr std::underlying_type_t<EnumType> AsUnderlying (EnumType e)
 namespace EnumUtilsPrivate {
     template <bool IsEnum, typename Type, typename BaseType>
     struct EnumWithBaseTypeHelper {
-        static bool const IsEnumWithBaseType = false;
+        inline static constexpr bool IsEnumWithBaseType = false;
     };
     
     template <typename Type, typename BaseType>
     struct EnumWithBaseTypeHelper<true, Type, BaseType> {
-        static bool const IsEnumWithBaseType =
+        inline static constexpr bool IsEnumWithBaseType =
             std::is_same<std::underlying_type_t<Type>, BaseType>::value;
     };
     

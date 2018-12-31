@@ -50,7 +50,8 @@ namespace AIpStack {
  * @tparam T Type to check.
  */
 template <typename T>
-constexpr bool IsInteger = std::is_integral<T>::value && !std::is_same<T, bool>::value;
+inline constexpr bool IsInteger =
+    std::is_integral<T>::value && !std::is_same<T, bool>::value;
 
 #ifndef IN_DOXYGEN
 namespace Private {
@@ -87,7 +88,7 @@ namespace Private {
  * @tparam T Integer type (excluding bool), see @ref IsInteger.
  */
 template <typename T, typename = std::enable_if_t<IsInteger<T>>>
-constexpr std::size_t MaxIntegerFormatLen = Private::MaxIntegerFormatLenBase<T>();
+inline constexpr std::size_t MaxIntegerFormatLen = Private::MaxIntegerFormatLenBase<T>();
 
 /**
  * Format an integer to decimal representation.

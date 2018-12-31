@@ -52,8 +52,8 @@ enum class DhcpMagicField : std::uint32_t {
     Magic = 0x63825363,
 };
 
-static std::uint16_t const DhcpServerPort = 67;
-static std::uint16_t const DhcpClientPort = 68;
+inline constexpr std::uint16_t DhcpServerPort = 67;
+inline constexpr std::uint16_t DhcpClientPort = 68;
 
 enum class DhcpOptionType : std::uint8_t {
     Pad = 0,
@@ -110,7 +110,7 @@ AIPSTACK_DEFINE_STRUCT(DhcpHeader3,
     (DhcpMagic,   DhcpMagicField)
 )
 
-static std::size_t const DhcpHeaderSize =
+inline constexpr std::size_t DhcpHeaderSize =
     DhcpHeader1::Size + DhcpHeader2::Size + DhcpHeader3::Size;
 
 AIPSTACK_DEFINE_STRUCT(DhcpOptionHeader,

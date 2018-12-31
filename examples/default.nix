@@ -3,7 +3,7 @@
 let
     aipstackSrc = pkgs.lib.cleanSource ./..;
     
-    stdFlags = "-std=c++14";
+    stdFlags = "-std=c++17";
     defines = "-DAIPSTACK_CONFIG_ENABLE_ASSERTIONS";
     optFlags = "-O2 -fsanitize=address,undefined";
 

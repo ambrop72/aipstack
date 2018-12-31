@@ -69,14 +69,14 @@ public:
 
     using ThePlatformRef = PlatformRef<HostedPlatformImpl>;
 
-    static bool const ImplIsStatic = false;
+    inline static constexpr bool ImplIsStatic = false;
 
     using TimeType = std::make_unsigned_t<EventLoopTime::rep>;
 
-    static constexpr double TimeFreq =
+    inline static constexpr double TimeFreq =
         double(EventLoopTime::period::den) / EventLoopTime::period::num;
     
-    static constexpr TimeType RelativeTimeLimit =
+    inline static constexpr TimeType RelativeTimeLimit =
         EventLoopTime::max().time_since_epoch().count() / 64;
     
     inline static TimeType getTime ();

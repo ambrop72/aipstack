@@ -143,10 +143,11 @@ public:
 
     using Association = UdpAssociation<Arg>;
 
-    static std::size_t const HeaderBeforeUdpData =
+    inline static constexpr std::size_t HeaderBeforeUdpData =
         IpStack<StackArg>::HeaderBeforeIp4Dgram + Udp4Header::Size;
 
-    static std::size_t const MaxUdpDataLenIp4 = TypeMax<std::uint16_t>() - Udp4Header::Size;
+    inline static constexpr std::size_t MaxUdpDataLenIp4 =
+        TypeMax<std::uint16_t>() - Udp4Header::Size;
 
     IpErr sendUdpIp4Packet (Ip4AddrPair const &addrs, UdpTxInfo<Arg> const &udp_info,
                             IpBufRef udp_data, IpIface<StackArg> *iface,
@@ -406,7 +407,8 @@ class IpUdpProto :
 
     using Platform = PlatformFacade<PlatformImpl>;
 
-    static PortNum const NumEphemeralPorts = EphemeralPortLast - EphemeralPortFirst + 1;
+    inline static constexpr PortNum NumEphemeralPorts =
+        EphemeralPortLast - EphemeralPortFirst + 1;
 
     struct ListenerListNodeAccessor;
     using ListenersLinkModel = PointerLinkModel<UdpListener<Arg>>;

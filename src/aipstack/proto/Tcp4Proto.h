@@ -50,7 +50,7 @@ enum class Tcp4Flags : std::uint16_t {
 };
 AIPSTACK_ENUM_BITFIELD(Tcp4Flags)
 
-static int const TcpOffsetShift = 12;
+inline constexpr int TcpOffsetShift = 12;
 
 inline Tcp4Flags Tcp4EncodeOffset(std::uint8_t offset_words) {
     return Tcp4Flags(std::uint16_t(offset_words) << TcpOffsetShift);
@@ -74,7 +74,7 @@ enum class TcpOption : std::uint8_t {
     WndScale = 3,
 };
 
-static std::size_t const Ip4TcpHeaderSize = Ip4Header::Size + Tcp4Header::Size;
+inline constexpr std::size_t Ip4TcpHeaderSize = Ip4Header::Size + Tcp4Header::Size;
 
 }
 

@@ -95,7 +95,7 @@ class TcpMultiTimer :
     using Platform = PlatformFacade<PlatformImpl>;
     AIPSTACK_USE_TYPES(Platform, (TimeType, Timer))
     
-    static int const NumTimers = sizeof...(TimerIds);
+    inline static constexpr int NumTimers = sizeof...(TimerIds);
     using TimerIdsList = MakeTypeList<TimerIds...>;
     
     using StateType = ChooseInt<NumTimers + 1, false>;
@@ -112,7 +112,7 @@ class TcpMultiTimer :
         return StateType(1) << TimerIndex(TimerId());
     }
     
-    static constexpr StateType DirtyBit = StateType(1) << NumTimers;
+    inline static constexpr StateType DirtyBit = StateType(1) << NumTimers;
     
 private:
     // UserData would be placed in front of m_state using up

@@ -43,7 +43,7 @@ class EventProviderLinux :
 {
     friend class EventProviderLinuxFd;
     
-    static int const MaxEpollEvents = 64;
+    inline static constexpr int MaxEpollEvents = 64;
 
 public:
     EventProviderLinux ();
