@@ -51,14 +51,14 @@ namespace AIpStack {
  */
 template<typename T>
 inline constexpr bool IsInteger =
-    std::is_integral<T>::value && !std::is_same<T, bool>::value;
+    std::is_integral_v<T> && !std::is_same_v<T, bool>;
 
 #ifndef IN_DOXYGEN
 namespace Private {
     template<typename T>
     constexpr std::size_t IntegerFormatLenUnsigned (T value)
     {
-        static_assert(std::is_unsigned<T>::value);
+        static_assert(std::is_unsigned_v<T>);
 
         std::size_t len = 0;
         do {
@@ -72,7 +72,7 @@ namespace Private {
     template<typename T>
     constexpr std::size_t MaxIntegerFormatLenBase ()
     {
-        if (std::is_signed<T>::value) {
+        if (std::is_signed_v<T>) {
             using UT = std::make_unsigned_t<T>;
             return 1 + IntegerFormatLenUnsigned<UT>(UT(-UT(TypeMin<T>)));
         } else {
@@ -158,7 +158,7 @@ bool ParseInteger (MemRef str, T &out_value)
 
     bool isNegative = false;
 
-    if (std::is_signed<T>::value && *ptr == '-') {
+    if (std::is_signed_v<T> && *ptr == '-') {
         ptr++;
         isNegative = true;
 

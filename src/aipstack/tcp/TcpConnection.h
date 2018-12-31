@@ -231,7 +231,7 @@ public:
         assert_init();
         src_con->assert_connected();
         
-        static_assert(std::is_trivially_copy_constructible<TcpConOosBuffer>::value);
+        static_assert(std::is_trivially_copy_constructible_v<TcpConOosBuffer>);
         
         // Byte-copy the whole m_v.
         std::memcpy(&m_v, &src_con->m_v, sizeof(m_v));

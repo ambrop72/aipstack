@@ -70,7 +70,7 @@ template<
 >
 class LinkedHeap
 {
-    static_assert(std::is_unsigned<SizeType>::value);
+    static_assert(std::is_unsigned_v<SizeType>);
     
     using Link = typename LinkModel::Link;
     

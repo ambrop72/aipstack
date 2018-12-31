@@ -214,8 +214,8 @@ public:
      */
     using TimeType = typename Impl::TimeType;
     
-    static_assert(std::is_integral<TimeType>::value);
-    static_assert(std::is_unsigned<TimeType>::value);
+    static_assert(std::is_integral_v<TimeType>);
+    static_assert(std::is_unsigned_v<TimeType>);
     static_assert(std::numeric_limits<TimeType>::radix == 2);
     
     /**

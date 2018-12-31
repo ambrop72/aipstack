@@ -87,7 +87,7 @@ class EnableEnumBitfield;
 #define AIPSTACK_ENUM_BITFIELD(EnumType) implementation_hidden
 #else
 #define AIPSTACK_ENUM_BITFIELD(EnumType) \
-static_assert(std::is_enum<EnumType>::value, "AIPSTACK_ENUM_BITFIELD: not an enum"); \
+static_assert(std::is_enum_v<EnumType>, "AIPSTACK_ENUM_BITFIELD: not an enum"); \
 template<> \
 class EnableEnumBitfield<EnumType> { \
 public: \

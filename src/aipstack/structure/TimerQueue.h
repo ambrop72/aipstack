@@ -71,8 +71,8 @@ template<
 class TimerQueue
 {
     // TimeType must be an unsigned integer type.
-    static_assert(std::is_arithmetic<TimeType>::value);
-    static_assert(std::is_unsigned<TimeType>::value);
+    static_assert(std::is_arithmetic_v<TimeType>);
+    static_assert(std::is_unsigned_v<TimeType>);
     
     // Get the State and Ref types from the link model.
     AIPSTACK_USE_TYPES(LinkModel, (State, Ref))

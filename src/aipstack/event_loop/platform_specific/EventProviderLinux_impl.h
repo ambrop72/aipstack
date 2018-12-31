@@ -128,8 +128,8 @@ void EventProviderLinux::waitForEvents (EventLoopTime wait_time)
 
     static_assert(Period::num == 1);
     static_assert(Period::den <= std::nano::den);
-    static_assert(std::is_signed<Rep>::value);
-    static_assert(std::is_signed<SecType>::value);
+    static_assert(std::is_signed_v<Rep>);
+    static_assert(std::is_signed_v<SecType>);
     static_assert(TypeMax<Rep> / Period::den <= TypeMax<SecType>);
     static_assert(TypeMin<Rep> / Period::den >= TypeMin<SecType> + 1);
 

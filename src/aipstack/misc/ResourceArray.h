@@ -267,11 +267,11 @@ template<typename Elem, std::size_t Size>
 class ResourceArray
 #ifndef IN_DOXYGEN
     :private ResourceArrayPrivate::ArrayBase<Elem, Size>,
-    private ResourceArrayPrivate::DefaultConstructMixin<std::is_default_constructible<Elem>::value>,
-    private ResourceArrayPrivate::CopyConstructMixin<std::is_copy_constructible<Elem>::value>,
-    private ResourceArrayPrivate::MoveConstructMixin<std::is_move_constructible<Elem>::value>,
-    private ResourceArrayPrivate::CopyAssignMixin<std::is_copy_assignable<Elem>::value>,
-    private ResourceArrayPrivate::MoveAssignMixin<std::is_move_assignable<Elem>::value>
+    private ResourceArrayPrivate::DefaultConstructMixin<std::is_default_constructible_v<Elem>>,
+    private ResourceArrayPrivate::CopyConstructMixin<std::is_copy_constructible_v<Elem>>,
+    private ResourceArrayPrivate::MoveConstructMixin<std::is_move_constructible_v<Elem>>,
+    private ResourceArrayPrivate::CopyAssignMixin<std::is_copy_assignable_v<Elem>>,
+    private ResourceArrayPrivate::MoveAssignMixin<std::is_move_assignable_v<Elem>>
 #endif
 {
 public:
@@ -291,7 +291,7 @@ public:
     template<typename ...Args>
     ResourceArray (ResourceArrayInitSame, Args const & ... args) :
         ResourceArrayPrivate::ArrayBase<Elem, Size>(ResourceArrayInitSame(), args...),
-        ResourceArrayPrivate::DefaultConstructMixin<std::is_default_constructible<Elem>::value>(ResourceArrayPrivate::DefaultConstructMixinArg())
+        ResourceArrayPrivate::DefaultConstructMixin<std::is_default_constructible_v<Elem>>(ResourceArrayPrivate::DefaultConstructMixinArg())
     {
     }
     

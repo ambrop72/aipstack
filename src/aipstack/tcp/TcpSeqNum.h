@@ -91,26 +91,26 @@ public:
     }
 
     template<typename IntType,
-        typename = std::enable_if_t<std::is_unsigned<IntType>::value>>
+        typename = std::enable_if_t<std::is_unsigned_v<IntType>>>
     inline constexpr TcpSeqNum operator+ (IntType int_val) const {
         return TcpSeqNum(TcpSeqInt(value() + int_val));
     }
 
     template<typename IntType,
-        typename = std::enable_if_t<std::is_unsigned<IntType>::value>>
+        typename = std::enable_if_t<std::is_unsigned_v<IntType>>>
     inline constexpr TcpSeqNum operator- (IntType int_val) const {
         return TcpSeqNum(TcpSeqInt(value() - int_val));
     }
 
     template<typename IntType,
-        typename = std::enable_if_t<std::is_unsigned<IntType>::value>>
+        typename = std::enable_if_t<std::is_unsigned_v<IntType>>>
     inline constexpr TcpSeqNum & operator+= (IntType int_val) {
         *this = operator+(int_val);
         return *this;
     }
 
     template<typename IntType,
-        typename = std::enable_if_t<std::is_unsigned<IntType>::value>>
+        typename = std::enable_if_t<std::is_unsigned_v<IntType>>>
     inline constexpr TcpSeqNum & operator-= (IntType int_val) {
         *this = operator-(int_val);
         return *this;

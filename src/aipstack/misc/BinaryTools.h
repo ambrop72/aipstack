@@ -72,7 +72,7 @@ namespace BinaryToolsPrivate {
  */
 template<typename T>
 constexpr bool BinaryReadWriteSupportsType () {
-    return BinaryToolsPrivate::IntegerSupported<T, std::is_integral<T>::value>::Value;
+    return BinaryToolsPrivate::IntegerSupported<T, std::is_integral_v<T>>::Value;
 }
 
 #ifndef IN_DOXYGEN
@@ -98,7 +98,7 @@ namespace BinaryToolsPrivate {
     template<typename T>
     struct RepresentativeCheck {
         static_assert(BinaryReadWriteSupportsType<T>());
-        static_assert(std::is_unsigned<T>::value);
+        static_assert(std::is_unsigned_v<T>);
         
         using Type = typename RepresentativeImpl<std::numeric_limits<T>::digits>::Type;
     };
@@ -216,7 +216,7 @@ namespace BinaryToolsPrivate {
         template<typename T, bool BigEndian>
         inline static T read_it (char const *src)
         {
-            static_assert(std::is_unsigned<T>::value);
+            static_assert(std::is_unsigned_v<T>);
             
             return ReadUnsigned<Representative<T>, BigEndian>::readInt(src);
         }
@@ -224,7 +224,7 @@ namespace BinaryToolsPrivate {
         template<typename T, bool BigEndian>
         inline static void write_it (T value, char *dst)
         {
-            static_assert(std::is_unsigned<T>::value);
+            static_assert(std::is_unsigned_v<T>);
             
             return WriteUnsigned<Representative<T>, BigEndian>::writeInt(value, dst);
         }
@@ -235,7 +235,7 @@ namespace BinaryToolsPrivate {
         template<typename T, bool BigEndian>
         inline static T read_it (char const *src)
         {
-            static_assert(std::is_signed<T>::value);
+            static_assert(std::is_signed_v<T>);
             using UT = std::make_unsigned_t<T>;
             
             UT uval = SignHelper<false>::template read_it<UT, BigEndian>(src);
@@ -245,7 +245,7 @@ namespace BinaryToolsPrivate {
         template<typename T, bool BigEndian>
         inline static void write_it (T value, char *dst)
         {
-            static_assert(std::is_signed<T>::value);
+            static_assert(std::is_signed_v<T>);
             using UT = std::make_unsigned_t<T>;
             
             UT uval = value;
@@ -285,7 +285,7 @@ inline T ReadBinaryInt (char const *src)
 {
     static_assert(BinaryReadWriteSupportsType<T>());
     
-    return BinaryToolsPrivate::SignHelper<std::is_signed<T>::value>::
+    return BinaryToolsPrivate::SignHelper<std::is_signed_v<T>>::
         template read_it<T, Endian::BigEndian>(src);
 }
 
@@ -304,7 +304,7 @@ inline void WriteBinaryInt (T value, char *dst)
 {
     static_assert(BinaryReadWriteSupportsType<T>());
     
-    return BinaryToolsPrivate::SignHelper<std::is_signed<T>::value>::
+    return BinaryToolsPrivate::SignHelper<std::is_signed_v<T>>::
         template write_it<T, Endian::BigEndian>(value, dst);
 }
 

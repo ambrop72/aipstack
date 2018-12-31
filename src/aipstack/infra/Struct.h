@@ -702,7 +702,7 @@ public:
 
 template<typename Type>
 struct StructTypeHandler<Type,
-    std::enable_if_t<std::is_base_of<StructBase<Type>, Type>::value>>
+    std::enable_if_t<std::is_base_of_v<StructBase<Type>, Type>>>
 {
     using Handler = StructNestedTypeHandler<Type>;
 };
@@ -736,8 +736,7 @@ public:
 
 template<typename T>
 using StructIsByteType = WrapBool<
-    std::is_same<T, char>::value || std::is_same<T, unsigned char>::value
->;
+    std::is_same_v<T, char> || std::is_same_v<T, unsigned char>>;
 
 template<typename ElemType, std::size_t Length>
 class StructByteArrayTypeHandler {
@@ -783,7 +782,7 @@ struct StructTypeHandler<ElemFieldType[Length],
 
 template<typename ElemFieldType, std::size_t Length>
 struct StructTypeHandler<std::array<ElemFieldType, Length>,
-    std::enable_if_t<std::is_same<StructFieldValType<ElemFieldType>, ElemFieldType>::value>>
+    std::enable_if_t<std::is_same_v<StructFieldValType<ElemFieldType>, ElemFieldType>>>
 {
     using Handler = StructSelectArrayTypeHandler<ElemFieldType, Length>;
 };
@@ -805,7 +804,7 @@ struct StructRawField {};
 template<typename Type>
 class StructRawTypeHandler {
 public:
-    static_assert(std::is_trivial<Type>::value);
+    static_assert(std::is_trivial_v<Type>);
     
     inline static constexpr std::size_t FieldSize = sizeof(Type);
     

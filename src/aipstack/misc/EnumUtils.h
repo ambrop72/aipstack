@@ -58,7 +58,7 @@ public:
      * @return `EnumType(0)`
      */
     template<typename EnumType,
-        typename = std::enable_if_t<std::is_enum<EnumType>::value>>
+        typename = std::enable_if_t<std::is_enum_v<EnumType>>>
     inline constexpr operator EnumType () const {
         return EnumType(0);
     }
@@ -72,7 +72,7 @@ public:
  * @return `e == EnumType(0)`
  */
 template<typename EnumType,
-    typename = std::enable_if_t<std::is_enum<EnumType>::value>>
+    typename = std::enable_if_t<std::is_enum_v<EnumType>>>
 inline constexpr bool operator== (EnumType e, Enum0Type) {
     return e == EnumType(0);
 }
@@ -85,7 +85,7 @@ inline constexpr bool operator== (EnumType e, Enum0Type) {
  * @return `e == EnumType(0)`
  */
 template<typename EnumType,
-    typename = std::enable_if_t<std::is_enum<EnumType>::value>>
+    typename = std::enable_if_t<std::is_enum_v<EnumType>>>
 inline constexpr bool operator== (Enum0Type, EnumType e) {
     return e == EnumType(0);
 }
@@ -98,7 +98,7 @@ inline constexpr bool operator== (Enum0Type, EnumType e) {
  * @return `e != EnumType(0)`
  */
 template<typename EnumType,
-    typename = std::enable_if_t<std::is_enum<EnumType>::value>>
+    typename = std::enable_if_t<std::is_enum_v<EnumType>>>
 inline constexpr bool operator!= (EnumType e, Enum0Type) {
     return e != EnumType(0);
 }
@@ -111,7 +111,7 @@ inline constexpr bool operator!= (EnumType e, Enum0Type) {
  * @return `e != EnumType(0)`
  */
 template<typename EnumType,
-    typename = std::enable_if_t<std::is_enum<EnumType>::value>>
+    typename = std::enable_if_t<std::is_enum_v<EnumType>>>
 inline constexpr bool operator!= (Enum0Type, EnumType e) {
     return e != EnumType(0);
 }
@@ -131,7 +131,7 @@ inline constexpr Enum0Type Enum0 = Enum0Type();
 template<typename EnumType>
 inline constexpr std::underlying_type_t<EnumType> AsUnderlying (EnumType e)
 {
-    static_assert(std::is_enum<EnumType>::value, "EnumType must be an enum type");
+    static_assert(std::is_enum_v<EnumType>, "EnumType must be an enum type");
     return std::underlying_type_t<EnumType>(e);
 }
 
@@ -146,7 +146,7 @@ namespace EnumUtilsPrivate {
     template<typename Type, typename BaseType>
     struct EnumWithBaseTypeHelper<true, Type, BaseType> {
         inline static constexpr bool IsEnumWithBaseType =
-            std::is_same<std::underlying_type_t<Type>, BaseType>::value;
+            std::is_same_v<std::underlying_type_t<Type>, BaseType>;
     };
     
     template<bool IsEnum, typename Type>
@@ -176,7 +176,7 @@ using IsEnumWithBaseType = WrapBool<
     #ifdef IN_DOXYGEN
     implementation_hidden
     #else
-    EnumUtilsPrivate::EnumWithBaseTypeHelper<std::is_enum<Type>::value, Type, BaseType>::IsEnumWithBaseType
+    EnumUtilsPrivate::EnumWithBaseTypeHelper<std::is_enum_v<Type>, Type, BaseType>::IsEnumWithBaseType
     #endif
 >;
 
@@ -194,7 +194,7 @@ using IsSameOrEnumWithBaseType = WrapBool<
     #ifdef IN_DOXYGEN
     implementation_hidden
     #else
-    std::is_same<Type, BaseType>::value || IsEnumWithBaseType<Type, BaseType>::Value
+    std::is_same_v<Type, BaseType> || IsEnumWithBaseType<Type, BaseType>::Value
     #endif
 >;
 
@@ -207,7 +207,7 @@ using IsSameOrEnumWithBaseType = WrapBool<
  * @tparam Type Type for which to get the same or underlying type.
  */
 template<typename Type>
-using GetSameOrEnumBaseType = typename EnumUtilsPrivate::GetSameOrBaseTypeHelper<std::is_enum<Type>::value, Type>::ResultType;
+using GetSameOrEnumBaseType = typename EnumUtilsPrivate::GetSameOrBaseTypeHelper<std::is_enum_v<Type>, Type>::ResultType;
 
 /** @} */
 

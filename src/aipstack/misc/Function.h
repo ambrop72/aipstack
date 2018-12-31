@@ -139,9 +139,9 @@ public:
     {
         static_assert(sizeof(Callable) <= FunctionStorageSize,
                       "Callable too large (greater than FunctionStorageSize)");
-        static_assert(std::is_trivially_copy_constructible<Callable>::value,
+        static_assert(std::is_trivially_copy_constructible_v<Callable>,
                       "Callable not trivially copy constructible");
-        static_assert(std::is_trivially_destructible<Callable>::value,
+        static_assert(std::is_trivially_destructible_v<Callable>,
                       "Callable not trivially destructible");
 
         m_func_ptr = &trampoline<Callable>;

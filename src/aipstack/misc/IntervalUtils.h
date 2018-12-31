@@ -56,7 +56,7 @@ namespace AIpStack {
 template<typename IntType>
 bool InOpenClosedIntervalStartLen (IntType start, IntType length, IntType x)
 {
-    static_assert(std::is_unsigned<IntType>::value, "Must be unsigned");
+    static_assert(std::is_unsigned_v<IntType>, "Must be unsigned");
     
     return IntType(x + ~start) < length;
 }

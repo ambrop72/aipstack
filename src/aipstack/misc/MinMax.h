@@ -128,8 +128,8 @@ using MinValueURetType = std::conditional_t<
 template<typename T1, typename T2>
 constexpr MinValueURetType<T1, T2> MinValueU (T1 op1, T2 op2)
 {
-    static_assert(std::is_unsigned<T1>::value, "Only unsigned allowed");
-    static_assert(std::is_unsigned<T2>::value, "Only unsigned allowed");
+    static_assert(std::is_unsigned_v<T1>, "Only unsigned allowed");
+    static_assert(std::is_unsigned_v<T2>, "Only unsigned allowed");
     using RetType = MinValueURetType<T1, T2>;
     
     return (op1 <= op2) ? RetType(op1) : RetType(op2);
@@ -157,8 +157,8 @@ using MaxValueURetType = std::conditional_t<
 template<typename T1, typename T2>
 constexpr MaxValueURetType<T1, T2> MaxValueU (T1 op1, T2 op2)
 {
-    static_assert(std::is_unsigned<T1>::value, "Only unsigned allowed");
-    static_assert(std::is_unsigned<T2>::value, "Only unsigned allowed");
+    static_assert(std::is_unsigned_v<T1>, "Only unsigned allowed");
+    static_assert(std::is_unsigned_v<T2>, "Only unsigned allowed");
     using RetType = MaxValueURetType<T1, T2>;
 
     return (op1 >= op2) ? RetType(op1) : RetType(op2);
@@ -178,8 +178,8 @@ constexpr MaxValueURetType<T1, T2> MaxValueU (T1 op1, T2 op2)
 template<typename ValType, typename IncrType>
 constexpr void AddToSat (ValType &val, IncrType incr)
 {
-    static_assert(std::is_unsigned<ValType>::value, "Only unsigned allowed");
-    static_assert(std::is_unsigned<IncrType>::value, "Only unsigned allowed");
+    static_assert(std::is_unsigned_v<ValType>, "Only unsigned allowed");
+    static_assert(std::is_unsigned_v<IncrType>, "Only unsigned allowed");
 
     ValType remain = TypeMax<ValType> - val;
     val = (incr > remain) ? TypeMax<ValType> : val + incr;
