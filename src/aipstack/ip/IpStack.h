@@ -189,7 +189,7 @@ private:
     // This metaprogramming is for GetProtoArg and getProtoApi. It finds the protocol
     // handler whose getApi() function returns a reference to ProtoApi<Arg> for some type
     // Arg.
-    template <template <typename> class ProtoApi>
+    template <template <typename> typename ProtoApi>
     class GetProtoApiHelper {
         template <typename, typename = void>
         struct MatchApi {
@@ -305,7 +305,7 @@ public:
      * @tparam ProtoApi Class template which represents the protocol API, for example @ref
      *         UdpApi or @ref TcpApi.
      */
-    template <template <typename> class ProtoApi>
+    template <template <typename> typename ProtoApi>
     using GetProtoArg = typename GetProtoApiHelper<ProtoApi>::ProtoArg;
 
     /**
@@ -320,7 +320,7 @@ public:
      *         UdpApi or @ref TcpApi.
      * @return Reference to protocol API.
      */
-    template <template <typename> class ProtoApi>
+    template <template <typename> typename ProtoApi>
     inline ProtoApi<GetProtoArg<ProtoApi>> & getProtoApi ()
     {
         using Protocol = typename GetProtoApiHelper<ProtoApi>::Protocol;

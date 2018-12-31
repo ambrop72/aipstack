@@ -35,7 +35,7 @@ namespace AIpStack {
 template <typename Func, typename Arg>
 using FuncCall = typename Func::template Call<Arg>::Type;
 
-template <template<typename> class Template>
+template <template<typename> typename Template>
 struct TemplateFunc {
     template <typename U>
     struct Call {
@@ -43,7 +43,7 @@ struct TemplateFunc {
     };
 };
 
-template <typename ValueType, template<ValueType> class Template>
+template <typename ValueType, template<ValueType> typename Template>
 struct ValueTemplateFunc {
     template <typename U>
     struct Call {

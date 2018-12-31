@@ -247,14 +247,14 @@ typename SequenceListPrivate::SequenceListHelper<Count, Start>::Type;
  * Create a list of ElemTemplate\<index\> for index from
  * 0 up to Count exclusive.
  */
-template <int Count, template<int> class ElemTemplate>
+template <int Count, template<int> typename ElemTemplate>
 using IndexElemListCount = MapTypeList<SequenceList<Count>, ValueTemplateFunc<int, ElemTemplate>>;
 
 /**
  * Create a list of ElemTemplate\<index\> for index from
  * 0 up to the length of List exclusive.
  */
-template <typename List, template<int> class ElemTemplate>
+template <typename List, template<int> typename ElemTemplate>
 using IndexElemList = IndexElemListCount<TypeListLength<List>::Value, ElemTemplate>;
 
 /** @} */
