@@ -156,12 +156,14 @@ static void dhcpClientCallback (
     char const *event_str = nullptr;
 
     switch (event_type) {
-        case AIpStack::IpDhcpClientEvent::LeaseObtained:
-            std::strcpy(buf, "Lease obtained: ");
-            AIpStack::FormatIpAddr(buf + std::strlen(buf),
-                dhcp->getLeaseInfoMustHaveLease().ip_address);
+        case AIpStack::IpDhcpClientEvent::LeaseObtained: {
+            char *out = buf;
+            out += std::strlen(std::strcpy(out, "Lease obtained: "));
+            out = AIpStack::FormatIpAddr(out, dhcp->getLeaseInfoMustHaveLease().ip_address);
+            *out = '\0';
             event_str = buf;
             break;
+        }
         case AIpStack::IpDhcpClientEvent::LeaseRenewed:
             event_str = "Lease renewed";
             break;

@@ -27,12 +27,12 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/MemRef.h>
 #include <aipstack/ip/IpAddr.h>
+#include <aipstack/utils/IntFormat.h>
 
 namespace AIpStack {
 
@@ -45,10 +45,9 @@ namespace AIpStack {
  */
 
 /**
- * Maximum number of characters that @ref FormatIpAddr may write including the null
- * terminator.
+ * Maximum number of characters that @ref FormatIpAddr may write.
  */
-static constexpr std::size_t MaxIp4AddrPrintLen = 16;
+static constexpr std::size_t MaxIp4AddrPrintLen = 15;
 
 /**
  * Format an IPv4 address to dot-decimal representation.
@@ -56,21 +55,24 @@ static constexpr std::size_t MaxIp4AddrPrintLen = 16;
  * This generates the representation "N.N.N.N" where each N is a decimal representation of
  * the corresponding byte with no redundant leading zeros (zero is represented as "0").
  * 
- * @param out_str Pointer to where the result will be written including a null terminator.
+ * @param out_str Pointer to where the result will be written (without a null terminator).
  *        It must not be null and there must be at least @ref MaxIp4AddrPrintLen bytes
  *        available.
  * @param addr IPv4 address to be formatted.
- * @return Pointer to one past the last non-null character written (and pointer to the
- *         written null terminator).
+ * @return Pointer to one past the last character written.
  */
 AIPSTACK_OPTIMIZE_SIZE
 inline char * FormatIpAddr (char *out_str, Ip4Addr addr)
 {
-    auto len = std::sprintf(out_str, "%d.%d.%d.%d",
-        int(addr.getByte<0>()), int(addr.getByte<1>()),
-        int(addr.getByte<2>()), int(addr.getByte<3>()));
-    AIPSTACK_ASSERT(len > 0)
-    return out_str + len;
+    char *end = out_str;
+    end = FormatInteger(end, addr.getByte<0>());
+    *end++ = '.';
+    end = FormatInteger(end, addr.getByte<1>());
+    *end++ = '.';
+    end = FormatInteger(end, addr.getByte<2>());
+    *end++ = '.';
+    end = FormatInteger(end, addr.getByte<3>());
+    return end;
 }
 
 /**

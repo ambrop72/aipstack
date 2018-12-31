@@ -82,13 +82,12 @@ namespace Private {
 #endif
 
 /**
- * Maximum number of characters that @ref FormatInteger may write for the given type
- * including the null terminator.
+ * Maximum number of characters that @ref FormatInteger may write for the given type.
  * 
  * @tparam T Integer type (excluding bool), see @ref IsInteger.
  */
 template <typename T, typename = std::enable_if_t<IsInteger<T>>>
-constexpr std::size_t MaxIntegerFormatLen = Private::MaxIntegerFormatLenBase<T>() + 1;
+constexpr std::size_t MaxIntegerFormatLen = Private::MaxIntegerFormatLenBase<T>();
 
 /**
  * Format an integer to decimal representation.
@@ -97,12 +96,11 @@ constexpr std::size_t MaxIntegerFormatLen = Private::MaxIntegerFormatLenBase<T>(
  * zeros and with a leading minus sign in case of negative values.
  * 
  * @tparam T Integer type (excluding bool), see @ref IsInteger.
- * @param out_str Pointer to where the result will be written including a null terminator.
+ * @param out_str Pointer to where the result will be written (without a null terminator).
  *        It must not be null and there must be at least @ref MaxIntegerFormatLen<T> bytes
  *        available.
  * @param value Integer to be formatted.
- * @return Pointer to one past the last non-null character written (and pointer to the
- *         written null terminator).
+ * @return Pointer to one past the last character written.
  */
 template <typename T, typename = std::enable_if_t<IsInteger<T>>>
 AIPSTACK_OPTIMIZE_SIZE
@@ -125,8 +123,6 @@ char * FormatInteger (char *out_str, T value)
     }
 
     std::reverse(out_str, pos);
-
-    *pos = '\0';
 
     return pos;
 }
