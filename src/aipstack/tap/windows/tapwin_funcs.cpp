@@ -103,7 +103,7 @@ public:
         return m_hkey;
     }
     
-    template <typename Func>
+    template<typename Func>
     bool open (Func func)
     {
         AIPSTACK_ASSERT(!m_have);

@@ -32,7 +32,7 @@
 namespace AIpStack {
 
 // Fields should be MakeTypeList<WrapValue<FieldType, &ObjType::Field>, ...>
-template <typename ObjType, typename Fields>
+template<typename ObjType, typename Fields>
 class LexiKeyCompare {
 public:
     static int CompareKeys (ObjType const &op1, ObjType const &op2)

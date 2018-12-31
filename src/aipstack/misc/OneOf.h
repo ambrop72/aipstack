@@ -36,16 +36,16 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <typename ...>
+template<typename ...>
 struct OneOfStruct;
 
-template <typename OptRefType, typename ...TailOptRefType>
+template<typename OptRefType, typename ...TailOptRefType>
 struct OneOfStruct<OptRefType, TailOptRefType...> {
     AIPSTACK_ALWAYS_INLINE
     constexpr OneOfStruct (OptRefType const &opt_ref_arg, TailOptRefType const & ... tail_opt_ref_arg)
     : opt_ref(opt_ref_arg), tail_opt_ref(tail_opt_ref_arg...) {}
     
-    template <typename SelType>
+    template<typename SelType>
     AIPSTACK_ALWAYS_INLINE
     constexpr bool one_of (SelType const &sel) const
     {
@@ -56,12 +56,12 @@ struct OneOfStruct<OptRefType, TailOptRefType...> {
     OneOfStruct<TailOptRefType...> tail_opt_ref;
 };
 
-template <>
+template<>
 struct OneOfStruct<> {
     AIPSTACK_ALWAYS_INLINE
     constexpr OneOfStruct () {}
     
-    template <typename SelType>
+    template<typename SelType>
     AIPSTACK_ALWAYS_INLINE
     constexpr bool one_of (SelType const &) const
     {
@@ -69,14 +69,14 @@ struct OneOfStruct<> {
     }
 };
 
-template <typename SelType, typename ...OptRefType>
+template<typename SelType, typename ...OptRefType>
 AIPSTACK_ALWAYS_INLINE
 constexpr bool operator== (SelType const &sel, OneOfStruct<OptRefType...> opt_struct)
 {
     return opt_struct.one_of(sel);
 }
 
-template <typename SelType, typename ...OptRefType>
+template<typename SelType, typename ...OptRefType>
 AIPSTACK_ALWAYS_INLINE
 constexpr bool operator!= (SelType const &sel, OneOfStruct<OptRefType...> opt_struct)
 {
@@ -110,7 +110,7 @@ constexpr bool operator!= (SelType const &sel, OneOfStruct<OptRefType...> opt_st
  * @return A value containing all the option values and for which `==` and `!=` operators
  *         are defined to support the expressions described.
  */
-template <typename ...OptType>
+template<typename ...OptType>
 AIPSTACK_ALWAYS_INLINE
 constexpr OneOfStruct<OptType...> OneOf (OptType ... opt)
 {

@@ -35,16 +35,16 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
-template <typename> class IpTcpProto;
+template<typename> class IpTcpProto;
 #endif
 
-template <typename Arg>
+template<typename Arg>
 class TcpApi :
     private NonCopyable<TcpApi<Arg>>
 {
-    template <typename> friend class IpTcpProto;
-    template <typename> friend class TcpListener;
-    template <typename> friend class TcpConnection;
+    template<typename> friend class IpTcpProto;
+    template<typename> friend class TcpListener;
+    template<typename> friend class TcpConnection;
 
     using Constants = IpTcpProto_constants<Arg>;
 

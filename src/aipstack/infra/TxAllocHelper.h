@@ -71,7 +71,7 @@ class TxAllocHelperUninitialized {};
  * @tparam MaxSize Maximum possible data size.
  * @tparam HeaderBefore Space before the data to reserve for headers.
  */
-template <std::size_t MaxSize, std::size_t HeaderBefore>
+template<std::size_t MaxSize, std::size_t HeaderBefore>
 class TxAllocHelper {
     inline static constexpr std::size_t TotalMaxSize = HeaderBefore + MaxSize;
     

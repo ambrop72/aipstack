@@ -44,7 +44,7 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <typename Arg>
+template<typename Arg>
 class AvlTreeIndex {
     AIPSTACK_USE_TYPES(Arg, (HookAccessor, LookupKeyArg, KeyFuncs, LinkModel))
     AIPSTACK_USE_VALS(Arg, (Duplicates))
@@ -71,13 +71,13 @@ public:
         // this as the KeyFunc to the AvlTree but we still directly use the original
         // KeyFuncs in findFirst and findNext.
         struct MultiKeyFuncs {
-            template <typename BaseKey>
+            template<typename BaseKey>
             struct EntryKey {
                 BaseKey base_key;
                 Node *ptr;
             };
             
-            template <typename Entry>
+            template<typename Entry>
             inline static auto GetKeyOfEntry (Entry &e) ->
                 EntryKey<decltype(KeyFuncs::GetKeyOfEntry(e))>
             {
@@ -87,7 +87,7 @@ public:
                 };
             }
             
-            template <typename BaseKey1, typename BaseKey2>
+            template<typename BaseKey1, typename BaseKey2>
             static int CompareKeys (EntryKey<BaseKey1> k1, EntryKey<BaseKey2> k2)
             {
                 // Comparing two entries: use lexicographical order by the base key
@@ -100,7 +100,7 @@ public:
                        std::less<Node *>()(k2.ptr, k1.ptr) ? 1 : 0;
             }
             
-            template <typename BaseKey2>
+            template<typename BaseKey2>
             static int CompareKeys (LookupKeyArg k1, EntryKey<BaseKey2> k2)
             {
                 // Comparing a lookup key and an entry (as part of a lookup): use
@@ -141,7 +141,7 @@ public:
             m_tree.remove(e, st);
         }
         
-        template <bool Enable = !Duplicates, typename = std::enable_if_t<Enable>>
+        template<bool Enable = !Duplicates, typename = std::enable_if_t<Enable>>
         inline Ref findEntry (LookupKeyArg key, State st = State()) const
         {
             Ref entry = m_tree.template lookup<LookupKeyArg>(key, st);
@@ -150,7 +150,7 @@ public:
             return entry;
         }
         
-        template <bool Enable = Duplicates, typename = std::enable_if_t<Enable>>
+        template<bool Enable = Duplicates, typename = std::enable_if_t<Enable>>
         inline Ref findFirst (LookupKeyArg key, State st = State()) const
         {
             int cmpKeyEntry;
@@ -183,7 +183,7 @@ public:
             return entry;
         }
         
-        template <bool Enable = Duplicates, typename = std::enable_if_t<Enable>>
+        template<bool Enable = Duplicates, typename = std::enable_if_t<Enable>>
         inline Ref findNext (LookupKeyArg key, Ref prev_e, State st = State()) const
         {
             // Move to the next entry and check if it matches the `key`. If not then this
@@ -229,7 +229,7 @@ public:
 class AvlTreeIndexService {
 public:
     #ifndef IN_DOXYGEN
-    template <typename HookAccessor_, typename LookupKeyArg_,
+    template<typename HookAccessor_, typename LookupKeyArg_,
               typename KeyFuncs_, typename LinkModel_, bool Duplicates_>
     struct Index {
         using HookAccessor = HookAccessor_;

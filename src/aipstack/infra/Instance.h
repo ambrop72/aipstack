@@ -37,7 +37,7 @@
  * configured using the @ref configuration module:
  * 
  * ```
- * template <typename ...Options>
+ * template<typename ...Options>
  * class MyClass {
  *     AIPSTACK_OPTION_CONFIG_VALUE(MyClassOptions, Option1)
  * public:
@@ -64,7 +64,7 @@
  * configuration options. In plain C++ code, the solution is as follows:
  * 
  * ```
- * template <typename Arg>
+ * template<typename Arg>
  * class MyClass {
  *     // Arg is a type derived from MyClassService, so option can be accessed like this:
  *     // Arg::Option1
@@ -73,11 +73,11 @@
  *     void function(NestedClass n);
  * };
  * 
- * template <typename ...Options>
+ * template<typename ...Options>
  * class MyClassService {
  *     AIPSTACK_OPTION_CONFIG_VALUE(MyClassOptions, Option1)
  *     
- *     template <typename Instance_self=MyClassService>
+ *     template<typename Instance_self=MyClassService>
  *     using Instance = MyClass<Instance_self>;
  *     // The type alias above should instead be defined with a macro like this:
  *     //AIPSTACK_DEF_INSTANCE(MyClassService, MyClass)
@@ -110,7 +110,7 @@
  *        different trivial struct type for each instance, derived from `self`.
  */
 #define AIPSTACK_DEF_INSTANCE(self, class) \
-template <typename Instance_self=self> \
+template<typename Instance_self=self> \
 using Instance = class<Instance_self>;
 
 /**

@@ -48,7 +48,7 @@ struct ResourceTupleInitSame {};
 #ifndef IN_DOXYGEN
 
 namespace ResourceTuplePrivate {
-    template <typename Elem, std::size_t Index>
+    template<typename Elem, std::size_t Index>
     class InheritElemHelper
     {
     public:
@@ -57,31 +57,31 @@ namespace ResourceTuplePrivate {
     public:
         InheritElemHelper () = default;
         
-        template <typename ...Args>
+        template<typename ...Args>
         inline InheritElemHelper (ResourceTupleInitSame, Args && ... args) :
             m_elem(std::forward<Args>(args)...)
         {
         }
     };
     
-    template <typename ElemsSequence, typename IndicesSequence>
+    template<typename ElemsSequence, typename IndicesSequence>
     class InheritAllHelper;
     
-    template <typename ...Elems, std::size_t... Indices>
+    template<typename ...Elems, std::size_t... Indices>
     class InheritAllHelper<std::tuple<Elems...>, std::index_sequence<Indices...>> :
         public InheritElemHelper<Elems, Indices>...
     {
     public:
         InheritAllHelper () = default;
         
-        template <typename ...Args>
+        template<typename ...Args>
         inline InheritAllHelper (ResourceTupleInitSame, Args const & ... args) :
             InheritElemHelper<Elems, Indices>{ResourceTupleInitSame(), args...}...
         {
         }
     };
     
-    template <typename ...Elems>
+    template<typename ...Elems>
     using InheritAllAlias = InheritAllHelper<
         std::tuple<Elems...>, std::make_index_sequence<sizeof...(Elems)>>;
 }
@@ -97,7 +97,7 @@ namespace ResourceTuplePrivate {
  * 
  * @tparam Elems Types of tuple elements.
  */
-template <typename ...Elems>
+template<typename ...Elems>
 class ResourceTuple
 #ifndef IN_DOXYGEN
     :private ResourceTuplePrivate::InheritAllAlias<Elems...>
@@ -111,11 +111,11 @@ public:
      * 
      * @tparam Index Element index. Must be less than `sizeof...(Elems)`.
      */
-    template <std::size_t Index>
+    template<std::size_t Index>
     using ElemType = std::tuple_element_t<Index, std::tuple<Elems...>>;
     
 private:
-    template <std::size_t Index>
+    template<std::size_t Index>
     using ElemHelperType = ResourceTuplePrivate::InheritElemHelper<ElemType<Index>, Index>;
     
 public:
@@ -132,7 +132,7 @@ public:
      *        element). Note that they are given by and passed to element constructors by
      *        const reference.
      */
-    template <typename ...Args>
+    template<typename ...Args>
     ResourceTuple (ResourceTupleInitSame, Args const & ... args) :
         InheritAll(ResourceTupleInitSame(), args...)
     {
@@ -144,7 +144,7 @@ public:
      * @tparam Index Element index. Must be less than `sizeof...(Elems)`.
      * @return Reference to the element at index `Index`.
      */
-    template <std::size_t Index>
+    template<std::size_t Index>
     ElemType<Index> & get (WrapSize<Index> = WrapSize<Index>())
     {
         return static_cast<ElemHelperType<Index> &>(*this).m_elem;
@@ -156,7 +156,7 @@ public:
      * @tparam Index Element index. Must be less than `sizeof...(Elems)`.
      * @return Reference to the element at index `Index`.
      */
-    template <std::size_t Index>
+    template<std::size_t Index>
     ElemType<Index> const & get (WrapSize<Index> = WrapSize<Index>()) const
     {
         return static_cast<ElemHelperType<Index> const &>(*this).m_elem;

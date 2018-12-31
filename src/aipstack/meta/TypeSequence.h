@@ -34,20 +34,20 @@ namespace AIpStack {
  * @{
  */
 
-template <typename ...Types>
+template<typename ...Types>
 struct TypeSequence {};
 
 #ifndef IN_DOXYGEN
 
-template <typename, typename>
+template<typename, typename>
 struct TypeSequenceMakeIntConcatHelper;
 
-template <typename ...Ints1, typename ...Ints2>
+template<typename ...Ints1, typename ...Ints2>
 struct TypeSequenceMakeIntConcatHelper<TypeSequence<Ints1...>, TypeSequence<Ints2...>> {
     using Result = TypeSequence<Ints1..., Ints2...>;
 };
 
-template <int S, int N>
+template<int S, int N>
 struct TypeSequenceMakeIntHelper {
     using Result = typename TypeSequenceMakeIntConcatHelper<
         typename TypeSequenceMakeIntHelper<S, (N / 2)>::Result,
@@ -55,19 +55,19 @@ struct TypeSequenceMakeIntHelper {
     >::Result;
 };
 
-template <int S>
+template<int S>
 struct TypeSequenceMakeIntHelper<S, 0> {
     using Result = TypeSequence<>;
 };
 
-template <int S>
+template<int S>
 struct TypeSequenceMakeIntHelper<S, 1> {
     using Result = TypeSequence<WrapInt<S>>;
 };
 
 #endif
 
-template <int N>
+template<int N>
 using TypeSequenceMakeInt =
 #ifdef IN_DOXYGEN
 implementation_hidden;

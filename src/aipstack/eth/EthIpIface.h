@@ -164,7 +164,7 @@ struct EthIfaceDriverParams {
  *         or a dummy class derived from such; see @ref EthIpIfaceService for an
  *         example.
  */
-template <typename Arg>
+template<typename Arg>
 class EthIpIface final :
     private NonCopyable<EthIpIface<Arg>>
 #ifndef IN_DOXYGEN
@@ -1027,9 +1027,9 @@ struct EthIpIfaceOptions {
  * 
  * @tparam Options Assignments of options defined in @ref EthIpIfaceOptions.
  */
-template <typename ...Options>
+template<typename ...Options>
 class EthIpIfaceService {
-    template <typename>
+    template<typename>
     friend class EthIpIface;
     
     AIPSTACK_OPTION_CONFIG_VALUE(EthIpIfaceOptions, NumArpEntries)
@@ -1049,7 +1049,7 @@ public:
      *         @ref IpStack (see @ref IpStackService::Compose).
      * @tparam StackArg_ Template parameter of @ref IpStack.
      */
-    template <typename PlatformImpl_, typename StackArg_>
+    template<typename PlatformImpl_, typename StackArg_>
     struct Compose {
 #ifndef IN_DOXYGEN
         using PlatformImpl = PlatformImpl_;

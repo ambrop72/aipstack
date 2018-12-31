@@ -31,9 +31,9 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
-template <typename> class IpStack;
-template <typename> class IpIface;
-template <typename> class IpDriverIface;
+template<typename> class IpStack;
+template<typename> class IpIface;
+template<typename> class IpDriverIface;
 #endif
 
 /**
@@ -54,11 +54,11 @@ template <typename> class IpDriverIface;
  * 
  * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename Arg>
+template<typename Arg>
 class IpIfaceStateObserver :
     public Observer<IpIfaceStateObserver<Arg>>
 {
-    template <typename> friend class IpDriverIface;
+    template<typename> friend class IpDriverIface;
     friend Observable<IpIfaceStateObserver>;
     
 public:

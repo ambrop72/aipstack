@@ -37,17 +37,17 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <template<typename ...> typename Template, typename Sequence>
+template<template<typename ...> typename Template, typename Sequence>
 struct InstantiateVariadicHelper;
 
-template <template<typename ...> typename Template, typename ...Args>
+template<template<typename ...> typename Template, typename ...Args>
 struct InstantiateVariadicHelper<Template, TypeSequence<Args...>> {
     using Result = Template<Args...>;
 };
 
 #endif
 
-template <template<typename ...> typename Template, typename List>
+template<template<typename ...> typename Template, typename List>
 using InstantiateVariadic =
 #ifdef IN_DOXYGEN
 implementation_hidden;

@@ -51,10 +51,10 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
-template <typename> class IpTcpProto;
+template<typename> class IpTcpProto;
 #endif
 
-template <typename Arg>
+template<typename Arg>
 class IpTcpProto_output
 {
     using TcpProto = IpTcpProto<Arg>;

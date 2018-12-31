@@ -123,14 +123,14 @@ namespace AIpStack {
  * @tparam Arg An instantiation of the @ref IpStackService::Compose template or a
  *         dummy class derived from such; see @ref IpStackService for an example.
  */
-template <typename Arg>
+template<typename Arg>
 class IpStack :
     private NonCopyable<IpStack<Arg>>
 {
-    template <typename> friend class IpIface;
-    template <typename> friend class IpIfaceListener;
-    template <typename> friend class IpDriverIface;
-    template <typename> friend class IpMtuRef;
+    template<typename> friend class IpIface;
+    template<typename> friend class IpIfaceListener;
+    template<typename> friend class IpDriverIface;
+    template<typename> friend class IpMtuRef;
     
     AIPSTACK_USE_TYPES(Arg, (Params, ProtocolServicesList))
     AIPSTACK_USE_VALS(Params, (HeaderBeforeIp, IcmpTTL, AllowBroadcastPing))
@@ -157,7 +157,7 @@ private:
         PathMtuCacheService::template Compose<PlatformImpl, Arg>))
     
     // Instantiate the protocols.
-    template <int ProtocolIndex>
+    template<int ProtocolIndex>
     struct ProtocolHelper {
         // Get the protocol service.
         using ProtocolService = TypeListGet<ProtocolServicesList, ProtocolIndex>;
@@ -181,7 +181,7 @@ private:
     inline static constexpr int NumProtocols = TypeListLength<ProtocolHelpersList>::Value;
     
     // Create a list of the instantiated protocols, for the tuple.
-    template <typename Helper>
+    template<typename Helper>
     using ProtocolForHelper = typename Helper::Protocol;
     using ProtocolsList = MapTypeList<
         ProtocolHelpersList, TemplateFunc<ProtocolForHelper>>;
@@ -189,26 +189,26 @@ private:
     // This metaprogramming is for GetProtoArg and getProtoApi. It finds the protocol
     // handler whose getApi() function returns a reference to ProtoApi<Arg> for some type
     // Arg.
-    template <template <typename> typename ProtoApi>
+    template<template<typename> typename ProtoApi>
     class GetProtoApiHelper {
-        template <typename, typename = void>
+        template<typename, typename = void>
         struct MatchApi {
             inline static constexpr bool Matches = false;
         };
 
-        template <typename ProtoApiArg, typename Protocol, typename Dummy>
+        template<typename ProtoApiArg, typename Protocol, typename Dummy>
         struct MatchApi<ProtoApi<ProtoApiArg> & (Protocol::*) (), Dummy> {
             inline static constexpr bool Matches = true;
             using MatchArg = ProtoApiArg;
             using MatchProtocol = Protocol;
         };
 
-        template <typename Helper>
+        template<typename Helper>
         using MatchHelperApi = MatchApi<decltype(&Helper::Protocol::getApi)>;
 
         using MatchApiList = MapTypeList<ProtocolHelpersList, TemplateFunc<MatchHelperApi>>;
 
-        template <typename Match>
+        template<typename Match>
         using CheckMatch = WrapBool<Match::Matches>;
 
         using MatchFindRes = TypeListFindMapped<
@@ -305,7 +305,7 @@ public:
      * @tparam ProtoApi Class template which represents the protocol API, for example @ref
      *         UdpApi or @ref TcpApi.
      */
-    template <template <typename> typename ProtoApi>
+    template<template<typename> typename ProtoApi>
     using GetProtoArg = typename GetProtoApiHelper<ProtoApi>::ProtoArg;
 
     /**
@@ -320,7 +320,7 @@ public:
      *         UdpApi or @ref TcpApi.
      * @return Reference to protocol API.
      */
-    template <template <typename> typename ProtoApi>
+    template<template<typename> typename ProtoApi>
     inline ProtoApi<GetProtoArg<ProtoApi>> & getProtoApi ()
     {
         using Protocol = typename GetProtoApiHelper<ProtoApi>::Protocol;
@@ -1317,9 +1317,9 @@ struct IpStackOptions {
  * 
  * @tparam Options Assignments of options defined in @ref IpStackOptions.
  */
-template <typename ...Options>
+template<typename ...Options>
 class IpStackService {
-    template <typename>
+    template<typename>
     friend class IpStack;
     
     AIPSTACK_OPTION_CONFIG_VALUE(IpStackOptions, HeaderBeforeIp)
@@ -1344,7 +1344,7 @@ public:
      *         appropriate parameters passed to @ref IpTcpProtoService and @ref
      *         IpUdpProtoService.
      */
-    template <typename PlatformImpl_, typename ProtocolServicesList_>
+    template<typename PlatformImpl_, typename ProtocolServicesList_>
     struct Compose {
 #ifndef IN_DOXYGEN
         using PlatformImpl = PlatformImpl_;

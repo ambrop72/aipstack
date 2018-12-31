@@ -36,19 +36,19 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <int Base, std::uintmax_t N>
+template<int Base, std::uintmax_t N>
 struct DigitsInInt {
     inline static constexpr int Value = 1 + DigitsInInt<Base, N / Base>::Value;
 };
 
-template <int Base>
+template<int Base>
 struct DigitsInInt<Base, 0> {
     inline static constexpr int Value = 0;
 };
 
 #endif
 
-template <std::uintmax_t N>
+template<std::uintmax_t N>
 using BitsInInt =
 #ifdef IN_DOXYGEN
 implementation_hidden;
@@ -56,7 +56,7 @@ implementation_hidden;
 DigitsInInt<2, N>;
 #endif
 
-template <std::uintmax_t N>
+template<std::uintmax_t N>
 using HexDigitsInInt =
 #ifdef IN_DOXYGEN
 implementation_hidden;

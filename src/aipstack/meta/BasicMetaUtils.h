@@ -36,54 +36,54 @@ namespace AIpStack {
 
 // WrapType
 
-template <typename TType>
+template<typename TType>
 struct WrapType {
     using Type = TType;
 };
 
 // WrapValue
 
-template <typename TType, TType TValue>
+template<typename TType, TType TValue>
 struct WrapValue {
     typedef TType Type;
     inline static constexpr Type Value = TValue;
     static constexpr Type value () { return TValue; }
 };
 
-template <bool Value>
+template<bool Value>
 using WrapBool = WrapValue<bool, Value>;
 
-template <int Value>
+template<int Value>
 using WrapInt = WrapValue<int, Value>;
 
-template <std::size_t Value>
+template<std::size_t Value>
 using WrapSize = WrapValue<std::size_t, Value>;
 
 // VoidFor
 
-template <typename ...>
+template<typename ...>
 using VoidFor = void;
 
 // GetReturnType
 
 #ifndef IN_DOXYGEN
 
-template <typename Func>
+template<typename Func>
 struct GetReturnTypeHelper;
 
-template <typename Ret, typename ...Args>
+template<typename Ret, typename ...Args>
 struct GetReturnTypeHelper<Ret(Args...)> {
     using Result = Ret;
 };
 
-template <typename Ret, typename ...Args>
+template<typename Ret, typename ...Args>
 struct GetReturnTypeHelper<Ret(Args...)const> {
     using Result = Ret;
 };
 
 #endif
 
-template <typename Func>
+template<typename Func>
 using GetReturnType =
 #ifdef IN_DOXYGEN
 implementation_hidden;

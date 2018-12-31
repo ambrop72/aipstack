@@ -96,7 +96,7 @@ public:
             m_first = nullptr;
         }
         
-        template <typename EnumerateFunc>
+        template<typename EnumerateFunc>
         void enumerateObservers (EnumerateFunc enumerate)
         {
             for (ListNode *node = m_first; node != nullptr; node = node->m_next) {
@@ -104,7 +104,7 @@ public:
             }
         }
         
-        template <bool RemoveNotified, typename NotifyFunc>
+        template<bool RemoveNotified, typename NotifyFunc>
         void notifyObservers (NotifyFunc notify)
         {
             NotificationIterator iter(*this);
@@ -128,7 +128,7 @@ public:
                 m_observer = static_cast<BaseObserver *>(observable.m_first);
             }
             
-            template <bool RemoveNotified>
+            template<bool RemoveNotified>
             BaseObserver * beginNotify ()
             {
                 if (m_observer == nullptr) {
@@ -239,7 +239,7 @@ public:
 
 #endif
 
-template <typename ObserverDerived>
+template<typename ObserverDerived>
 class Observable;
 
 /**
@@ -273,7 +273,7 @@ class Observable;
  *         @ref Observer<ObserverDerived> must be a base subobject of an `ObserverDerived`
  *         object.
  */
-template <typename ObserverDerived>
+template<typename ObserverDerived>
 class Observer
 #ifndef IN_DOXYGEN
     :private ObserverNotificationPrivate::BaseObserver
@@ -328,7 +328,7 @@ public:
  *         `Observer<ObserverDerived>` observers can be associated with
  *         `Observable<ObserverDerived>`.
  */
-template <typename ObserverDerived>
+template<typename ObserverDerived>
 class Observable
 #ifndef IN_DOXYGEN
     :private ObserverNotificationPrivate::BaseObservable
@@ -391,7 +391,7 @@ public:
      * @tparam EnumerateFunc Function object type. Must be copy-constructible.
      * @param enumerate Function object to call for each observer.
      */
-    template <typename EnumerateFunc>
+    template<typename EnumerateFunc>
     inline void enumerateObservers (EnumerateFunc enumerate)
     {
         BaseObservable::enumerateObservers(convertObserverFunc(enumerate));
@@ -410,7 +410,7 @@ public:
      * @tparam NotifyFunc Function object type. Must be copy-constructible.
      * @param notify Function object to call to notify a specific observer.
      */
-    template <typename NotifyFunc>
+    template<typename NotifyFunc>
     inline void notifyKeepObservers (NotifyFunc notify)
     {
         BaseObservable::template notifyObservers<false>(convertObserverFunc(notify));
@@ -430,14 +430,14 @@ public:
      * @tparam NotifyFunc Function object type. Must be copy-constructible.
      * @param notify Function object to call to notify a specific observer.
      */
-    template <typename NotifyFunc>
+    template<typename NotifyFunc>
     inline void notifyRemoveObservers (NotifyFunc notify)
     {
         BaseObservable::template notifyObservers<true>(convertObserverFunc(notify));
     }
     
 private:
-    template <typename Func>
+    template<typename Func>
     inline static auto convertObserverFunc (Func func)
     {
         return [=](BaseObserver &base_observer) {

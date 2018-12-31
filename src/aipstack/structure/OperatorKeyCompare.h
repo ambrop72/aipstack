@@ -34,13 +34,13 @@ namespace AIpStack {
  */
 class OperatorKeyCompare {
 public:
-    template <typename Key1, typename Key2>
+    template<typename Key1, typename Key2>
     inline static int CompareKeys (Key1 const &op1, Key2 const &op2)
     {
         return (op1 < op2) ? -1 : (op1 == op2) ? 0 : 1;
     }
     
-    template <typename Key1, typename Key2>
+    template<typename Key1, typename Key2>
     inline static bool KeysAreEqual (Key1 const &op1, Key2 const &op2)
     {
         return op1 == op2;

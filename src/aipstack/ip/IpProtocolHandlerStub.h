@@ -99,7 +99,7 @@ namespace AIpStack {
  *         or a type derived from such. Therefore all type aliases defined
  *         there are available in Arg.
  */
-template <typename Arg>
+template<typename Arg>
 class IpProtocolHandlerStub :
     private NonCopyable<IpProtocolHandlerStub<Arg>>
 {
@@ -296,7 +296,7 @@ struct IpProtocolHandlerStubService {
      *         @ref PlatformFacade.
      * @tparam StackArg_ Template parameter of @ref IpStack.
      */
-    template <typename PlatformImpl_, typename StackArg_>
+    template<typename PlatformImpl_, typename StackArg_>
     struct Compose {
         /**
          * Exposes the `PlatformImpl_` template parameter.

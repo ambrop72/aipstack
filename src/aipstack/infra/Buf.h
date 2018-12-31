@@ -555,7 +555,7 @@ struct IpBufRef {
      *        function must not modify this @ref IpBufRef object, and the state of
      *        this object at the time of invocation is unspecified.
      */
-    template <typename Func>
+    template<typename Func>
     void processBytes (std::size_t amount, Func func)
     {
         AIPSTACK_ASSERT(node != nullptr);
@@ -635,7 +635,7 @@ struct IpBufRef {
      *         (`func` returned true last time it was called, less than all available bytes
      *         may have been processed).
      */
-    template <typename Func>
+    template<typename Func>
     bool processBytesInterruptible (std::size_t max_amount, Func func)
     {
         AIPSTACK_ASSERT(node != nullptr);

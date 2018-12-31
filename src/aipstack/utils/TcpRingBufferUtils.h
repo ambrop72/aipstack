@@ -38,7 +38,7 @@
 
 namespace AIpStack {
 
-template <typename TcpArg>
+template<typename TcpArg>
 class SendRingBuffer {
 public:
     void setup (TcpConnection<TcpArg> &con, char *buf, std::size_t buf_size)
@@ -95,7 +95,7 @@ private:
     IpBufNode m_buf_node;
 };
 
-template <typename TcpArg>
+template<typename TcpArg>
 class RecvRingBuffer {
 public:
     // NOTE: If using mirror region and initial_rx_data is not empty, it is

@@ -41,10 +41,10 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
-template <typename> class IpTcpProto;
-template <typename> class IpTcpProto_input;
-template <typename> class TcpApi;
-template <typename> class TcpConnection;
+template<typename> class IpTcpProto;
+template<typename> class IpTcpProto_input;
+template<typename> class TcpApi;
+template<typename> class TcpConnection;
 #endif
 
 /**
@@ -59,13 +59,13 @@ struct TcpListenParams {
 /**
  * Represents listening for connections on a specific address and port.
  */
-template <typename Arg>
+template<typename Arg>
 class TcpListener :
     private NonCopyable<TcpListener<Arg>>
 {
-    template <typename> friend class IpTcpProto;
-    template <typename> friend class IpTcpProto_input;
-    template <typename> friend class TcpConnection;
+    template<typename> friend class IpTcpProto;
+    template<typename> friend class IpTcpProto_input;
+    template<typename> friend class TcpConnection;
     
     using TcpProto = IpTcpProto<Arg>;
 

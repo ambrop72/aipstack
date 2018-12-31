@@ -39,7 +39,7 @@ namespace AIpStack {
 template<typename, typename, typename>
 class AvlTree;
 
-template <typename LinkModel>
+template<typename LinkModel>
 class AvlTreeNode {
     template<typename, typename, typename>
     friend class AvlTree;
@@ -52,7 +52,7 @@ private:
     std::int8_t balance;
 };
 
-template <
+template<
     typename Accessor,
     typename Compare,
     typename LinkModel
@@ -157,7 +157,7 @@ public:
         assert_tree(st);
     }
     
-    template <typename KeyType, typename LookupCompare = Compare>
+    template<typename KeyType, typename LookupCompare = Compare>
     Ref lookup (KeyType key, State st = State()) const
     {
         if (m_root.isNull()) {
@@ -186,7 +186,7 @@ public:
         }
     }
     
-    template <typename KeyType, typename LookupCompare = Compare>
+    template<typename KeyType, typename LookupCompare = Compare>
     Ref lookupInexact (KeyType key, int &outCompareKeyEntry, State st = State()) const
     {
         if (m_root.isNull()) {

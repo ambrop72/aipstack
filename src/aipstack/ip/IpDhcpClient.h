@@ -187,7 +187,7 @@ public:
     Ip4Addr request_ip_address;
 };
 
-template <typename Arg>
+template<typename Arg>
 class IpDhcpClient;
 
 /**
@@ -197,7 +197,7 @@ class IpDhcpClient;
  *         or a dummy class derived from such; see @ref IpDhcpClientService for an
  *         example.
  */
-template <typename Arg>
+template<typename Arg>
 class IpDhcpClient final :
     private NonCopyable<IpDhcpClient<Arg>>
 #ifndef IN_DOXYGEN
@@ -1463,9 +1463,9 @@ struct IpDhcpClientOptions {
  * 
  * @tparam Options Assignments of options defined in @ref IpDhcpClientOptions.
  */
-template <typename ...Options>
+template<typename ...Options>
 class IpDhcpClientService {
-    template <typename>
+    template<typename>
     friend class IpDhcpClient;
     
     AIPSTACK_OPTION_CONFIG_VALUE(IpDhcpClientOptions, DhcpTTL)
@@ -1494,7 +1494,7 @@ public:
      *         passed to @ref IpStackService::Compose.
      * @tparam StackArg_ Template parameter of @ref IpStack.
      */
-    template <typename PlatformImpl_, typename StackArg_>
+    template<typename PlatformImpl_, typename StackArg_>
     struct Compose {
 #ifndef IN_DOXYGEN
         using PlatformImpl = PlatformImpl_;

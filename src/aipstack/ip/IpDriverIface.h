@@ -35,8 +35,8 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
-template <typename> class IpStack;
-template <typename> class IpIfaceStateObserver;
+template<typename> class IpStack;
+template<typename> class IpIfaceStateObserver;
 #endif
 
 /**
@@ -73,14 +73,14 @@ template <typename> class IpIfaceStateObserver;
  * 
  * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename Arg>
+template<typename Arg>
 class IpDriverIface :
     private NonCopyable<IpDriverIface<Arg>>
 #ifndef IN_DOXYGEN
     ,private IpIface<Arg>
 #endif
 {
-    template <typename> friend class IpIface;
+    template<typename> friend class IpIface;
 
 public:
     /**

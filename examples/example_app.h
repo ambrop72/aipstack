@@ -58,7 +58,7 @@
 
 namespace AIpStackExamples {
 
-template <typename Arg>
+template<typename Arg>
 class ExampleApp :
     private AIpStack::NonCopyable<ExampleApp<Arg>>
 {
@@ -508,9 +508,9 @@ struct ExampleAppOptions {
     AIPSTACK_OPTION_DECL_VALUE(WindowUpdateThresDiv, int, 8)
 };
 
-template <typename ...Options>
+template<typename ...Options>
 class ExampleAppService {
-    template <typename>
+    template<typename>
     friend class ExampleApp;
     
     AIPSTACK_OPTION_CONFIG_VALUE(ExampleAppOptions, EchoPort)
@@ -523,7 +523,7 @@ class ExampleAppService {
     AIPSTACK_OPTION_CONFIG_VALUE(ExampleAppOptions, WindowUpdateThresDiv)
     
 public:
-    template <typename StackArg_>
+    template<typename StackArg_>
     struct Compose {
         using StackArg = StackArg_;
         using Params = ExampleAppService;

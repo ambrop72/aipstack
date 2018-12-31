@@ -37,8 +37,8 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
-template <typename> class IpStack;
-template <typename> class IpIface;
+template<typename> class IpStack;
+template<typename> class IpIface;
 #endif
 
 /**
@@ -52,11 +52,11 @@ template <typename> class IpIface;
  * 
  * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename Arg>
+template<typename Arg>
 class IpIfaceListener :
     private NonCopyable<IpIfaceListener<Arg>>
 {
-    template <typename> friend class IpStack;
+    template<typename> friend class IpStack;
     
 public:
     /**

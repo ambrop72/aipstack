@@ -72,7 +72,7 @@ namespace AIpStack {
 /**
  * TCP protocol implementation.
  */
-template <typename Arg>
+template<typename Arg>
 class IpTcpProto :
     private NonCopyable<IpTcpProto<Arg>>,
     private TcpApi<Arg>
@@ -90,12 +90,12 @@ class IpTcpProto :
     static_assert(EphemeralPortFirst > 0);
     static_assert(EphemeralPortFirst <= EphemeralPortLast);
     
-    template <typename> friend class IpTcpProto_constants;
-    template <typename> friend class IpTcpProto_input;
-    template <typename> friend class IpTcpProto_output;
-    template <typename> friend class TcpApi;
-    template <typename> friend class TcpListener;
-    template <typename> friend class TcpConnection;
+    template<typename> friend class IpTcpProto_constants;
+    template<typename> friend class IpTcpProto_input;
+    template<typename> friend class IpTcpProto_output;
+    template<typename> friend class TcpApi;
+    template<typename> friend class TcpListener;
+    template<typename> friend class TcpConnection;
     
     using Constants = IpTcpProto_constants<Arg>;
     using Input = IpTcpProto_input<Arg>;
@@ -892,10 +892,10 @@ struct IpTcpProtoOptions {
     AIPSTACK_OPTION_DECL_VALUE(LinkWithArrayIndices, bool, true)
 };
 
-template <typename ...Options>
+template<typename ...Options>
 class IpTcpProtoService {
-    template <typename> friend class IpTcpProto;
-    template <typename> friend class TcpConnection;
+    template<typename> friend class IpTcpProto;
+    template<typename> friend class TcpConnection;
     
     AIPSTACK_OPTION_CONFIG_VALUE(IpTcpProtoOptions, TcpTTL)
     AIPSTACK_OPTION_CONFIG_VALUE(IpTcpProtoOptions, NumTcpPcbs)
@@ -910,7 +910,7 @@ public:
     using IpProtocolNumber = WrapValue<Ip4Protocol, Ip4Protocol::Tcp>;
     
 #ifndef IN_DOXYGEN
-    template <typename PlatformImpl_, typename StackArg_>
+    template<typename PlatformImpl_, typename StackArg_>
     struct Compose {
         using PlatformImpl = PlatformImpl_;
         using StackArg = StackArg_;

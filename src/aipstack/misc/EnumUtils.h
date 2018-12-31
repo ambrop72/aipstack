@@ -57,7 +57,7 @@ public:
      * @tparam EnumType Target enum type (restricted to enum types using SFINAE).
      * @return `EnumType(0)`
      */
-    template <typename EnumType,
+    template<typename EnumType,
         typename = std::enable_if_t<std::is_enum<EnumType>::value>>
     inline constexpr operator EnumType () const {
         return EnumType(0);
@@ -71,7 +71,7 @@ public:
  * @param e Enum value.
  * @return `e == EnumType(0)`
  */
-template <typename EnumType,
+template<typename EnumType,
     typename = std::enable_if_t<std::is_enum<EnumType>::value>>
 inline constexpr bool operator== (EnumType e, Enum0Type) {
     return e == EnumType(0);
@@ -84,7 +84,7 @@ inline constexpr bool operator== (EnumType e, Enum0Type) {
  * @param e Enum value.
  * @return `e == EnumType(0)`
  */
-template <typename EnumType,
+template<typename EnumType,
     typename = std::enable_if_t<std::is_enum<EnumType>::value>>
 inline constexpr bool operator== (Enum0Type, EnumType e) {
     return e == EnumType(0);
@@ -97,7 +97,7 @@ inline constexpr bool operator== (Enum0Type, EnumType e) {
  * @param e Enum value.
  * @return `e != EnumType(0)`
  */
-template <typename EnumType,
+template<typename EnumType,
     typename = std::enable_if_t<std::is_enum<EnumType>::value>>
 inline constexpr bool operator!= (EnumType e, Enum0Type) {
     return e != EnumType(0);
@@ -110,7 +110,7 @@ inline constexpr bool operator!= (EnumType e, Enum0Type) {
  * @param e Enum value.
  * @return `e != EnumType(0)`
  */
-template <typename EnumType,
+template<typename EnumType,
     typename = std::enable_if_t<std::is_enum<EnumType>::value>>
 inline constexpr bool operator!= (Enum0Type, EnumType e) {
     return e != EnumType(0);
@@ -128,7 +128,7 @@ inline constexpr Enum0Type Enum0 = Enum0Type();
  * @param e Enum value.
  * @return Value converted to underlying type.
  */
-template <typename EnumType>
+template<typename EnumType>
 inline constexpr std::underlying_type_t<EnumType> AsUnderlying (EnumType e)
 {
     static_assert(std::is_enum<EnumType>::value, "EnumType must be an enum type");
@@ -138,23 +138,23 @@ inline constexpr std::underlying_type_t<EnumType> AsUnderlying (EnumType e)
 #ifndef IN_DOXYGEN
 
 namespace EnumUtilsPrivate {
-    template <bool IsEnum, typename Type, typename BaseType>
+    template<bool IsEnum, typename Type, typename BaseType>
     struct EnumWithBaseTypeHelper {
         inline static constexpr bool IsEnumWithBaseType = false;
     };
     
-    template <typename Type, typename BaseType>
+    template<typename Type, typename BaseType>
     struct EnumWithBaseTypeHelper<true, Type, BaseType> {
         inline static constexpr bool IsEnumWithBaseType =
             std::is_same<std::underlying_type_t<Type>, BaseType>::value;
     };
     
-    template <bool IsEnum, typename Type>
+    template<bool IsEnum, typename Type>
     struct GetSameOrBaseTypeHelper {
         using ResultType = Type;
     };
     
-    template <typename Type>
+    template<typename Type>
     struct GetSameOrBaseTypeHelper<true, Type> {
         using ResultType = std::underlying_type_t<Type>;
     };
@@ -171,7 +171,7 @@ namespace EnumUtilsPrivate {
  * @tparam Type Type to check.
  * @tparam BaseType Underlying type to check for.
  */
-template <typename Type, typename BaseType>
+template<typename Type, typename BaseType>
 using IsEnumWithBaseType = WrapBool<
     #ifdef IN_DOXYGEN
     implementation_hidden
@@ -189,7 +189,7 @@ using IsEnumWithBaseType = WrapBool<
  * @tparam Type Type to check.
  * @tparam BaseType Type or underlying type to check for.
  */
-template <typename Type, typename BaseType>
+template<typename Type, typename BaseType>
 using IsSameOrEnumWithBaseType = WrapBool<
     #ifdef IN_DOXYGEN
     implementation_hidden
@@ -206,7 +206,7 @@ using IsSameOrEnumWithBaseType = WrapBool<
  * 
  * @tparam Type Type for which to get the same or underlying type.
  */
-template <typename Type>
+template<typename Type>
 using GetSameOrEnumBaseType = typename EnumUtilsPrivate::GetSameOrBaseTypeHelper<std::is_enum<Type>::value, Type>::ResultType;
 
 /** @} */

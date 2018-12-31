@@ -40,10 +40,10 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <typename IntType>
+template<typename IntType>
 class IntRangeIter;
 
-template <typename IntType>
+template<typename IntType>
 class IntRangeImpl {
 public:
     inline IntRangeImpl (IntType start, IntType end)
@@ -69,7 +69,7 @@ private:
     IntType m_end;
 };
 
-template <typename IntType>
+template<typename IntType>
 class IntRangeIter {
 public:
     inline IntRangeIter (IntType value)
@@ -114,7 +114,7 @@ private:
  * @param end End of the range, not included.
  * @return Object to be used in a range-based for loop.
  */
-template <typename IntType>
+template<typename IntType>
 IntRangeImpl<IntType> IntRange (IntType end)
 {
     return IntRangeImpl<IntType>(end);
@@ -137,7 +137,7 @@ IntRangeImpl<IntType> IntRange (IntType end)
  * @param end End of the range, not included.
  * @return Object to be used in a range-based for loop.
  */
-template <typename IntType>
+template<typename IntType>
 IntRangeImpl<IntType> IntRange (IntType start, IntType end)
 {
     return IntRangeImpl<IntType>(start, end);

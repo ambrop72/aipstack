@@ -39,7 +39,7 @@
 
 namespace AIpStack {
 
-template <typename Arg>
+template<typename Arg>
 class IpTcpProto_constants
 {
     AIPSTACK_USE_TYPES(Arg, (PlatformImpl, StackArg))

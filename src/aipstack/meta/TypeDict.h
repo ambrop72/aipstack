@@ -36,13 +36,13 @@ namespace AIpStack {
  * @{
  */
 
-template <typename TKey, typename TValue>
+template<typename TKey, typename TValue>
 struct TypeDictEntry {
     using Key = TKey;
     using Value = TValue;
 };
 
-template <typename TResult>
+template<typename TResult>
 struct TypeDictFound {
     inline static constexpr bool Found = true;
     using Result = TResult;
@@ -55,20 +55,20 @@ struct TypeDictNotFound {
 #ifndef IN_DOXYGEN
 
 namespace Private {
-    template <typename Key, typename EntriesList>
+    template<typename Key, typename EntriesList>
     struct TypeDictFindHelper;
     
-    template <typename Key>
+    template<typename Key>
     struct TypeDictFindHelper<Key, EmptyTypeList> {
         using Result = TypeDictNotFound;
     };
     
-    template <typename Key, typename Value, typename Tail>
+    template<typename Key, typename Value, typename Tail>
     struct TypeDictFindHelper<Key, ConsTypeList<TypeDictEntry<Key, Value>, Tail>> {
         using Result = TypeDictFound<Value>;
     };
     
-    template <typename Key, typename OtherKey, typename Value, typename Tail>
+    template<typename Key, typename OtherKey, typename Value, typename Tail>
     struct TypeDictFindHelper<Key, ConsTypeList<TypeDictEntry<OtherKey, Value>, Tail>> {
         using Result = typename TypeDictFindHelper<Key, Tail>::Result;
     };
@@ -76,7 +76,7 @@ namespace Private {
 
 #endif
 
-template <typename EntriesList, typename Key>
+template<typename EntriesList, typename Key>
 using TypeDictFind =
 #ifdef IN_DOXYGEN
 implementation_hidden;
@@ -87,12 +87,12 @@ typename Private::TypeDictFindHelper<Key, EntriesList>::Result;
 #ifndef IN_DOXYGEN
 
 namespace Private {
-    template <typename Default, typename FindResult>
+    template<typename Default, typename FindResult>
     struct TypeDictDefaultHelper {
         using Result = typename FindResult::Result;
     };
     
-    template <typename Default>
+    template<typename Default>
     struct TypeDictDefaultHelper<Default, TypeDictNotFound> {
         using Result = Default;
     };
@@ -100,7 +100,7 @@ namespace Private {
 
 #endif
 
-template <typename EntriesList, typename Key, typename Default>
+template<typename EntriesList, typename Key, typename Default>
 using TypeDictGetOrDefault =
 #ifdef IN_DOXYGEN
 implementation_hidden;

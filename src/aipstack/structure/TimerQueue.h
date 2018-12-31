@@ -36,10 +36,10 @@
 
 namespace AIpStack {
 
-template <typename, typename, typename, typename, typename>
+template<typename, typename, typename, typename, typename>
 class TimerQueue;
 
-template <
+template<
     typename TimersStructureService,
     typename LinkModel,
     typename TimeType,
@@ -47,7 +47,7 @@ template <
 >
 class TimerQueueNode : public NodeUserData
 {
-    template <typename, typename, typename, typename, typename>
+    template<typename, typename, typename, typename, typename>
     friend class TimerQueue;
     
     // Get the Node type for the data structure.
@@ -61,7 +61,7 @@ private:
     TimeType time;
 };
 
-template <
+template<
     typename TimersStructureService,
     typename LinkModel,
     typename Accessor,
@@ -273,7 +273,7 @@ private:
     {
     public:
         // Get the key (timer time) of an entry.
-        template <typename EntryType>
+        template<typename EntryType>
         static TimeType GetKeyOfEntry (EntryType &entry)
         {
             return Accessor::access(entry).time;
@@ -287,12 +287,12 @@ private:
     };
 };
 
-template <typename TimersStructureService>
+template<typename TimersStructureService>
 struct TimerQueueService {
-    template <typename LinkModel, typename TimeType, typename NodeUserData>
+    template<typename LinkModel, typename TimeType, typename NodeUserData>
     using Node = TimerQueueNode<TimersStructureService, LinkModel, TimeType, NodeUserData>;
     
-    template <typename LinkModel, typename Accessor,
+    template<typename LinkModel, typename Accessor,
               typename TimeType, typename NodeUserData>
     using Queue = TimerQueue<TimersStructureService, LinkModel, Accessor,
                              TimeType, NodeUserData>;

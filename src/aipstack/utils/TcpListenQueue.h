@@ -40,7 +40,7 @@
 
 namespace AIpStack {
 
-template <
+template<
     typename PlatformImpl,
     typename TcpArg,
     std::size_t RxBufferSize

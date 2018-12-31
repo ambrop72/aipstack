@@ -34,13 +34,13 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <typename T>
+template<typename T>
 static constexpr int BitsInFloatHelper1 (T x)
 {
     return (x < 1.0) ? 0 : (1 + BitsInFloatHelper1(x / 2));
 }
 
-template <typename T>
+template<typename T>
 static constexpr int BitsInFloatHelper2 (T x)
 {
     return (x > 0.5) ? 0 : (BitsInFloatHelper2(x * 2) - 1);
@@ -48,7 +48,7 @@ static constexpr int BitsInFloatHelper2 (T x)
 
 #endif
 
-template <typename T>
+template<typename T>
 static constexpr int BitsInFloat (T x)
 {
     return (x >= 0.5) ? BitsInFloatHelper1(x) : BitsInFloatHelper2(x);

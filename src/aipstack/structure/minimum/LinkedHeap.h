@@ -47,10 +47,10 @@ namespace AIpStack {
 #define AIPSTACK_LINKED_HEAP_VERIFY 0
 #endif
 
-template <typename, typename, typename, typename>
+template<typename, typename, typename, typename>
 class LinkedHeap;
 
-template <typename LinkModel>
+template<typename LinkModel>
 class LinkedHeapNode {
     template<typename, typename, typename, typename>
     friend class LinkedHeap;
@@ -62,7 +62,7 @@ private:
     Link link[2];
 };
 
-template <
+template<
     typename Accessor,
     typename Compare,
     typename LinkModel,
@@ -279,13 +279,13 @@ public:
         assertValidHeap(st);
     }
     
-    template <typename KeyType, typename Func>
+    template<typename KeyType, typename Func>
     inline void findAllLesserOrEqual (KeyType key, Func func, State st = State())
     {
         find_all_lesser_or_equal(st, key, func, m_root);
     }
     
-    template <typename KeyType>
+    template<typename KeyType>
     AIPSTACK_OPTIMIZE_SIZE
     Ref findFirstLesserOrEqual (KeyType key, State st = State())
     {
@@ -297,7 +297,7 @@ public:
         return Ref::null();
     }
     
-    template <typename KeyType>
+    template<typename KeyType>
     AIPSTACK_OPTIMIZE_SIZE
     Ref findNextLesserOrEqual (KeyType key, Ref node, State st = State())
     {
@@ -578,7 +578,7 @@ private:
         }
     }
     
-    template <typename KeyType, typename Func>
+    template<typename KeyType, typename Func>
     void find_all_lesser_or_equal (State st, KeyType key, Func func, Link node_link)
     {
         Ref node;
@@ -676,10 +676,10 @@ class LinkedHeapService {
 public:
     #ifndef IN_DOXYGEN
 
-    template <typename LinkModel>
+    template<typename LinkModel>
     using Node = LinkedHeapNode<LinkModel>;
     
-    template <typename Accessor, typename Compare, typename LinkModel>
+    template<typename Accessor, typename Compare, typename LinkModel>
     using Structure = LinkedHeap<Accessor, Compare, LinkModel>;
 
     #endif

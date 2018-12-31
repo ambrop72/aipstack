@@ -32,13 +32,13 @@
 
 namespace AIpStack {
 
-template <typename, typename, bool> class LinkedList;
-template <typename, typename> class CircularLinkedList;
+template<typename, typename, bool> class LinkedList;
+template<typename, typename> class CircularLinkedList;
 
-template <typename LinkModel>
+template<typename LinkModel>
 class LinkedListNode {
-    template <typename, typename, bool> friend class LinkedList;
-    template <typename, typename> friend class CircularLinkedList;
+    template<typename, typename, bool> friend class LinkedList;
+    template<typename, typename> friend class CircularLinkedList;
     
     using Link = typename LinkModel::Link;
     
@@ -47,15 +47,15 @@ private:
     Link prev;
 };
 
-template <typename LinkModel, bool WithLast>
+template<typename LinkModel, bool WithLast>
 struct LinkedList__Extra_WithLast {};
 
-template <typename LinkModel>
+template<typename LinkModel>
 struct LinkedList__Extra_WithLast<LinkModel, true> {
     typename LinkModel::Link m_last;
 };
 
-template <
+template<
     typename Accessor,
     typename LinkModel,
     bool WithLast_
@@ -89,7 +89,7 @@ public:
         return m_first.ref(st);
     }
     
-    template <bool Enable = WithLast, typename = std::enable_if_t<Enable>>
+    template<bool Enable = WithLast, typename = std::enable_if_t<Enable>>
     inline Ref lastNotEmpty (State st = State()) const
     {
         AIPSTACK_ASSERT(!m_first.isNull());
@@ -121,7 +121,7 @@ public:
         m_first = e.link(st);
     }
     
-    template <bool Enable = WithLast, typename = std::enable_if_t<Enable>>
+    template<bool Enable = WithLast, typename = std::enable_if_t<Enable>>
     void append (Ref e, State st = State())
     {
         ac(e).next = Link::null();
@@ -183,18 +183,18 @@ private:
         return Accessor::access(*ref);
     }
     
-    template <typename Dummy = std::true_type>
+    template<typename Dummy = std::true_type>
     inline void set_last (Link last, std::enable_if_t<WithLast, Dummy> = {})
     {
         this->m_last = last;
     }
     
-    template <typename Dummy = std::true_type>
+    template<typename Dummy = std::true_type>
     inline void set_last (Link, std::enable_if_t<!WithLast, Dummy> = {})
     {}
 };
 
-template <
+template<
     typename Accessor,
     typename LinkModel
 >

@@ -258,7 +258,7 @@ public:
      *         Must be less than or equal to @ref Bits (32).
      * @return Address with that many most-significant bits one.
      */
-    template <std::size_t PrefixBits>
+    template<std::size_t PrefixBits>
     static constexpr Ip4Addr PrefixMask ()
     {
         static_assert(PrefixBits <= Bits);
@@ -329,7 +329,7 @@ public:
      *         significant octet. Must be less than @ref Size (4).
      * @return Value of octet at the given index.
      */
-    template <std::size_t ByteIndex>
+    template<std::size_t ByteIndex>
     inline constexpr std::uint8_t getByte () const {
         static_assert(ByteIndex < Size);
 
@@ -376,7 +376,7 @@ public:
 };
 
 #ifndef IN_DOXYGEN
-template <>
+template<>
 struct StructTypeHandler<Ip4Addr, void> {
     using Handler = StructConventionalTypeHandler<Ip4Addr>;
 };

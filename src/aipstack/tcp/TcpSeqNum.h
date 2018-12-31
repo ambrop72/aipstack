@@ -90,26 +90,26 @@ public:
         return TcpSeqInt(value() - other.value());
     }
 
-    template <typename IntType,
+    template<typename IntType,
         typename = std::enable_if_t<std::is_unsigned<IntType>::value>>
     inline constexpr TcpSeqNum operator+ (IntType int_val) const {
         return TcpSeqNum(TcpSeqInt(value() + int_val));
     }
 
-    template <typename IntType,
+    template<typename IntType,
         typename = std::enable_if_t<std::is_unsigned<IntType>::value>>
     inline constexpr TcpSeqNum operator- (IntType int_val) const {
         return TcpSeqNum(TcpSeqInt(value() - int_val));
     }
 
-    template <typename IntType,
+    template<typename IntType,
         typename = std::enable_if_t<std::is_unsigned<IntType>::value>>
     inline constexpr TcpSeqNum & operator+= (IntType int_val) {
         *this = operator+(int_val);
         return *this;
     }
 
-    template <typename IntType,
+    template<typename IntType,
         typename = std::enable_if_t<std::is_unsigned<IntType>::value>>
     inline constexpr TcpSeqNum & operator-= (IntType int_val) {
         *this = operator-(int_val);
@@ -118,7 +118,7 @@ public:
 };
 
 #ifndef IN_DOXYGEN
-template <>
+template<>
 struct StructTypeHandler<TcpSeqNum, void> {
     using Handler = StructConventionalTypeHandler<TcpSeqNum>;
 };

@@ -66,7 +66,7 @@ public:
     
     // Convenience constructor that allows using the same way as
     // with ArrayLinkModel, it ignores the argument.
-    template <typename T>
+    template<typename T>
     inline PointerLinkModelState (T const &) {}
 };
 
@@ -77,7 +77,7 @@ public:
  * The State type is defined as an empty class with a
  * default constructor, as it is not really needed.
  */
-template <typename Entry>
+template<typename Entry>
 class PointerLinkModel {
 public:
     using State = PointerLinkModelState;
@@ -171,7 +171,7 @@ public:
     };
 };
 
-template <
+template<
     typename Entry,
     typename ArrayContainer,
     typename ArrayAccessor
@@ -214,7 +214,7 @@ private:
  * constructor, with the reference to the entry and its
  * array index.
  */
-template <
+template<
     typename Entry,
     typename IndexType,
     IndexType NullIndex,
@@ -328,7 +328,7 @@ public:
 /**
  * Shortcut for ArrayLinkModel with ArrayLinkModelAccessorState.
  */
-template <
+template<
     typename Entry,
     typename IndexType,
     IndexType NullIndex,

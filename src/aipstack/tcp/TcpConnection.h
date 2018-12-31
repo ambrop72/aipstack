@@ -45,16 +45,16 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
-template <typename> class IpTcpProto;
-template <typename> class IpTcpProto_input;
-template <typename> class IpTcpProto_output;
-template <typename> class TcpApi;
+template<typename> class IpTcpProto;
+template<typename> class IpTcpProto_input;
+template<typename> class IpTcpProto_output;
+template<typename> class TcpApi;
 #endif
 
 /**
  * Encapsulates connection parameters for @ref TcpConnection::startConnection.
  */
-template <typename Arg>
+template<typename Arg>
 struct TcpStartConnectionArgs {
     Ip4Addr addr = Ip4Addr::ZeroAddr();
     std::uint16_t port = 0;
@@ -69,16 +69,16 @@ struct TcpStartConnectionArgs {
  *              is in progress.
  * - CLOSED: There was a connection but is no more.
  */
-template <typename Arg>
+template<typename Arg>
 class TcpConnection :
     private NonCopyable<TcpConnection<Arg>>
 #ifndef IN_DOXYGEN
     ,private IpMtuRef<typename Arg::StackArg>
 #endif
 {
-    template <typename> friend class IpTcpProto;
-    template <typename> friend class IpTcpProto_input;
-    template <typename> friend class IpTcpProto_output;
+    template<typename> friend class IpTcpProto;
+    template<typename> friend class IpTcpProto_input;
+    template<typename> friend class IpTcpProto_output;
     
     using TcpConStackArg = typename Arg::StackArg;
     

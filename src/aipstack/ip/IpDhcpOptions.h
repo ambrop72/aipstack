@@ -45,7 +45,7 @@ namespace AIpStack {
 /**
  * Implementation of DHCP option reading and writing for @ref IpDhcpClient.
  */
-template <
+template<
     std::uint8_t MaxDnsServers,
     std::uint8_t MaxClientIdSize,
     std::uint8_t MaxVendorClassIdSize,
@@ -61,7 +61,7 @@ class IpDhcpOptions
     
     // Calculates the size of a DHCP option.
     // OptDataType is the payload type declared with AIPSTACK_DEFINE_STRUCT.
-    template <typename OptDataType>
+    template<typename OptDataType>
     inline static constexpr std::size_t OptSizeForType = OptSizeForSize(OptDataType::Size);
     
     // Possible regions where options can be located from.
@@ -442,7 +442,7 @@ private:
         }
     }
     
-    template <typename PayloadFunc>
+    template<typename PayloadFunc>
     static void write_option (char *&opt_writeptr, DhcpOptionType opt_type,
                               PayloadFunc payload_func)
     {

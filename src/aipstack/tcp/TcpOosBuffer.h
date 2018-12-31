@@ -45,7 +45,7 @@ namespace AIpStack {
  * configured number of received contiguous ranges
  * of data or FIN.
  */
-template <typename Arg>
+template<typename Arg>
 class TcpOosBuffer
 {
     static_assert(Arg::NumOosSegs > 0);
@@ -360,9 +360,9 @@ struct TcpOosBufferServiceOptions {
     AIPSTACK_OPTION_DECL_VALUE(NumOosSegs, std::size_t, 4)
 };
 
-template <typename ...Options>
+template<typename ...Options>
 class TcpOosBufferService {
-    template <typename>
+    template<typename>
     friend class TcpOosBuffer;
     
     AIPSTACK_OPTION_CONFIG_VALUE(TcpOosBufferServiceOptions, NumOosSegs)

@@ -67,7 +67,7 @@ namespace AIpStack {
  * example is shown below.
  *
  * ```
- * template <typename ...Options>
+ * template<typename ...Options>
  * class MyModule {
  * public:
  *     AIPSTACK_OPTION_CONFIG_TYPE(MyModuleOptions, ExampleTypeOption)
@@ -99,7 +99,7 @@ namespace AIpStack {
 #ifndef IN_DOXYGEN
 
 namespace OptionsPrivate {
-    template <typename Derived, typename DefaultValue, typename ...Options>
+    template<typename Derived, typename DefaultValue, typename ...Options>
     using GetValue = TypeDictGetOrDefault<
         TypeListReverse<MakeTypeList<Options...>>, Derived, DefaultValue
     >;
@@ -114,7 +114,7 @@ namespace OptionsPrivate {
  * @tparam ValueType The type of the option value.
  * @tparam DefaultValue The default value if none is provided.
  */
-template <typename Derived, typename ValueType, ValueType DefaultValue>
+template<typename Derived, typename ValueType, ValueType DefaultValue>
 class ConfigOptionValue {
 public:
     /**
@@ -126,11 +126,11 @@ public:
      * 
      * @tparam Value The desired value for the option.
      */
-    template <ValueType Value>
+    template<ValueType Value>
     using Is = TypeDictEntry<Derived, WrapValue<ValueType, Value>>;
     
 #ifndef IN_DOXYGEN
-    template <typename ...Options>
+    template<typename ...Options>
     struct Config {
         inline static constexpr ValueType Value = OptionsPrivate::GetValue<
             Derived, WrapValue<ValueType, DefaultValue>, Options...>::Value;
@@ -144,7 +144,7 @@ public:
  * @tparam Derived The derived class identifying this option.
  * @tparam DefaultValue The default value if none is provided.
  */
-template <typename Derived, typename DefaultValue>
+template<typename Derived, typename DefaultValue>
 class ConfigOptionType {
 public:
     /**
@@ -156,11 +156,11 @@ public:
      * 
      * @tparam Value The desired value for the option.
      */
-    template <typename Value>
+    template<typename Value>
     using Is = TypeDictEntry<Derived, Value>;
     
 #ifndef IN_DOXYGEN
-    template <typename ...Options>
+    template<typename ...Options>
     struct Config {
         using Value = OptionsPrivate::GetValue<Derived, DefaultValue, Options...>;
     };

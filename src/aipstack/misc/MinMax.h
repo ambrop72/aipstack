@@ -43,7 +43,7 @@ namespace AIpStack {
  *
  * @tparam T Arithmetic type.
  */
-template <typename T>
+template<typename T>
 inline constexpr T TypeMin = std::numeric_limits<T>::min();
 
 /**
@@ -52,7 +52,7 @@ inline constexpr T TypeMin = std::numeric_limits<T>::min();
  * @tparam T Arithmetic type.
  * @return Maximum representable value.
  */
-template <typename T>
+template<typename T>
 inline constexpr T TypeMax = std::numeric_limits<T>::max();
 
 /**
@@ -63,7 +63,7 @@ inline constexpr T TypeMax = std::numeric_limits<T>::max();
  * @param op2 Second operand.
  * @return `(op1 < op2) ? op1 : op2`
  */
-template <typename T>
+template<typename T>
 constexpr T MinValue (T op1, T op2)
 {
     return (op1 < op2) ? op1 : op2;
@@ -77,7 +77,7 @@ constexpr T MinValue (T op1, T op2)
  * @param op2 Second operand.
  * @return `(op1 > op2) ? op1 : op2`
  */
-template <typename T>
+template<typename T>
 constexpr T MaxValue (T op1, T op2)
 {
     return (op1 > op2) ? op1 : op2;
@@ -91,14 +91,14 @@ constexpr T MaxValue (T op1, T op2)
  * @param op2 Second operand.
  * @return `(op1 > op2) ? (op1 - op2) : (op2 - op1)`
  */
-template <typename T>
+template<typename T>
 constexpr T AbsoluteDiff (T op1, T op2)
 {
     return (op1 > op2) ? (op1 - op2) : (op2 - op1);
 }
 
 #ifndef IN_DOXYGEN
-template <typename T1, typename T2>
+template<typename T1, typename T2>
 using MinValueURetType = std::conditional_t<
     (std::numeric_limits<T1>::digits <= std::numeric_limits<T2>::digits), T1, T2>;
 #endif
@@ -125,7 +125,7 @@ using MinValueURetType = std::conditional_t<
  * @param op2 Second operand.
  * @return The smaller operand, as the narrower type (see description).
  */
-template <typename T1, typename T2>
+template<typename T1, typename T2>
 constexpr MinValueURetType<T1, T2> MinValueU (T1 op1, T2 op2)
 {
     static_assert(std::is_unsigned<T1>::value, "Only unsigned allowed");
@@ -136,7 +136,7 @@ constexpr MinValueURetType<T1, T2> MinValueU (T1 op1, T2 op2)
 }
 
 #ifndef IN_DOXYGEN
-template <typename T1, typename T2>
+template<typename T1, typename T2>
 using MaxValueURetType = std::conditional_t<
     (std::numeric_limits<T1>::digits >= std::numeric_limits<T2>::digits), T1, T2>;
 #endif
@@ -154,7 +154,7 @@ using MaxValueURetType = std::conditional_t<
  * @param op2 Second operand.
  * @return The greater operand, as the wider type (see description).
  */
-template <typename T1, typename T2>
+template<typename T1, typename T2>
 constexpr MaxValueURetType<T1, T2> MaxValueU (T1 op1, T2 op2)
 {
     static_assert(std::is_unsigned<T1>::value, "Only unsigned allowed");
@@ -175,7 +175,7 @@ constexpr MaxValueURetType<T1, T2> MaxValueU (T1 op1, T2 op2)
  * @param val Reference to integer to be incremented.
  * @param incr The amount to increment by.
  */
-template <typename ValType, typename IncrType>
+template<typename ValType, typename IncrType>
 constexpr void AddToSat (ValType &val, IncrType incr)
 {
     static_assert(std::is_unsigned<ValType>::value, "Only unsigned allowed");

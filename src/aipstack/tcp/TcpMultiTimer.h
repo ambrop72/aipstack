@@ -35,7 +35,7 @@
 
 namespace AIpStack {
 
-template <typename PlatformImpl, typename MT, typename TimerId>
+template<typename PlatformImpl, typename MT, typename TimerId>
 class TcpMultiTimerOne
 {
     using Platform = PlatformFacade<PlatformImpl>;
@@ -82,14 +82,14 @@ private:
     }
 };
 
-template <typename PlatformImpl, typename Derived, typename UserData, typename ...TimerIds>
+template<typename PlatformImpl, typename Derived, typename UserData, typename ...TimerIds>
 class TcpMultiTimer :
     private TcpMultiTimerOne<PlatformImpl,
         TcpMultiTimer<PlatformImpl, Derived, UserData, TimerIds...>, TimerIds>...,
     private PlatformFacade<PlatformImpl>::Timer,
     public UserData
 {
-    template <typename, typename, typename>
+    template<typename, typename, typename>
     friend class TcpMultiTimerOne;
     
     using Platform = PlatformFacade<PlatformImpl>;
@@ -100,13 +100,13 @@ class TcpMultiTimer :
     
     using StateType = ChooseInt<NumTimers + 1, false>;
     
-    template <typename TimerId>
+    template<typename TimerId>
     static constexpr int TimerIndex (TimerId)
     {
         return TypeListIndex<TimerIdsList, TimerId>::Value;
     }
     
-    template <typename TimerId>
+    template<typename TimerId>
     static constexpr StateType TimerBit (TimerId)
     {
         return StateType(1) << TimerIndex(TimerId());
@@ -135,7 +135,7 @@ public:
         m_state = 0;
     }
     
-    template <typename TimerId>
+    template<typename TimerId>
     inline TcpMultiTimerOne<PlatformImpl, TcpMultiTimer, TimerId> & tim (TimerId)
     {
         return

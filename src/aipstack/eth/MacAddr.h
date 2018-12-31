@@ -219,7 +219,7 @@ public:
 };
 
 #ifndef IN_DOXYGEN
-template <>
+template<>
 struct StructTypeHandler<MacAddr, void> {
     using Handler = StructConventionalTypeHandler<MacAddr>;
 };

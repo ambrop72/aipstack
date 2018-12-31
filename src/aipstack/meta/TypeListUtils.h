@@ -41,22 +41,22 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <typename ...Ts>
+template<typename ...Ts>
 struct MakeTypeListHelper;
 
-template <>
+template<>
 struct MakeTypeListHelper<> {
     typedef EmptyTypeList Type;
 };
 
-template <typename T, typename ...Ts>
+template<typename T, typename ...Ts>
 struct MakeTypeListHelper<T, Ts...> {
     typedef ConsTypeList<T, typename MakeTypeListHelper<Ts...>::Type> Type;
 };
 
 #endif
 
-template <typename ...Ts>
+template<typename ...Ts>
 using MakeTypeList =
 #ifdef IN_DOXYGEN
 implementation_hidden;
@@ -66,22 +66,22 @@ typename MakeTypeListHelper<Ts...>::Type;
 
 #ifndef IN_DOXYGEN
 
-template <typename List, typename Func>
+template<typename List, typename Func>
 struct MapTypeListHelper;
 
-template <typename Func>
+template<typename Func>
 struct MapTypeListHelper<EmptyTypeList, Func> {
     typedef EmptyTypeList Type;
 };
 
-template <typename Head, typename Tail, typename Func>
+template<typename Head, typename Tail, typename Func>
 struct MapTypeListHelper<ConsTypeList<Head, Tail>, Func> {
     typedef ConsTypeList<FuncCall<Func, Head>, typename MapTypeListHelper<Tail, Func>::Type> Type;
 };
 
 #endif
 
-template <typename List, typename Func>
+template<typename List, typename Func>
 using MapTypeList =
 #ifdef IN_DOXYGEN
 implementation_hidden;
@@ -92,15 +92,15 @@ typename MapTypeListHelper<List, Func>::Type;
 #ifndef IN_DOXYGEN
 
 namespace Private {
-    template <typename List>
+    template<typename List>
     struct TypeListLengthHelper;
 
-    template <>
+    template<>
     struct TypeListLengthHelper<EmptyTypeList> {
         inline static constexpr int Value = 0;
     };
 
-    template <typename Head, typename Tail>
+    template<typename Head, typename Tail>
     struct TypeListLengthHelper<ConsTypeList<Head, Tail>> {
         inline static constexpr int Value = 1 + TypeListLengthHelper<Tail>::Value;
     };
@@ -108,7 +108,7 @@ namespace Private {
 
 #endif
 
-template <typename List>
+template<typename List>
 using TypeListLength =
 #ifdef IN_DOXYGEN
 implementation_hidden;
@@ -118,22 +118,22 @@ Private::TypeListLengthHelper<List>;
 
 #ifndef IN_DOXYGEN
 
-template <typename List, typename Reversed>
+template<typename List, typename Reversed>
 struct TypeListReverseHelper;
 
-template <typename Reversed>
+template<typename Reversed>
 struct TypeListReverseHelper<EmptyTypeList, Reversed> {
     using Type = Reversed;
 };
 
-template <typename Head, typename Tail, typename Reversed>
+template<typename Head, typename Tail, typename Reversed>
 struct TypeListReverseHelper<ConsTypeList<Head, Tail>, Reversed> {
     using Type = typename TypeListReverseHelper<Tail, ConsTypeList<Head, Reversed>>::Type;
 };
 
 #endif
 
-template <typename List>
+template<typename List>
 using TypeListReverse =
 #ifdef IN_DOXYGEN
 implementation_hidden;
@@ -144,15 +144,15 @@ typename TypeListReverseHelper<List, EmptyTypeList>::Type;
 #ifndef IN_DOXYGEN
 
 namespace Private {
-    template <typename List, int Index>
+    template<typename List, int Index>
     struct TypeListGetHelper;
     
-    template <typename Head, typename Tail, int Index>
+    template<typename Head, typename Tail, int Index>
     struct TypeListGetHelper<ConsTypeList<Head, Tail>, Index> {
         using Result = typename TypeListGetHelper<Tail, Index - 1>::Result;
     };
     
-    template <typename Head, typename Tail>
+    template<typename Head, typename Tail>
     struct TypeListGetHelper<ConsTypeList<Head, Tail>, 0> {
         using Result = Head;
     };
@@ -160,7 +160,7 @@ namespace Private {
 
 #endif
 
-template <typename List, int Index>
+template<typename List, int Index>
 using TypeListGet =
 #ifdef IN_DOXYGEN
 implementation_hidden;
@@ -171,20 +171,20 @@ typename Private::TypeListGetHelper<List, Index>::Result;
 #ifndef IN_DOXYGEN
 
 namespace Private {
-    template <typename List, typename Value, int Offset>
+    template<typename List, typename Value, int Offset>
     struct TypeListFindHelper;
     
-    template <typename Tail, typename Value, int Offset>
+    template<typename Tail, typename Value, int Offset>
     struct TypeListFindHelper<ConsTypeList<Value, Tail>, Value, Offset> {
         using Result = TypeDictFound<WrapInt<Offset>>;
     };
     
-    template <typename Head, typename Tail, typename Value, int Offset>
+    template<typename Head, typename Tail, typename Value, int Offset>
     struct TypeListFindHelper<ConsTypeList<Head, Tail>, Value, Offset> {
        using Result = typename TypeListFindHelper<Tail, Value, Offset + 1>::Result; 
     };
     
-    template <typename Value, int Offset>
+    template<typename Value, int Offset>
     struct TypeListFindHelper<EmptyTypeList, Value, Offset> {
         using Result = TypeDictNotFound;
     };
@@ -192,7 +192,7 @@ namespace Private {
 
 #endif
 
-template <typename List, typename Value>
+template<typename List, typename Value>
 using TypeListFind =
 #ifdef IN_DOXYGEN
 implementation_hidden;
@@ -200,22 +200,22 @@ implementation_hidden;
 typename Private::TypeListFindHelper<List, Value, 0>::Result;
 #endif
 
-template <typename List, typename Value>
+template<typename List, typename Value>
 using TypeListIndex = typename TypeListFind<List, Value>::Result;
 
-template <typename List, typename Func, typename FuncValue>
+template<typename List, typename Func, typename FuncValue>
 using TypeListFindMapped = TypeListFind<MapTypeList<List, Func>, FuncValue>;
 
-template <typename List, typename Func, typename FuncValue>
+template<typename List, typename Func, typename FuncValue>
 using TypeListIndexMapped = typename TypeListFindMapped<List, Func, FuncValue>::Result;
 
-template <typename List, typename Func, typename FuncValue>
+template<typename List, typename Func, typename FuncValue>
 using TypeListGetMapped = TypeListGet<List, TypeListIndexMapped<List, Func, FuncValue>::Value>;
 
 #ifndef IN_DOXYGEN
 
 namespace SequenceListPrivate {
-    template <int Count, int Start>
+    template<int Count, int Start>
     struct SequenceListHelper {
         typedef ConsTypeList<
             WrapInt<Start>,
@@ -223,7 +223,7 @@ namespace SequenceListPrivate {
         > Type;
     };
 
-    template <int Start>
+    template<int Start>
     struct SequenceListHelper<0, Start> {
         typedef EmptyTypeList Type;
     };
@@ -235,7 +235,7 @@ namespace SequenceListPrivate {
  * Create a list of WrapInt\<index\> for index from Start up to
  * Start+Count exclusive.
  */
-template <int Count, int Start=0>
+template<int Count, int Start=0>
 using SequenceList =
 #ifdef IN_DOXYGEN
 implementation_hidden;
@@ -247,14 +247,14 @@ typename SequenceListPrivate::SequenceListHelper<Count, Start>::Type;
  * Create a list of ElemTemplate\<index\> for index from
  * 0 up to Count exclusive.
  */
-template <int Count, template<int> typename ElemTemplate>
+template<int Count, template<int> typename ElemTemplate>
 using IndexElemListCount = MapTypeList<SequenceList<Count>, ValueTemplateFunc<int, ElemTemplate>>;
 
 /**
  * Create a list of ElemTemplate\<index\> for index from
  * 0 up to the length of List exclusive.
  */
-template <typename List, template<int> typename ElemTemplate>
+template<typename List, template<int> typename ElemTemplate>
 using IndexElemList = IndexElemListCount<TypeListLength<List>::Value, ElemTemplate>;
 
 /** @} */

@@ -42,7 +42,7 @@ namespace AIpStack {
  * @param e Exponent (negative values are treated as 0).
  * @return 2 raised to the power `max(0, e)`.
  */
-template <typename T>
+template<typename T>
 constexpr T PowerOfTwo (int e)
 {
     return (e <= 0) ? 1 : 2 * PowerOfTwo<T>(e - 1);

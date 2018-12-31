@@ -58,7 +58,7 @@
  *     return arg + 1;
  * }
  * 
- * template <typename T>
+ * template<typename T>
  * AIPSTACK_NO_INLINE
  * void function2 (T arg) {
  *     arg.foo();

@@ -38,8 +38,8 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
-template <typename> class IpStack;
-template <typename> class IpIface;
+template<typename> class IpStack;
+template<typename> class IpIface;
 #endif
 
 /**
@@ -312,7 +312,7 @@ struct Ip4CommonSendParams {
  * 
  * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename Arg>
+template<typename Arg>
 struct IpProtocolHandlerArgs {
     /**
      * The platform facade, as passed to the @ref IpStack::IpStack constructor.
@@ -334,7 +334,7 @@ struct IpProtocolHandlerArgs {
  * 
  * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename Arg>
+template<typename Arg>
 struct IpRouteInfoIp4 {
     /**
      * The interface to send through.
@@ -355,7 +355,7 @@ struct IpRouteInfoIp4 {
  * 
  * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename Arg>
+template<typename Arg>
 struct IpRxInfoIp4 {
     /**
      * The source address.
@@ -399,7 +399,7 @@ struct IpRxInfoIp4 {
  * 
  * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename Arg>
+template<typename Arg>
 struct IpSendPreparedIp4 {
     /**
      * Routing information (may be read externally if found useful).

@@ -42,7 +42,7 @@ namespace AIpStack {
  * @tparam Derived Dummy template parameter to avoid problems with ambiguous base classes.
  *         It is recommended to use the type of the derived class.
  */
-template <typename Derived = void>
+template<typename Derived = void>
 class NonCopyable {
 public:
     /**

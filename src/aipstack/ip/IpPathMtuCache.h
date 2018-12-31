@@ -56,10 +56,10 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <typename> class IpStack;
-template <typename> class IpIface;
+template<typename> class IpStack;
+template<typename> class IpIface;
 
-template <typename Arg>
+template<typename Arg>
 class IpPathMtuCache;
 
 /**
@@ -73,7 +73,7 @@ class IpPathMtuCache;
  *         or a type derived from such. Note that the @ref IpStack actually
  *         performs this instantiation.
  */
-template <typename Arg>
+template<typename Arg>
 class IpPathMtuCache :
     private NonCopyable<IpPathMtuCache<Arg>>
 {
@@ -634,9 +634,9 @@ struct IpPathMtuCacheOptions {
  * 
  * @tparam Options Assignments of options defined in @ref IpPathMtuCacheOptions.
  */
-template <typename ...Options>
+template<typename ...Options>
 class IpPathMtuCacheService {
-    template <typename>
+    template<typename>
     friend class IpPathMtuCache;
     
     AIPSTACK_OPTION_CONFIG_VALUE(IpPathMtuCacheOptions, NumMtuEntries)
@@ -645,7 +645,7 @@ class IpPathMtuCacheService {
     
 public:
 #ifndef IN_DOXYGEN
-    template <typename PlatformImpl_, typename StackArg_>
+    template<typename PlatformImpl_, typename StackArg_>
     struct Compose {
         using PlatformImpl = PlatformImpl_;
         using StackArg = StackArg_;

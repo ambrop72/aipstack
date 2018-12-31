@@ -41,15 +41,15 @@ namespace AIpStack {
  * @{
  */
 
-template <typename Impl>
+template<typename Impl>
 class PlatformFacade;
 
 #ifndef IN_DOXYGEN
 
-template <typename Impl, bool ImplIsStatic>
+template<typename Impl, bool ImplIsStatic>
 struct PlatformRefBase {};
 
-template <typename Impl>
+template<typename Impl>
 struct PlatformRefBase<Impl, false>
 {
     Impl *m_platform_impl;
@@ -83,7 +83,7 @@ struct PlatformRefBase<Impl, false>
  * @tparam Impl The platform implementation class, providing the API described
  *         in @ref PlatformImplStub.
  */
-template <typename Impl>
+template<typename Impl>
 class PlatformRef :
     private PlatformRefBase<Impl, Impl::ImplIsStatic>
 {
@@ -100,7 +100,7 @@ public:
      * @param args No arguments (static platform implementation) or a pointer to
      *        Impl (non-static platform implementation).
      */
-    template <typename ...Args>
+    template<typename ...Args>
     inline PlatformRef (Args && ... args) :
         Base(std::forward<Args>(args)...)
     {
@@ -153,7 +153,7 @@ public:
      * 
      * @return The pointer to the platform implementation.
      */
-    template <bool Enable = !Impl::ImplIsStatic, typename = std::enable_if_t<Enable>>
+    template<bool Enable = !Impl::ImplIsStatic, typename = std::enable_if_t<Enable>>
     inline Impl * platformImpl () const
     {
         return this->m_platform_impl;
@@ -176,7 +176,7 @@ public:
  * @tparam Impl The platform implementation class, providing the API described
  *         in @ref PlatformImplStub.
  */
-template <typename Impl>
+template<typename Impl>
 class PlatformFacade :
     private PlatformRef<Impl>
 {
@@ -327,7 +327,7 @@ public:
      *         which will prevent base class ambiguity problems. This type is not
      *         used by this class in any way.
      */
-    template <typename Derived>
+    template<typename Derived>
     class RefWrapper :
         public Ref
     {
@@ -485,10 +485,10 @@ public:
     };
     
 private:
-    template <typename Func>
+    template<typename Func>
     using RetType = GetReturnType<Func>;
     
-    template <typename Func, typename ...Args>
+    template<typename Func, typename ...Args>
     inline RetType<Func> callImpl (Func Impl::*func_ptr, Args && ... args) const
     {
         static_assert(!Impl::ImplIsStatic);
@@ -496,19 +496,19 @@ private:
         return (impl->*func_ptr)(std::forward<Args>(args)...);
     }
     
-    template <typename Func, typename ...Args>
+    template<typename Func, typename ...Args>
     inline RetType<Func> callImpl (Func *func_ptr, Args && ... args) const
     {
         return (*func_ptr)(std::forward<Args>(args)...);
     }
     
-    template <typename Obj, typename Func, typename ...Args>
+    template<typename Obj, typename Func, typename ...Args>
     inline static RetType<Func> callObj (Func Obj::*func_ptr, Obj &obj, Args && ... args)
     {
         return (obj.*func_ptr)(std::forward<Args>(args)...);
     }
     
-    template <typename Obj, typename Func, typename ...Args>
+    template<typename Obj, typename Func, typename ...Args>
     inline static RetType<Func> callObj (
         Func Obj::*func_ptr, Obj const &obj, Args && ... args)
     {

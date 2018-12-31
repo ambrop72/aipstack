@@ -41,7 +41,7 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <typename Arg>
+template<typename Arg>
 class MruListIndex {
     AIPSTACK_USE_TYPES(Arg, (HookAccessor, LookupKeyArg, KeyFuncs, LinkModel))
     AIPSTACK_USE_VALS(Arg, (Duplicates))
@@ -80,7 +80,7 @@ public:
             m_list.remove(e, st);
         }
         
-        template <bool Enable = !Duplicates, typename = std::enable_if_t<Enable>>
+        template<bool Enable = !Duplicates, typename = std::enable_if_t<Enable>>
         Ref findEntry (LookupKeyArg key, State st = State()) const
         {
             for (Ref e = m_list.first(st); !e.isNull(); e = m_list.next(e, st)) {
@@ -95,13 +95,13 @@ public:
             return Ref::null();
         }
         
-        template <bool Enable = Duplicates, typename = std::enable_if_t<Enable>>
+        template<bool Enable = Duplicates, typename = std::enable_if_t<Enable>>
         inline Ref findFirst (LookupKeyArg key, State st = State()) const
         {
             return findFirstNextCommon(key, m_list.first(st), st);
         }
         
-        template <bool Enable = Duplicates, typename = std::enable_if_t<Enable>>
+        template<bool Enable = Duplicates, typename = std::enable_if_t<Enable>>
         inline Ref findNext (LookupKeyArg key, Ref prev_e, State st = State()) const
         {
             return findFirstNextCommon(key, m_list.next(prev_e, st), st);
@@ -150,7 +150,7 @@ public:
 class MruListIndexService {
 public:
     #ifndef IN_DOXYGEN
-    template <typename HookAccessor_, typename LookupKeyArg_,
+    template<typename HookAccessor_, typename LookupKeyArg_,
               typename KeyFuncs_, typename LinkModel_, bool Duplicates_>
     struct Index {
         using HookAccessor = HookAccessor_;

@@ -71,7 +71,7 @@ namespace AIpStack {
 inline constexpr std::size_t FunctionStorageSize = sizeof(void *);
 
 #ifndef IN_DOXYGEN
-template <typename>
+template<typename>
 class Function;
 #endif
 
@@ -86,7 +86,7 @@ class Function;
  * @tparam Ret Return type (may be void).
  * @tparam Args Argument types.
  */
-template <typename Ret, typename ...Args>
+template<typename Ret, typename ...Args>
 class Function<Ret(Args...)>
 {
     struct Storage {
@@ -134,7 +134,7 @@ public:
      *         requirements).
      * @param callable Callable object to be stored in the function object.
      */
-    template <typename Callable>
+    template<typename Callable>
     Function (Callable callable) noexcept
     {
         static_assert(sizeof(Callable) <= FunctionStorageSize,
@@ -173,7 +173,7 @@ public:
     }
 
 private:
-    template <typename Callable>
+    template<typename Callable>
     static Ret trampoline (Storage storage, Args ...args)
     {
         Callable const *c = reinterpret_cast<Callable const *>(storage.data);
@@ -200,7 +200,7 @@ private:
  * @param callable Reference to object to be wrapped.
  * @return Wrapped reference: `std::reference_wrapper<Callable const>(callable)`.
  */
-template <typename Callable>
+template<typename Callable>
 inline std::reference_wrapper<Callable const> RefFunc (Callable const &callable) noexcept
 {
     return std::reference_wrapper<Callable const>(callable);
@@ -208,9 +208,9 @@ inline std::reference_wrapper<Callable const> RefFunc (Callable const &callable)
 
 #ifndef IN_DOXYGEN
 namespace BindPrivate {
-    template <typename Container, typename Ret, typename ...Args>
+    template<typename Container, typename Ret, typename ...Args>
     struct BindImpl {
-        template <Ret (Container::*MemberFunc)(Args...)>
+        template<Ret (Container::*MemberFunc)(Args...)>
         class Callable {
         public:
             inline constexpr Callable (Container *container) :
@@ -227,9 +227,9 @@ namespace BindPrivate {
         };
     };
 
-    template <typename Container, typename Ret, typename ...Args>
+    template<typename Container, typename Ret, typename ...Args>
     struct BindImplConst {
-        template <Ret (Container::*MemberFunc)(Args...) const>
+        template<Ret (Container::*MemberFunc)(Args...) const>
         class Callable {
         public:
             inline constexpr Callable (Container const *container) :
@@ -246,10 +246,10 @@ namespace BindPrivate {
         };
     };
 
-    template <typename Container, typename Ret, typename ...Args>
+    template<typename Container, typename Ret, typename ...Args>
     BindImpl<Container, Ret, Args...> DeduceImpl (Ret (Container::*)(Args...));
 
-    template <typename Container, typename Ret, typename ...Args>
+    template<typename Container, typename Ret, typename ...Args>
     BindImplConst<Container, Ret, Args...> DeduceImpl (Ret (Container::*)(Args...) const);
 }
 #endif

@@ -27,7 +27,7 @@
 
 namespace AIpStack {
 
-template <typename Object, typename Member, Member Object::*MemberPtr>
+template<typename Object, typename Member, Member Object::*MemberPtr>
 struct MemberAccessor {
     using ObjectType = Object;
     using MemberType = Member;
@@ -38,7 +38,7 @@ struct MemberAccessor {
     }
 };
 
-template <typename Accessor1, typename Accessor2>
+template<typename Accessor1, typename Accessor2>
 struct ComposedAccessor {
     using ObjectType = typename Accessor1::ObjectType;
     using MemberType = typename Accessor2::MemberType;

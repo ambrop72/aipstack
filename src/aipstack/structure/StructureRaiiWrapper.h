@@ -34,7 +34,7 @@ namespace AIpStack {
 
 enum class StructureDestructAction {None, AssertEmpty};
 
-template <
+template<
     typename StructureType,
     StructureDestructAction DestructAction = StructureDestructAction::None
 >

@@ -32,20 +32,20 @@ namespace AIpStack {
  * @{
  */
 
-template <typename Func, typename Arg>
+template<typename Func, typename Arg>
 using FuncCall = typename Func::template Call<Arg>::Type;
 
-template <template<typename> typename Template>
+template<template<typename> typename Template>
 struct TemplateFunc {
-    template <typename U>
+    template<typename U>
     struct Call {
         typedef Template<U> Type;
     };
 };
 
-template <typename ValueType, template<ValueType> typename Template>
+template<typename ValueType, template<ValueType> typename Template>
 struct ValueTemplateFunc {
-    template <typename U>
+    template<typename U>
     struct Call {
         typedef Template<U::Value> Type;
     };

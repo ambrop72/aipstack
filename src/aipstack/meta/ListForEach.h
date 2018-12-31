@@ -39,19 +39,19 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <typename TheList>
+template<typename TheList>
 struct ListForEach;
 
-template <typename Head, typename Tail>
+template<typename Head, typename Tail>
 struct ListForEach<ConsTypeList<Head, Tail>> {
-    template <typename Func, typename ...Args>
+    template<typename Func, typename ...Args>
     AIPSTACK_ALWAYS_INLINE static void call_forward (Func func, Args... args)
     {
         func(WrapType<Head>(), args...);
         ListForEach<Tail>::call_forward(func, args...);
     }
     
-    template <typename Func, typename ...Args>
+    template<typename Func, typename ...Args>
     AIPSTACK_ALWAYS_INLINE static bool call_forward_interruptible (Func func, Args... args)
     {
         if (!func(WrapType<Head>(), args...)) {
@@ -61,14 +61,14 @@ struct ListForEach<ConsTypeList<Head, Tail>> {
     }
 };
 
-template <>
+template<>
 struct ListForEach<EmptyTypeList> {
-    template <typename Func, typename ...Args>
+    template<typename Func, typename ...Args>
     AIPSTACK_ALWAYS_INLINE static void call_forward (Func, Args...)
     {
     }
     
-    template <typename Func, typename ...Args>
+    template<typename Func, typename ...Args>
     AIPSTACK_ALWAYS_INLINE static bool call_forward_interruptible (Func, Args...)
     {
         return true;
@@ -77,13 +77,13 @@ struct ListForEach<EmptyTypeList> {
 
 #endif
 
-template <typename List, typename Func, typename ...Args>
+template<typename List, typename Func, typename ...Args>
 AIPSTACK_ALWAYS_INLINE void ListFor (Func func, Args... args)
 {
     return ListForEach<List>::call_forward(func, args...);
 }
 
-template <typename List, typename Func, typename ...Args>
+template<typename List, typename Func, typename ...Args>
 AIPSTACK_ALWAYS_INLINE bool ListForBreak (Func func, Args... args)
 {
     return ListForEach<List>::call_forward_interruptible(func, args...);

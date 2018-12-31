@@ -51,7 +51,7 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <typename Arg>
+template<typename Arg>
 class IpReassembly;
 
 /**
@@ -65,7 +65,7 @@ class IpReassembly;
  *         performs this instantiation, the application must just pass an
  *         instantiated @ref IpReassemblyService to @ref IpStackService.
  */
-template <typename Arg>
+template<typename Arg>
 class IpReassembly :
     private NonCopyable<IpReassembly<Arg>>
 {
@@ -513,9 +513,9 @@ struct IpReassemblyOptions {
  * 
  * @tparam Options Assignments of options defined in @ref IpReassemblyOptions.
  */
-template <typename ...Options>
+template<typename ...Options>
 class IpReassemblyService {
-    template <typename>
+    template<typename>
     friend class IpReassembly;
     
     AIPSTACK_OPTION_CONFIG_VALUE(IpReassemblyOptions, MaxReassEntrys)
@@ -525,7 +525,7 @@ class IpReassemblyService {
     
 public:
 #ifndef IN_DOXYGEN
-    template <typename PlatformImpl_>
+    template<typename PlatformImpl_>
     struct Compose {
         using PlatformImpl = PlatformImpl_;
         using Params = IpReassemblyService;

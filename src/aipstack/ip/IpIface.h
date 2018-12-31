@@ -41,10 +41,10 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
-template <typename> class IpStack;
-template <typename> class IpIfaceListener;
-template <typename> class IpIfaceStateObserver;
-template <typename> class IpDriverIface;
+template<typename> class IpStack;
+template<typename> class IpIfaceListener;
+template<typename> class IpIfaceStateObserver;
+template<typename> class IpDriverIface;
 #endif
 
 /**
@@ -69,14 +69,14 @@ template <typename> class IpDriverIface;
  * 
  * @tparam Arg Template parameter of @ref IpStack.
  */
-template <typename Arg>
+template<typename Arg>
 class IpIface :
     private NonCopyable<IpIface<Arg>>
 {
-    template <typename> friend class IpStack;
-    template <typename> friend class IpIfaceListener;
-    template <typename> friend class IpIfaceStateObserver;
-    template <typename> friend class IpDriverIface;
+    template<typename> friend class IpStack;
+    template<typename> friend class IpIfaceListener;
+    template<typename> friend class IpIfaceStateObserver;
+    template<typename> friend class IpDriverIface;
 
 private:
     IpIface (IpStack<Arg> *stack, IpIfaceDriverParams const &params) :
@@ -213,7 +213,7 @@ public:
      * @tparam HwIface Type of hardware-type-specific interface.
      * @return Pointer to hardware-type-specific interface.
      */
-    template <typename HwIface>
+    template<typename HwIface>
     inline HwIface * getHwIface () {
         return static_cast<HwIface *>(m_params.hw_iface);
     }

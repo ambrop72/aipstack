@@ -27,7 +27,7 @@
 
 namespace AIpStack {
 
-template <
+template<
     typename LinkModel,
     typename KeyFuncs
 >
@@ -44,7 +44,7 @@ public:
         return KeyFuncs::CompareKeys(key1, key2);
     }
     
-    template <typename Key>
+    template<typename Key>
     inline static int compareKeyEntry (State, Key const &key1, Ref ref2)
     {
         decltype(auto) key2 = KeyFuncs::GetKeyOfEntry(*ref2);

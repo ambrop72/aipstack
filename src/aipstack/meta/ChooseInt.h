@@ -40,7 +40,7 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <int NumBits, bool Signed>
+template<int NumBits, bool Signed>
 class ChooseIntHelper {
 public:
     static_assert(NumBits > 0);
@@ -61,7 +61,7 @@ public:
 
 #endif
 
-template <int NumBits, bool Signed = false>
+template<int NumBits, bool Signed = false>
 using ChooseInt =
 #ifdef IN_DOXYGEN
 implementation_hidden;
@@ -69,7 +69,7 @@ implementation_hidden;
 typename ChooseIntHelper<NumBits, Signed>::Result;
 #endif
 
-template <std::uintmax_t N, bool Signed = false>
+template<std::uintmax_t N, bool Signed = false>
 using ChooseIntForMax = ChooseInt<BitsInInt<N>::Value, Signed>;
 
 /** @} */

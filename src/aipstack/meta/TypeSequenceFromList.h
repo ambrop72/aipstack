@@ -37,13 +37,13 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 
-template <typename, typename>
+template<typename, typename>
 struct TypeSequenceFromListHelper;
 
-template <typename List, typename ...Indices>
+template<typename List, typename ...Indices>
 struct TypeSequenceFromListHelper<List, TypeSequence<Indices...>> {
 #ifdef _MSC_VER
-    template <int Index>
+    template<int Index>
     struct Hack {
         using Elem = TypeListGet<List, Index>;
     };
@@ -56,7 +56,7 @@ struct TypeSequenceFromListHelper<List, TypeSequence<Indices...>> {
 
 #endif
 
-template <typename List>
+template<typename List>
 using TypeSequenceFromList =
 #ifdef IN_DOXYGEN
 implementation_hidden;

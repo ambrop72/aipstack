@@ -34,7 +34,7 @@ namespace AIpStack {
 
 struct EmptyTypeList {};
 
-template <typename THead, typename TTail>
+template<typename THead, typename TTail>
 struct ConsTypeList {
     typedef THead Head;
     typedef TTail Tail;

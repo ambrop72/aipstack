@@ -51,12 +51,12 @@ namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 namespace BinaryToolsPrivate {
-    template <typename T, bool IsIntegral>
+    template<typename T, bool IsIntegral>
     struct IntegerSupported {
         inline static constexpr bool Value = std::numeric_limits<T>::radix == 2;
     };
 
-    template <typename T>
+    template<typename T>
     struct IntegerSupported<T, false> {
         inline static constexpr bool Value = false;
     };
@@ -70,7 +70,7 @@ namespace BinaryToolsPrivate {
  * @tparam T Type to check.
  * @return True if the type is supported, false if not.
  */
-template <typename T>
+template<typename T>
 constexpr bool BinaryReadWriteSupportsType () {
     return BinaryToolsPrivate::IntegerSupported<T, std::is_integral<T>::value>::Value;
 }
@@ -79,11 +79,11 @@ constexpr bool BinaryReadWriteSupportsType () {
 
 namespace BinaryToolsPrivate {
     
-    template <int Bits>
+    template<int Bits>
     struct RepresentativeImpl;
 
     #define AIPSTACK_DEFINE_REPRESENTATIVE(bits, repr_type) \
-    template <> \
+    template<> \
     struct RepresentativeImpl<bits> { \
         using Type = repr_type; \
     };
@@ -95,7 +95,7 @@ namespace BinaryToolsPrivate {
 
     #undef AIPSTACK_DEFINE_REPRESENTATIVE
     
-    template <typename T>
+    template<typename T>
     struct RepresentativeCheck {
         static_assert(BinaryReadWriteSupportsType<T>());
         static_assert(std::is_unsigned<T>::value);
@@ -103,10 +103,10 @@ namespace BinaryToolsPrivate {
         using Type = typename RepresentativeImpl<std::numeric_limits<T>::digits>::Type;
     };
     
-    template <typename T>
+    template<typename T>
     using Representative = typename RepresentativeCheck<T>::Type;
     
-    template <typename T, bool BigEndian>
+    template<typename T, bool BigEndian>
     struct ReadUnsigned {
         inline static constexpr int Bits = std::numeric_limits<T>::digits;
         static_assert(Bits % 8 == 0);
@@ -126,7 +126,7 @@ namespace BinaryToolsPrivate {
         }
     };
     
-    template <typename T, bool BigEndian>
+    template<typename T, bool BigEndian>
     struct WriteUnsigned {
         inline static constexpr int Bits = std::numeric_limits<T>::digits;
         static_assert(Bits % 8 == 0);
@@ -167,7 +167,7 @@ namespace BinaryToolsPrivate {
      * only after it is confirmed the result is good.
      */
     
-    template <bool BigEndian>
+    template<bool BigEndian>
     struct ReadUnsigned<std::uint32_t, BigEndian> {
         AIPSTACK_ALWAYS_INLINE
         static std::uint32_t readInt (char const *src)
@@ -178,7 +178,7 @@ namespace BinaryToolsPrivate {
         }
     };
     
-    template <bool BigEndian>
+    template<bool BigEndian>
     struct WriteUnsigned<std::uint32_t, BigEndian> {
         AIPSTACK_ALWAYS_INLINE
         static void writeInt (std::uint32_t value, char *dst)
@@ -188,7 +188,7 @@ namespace BinaryToolsPrivate {
         }
     };
     
-    template <bool BigEndian>
+    template<bool BigEndian>
     struct ReadUnsigned<std::uint16_t, BigEndian> {
         AIPSTACK_ALWAYS_INLINE
         static std::uint16_t readInt (char const *src)
@@ -199,7 +199,7 @@ namespace BinaryToolsPrivate {
         }
     };
     
-    template <bool BigEndian>
+    template<bool BigEndian>
     struct WriteUnsigned<std::uint16_t, BigEndian> {
         AIPSTACK_ALWAYS_INLINE
         static void writeInt (std::uint16_t value, char *dst)
@@ -211,9 +211,9 @@ namespace BinaryToolsPrivate {
     
 #endif
     
-    template <bool IsSigned>
+    template<bool IsSigned>
     struct SignHelper {
-        template <typename T, bool BigEndian>
+        template<typename T, bool BigEndian>
         inline static T read_it (char const *src)
         {
             static_assert(std::is_unsigned<T>::value);
@@ -221,7 +221,7 @@ namespace BinaryToolsPrivate {
             return ReadUnsigned<Representative<T>, BigEndian>::readInt(src);
         }
         
-        template <typename T, bool BigEndian>
+        template<typename T, bool BigEndian>
         inline static void write_it (T value, char *dst)
         {
             static_assert(std::is_unsigned<T>::value);
@@ -230,9 +230,9 @@ namespace BinaryToolsPrivate {
         }
     };
     
-    template <>
+    template<>
     struct SignHelper<true> {
-        template <typename T, bool BigEndian>
+        template<typename T, bool BigEndian>
         inline static T read_it (char const *src)
         {
             static_assert(std::is_signed<T>::value);
@@ -242,7 +242,7 @@ namespace BinaryToolsPrivate {
             return reinterpret_cast<T const &>(uval);
         }
         
-        template <typename T, bool BigEndian>
+        template<typename T, bool BigEndian>
         inline static void write_it (T value, char *dst)
         {
             static_assert(std::is_signed<T>::value);
@@ -254,7 +254,7 @@ namespace BinaryToolsPrivate {
     };
 }
 
-template <bool BigEndian_>
+template<bool BigEndian_>
 struct BinaryEndian {
     inline static constexpr bool BigEndian = BigEndian_;
 };
@@ -280,7 +280,7 @@ using BinaryBigEndian = BinaryEndian<true>;
  * @param src Pointer to encoded data; `sizeof(T)` bytes will be read from here.
  * @return Decoded integer value.
  */
-template <typename T, typename Endian>
+template<typename T, typename Endian>
 inline T ReadBinaryInt (char const *src)
 {
     static_assert(BinaryReadWriteSupportsType<T>());
@@ -299,7 +299,7 @@ inline T ReadBinaryInt (char const *src)
  * @param dst Pointer where to write the encoded data; `sizeof(T)` bytes will be written
  *        here.
  */
-template <typename T, typename Endian>
+template<typename T, typename Endian>
 inline void WriteBinaryInt (T value, char *dst)
 {
     static_assert(BinaryReadWriteSupportsType<T>());

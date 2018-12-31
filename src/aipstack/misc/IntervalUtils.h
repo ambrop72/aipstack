@@ -53,7 +53,7 @@ namespace AIpStack {
  * @param x Value for which to check whether it is in the interval.
  * @return Whether `x` is in the interval (`start`, `start`+`length`].
  */
-template <typename IntType>
+template<typename IntType>
 bool InOpenClosedIntervalStartLen (IntType start, IntType length, IntType x)
 {
     static_assert(std::is_unsigned<IntType>::value, "Must be unsigned");

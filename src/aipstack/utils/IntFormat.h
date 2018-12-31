@@ -49,13 +49,13 @@ namespace AIpStack {
  * 
  * @tparam T Type to check.
  */
-template <typename T>
+template<typename T>
 inline constexpr bool IsInteger =
     std::is_integral<T>::value && !std::is_same<T, bool>::value;
 
 #ifndef IN_DOXYGEN
 namespace Private {
-    template <typename T>
+    template<typename T>
     constexpr std::size_t IntegerFormatLenUnsigned (T value)
     {
         static_assert(std::is_unsigned<T>::value);
@@ -69,7 +69,7 @@ namespace Private {
         return len;
     }
 
-    template <typename T>
+    template<typename T>
     constexpr std::size_t MaxIntegerFormatLenBase ()
     {
         if (std::is_signed<T>::value) {
@@ -87,7 +87,7 @@ namespace Private {
  * 
  * @tparam T Integer type (excluding bool), see @ref IsInteger.
  */
-template <typename T, typename = std::enable_if_t<IsInteger<T>>>
+template<typename T, typename = std::enable_if_t<IsInteger<T>>>
 inline constexpr std::size_t MaxIntegerFormatLen = Private::MaxIntegerFormatLenBase<T>();
 
 /**
@@ -103,7 +103,7 @@ inline constexpr std::size_t MaxIntegerFormatLen = Private::MaxIntegerFormatLenB
  * @param value Integer to be formatted.
  * @return Pointer to one past the last character written.
  */
-template <typename T, typename = std::enable_if_t<IsInteger<T>>>
+template<typename T, typename = std::enable_if_t<IsInteger<T>>>
 AIPSTACK_OPTIMIZE_SIZE
 char * FormatInteger (char *out_str, T value)
 {
@@ -140,7 +140,7 @@ char * FormatInteger (char *out_str, T value)
  * @param out_value On success, is set to the parsed integer value (not changed on failure).
  * @return True on success, false on failure.
  */
-template <typename T, typename = std::enable_if_t<IsInteger<T>>>
+template<typename T, typename = std::enable_if_t<IsInteger<T>>>
 AIPSTACK_OPTIMIZE_SIZE
 bool ParseInteger (MemRef str, T &out_value)
 {

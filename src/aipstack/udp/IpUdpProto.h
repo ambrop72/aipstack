@@ -58,20 +58,20 @@
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
-template <typename Arg>
+template<typename Arg>
 class UdpApi;
 
-template <typename Arg>
+template<typename Arg>
 class UdpListener;
 
-template <typename Arg>
+template<typename Arg>
 class UdpAssociation;
 
-template <typename Arg>
+template<typename Arg>
 class IpUdpProto;
 #endif
 
-template <typename Arg>
+template<typename Arg>
 struct UdpListenParams {
     Ip4Addr iface_addr = Ip4Addr::ZeroAddr();
     std::uint16_t port = 0;
@@ -80,7 +80,7 @@ struct UdpListenParams {
     IpIface<typename Arg::StackArg> *iface = nullptr;
 };
 
-template <typename Arg>
+template<typename Arg>
 struct UdpRxInfo {
     std::uint16_t src_port;
     std::uint16_t dst_port;
@@ -93,7 +93,7 @@ enum class UdpRecvResult {
     AcceptStop
 };
 
-template <typename Arg>
+template<typename Arg>
 struct UdpTxInfo {
     std::uint16_t src_port;
     std::uint16_t dst_port;
@@ -106,19 +106,19 @@ struct UdpAssociationKey {
     std::uint16_t remote_port;
 };
 
-template <typename Arg>
+template<typename Arg>
 struct UdpAssociationParams {
     UdpAssociationKey key;
     bool accept_nonlocal_dst = false;
 };
 
-template <typename Arg>
+template<typename Arg>
 class UdpApi :
     private NonCopyable<UdpApi<Arg>>
 {
-    template <typename> friend class UdpListener;
-    template <typename> friend class UdpAssociation;
-    template <typename> friend class IpUdpProto;
+    template<typename> friend class UdpListener;
+    template<typename> friend class UdpAssociation;
+    template<typename> friend class IpUdpProto;
 
     AIPSTACK_USE_VALS(Arg::Params, (UdpTTL))
 
@@ -184,11 +184,11 @@ public:
     }
 };
 
-template <typename Arg>
+template<typename Arg>
 class UdpListener :
     private NonCopyable<UdpListener<Arg>>
 {
-    template <typename> friend class IpUdpProto;
+    template<typename> friend class IpUdpProto;
     
     AIPSTACK_USE_TYPES(IpUdpProto<Arg>, (ListenersLinkModel))
 
@@ -295,11 +295,11 @@ private:
     UdpListenParams<Arg> m_params;
 };
 
-template <typename Arg>
+template<typename Arg>
 class UdpAssociation :
     private NonCopyable<UdpAssociation<Arg>>
 {
-    template <typename> friend class IpUdpProto;
+    template<typename> friend class IpUdpProto;
     
 public:
     using StackArg = typename Arg::StackArg;
@@ -389,14 +389,14 @@ private:
 
 #ifndef IN_DOXYGEN
 
-template <typename Arg>
+template<typename Arg>
 class IpUdpProto :
     private NonCopyable<IpUdpProto<Arg>>,
     private UdpApi<Arg>
 {
-    template <typename> friend class UdpApi;
-    template <typename> friend class UdpListener;
-    template <typename> friend class UdpAssociation;
+    template<typename> friend class UdpApi;
+    template<typename> friend class UdpListener;
+    template<typename> friend class UdpAssociation;
 
     AIPSTACK_USE_VALS(Arg::Params, (UdpTTL, EphemeralPortFirst, EphemeralPortLast))
     AIPSTACK_USE_TYPES(Arg::Params, (UdpIndexService))
@@ -685,10 +685,10 @@ struct IpUdpProtoOptions {
     AIPSTACK_OPTION_DECL_TYPE(UdpIndexService, void)
 };
 
-template <typename ...Options>
+template<typename ...Options>
 class IpUdpProtoService {
-    template <typename> friend class IpUdpProto;
-    template <typename> friend class UdpApi;
+    template<typename> friend class IpUdpProto;
+    template<typename> friend class UdpApi;
     
     AIPSTACK_OPTION_CONFIG_VALUE(IpUdpProtoOptions, UdpTTL)
     AIPSTACK_OPTION_CONFIG_VALUE(IpUdpProtoOptions, EphemeralPortFirst)
@@ -700,7 +700,7 @@ public:
     using IpProtocolNumber = WrapValue<Ip4Protocol, Ip4Protocol::Udp>;
     
 #ifndef IN_DOXYGEN
-    template <typename PlatformImpl_, typename StackArg_>
+    template<typename PlatformImpl_, typename StackArg_>
     struct Compose {
         using PlatformImpl = PlatformImpl_;
         using StackArg = StackArg_;

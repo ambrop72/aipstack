@@ -44,7 +44,7 @@ class ResourceArrayInitSame {};
  * @{
  */
 
-template <typename Elem, std::size_t Size>
+template<typename Elem, std::size_t Size>
 class ResourceArray;
 
 #ifndef IN_DOXYGEN
@@ -52,13 +52,13 @@ class ResourceArray;
 namespace ResourceArrayPrivate {
     struct DefaultConstructMixinArg {};
     
-    template <bool Has>
+    template<bool Has>
     struct DefaultConstructMixin
     {
         DefaultConstructMixin (DefaultConstructMixinArg) {}
     };
 
-    template <>
+    template<>
     struct DefaultConstructMixin<false>
     {
         DefaultConstructMixin (DefaultConstructMixinArg) {}
@@ -69,10 +69,10 @@ namespace ResourceArrayPrivate {
         DefaultConstructMixin & operator= (DefaultConstructMixin &&) = default;
     };
     
-    template <bool Has>
+    template<bool Has>
     struct CopyConstructMixin {};
 
-    template <>
+    template<>
     struct CopyConstructMixin<false>
     {
         CopyConstructMixin () = default;
@@ -82,10 +82,10 @@ namespace ResourceArrayPrivate {
         CopyConstructMixin & operator= (CopyConstructMixin &&) = default;
     };
     
-    template <bool Has>
+    template<bool Has>
     struct MoveConstructMixin {};
 
-    template <>
+    template<>
     struct MoveConstructMixin<false>
     {
         MoveConstructMixin () = default;
@@ -95,10 +95,10 @@ namespace ResourceArrayPrivate {
         MoveConstructMixin & operator= (MoveConstructMixin &&) = default;
     };
     
-    template <bool Has>
+    template<bool Has>
     struct CopyAssignMixin {};
 
-    template <>
+    template<>
     struct CopyAssignMixin<false>
     {
         CopyAssignMixin () = default;
@@ -108,10 +108,10 @@ namespace ResourceArrayPrivate {
         CopyAssignMixin & operator= (CopyAssignMixin &&) = default;
     };
     
-    template <bool Has>
+    template<bool Has>
     struct MoveAssignMixin {};
 
-    template <>
+    template<>
     struct MoveAssignMixin<false>
     {
         MoveAssignMixin () = default;
@@ -121,7 +121,7 @@ namespace ResourceArrayPrivate {
         MoveAssignMixin & operator= (MoveAssignMixin &&) = delete;
     };
     
-    template <typename Elem, std::size_t Size>
+    template<typename Elem, std::size_t Size>
     class ArrayBase
     {
         friend ResourceArray<Elem, Size>;
@@ -176,7 +176,7 @@ namespace ResourceArrayPrivate {
             })
         }
         
-        template <typename ...Args>
+        template<typename ...Args>
         ArrayBase (ResourceArrayInitSame, Args const & ... args)
         {
             std::size_t i;
@@ -263,7 +263,7 @@ namespace ResourceArrayPrivate {
  * @tparam Elem Type of array elements.
  * @tparam Size Number of array elements. Must be positive.
  */
-template <typename Elem, std::size_t Size>
+template<typename Elem, std::size_t Size>
 class ResourceArray
 #ifndef IN_DOXYGEN
     :private ResourceArrayPrivate::ArrayBase<Elem, Size>,
@@ -288,7 +288,7 @@ public:
      *        element). Note that they are given by and passed to element constructors by
      *        const reference.
      */
-    template <typename ...Args>
+    template<typename ...Args>
     ResourceArray (ResourceArrayInitSame, Args const & ... args) :
         ResourceArrayPrivate::ArrayBase<Elem, Size>(ResourceArrayInitSame(), args...),
         ResourceArrayPrivate::DefaultConstructMixin<std::is_default_constructible<Elem>::value>(ResourceArrayPrivate::DefaultConstructMixinArg())

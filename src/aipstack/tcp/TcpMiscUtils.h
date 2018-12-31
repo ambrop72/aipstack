@@ -52,7 +52,7 @@ inline std::size_t CalcTcpSeqLen (Tcp4Flags flags, std::size_t tcp_data_len)
     return tcp_data_len + ((flags & Tcp4Flags::SeqFlags) != Enum0);
 }
 
-template <std::uint16_t MinAllowedMss>
+template<std::uint16_t MinAllowedMss>
 bool CalcTcpSndMss (
     std::uint16_t iface_mss, TcpOptions const &tcp_opts, std::uint16_t *out_mss)
 {

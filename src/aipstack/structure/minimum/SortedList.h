@@ -42,19 +42,19 @@ namespace AIpStack {
 #define AIPSTACK_SORTED_LIST_VERIFY 0
 #endif
 
-template <typename, typename, typename>
+template<typename, typename, typename>
 class SortedList;
 
-template <typename LinkModel>
+template<typename LinkModel>
 class SortedListNode {
-    template <typename, typename, typename>
+    template<typename, typename, typename>
     friend class SortedList;
     
 private:
     LinkedListNode<LinkModel> list_node;
 };
 
-template <
+template<
     typename Accessor,
     typename Compare,
     typename LinkModel
@@ -170,7 +170,7 @@ public:
         assertValidHeap(st);
     }
     
-    template <typename KeyType, typename Func>
+    template<typename KeyType, typename Func>
     inline void findAllLesserOrEqual (KeyType key, Func func, State st = State())
     {
         Ref node = m_list.first(st);
@@ -180,13 +180,13 @@ public:
         }
     }
     
-    template <typename KeyType>
+    template<typename KeyType>
     Ref findFirstLesserOrEqual (KeyType key, State st = State())
     {
         return next_lesser_or_equal(st, key, m_list.first(st));
     }
     
-    template <typename KeyType>
+    template<typename KeyType>
     Ref findNextLesserOrEqual (KeyType key, Ref node, State st = State())
     {
         AIPSTACK_ASSERT(!node.isNull());
@@ -217,7 +217,7 @@ public:
     }
     
 private:
-    template <typename KeyType>
+    template<typename KeyType>
     Ref next_lesser_or_equal (State st, KeyType key, Ref node)
     {
         if (!node.isNull() && Compare::compareKeyEntry(st, key, node) >= 0) {
@@ -241,10 +241,10 @@ class SortedListService {
 public:
     #ifndef IN_DOXYGEN
 
-    template <typename LinkModel>
+    template<typename LinkModel>
     using Node = SortedListNode<LinkModel>;
     
-    template <typename Accessor, typename Compare, typename LinkModel>
+    template<typename Accessor, typename Compare, typename LinkModel>
     using Structure = SortedList<Accessor, Compare, LinkModel>;
 
     #endif

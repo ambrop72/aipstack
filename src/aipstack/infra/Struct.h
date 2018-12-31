@@ -175,17 +175,17 @@ namespace AIpStack {
  *         to define conditions based on SFINAE, e.g. using `enable_if_t` or `void_t`.
  *         If no condition is needed, the specialization should use `void` here.
  */
-template <typename Type, typename Void>
+template<typename Type, typename Void>
 struct StructTypeHandler;
 
 #ifndef IN_DOXYGEN
 
-template <typename TType>
+template<typename TType>
 struct StructField {
     using StructFieldType = TType;
 };
 
-template <typename FieldType>
+template<typename FieldType>
 using StructFieldHandler = typename StructTypeHandler<FieldType, void>::Handler;
 
 #endif
@@ -197,7 +197,7 @@ using StructFieldHandler = typename StructTypeHandler<FieldType, void>::Handler;
  * 
  * @tparam FieldType Field type, as used in the structure definition.
  */
-template <typename FieldType>
+template<typename FieldType>
 using StructFieldValType =
 #ifdef IN_DOXYGEN
 implementation_hidden;
@@ -213,7 +213,7 @@ typename StructFieldHandler<FieldType>::ValType;
  * 
  * @tparam FieldType Field type, as used in the structure definition.
  */
-template <typename FieldType>
+template<typename FieldType>
 using StructFieldRefType =
 #ifdef IN_DOXYGEN
 implementation_hidden;
@@ -236,22 +236,22 @@ typename StructFieldHandler<FieldType>::RefType;
  * 
  * @tparam StructType_ Structure type (derived from this class).
  */
-template <typename StructType_>
+template<typename StructType_>
 class StructBase {
     using StructType = StructType_;
     
-    template <typename This=StructBase>
+    template<typename This=StructBase>
     using Fields = typename This::StructType::StructFields;
     
-    template <int FieldIndex, typename Dummy=void>
+    template<int FieldIndex, typename Dummy=void>
     struct FieldInfo;
     
-    template <typename Dummy>
+    template<typename Dummy>
     struct FieldInfo<-1, Dummy> {
         inline static constexpr std::size_t PartialStructSize = 0;
     };
     
-    template <int FieldIndex, typename Dummy>
+    template<int FieldIndex, typename Dummy>
     struct FieldInfo {
         using PrevFieldInfo = FieldInfo<FieldIndex-1, void>;
         using Field = TypeListGet<Fields<>, FieldIndex>;
@@ -264,10 +264,10 @@ class StructBase {
             FieldOffset + Handler::FieldSize;
     };
     
-    template <typename Field, typename This=StructBase>
+    template<typename Field, typename This=StructBase>
     using GetFieldInfo = FieldInfo<TypeListIndex<Fields<This>, Field>::Value, void>;
     
-    template <typename This=StructBase>
+    template<typename This=StructBase>
     using LastFieldInfo = FieldInfo<TypeListLength<Fields<This>>::Value-1, void>;
     
 public:
@@ -279,7 +279,7 @@ public:
      * 
      * @tparam Field Field identifier.
      */
-    template <typename Field>
+    template<typename Field>
     using ValType = StructFieldValType<typename Field::StructFieldType>;
     
     /**
@@ -289,7 +289,7 @@ public:
      * 
      * @tparam Field Field identifier.
      */
-    template <typename Field>
+    template<typename Field>
     using RefType = StructFieldRefType<typename Field::StructFieldType>;
     
     /**
@@ -312,7 +312,7 @@ public:
      * @tparam Field Field identifier.
      * @return Field offset from the start of the structure in bytes.
      */
-    template <typename Field>
+    template<typename Field>
     inline static std::size_t getOffset (Field)
     {
         using Info = GetFieldInfo<Field>;
@@ -326,7 +326,7 @@ public:
      * @param data Pointer to the start of the structure.
      * @return Field value that was read.
      */
-    template <typename Field>
+    template<typename Field>
     inline static ValType<Field> get (char const *data, Field)
     {
         using Info = GetFieldInfo<Field>;
@@ -340,7 +340,7 @@ public:
      * @param data Pointer to the start of the structure.
      * @param value Field value to write.
      */
-    template <typename Field>
+    template<typename Field>
     inline static void set (char *data, Field, ValType<Field> value)
     {
         using Info = GetFieldInfo<Field>;
@@ -356,7 +356,7 @@ public:
      * @param data Pointer to the start of the structure.
      * @return Reference to the field.
      */
-    template <typename Field>
+    template<typename Field>
     inline static RefType<Field> ref (char *data, Field)
     {
         using Info = GetFieldInfo<Field>;
@@ -429,7 +429,7 @@ public:
          * @tparam Field Field identifier.
          * @return Field value that was read.
          */
-        template <typename Field>
+        template<typename Field>
         inline ValType<Field> get (Field) const
         {
             return StructBase::get(data, Field());
@@ -443,7 +443,7 @@ public:
          * @tparam Field Field identifier.
          * @param value Field value to write.
          */
-        template <typename Field>
+        template<typename Field>
         inline void set (Field, ValType<Field> value)
         {
             StructBase::set(data, Field(), value);
@@ -457,7 +457,7 @@ public:
          * @tparam Field Field identifier.
          * @return Reference to the field.
          */
-        template <typename Field>
+        template<typename Field>
         inline RefType<Field> ref (Field)
         {
             return StructBase::ref(data, Field());
@@ -510,7 +510,7 @@ public:
          * @tparam Field Field identifier.
          * @return Field value that was read.
          */
-        template <typename Field>
+        template<typename Field>
         inline ValType<Field> get (Field) const
         {
             return StructBase::get(data, Field());
@@ -524,7 +524,7 @@ public:
          * @tparam Field Field identifier.
          * @param value Field value to write.
          */
-        template <typename Field>
+        template<typename Field>
         inline void set (Field, ValType<Field> value) const
         {
             StructBase::set(data, Field(), value);
@@ -538,7 +538,7 @@ public:
          * @tparam Field Field identifier.
          * @return Reference to the field.
          */
-        template <typename Field>
+        template<typename Field>
         inline RefType<Field> ref (Field) const
         {
             return StructBase::ref(data, Field());
@@ -583,7 +583,7 @@ public:
  * @param ptr Pointer to field data to decode.
  * @return Decoded field value.
  */
-template <typename FieldType>
+template<typename FieldType>
 inline StructFieldValType<FieldType> ReadSingleField (char const *ptr)
 {
     return StructFieldHandler<FieldType>::get(ptr);
@@ -598,7 +598,7 @@ inline StructFieldValType<FieldType> ReadSingleField (char const *ptr)
  * @param ptr Pointer to where field data will be written.
  * @param value Value to encode.
  */
-template <typename FieldType>
+template<typename FieldType>
 inline void WriteSingleField (char *ptr, StructFieldValType<FieldType> value)
 {
     StructFieldHandler<FieldType>::set(ptr, value);
@@ -648,7 +648,7 @@ AIPSTACK_DEFINE_STRUCT_FIELD_1
 #define AIPSTACK_DEFINE_STRUCT_LIST_1_END
 #define AIPSTACK_DEFINE_STRUCT_LIST_2_END
 
-template <typename Type>
+template<typename Type>
 class StructBinaryTypeHandler {
     using IntType = GetSameOrEnumBaseType<Type>;
     using Endian = BinaryBigEndian;
@@ -669,14 +669,14 @@ public:
     }
 };
 
-template <typename Type>
+template<typename Type>
 struct StructTypeHandler<Type,
     std::enable_if_t<BinaryReadWriteSupportsType<GetSameOrEnumBaseType<Type>>()>>
 {
     using Handler = AIpStack::StructBinaryTypeHandler<Type>;
 };
 
-template <typename StructType>
+template<typename StructType>
 class StructNestedTypeHandler {
 public:
     inline static constexpr std::size_t FieldSize = StructType::GetStructSize();
@@ -700,14 +700,14 @@ public:
     }
 };
 
-template <typename Type>
+template<typename Type>
 struct StructTypeHandler<Type,
     std::enable_if_t<std::is_base_of<StructBase<Type>, Type>::value>>
 {
     using Handler = StructNestedTypeHandler<Type>;
 };
 
-template <typename ElemFieldType, std::size_t Length>
+template<typename ElemFieldType, std::size_t Length>
 class StructArrayTypeHandler {
     using ElemFieldHandler = StructFieldHandler<ElemFieldType>;
     using ElemValType = typename ElemFieldHandler::ValType;
@@ -734,12 +734,12 @@ public:
     }
 };
 
-template <typename T>
+template<typename T>
 using StructIsByteType = WrapBool<
     std::is_same<T, char>::value || std::is_same<T, unsigned char>::value
 >;
 
-template <typename ElemType, std::size_t Length>
+template<typename ElemType, std::size_t Length>
 class StructByteArrayTypeHandler {
     static_assert(StructIsByteType<ElemType>::Value);
     
@@ -767,21 +767,21 @@ public:
     }
 };
 
-template <typename ElemFieldType, std::size_t Length>
+template<typename ElemFieldType, std::size_t Length>
 using StructSelectArrayTypeHandler = std::conditional_t<
     StructIsByteType<ElemFieldType>::Value,
     StructByteArrayTypeHandler<ElemFieldType, Length>,
     StructArrayTypeHandler<ElemFieldType, Length>
 >;
 
-template <typename ElemFieldType, std::size_t Length>
+template<typename ElemFieldType, std::size_t Length>
 struct StructTypeHandler<ElemFieldType[Length],
     VoidFor<StructFieldHandler<ElemFieldType>>>
 {
     using Handler = StructSelectArrayTypeHandler<ElemFieldType, Length>;
 };
 
-template <typename ElemFieldType, std::size_t Length>
+template<typename ElemFieldType, std::size_t Length>
 struct StructTypeHandler<std::array<ElemFieldType, Length>,
     std::enable_if_t<std::is_same<StructFieldValType<ElemFieldType>, ElemFieldType>::value>>
 {
@@ -797,12 +797,12 @@ struct StructTypeHandler<std::array<ElemFieldType, Length>,
  * 
  * @tparam Type Value type. Must be a trivial type (`std::is_trivial<T>`).
  */
-template <typename Type>
+template<typename Type>
 struct StructRawField {};
 
 #ifndef IN_DOXYGEN
 
-template <typename Type>
+template<typename Type>
 class StructRawTypeHandler {
 public:
     static_assert(std::is_trivial<Type>::value);
@@ -824,7 +824,7 @@ public:
     }
 };
 
-template <typename Type>
+template<typename Type>
 struct StructTypeHandler<StructRawField<Type>, void> {
     using Handler = StructRawTypeHandler<Type>;
 };
@@ -846,13 +846,13 @@ struct StructTypeHandler<StructRawField<Type>, void> {
  * In simple cases this is done like this:
  * 
  * ```
- * template <>
+ * template<>
  * struct StructTypeHandler<Type, void> {
  *     using Handler = StructConventionalTypeHandler<Type>;
  * };
  * ```
  */
-template <typename Type>
+template<typename Type>
 class StructConventionalTypeHandler {
 public:
     #ifndef IN_DOXYGEN

@@ -39,7 +39,7 @@
 
 namespace AIpStackExamples {
 
-template <typename StackArg, typename TheEthIpIfaceService>
+template<typename StackArg, typename TheEthIpIfaceService>
 class TapIface {
     using Platform = AIpStack::PlatformFacade<AIpStack::HostedPlatformImpl>;
 
