@@ -61,8 +61,12 @@ class IpDhcpOptions
     
     // Calculates the size of a DHCP option.
     // OptDataType is the payload type declared with AIPSTACK_DEFINE_STRUCT.
+    // This should be a variable template but is a function due to a bug
+    // in Clang (https://bugs.llvm.org/show_bug.cgi?id=40195).
     template<typename OptDataType>
-    inline static constexpr std::size_t OptSizeForType = OptSizeForSize(OptDataType::Size);
+    inline static constexpr std::size_t OptSizeForType() { 
+        return OptSizeForSize(OptDataType::Size);
+    }
     
     // Possible regions where options can be located from.
     enum class OptionRegion {Options, File, Sname};
@@ -74,13 +78,13 @@ public:
     // Maximum size of options that we could possibly transmit.
     inline static constexpr std::size_t MaxOptionsSendSize =
         // DHCP message type
-        OptSizeForType<DhcpOptMsgType> +
+        OptSizeForType<DhcpOptMsgType>() +
         // requested IP address
-        OptSizeForType<DhcpOptAddr> +
+        OptSizeForType<DhcpOptAddr>() +
         // DHCP server identifier
-        OptSizeForType<DhcpOptServerId> +
+        OptSizeForType<DhcpOptServerId>()+
         // maximum message size
-        OptSizeForType<DhcpOptMaxMsgSize> +
+        OptSizeForType<DhcpOptMaxMsgSize>() +
         // parameter request list
         OptSizeForSize(ParameterRequestListSize) +
         // client identifier
