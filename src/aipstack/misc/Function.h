@@ -222,6 +222,11 @@ namespace BindPrivate {
                 return (m_container->*MemberFunc)(std::forward<Args>(args)...);
             }
 
+            inline Function<Ret(Args...)> toFunction() const
+            {
+                return Function<Ret(Args...)>(*this);
+            }
+
         private:
             Container *m_container;
         };
@@ -239,6 +244,11 @@ namespace BindPrivate {
             inline Ret operator() (Args ...args) const
             {
                 return (m_container->*MemberFunc)(std::forward<Args>(args)...);
+            }
+
+            inline Function<Ret(Args...)> toFunction() const
+            {
+                return Function<Ret(Args...)>(*this);
             }
 
         private:
@@ -268,13 +278,14 @@ namespace BindPrivate {
  *        and ref-qualifiers are not.
  * @param object_ptr Pointer to object on which the member function would be
  *        invoked. Must not be null.
- * @return Function object representing the specified member function operating on
- *         the specified object. The argument types and return type are deduced and
- *         match the declaration of the member function.
+ * @return @ref AIpStack::Function<Ret(Args...)> "Function" object representing the
+ *         specified member function operating on the specified object. The argument
+ *         types and return type are deduced and match the declaration of the member
+ *         function.
  */
 #define AIPSTACK_BIND_MEMBER(member_func, object_ptr) \
     (decltype(::AIpStack::BindPrivate::DeduceImpl(member_func)) \
-     ::template Callable<member_func>((object_ptr)))
+     ::template Callable<member_func>((object_ptr)).toFunction())
 
 /**
  * Wrap a member function and object pointer into @ref
@@ -289,13 +300,14 @@ namespace BindPrivate {
  *        and ref-qualifiers are not.
  * @param object_ptr Pointer to object on which the member function would be
  *        invoked. Must not be null.
- * @return Function object representing the specified member function operating on
- *         the specified object. The argument types and return type are deduced and
- *         match the declaration of the member function.
+ * @return @ref AIpStack::Function<Ret(Args...)> "Function" object representing the
+ *         specified member function operating on the specified object. The argument
+ *         types and return type are deduced and match the declaration of the member
+ *         function.
  */
 #define AIPSTACK_BIND_MEMBER_TN(member_func, object_ptr) \
     (typename decltype(::AIpStack::BindPrivate::DeduceImpl(member_func)) \
-     ::template Callable<member_func>((object_ptr)))
+     ::template Callable<member_func>((object_ptr)).toFunction())
 
 /** @} */
 
