@@ -36,6 +36,7 @@
 #include <aipstack/misc/EnumUtils.h>
 #include <aipstack/misc/IntervalUtils.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/BufUtils.h>
 #include <aipstack/infra/Chksum.h>
 #include <aipstack/infra/TxAllocHelper.h>
 #include <aipstack/infra/Err.h>
@@ -375,7 +376,7 @@ public:
             
             // Advance snd_buf_cur over any data just sent.
             if (AIPSTACK_LIKELY(data_sent > 0)) {
-                snd_buf_cur->skipBytes(data_sent);
+                *snd_buf_cur = ipBufSkipBytes(*snd_buf_cur, data_sent);
             }
             
             // Decrement remaining window.
@@ -1268,7 +1269,7 @@ private:
             // Include any data.
             IpBufNode data_node;
             if (AIPSTACK_LIKELY(data.tot_len > 0)) {
-                data_node = data.toNode();
+                data_node = ipBufRefToNode(data);
                 dgram_alloc.setNext(&data_node, data.tot_len);
             }
             

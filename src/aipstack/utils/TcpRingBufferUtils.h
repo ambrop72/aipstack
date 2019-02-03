@@ -34,6 +34,7 @@
 #include <aipstack/misc/Hints.h>
 #include <aipstack/misc/MemRef.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/BufUtils.h>
 #include <aipstack/tcp/TcpConnection.h>
 
 namespace AIpStack {
@@ -54,8 +55,7 @@ public:
         IpBufRef send_buf = IpBufRef{&m_buf_node, std::size_t(0), old_send_buf.tot_len};
 
         if (old_send_buf.tot_len > 0) {
-            IpBufRef tmp_buf = send_buf;
-            tmp_buf.giveBuf(old_send_buf);
+            ipBufGiveBuf(send_buf, old_send_buf);
         }
 
         con.setSendBuf(send_buf);
@@ -119,12 +119,12 @@ public:
         IpBufRef recv_buf = IpBufRef{&m_buf_node, std::size_t(0), buf_size};
         
         if (initial_rx_data.tot_len > 0) {
-            recv_buf.giveBuf(initial_rx_data);
+            recv_buf = ipBufGiveBuf(recv_buf, initial_rx_data);
         }
         
         if (old_recv_buf.tot_len > 0) {
-            IpBufRef tmp_buf = recv_buf;
-            tmp_buf.giveBuf(old_recv_buf);
+            ipBufGiveBuf(recv_buf, old_recv_buf);
+            // recv_buf not assigned here, this is right
         }
         
         con.setRecvBuf(recv_buf);

@@ -36,6 +36,7 @@
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/misc/MemRef.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/BufUtils.h>
 #include <aipstack/infra/Struct.h>
 #include <aipstack/proto/DhcpProto.h>
 #include <aipstack/ip/IpAddr.h>
@@ -170,7 +171,7 @@ public:
         while (true) {
             while (data.tot_len > 0) {
                 // Read option type.
-                DhcpOptionType opt_type = DhcpOptionType(data.takeByte());
+                DhcpOptionType opt_type = DhcpOptionType(ipBufTakeByteMut(data));
                 
                 // End option?
                 if (opt_type == DhcpOptionType::End) {
@@ -188,7 +189,7 @@ public:
                 if (data.tot_len == 0) {
                     return false;
                 }
-                std::uint8_t opt_len = std::uint8_t(data.takeByte());
+                std::uint8_t opt_len = std::uint8_t(ipBufTakeByteMut(data));
                 
                 // Check that the remainder of the option is available.
                 if (opt_len > data.tot_len) {
@@ -207,7 +208,7 @@ public:
             {
                 // Parse options in file.
                 region = OptionRegion::File;
-                data = dhcp_header2.subFromTo(64, 128);
+                data = ip4BufSubFromTo(dhcp_header2, 64, 128);
             }
             else if (
                 (region == OptionRegion::Options &&
@@ -217,7 +218,7 @@ public:
             ) {
                 // Parse options in sname.
                 region = OptionRegion::Sname;
-                data = dhcp_header2.subFromTo(0, 64);
+                data = ip4BufSubFromTo(dhcp_header2, 0, 64);
             }
             else {
                 // Done parsing options.
@@ -332,7 +333,7 @@ private:
                     goto skip_data;
                 }
                 DhcpOptMsgType::Val val;
-                data.takeBytes(opt_len, val.data);
+                data = ipBufTakeBytes(data, opt_len, val.data);
                 opts.have.dhcp_message_type = true;
                 opts.dhcp_message_type = val.get(DhcpOptMsgType::MsgType());
             } break;
@@ -342,7 +343,7 @@ private:
                     goto skip_data;
                 }
                 DhcpOptServerId::Val val;
-                data.takeBytes(opt_len, val.data);
+                data = ipBufTakeBytes(data, opt_len, val.data);
                 opts.have.dhcp_server_identifier = true;
                 opts.dhcp_server_identifier = val.get(DhcpOptServerId::ServerId());
             } break;
@@ -352,7 +353,7 @@ private:
                     goto skip_data;
                 }
                 DhcpOptTime::Val val;
-                data.takeBytes(opt_len, val.data);
+                data = ipBufTakeBytes(data, opt_len, val.data);
                 opts.have.ip_address_lease_time = true;
                 opts.ip_address_lease_time = val.get(DhcpOptTime::Time());
             } break;
@@ -362,7 +363,7 @@ private:
                     goto skip_data;
                 }
                 DhcpOptTime::Val val;
-                data.takeBytes(opt_len, val.data);
+                data = ipBufTakeBytes(data, opt_len, val.data);
                 opts.have.renewal_time = true;
                 opts.renewal_time = val.get(DhcpOptTime::Time());
             } break;
@@ -372,7 +373,7 @@ private:
                     goto skip_data;
                 }
                 DhcpOptTime::Val val;
-                data.takeBytes(opt_len, val.data);
+                data = ipBufTakeBytes(data, opt_len, val.data);
                 opts.have.rebinding_time = true;
                 opts.rebinding_time = val.get(DhcpOptTime::Time());
             } break;
@@ -382,7 +383,7 @@ private:
                     goto skip_data;
                 }
                 DhcpOptAddr::Val val;
-                data.takeBytes(opt_len, val.data);
+                data = ipBufTakeBytes(data, opt_len, val.data);
                 opts.have.subnet_mask = true;
                 opts.subnet_mask = val.get(DhcpOptAddr::Addr());
             } break;
@@ -395,10 +396,10 @@ private:
                     goto skip_data;
                 }
                 DhcpOptAddr::Val val;
-                data.takeBytes(DhcpOptAddr::Size, val.data);
+                data = ipBufTakeBytes(data, DhcpOptAddr::Size, val.data);
                 opts.have.router = true;
                 opts.router = val.get(DhcpOptAddr::Addr());
-                data.skipBytes(opt_len - DhcpOptAddr::Size);
+                data = ipBufSkipBytes(data, opt_len - DhcpOptAddr::Size);
             } break;
             
             case DhcpOptionType::DomainNameServer: {
@@ -410,7 +411,7 @@ private:
                     // Must consume all servers from data even if we can't save
                     // them.
                     DhcpOptAddr::Val val;
-                    data.takeBytes(DhcpOptAddr::Size, val.data);
+                    data = ipBufTakeBytes(data, DhcpOptAddr::Size, val.data);
                     if (opts.have.dns_servers < MaxDnsServers) {
                         opts.dns_servers[opts.have.dns_servers++] =
                             val.get(DhcpOptAddr::Addr());
@@ -426,7 +427,7 @@ private:
                     goto skip_data;
                 }
                 DhcpOptOptionOverload::Val val;
-                data.takeBytes(opt_len, val.data);
+                data = ipBufTakeBytes(data, opt_len, val.data);
                 DhcpOptionOverload overload_val =
                     val.get(DhcpOptOptionOverload::Overload());
                 if (overload_val == OneOf(
@@ -441,7 +442,7 @@ private:
             // Unknown or bad option, consume the option data.
             skip_data:
             default: {
-                data.skipBytes(opt_len);
+                data = ipBufSkipBytes(data, opt_len);
             } break;
         }
     }

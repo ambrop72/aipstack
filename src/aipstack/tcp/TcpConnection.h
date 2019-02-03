@@ -35,6 +35,7 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/Hints.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/BufUtils.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpMtuRef.h>
@@ -428,7 +429,7 @@ public:
      * May only be called in CONNECTED or CLOSED state.
      * 
      * When the stack shifts the receive buffer it will move to
-     * subsequent buffer nodes eagerly (see IpBufRef::processBytes).
+     * subsequent buffer nodes eagerly (see ipBufProcessBytes).
      * This is convenient when using a ring buffer as it guarantees
      * that the offset will remain less than the buffer size.
      */
@@ -491,9 +492,8 @@ public:
         // Set the send buffer.
         m_v.snd_buf = snd_buf;
         
-        // Set snd_buf_cur and advance it to preserve the send offset.
-        m_v.snd_buf_cur = snd_buf;
-        m_v.snd_buf_cur.skipBytes(snd_offset);
+        // Set snd_buf_cur to snd_buf advanced to the send offset.
+        m_v.snd_buf_cur = ipBufSkipBytes(snd_buf, snd_offset);
         
         if (AIPSTACK_LIKELY(m_v.pcb != nullptr && extended)) {
             // Inform the output code, so it may send the data.
@@ -529,7 +529,7 @@ public:
      * May only be called in CONNECTED or CLOSED state.
      * 
      * When the stack shifts the send buffer it will move to
-     * subsequent buffer nodes eagerly (see IpBufRef::processBytes).
+     * subsequent buffer nodes eagerly (see ipBufProcessBytes).
      * This is convenient when using a ring buffer as it guarantees
      * that the offset will remain less than the buffer size.
      */

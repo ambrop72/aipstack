@@ -40,6 +40,7 @@
 
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Function.h>
+#include <aipstack/infra/BufUtils.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/tap/linux/TapDeviceLinux.h>
 
@@ -121,7 +122,7 @@ AIpStack::IpErr TapDeviceLinux::sendFrame (AIpStack::IpBufRef frame)
     char *buffer = m_write_buffer.data();
     
     std::size_t len = frame.tot_len;
-    frame.takeBytes(len, buffer);
+    frame = ipBufTakeBytes(frame, len, buffer);
     
     auto write_res = ::write(*m_fd, buffer, len);
     if (write_res < 0) {

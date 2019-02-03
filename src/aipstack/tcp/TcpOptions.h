@@ -32,6 +32,7 @@
 #include <aipstack/misc/EnumUtils.h>
 #include <aipstack/misc/EnumBitfieldUtils.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/BufUtils.h>
 #include <aipstack/infra/Struct.h>
 #include <aipstack/proto/Tcp4Proto.h>
 
@@ -66,7 +67,7 @@ inline void ParseTcpOptions (IpBufRef buf, TcpOptions &out_opts)
     
     while (buf.tot_len > 0) {
         // Read the option kind.
-        TcpOption kind = TcpOption(std::uint8_t(buf.takeByte()));
+        TcpOption kind = TcpOption(std::uint8_t(ipBufTakeByteMut(buf)));
         
         // Hanlde end option and nop option.
         if (kind == TcpOption::End) {
@@ -80,7 +81,7 @@ inline void ParseTcpOptions (IpBufRef buf, TcpOptions &out_opts)
         if (buf.tot_len == 0) {
             break;
         }
-        std::uint8_t length = std::uint8_t(buf.takeByte());
+        std::uint8_t length = std::uint8_t(ipBufTakeByteMut(buf));
         
         // Check the option length.
         if (length < 2) {
@@ -99,7 +100,7 @@ inline void ParseTcpOptions (IpBufRef buf, TcpOptions &out_opts)
                     goto skip_option;
                 }
                 char opt_data[2];
-                buf.takeBytes(opt_data_len, opt_data);
+                buf = ipBufTakeBytes(buf, opt_data_len, opt_data);
                 out_opts.options |= TcpOptionFlags::Mss;
                 out_opts.mss = ReadSingleField<std::uint16_t>(opt_data);
             } break;
@@ -109,7 +110,7 @@ inline void ParseTcpOptions (IpBufRef buf, TcpOptions &out_opts)
                 if (opt_data_len != 1) {
                     goto skip_option;
                 }
-                std::uint8_t value = std::uint8_t(buf.takeByte());
+                std::uint8_t value = std::uint8_t(ipBufTakeByteMut(buf));
                 out_opts.options |= TcpOptionFlags::WndScale;
                 out_opts.wnd_scale = value;
             } break;
@@ -117,7 +118,7 @@ inline void ParseTcpOptions (IpBufRef buf, TcpOptions &out_opts)
             // Unknown option (also used to handle bad options).
             skip_option:
             default: {
-                buf.skipBytes(opt_data_len);
+                buf = ipBufSkipBytes(buf, opt_data_len);
             } break;
         }
     }

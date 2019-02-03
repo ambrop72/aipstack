@@ -43,6 +43,7 @@
 #include <aipstack/misc/MemRef.h>
 #include <aipstack/infra/Options.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/BufUtils.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Instance.h>
 #include <aipstack/proto/Ip4Proto.h>
@@ -343,10 +344,10 @@ private:
                 
                 // Skip over any already parsed data (known not to contain a newline).
                 AIpStack::IpBufRef unparsed_data = rx_data;
-                unparsed_data.skipBytes(m_rx_line_len);
+                unparsed_data = ipBufSkipBytes(unparsed_data, m_rx_line_len);
 
                 // Search for a newline.
-                bool found_newline = unparsed_data.findByte(
+                bool found_newline = ipBufFindByteMut(unparsed_data,
                     '\n', MaxRxLineLen - m_rx_line_len);
 
                 // Update m_rx_line_len to reflect any data searched possibly including
@@ -411,10 +412,11 @@ private:
                 m_rx_ring_buf.getReadRange(*this).subTo(recv_len);
             
             // Write the response prefix to the send buffer.
-            tx_free.giveBytes(AIpStack::MemRef(ResponsePrefix, ResponsePrefixLen));
+            tx_free = ipBufGiveBytes(tx_free,
+                AIpStack::MemRef(ResponsePrefix, ResponsePrefixLen));
             
             // Copy the line from the receive buffer to the send buffer.
-            tx_free.giveBuf(rx_line);
+            tx_free = ipBufGiveBuf(tx_free, rx_line);
             
             // Extend the receive buffer (mark the space used by the received line as free).
             TcpConnection::extendRecvBuf(recv_len);
@@ -444,7 +446,7 @@ private:
             // Copy the line into a local buffer.
             char buf[BufSize];
             AIpStack::MemRef line(buf, line_ref.tot_len);
-            line_ref.takeBytes(line.len, buf);
+            line_ref = ipBufTakeBytes(line_ref, line.len, buf);
             
             if (line.removePrefix("connect ")) {
                 std::size_t colon_pos;

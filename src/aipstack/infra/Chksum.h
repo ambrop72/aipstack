@@ -34,6 +34,7 @@
 #include <aipstack/misc/MinMax.h>
 #include <aipstack/misc/EnumUtils.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/BufUtils.h>
 #include <aipstack/infra/Struct.h>
 
 /**
@@ -282,7 +283,7 @@ private:
     {
         bool swapped = false;
 
-        buf.processBytes(buf.tot_len,
+        ipBufProcessBytes(buf, buf.tot_len,
             [&](char *dataPtr, std::size_t dataLen)
         {
             // Calculate sum of buffer.

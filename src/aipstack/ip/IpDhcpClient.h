@@ -38,6 +38,7 @@
 #include <aipstack/misc/Function.h>
 #include <aipstack/misc/MemRef.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/BufUtils.h>
 #include <aipstack/infra/TxAllocHelper.h>
 #include <aipstack/infra/SendRetry.h>
 #include <aipstack/infra/Options.h>
@@ -816,11 +817,11 @@ private:
         
         // Get and skip the middle header part (sname and file).
         IpBufRef dhcp_header2 = data.subTo(DhcpHeader2::Size);
-        data.skipBytes(DhcpHeader2::Size);
+        data = ipBufSkipBytes(data, DhcpHeader2::Size);
         
         // Read and skip the final header part (magic number).
         DhcpHeader3::Val dhcp_header3;
-        data.takeBytes(DhcpHeader3::Size, dhcp_header3.data);
+        data = ipBufTakeBytes(data, DhcpHeader3::Size, dhcp_header3.data);
         
         // Check the magic number.
         if (dhcp_header3.get(DhcpHeader3::DhcpMagic()) != DhcpMagicField::Magic) {

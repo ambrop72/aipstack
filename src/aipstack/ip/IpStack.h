@@ -46,6 +46,7 @@
 #include <aipstack/structure/Accessor.h>
 #include <aipstack/infra/Err.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/BufUtils.h>
 #include <aipstack/infra/Chksum.h>
 #include <aipstack/infra/SendRetry.h>
 #include <aipstack/infra/TxAllocHelper.h>
@@ -483,7 +484,7 @@ private:
         
         // Calculate the next fragment offset and skip the sent data.
         std::uint16_t fragment_offset = pkt_send_len - Ip4Header::Size;
-        dgram.skipBytes(fragment_offset);
+        dgram = ipBufSkipBytes(dgram, fragment_offset);
         
         // Send remaining fragments.
         while (true) {
@@ -515,9 +516,9 @@ private:
             ip4_header.set(Ip4Header::HeaderChksum(), calc_chksum);
             
             // Construct a packet with header and partial data.
-            IpBufNode data_node = dgram.toNode();
+            IpBufNode data_node = ipBufRefToNode(dgram);
             IpBufNode header_node;
-            IpBufRef frag_pkt = pkt.subHeaderToContinuedBy(
+            IpBufRef frag_pkt = ipBufHeaderPrefixContinuedBy(pkt,
                 Ip4Header::Size, &data_node, pkt_send_len, &header_node);
             
             // Send the packet to the driver.
@@ -534,7 +535,7 @@ private:
             // Update the fragment offset and skip the sent data.
             std::uint16_t data_sent = pkt_send_len - Ip4Header::Size;
             fragment_offset += data_sent;
-            dgram.skipBytes(data_sent);
+            dgram = ipBufSkipBytes(dgram, data_sent);
         }
     }
     
@@ -1181,7 +1182,7 @@ private:
         icmp4_header.set(Icmp4Header::Rest(),   rest);
         
         // Construct the datagram reference with header and data.
-        IpBufNode data_node = data.toNode();
+        IpBufNode data_node = ipBufRefToNode(data);
         dgram_alloc.setNext(&data_node, data.tot_len);
         IpBufRef dgram = dgram_alloc.getBufRef();
         

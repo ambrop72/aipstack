@@ -36,6 +36,7 @@
 #include <aipstack/misc/Function.h>
 #include <aipstack/infra/Struct.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/BufUtils.h>
 #include <aipstack/infra/Options.h>
 #include <aipstack/infra/Instance.h>
 #include <aipstack/proto/Ip4Proto.h>
@@ -341,7 +342,8 @@ public:
             
             // Copy the fragment data into the reassembly buffer.
             IpBufRef dgram_tmp = dgram;
-            dgram_tmp.takeBytes(dgram.tot_len, reass->data + fragment_offset);
+            dgram_tmp = ipBufTakeBytes(dgram_tmp,
+                dgram.tot_len, reass->data + fragment_offset);
             
             // If we have not yet received the final fragment or there
             // are still holes after the end, the reassembly is not complete.

@@ -32,6 +32,7 @@
 #include <aipstack/misc/Assert.h>
 #include <aipstack/misc/Function.h>
 #include <aipstack/misc/Modulo.h>
+#include <aipstack/infra/BufUtils.h>
 #include <aipstack/proto/EthernetProto.h>
 #include <aipstack/tap/windows/TapDeviceWindows.h>
 #include <aipstack/tap/windows/tapwin_funcs.h>
@@ -163,7 +164,7 @@ IpErr TapDeviceWindows::sendFrame (IpBufRef frame)
     char *buffer = send_unit.m_resource->buffer.data();
     
     std::size_t len = frame.tot_len;
-    frame.takeBytes(len, buffer);
+    frame = ipBufTakeBytes(frame, len, buffer);
     
     OVERLAPPED &olap = send_unit.m_iocp_notifier.getOverlapped();
     std::memset(&olap, 0, sizeof(olap));

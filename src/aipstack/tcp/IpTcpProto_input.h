@@ -36,6 +36,7 @@
 #include <aipstack/misc/OneOf.h>
 #include <aipstack/misc/EnumUtils.h>
 #include <aipstack/infra/Buf.h>
+#include <aipstack/infra/BufUtils.h>
 #include <aipstack/infra/Chksum.h>
 #include <aipstack/proto/Ip4Proto.h>
 #include <aipstack/proto/Tcp4Proto.h>
@@ -118,7 +119,7 @@ public:
         // The options will only be parsed when they are needed,
         // using parse_received_opts.
         tcp->m_received_opts_buf = tcp_data.subTo(opts_len);
-        tcp_data.skipBytes(opts_len);
+        tcp_data = ipBufSkipBytes(tcp_data, opts_len);
         
         // Try to handle using a PCB.
         TcpPcb *pcb = tcp->find_pcb({ip_info.dst_addr, ip_info.src_addr,
@@ -667,7 +668,7 @@ private:
                         eff_rel_seq = 0;
                         // No change to seg_fin: for SYN we'd have bailed out earlier,
                         // and FIN could not be trimmed because left_trim < seqlen.
-                        tcp_data.skipBytes(std::size_t(left_trim));
+                        tcp_data = ipBufSkipBytes(tcp_data, std::size_t(left_trim));
                     }
                     else {
                         // The segment is completely outside the receive window.
@@ -1018,10 +1019,11 @@ private:
                 std::size_t cur_offset =
                     con->m_v.snd_buf.tot_len - con->m_v.snd_buf_cur.tot_len;
                 if (data_acked >= cur_offset) {
-                    con->m_v.snd_buf_cur.skipBytes(data_acked - cur_offset);
+                    con->m_v.snd_buf_cur =
+                        ipBufSkipBytes(con->m_v.snd_buf_cur, data_acked - cur_offset);
                     con->m_v.snd_buf = con->m_v.snd_buf_cur;
                 } else {
-                    con->m_v.snd_buf.skipBytes(data_acked);
+                    con->m_v.snd_buf = ipBufSkipBytes(con->m_v.snd_buf, data_acked);
                 }
                 
                 // Adjust the push index.
@@ -1199,7 +1201,7 @@ private:
                 }
                 
                 // Copy any received data into the receive buffer, shifting it.
-                con->m_v.rcv_buf.giveBuf(tcp_data);
+                con->m_v.rcv_buf = ipBufGiveBuf(con->m_v.rcv_buf, tcp_data);
             }
         }
         // Slow path performs out-of-sequence buffering.
@@ -1232,8 +1234,8 @@ private:
                 
                 // Copy any received data into the receive buffer.
                 IpBufRef dst_buf = con->m_v.rcv_buf;
-                dst_buf.skipBytes(eff_rel_seq);
-                dst_buf.giveBuf(tcp_data);
+                dst_buf = ipBufSkipBytes(dst_buf, eff_rel_seq);
+                dst_buf = ipBufGiveBuf(dst_buf, tcp_data);
             }
             
             // Get data or FIN from the out-of-sequence buffer.
@@ -1246,7 +1248,7 @@ private:
             
             // Shift any processed data out of the receive buffer.
             if (rcv_datalen > 0) {
-                con->m_v.rcv_buf.skipBytes(rcv_datalen);
+                con->m_v.rcv_buf = ipBufSkipBytes(con->m_v.rcv_buf, rcv_datalen);
             }
         }
         
