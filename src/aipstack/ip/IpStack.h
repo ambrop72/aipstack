@@ -381,7 +381,7 @@ public:
         IpSendFlags send_flags = common.send_flags;
 
         // Reveal IP header.
-        IpBufRef pkt = dgram.revealHeaderMust(Ip4Header::Size);
+        IpBufRef pkt = dgram.revealHeader(Ip4Header::Size);
         
         // Find an interface and address for output.
         IpRouteInfoIp4<Arg> route_info;
@@ -636,7 +636,7 @@ public:
         AIPSTACK_ASSERT(dgram.offset >= Ip4Header::Size);
         
         // Reveal IP header.
-        IpBufRef pkt = dgram.revealHeaderMust(Ip4Header::Size);
+        IpBufRef pkt = dgram.revealHeader(Ip4Header::Size);
         
         // This function does not support fragmentation.
         if (AIPSTACK_UNLIKELY(pkt.tot_len > prep.route_info.iface->getMtu())) {
@@ -880,7 +880,7 @@ public:
         
         // Get this data by revealing the IP header in rx_dgram and taking only the
         // calculated length.
-        IpBufRef data = rx_dgram.revealHeaderMust(rx_ip_info.header_len).subTo(data_len);
+        IpBufRef data = rx_dgram.revealHeader(rx_ip_info.header_len).subTo(data_len);
 
         return sendIcmp4Message(addrs, rx_ip_info.iface, Icmp4Type::DestUnreach,
                                 du_meta.icmp_code, du_meta.icmp_rest, data);

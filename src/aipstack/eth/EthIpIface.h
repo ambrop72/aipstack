@@ -418,10 +418,10 @@ private:
         }
         
         // Reveal the Ethernet header.
-        IpBufRef frame;
-        if (AIPSTACK_UNLIKELY(!pkt.revealHeader(EthHeader::Size, &frame))) {
+        if (AIPSTACK_UNLIKELY(pkt.offset < EthHeader::Size)) {
             return IpErr::NoHeaderSpace;
         }
+        IpBufRef frame = pkt.revealHeader(EthHeader::Size);
         
         // Write the Ethernet header.
         auto eth_header = EthHeader::MakeRef(frame.getChunkPtr());

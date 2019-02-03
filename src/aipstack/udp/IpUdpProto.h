@@ -157,7 +157,7 @@ public:
         AIPSTACK_ASSERT(udp_data.offset >= Ip4Header::Size + Udp4Header::Size);
 
         // Reveal the UDP header.
-        IpBufRef dgram = udp_data.revealHeaderMust(Udp4Header::Size);
+        IpBufRef dgram = udp_data.revealHeader(Udp4Header::Size);
 
         // Write the UDP header.
         auto udp_header = Udp4Header::MakeRef(dgram.getChunkPtr());

@@ -281,12 +281,12 @@ private:
     void addIpBuf (IpBufRef buf)
     {
         bool swapped = false;
-        
-        do {
-            std::size_t len = buf.getChunkLength();
-            
+
+        buf.processBytes(buf.tot_len,
+            [&](char *dataPtr, std::size_t dataLen)
+        {
             // Calculate sum of buffer.
-            std::uint16_t buf_sum = IpChksumInverted(buf.getChunkPtr(), len);
+            std::uint16_t buf_sum = IpChksumInverted(dataPtr, dataLen);
             
             // Add the buffer sum to our sum.
             std::uint32_t old_sum = m_sum;
@@ -298,11 +298,11 @@ private:
             }
             
             // If the buffer has an odd length, swap bytes in sum.
-            if (len % 2 != 0) {
+            if (dataLen % 2 != 0) {
                 m_sum = swapBytes(m_sum);
                 swapped = !swapped;
             }
-        } while (buf.nextChunk());
+        });
         
         // Swap bytes if we swapped an odd number of times.
         if (swapped) {

@@ -136,27 +136,13 @@ struct IpBufRef {
     std::size_t tot_len = 0;
     
     /**
-     * Return the length of this memory range (@ref tot_len).
-     * 
-     * A valid reference is not needed, this simply returns @ref tot_len
-     * without any requirements.
-     * 
-     * @return @ref tot_len
-     */
-    inline std::size_t getTotalLength () const
-    {
-        return tot_len;
-    }
-    
-    /**
      * Return the pointer to the first chunk of the memory range.
      * 
      * @return `node->ptr + offset`
      */
     inline char * getChunkPtr () const
     {
-        AIPSTACK_ASSERT(node != nullptr);
-        AIPSTACK_ASSERT(offset <= node->len);
+        assertBufSanity(*this);
         
         return node->ptr + offset;
     }
@@ -168,76 +154,22 @@ struct IpBufRef {
      */
     inline std::size_t getChunkLength () const
     {
-        AIPSTACK_ASSERT(node != nullptr);
-        AIPSTACK_ASSERT(offset <= node->len);
+        assertBufSanity(*this);
         
         return MinValue(tot_len, std::size_t(node->len - offset));
     }
-
-    /**
-     * Move to the next buffer in the memory range.
-     * 
-     * This decrements @ref tot_len by @ref getChunkLength(), sets @ref node to
-     * `node->next` and sets @ref offset to 0. After that it returns
-     * whether there is any more data in the (now modified) memory
-     * range, that is @ref tot_len > 0.
-     * 
-     * @return Whether there is any more data after the adjustment.
-     */
-    bool nextChunk ()
-    {
-        AIPSTACK_ASSERT(node != nullptr);
-        AIPSTACK_ASSERT(offset <= node->len);
-        
-        tot_len -= MinValue(tot_len, std::size_t(node->len - offset));
-        node = node->next;
-        offset = 0;
-        
-        bool more = (tot_len > 0);
-        AIPSTACK_ASSERT(!more || node != nullptr);
-        
-        return more;
-    }
     
     /**
-     * Try to extend the memory range backward in the first buffer.
+     * Extend the memory range backward in the first buffer.
      * 
-     * If amount is greater than offset, returns false since
-     * insufficient memory is available in the first buffer.
-     * Otherwise, sets *new_ref to the memory region extended
-     * to the left by amount and returns true. The *new_ref
-     * will have the same node, offset decremented by amount
-     * and tot_len incremented by amount.
-     * 
-     * @param amount Number of bytes to reveal.
-     * @param new_ref Pointer to where the result will be stored (must not
-     *        be null).
-     * @return True on success (enough space was available, `*new_ref` was
-     *         set), false on failure (`*new_ref` was not changed).
-     */
-    inline bool revealHeader (std::size_t amount, IpBufRef *new_ref) const
-    {
-        if (amount > offset) {
-            return false;
-        }
-        
-        *new_ref = IpBufRef {
-            node,
-            std::size_t(offset  - amount),
-            std::size_t(tot_len + amount)
-        };
-        return true;
-    }
-    
-    /**
-     * Extend the memory range backward in the first buffer assuming there
-     * is space.
+     * @note There must in fact be `amount` bytes available to reveal, that is
+     * @ref offset >= `amount`.
      * 
      * @param amount Number od bytes to reveal. Must be less then or equal
      *        to @ref offset.
      * @return The adjusted memory range.
      */
-    inline IpBufRef revealHeaderMust (std::size_t amount) const
+    inline IpBufRef revealHeader (std::size_t amount) const
     {
         AIPSTACK_ASSERT(amount <= offset);
         
@@ -249,18 +181,17 @@ struct IpBufRef {
     }
     
     /**
-     * Check if there is at least `amount` bytes available
-     * in the first chunk of this memory range.
+     * Check if there are at least `amount` bytes available in the first chunk of
+     * this memory range.
      * 
      * @param amount Number of bytes to check for.
-     * @return `getChunkLength() >= amount`.
+     * @return `amount <= getChunkLength()`.
      */
     inline bool hasHeader (std::size_t amount) const
     {
-        AIPSTACK_ASSERT(node != nullptr);
-        AIPSTACK_ASSERT(offset <= node->len);
+        assertBufSanity(*this);
         
-        return tot_len >= amount && node->len - offset >= amount;
+        return amount <= tot_len && amount <= node->len - offset;
     }
     
     /**
@@ -274,10 +205,9 @@ struct IpBufRef {
      */
     inline IpBufRef hideHeader (std::size_t amount) const
     {
-        AIPSTACK_ASSERT(node != nullptr);
-        AIPSTACK_ASSERT(offset <= node->len);
-        AIPSTACK_ASSERT(amount <= node->len - offset);
+        assertBufSanity(*this);
         AIPSTACK_ASSERT(amount <= tot_len);
+        AIPSTACK_ASSERT(amount <= node->len - offset);
         
         return IpBufRef {
             node,
@@ -296,8 +226,7 @@ struct IpBufRef {
      */
     inline IpBufNode toNode () const
     {
-        AIPSTACK_ASSERT(node != nullptr);
-        AIPSTACK_ASSERT(offset <= node->len);
+        assertBufSanity(*this);
         
         return IpBufNode {
             node->ptr + offset,
@@ -339,8 +268,7 @@ struct IpBufRef {
     IpBufRef subHeaderToContinuedBy (std::size_t header_len, IpBufNode const *cont,
                                      std::size_t total_len, IpBufNode *out_node) const
     {
-        AIPSTACK_ASSERT(node != nullptr);
-        AIPSTACK_ASSERT(offset <= node->len);
+        assertBufSanity(*this);
         AIPSTACK_ASSERT(header_len <= node->len - offset);
         AIPSTACK_ASSERT(total_len >= header_len);
         
@@ -726,6 +654,13 @@ struct IpBufRef {
         buf.skipBytes(offset_);
         buf = buf.subTo(len);
         return buf;
+    }
+
+private:
+    static void assertBufSanity (IpBufRef buf)
+    {
+        AIPSTACK_ASSERT(buf.node != nullptr);
+        AIPSTACK_ASSERT(buf.offset <= buf.node->len);
     }
 };
 
