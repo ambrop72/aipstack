@@ -22,6 +22,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef AIPSTACK_TYPED_FUNCTION_H
+#define AIPSTACK_TYPED_FUNCTION_H
+
 #include <type_traits>
 #include <utility>
 
@@ -172,3 +175,5 @@ TypedFunction(Impl) -> TypedFunction<TypedFunctionPrivate::GetFuncType<Impl>, Im
 
 /** @} */
 }
+
+#endif
