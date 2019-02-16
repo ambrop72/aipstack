@@ -105,8 +105,11 @@ inline IpBufRef ipBufHeaderPrefixContinuedBy (IpBufRef buf, std::size_t header_l
  * 
  * The `processChunk` function will be called on the subsequent contiguous chunks of
  * the consumed part of this memory range. It will be passed two arguments: a char
- * pointer to the start of the chunk, and a size_t length of the chunk. The function
- * will not be called on zero-sized chunks.
+ * pointer to the start of the chunk, and a size_t (nonzero) length of the chunk.
+ * The `processChunk` function returns the number of bytes in the chunk that were
+ * processed, which must be less than or equal to the provided chunk length. If it
+ * returns less than the chunk length, then processing will be interrupted at the
+ * corresponding position.
  * 
  * This function moves forward to subsequent buffers eagerly. This means that when
  * there are no more bytes to be processed, it will move to the next buffer as long
@@ -118,158 +121,60 @@ inline IpBufRef ipBufHeaderPrefixContinuedBy (IpBufRef buf, std::size_t header_l
  * 
  * @tparam FuncImpl Type of function object wrapped by `processChunk`.
  * @param buf Buffer to start with.
- * @param amount Number of bytes to process and consume. Must be less than
- *        or equal to `buf.tot_len`.
+ * @param processLen Number of bytes to process and consume (if not interrupted).
+ *        Must be less than or equal to `buf.tot_len`.
  * @param processChunk Function to call in order to process chunks (see above).
  * @return Updated buffer after processing.
  */
 template<typename FuncImpl>
-IpBufRef ipBufProcessBytes (IpBufRef buf, std::size_t amount,
-    TypedFunction<void(char *, std::size_t), FuncImpl> processChunk)
+IpBufRef ipBufProcessBytes (IpBufRef buf, std::size_t processLen,
+    TypedFunction<std::size_t(char *, std::size_t), FuncImpl> processChunk)
 {
     AIPSTACK_ASSERT(buf.node != nullptr);
-    AIPSTACK_ASSERT(amount <= buf.tot_len);
-    
-    while (true) {
-        AIPSTACK_ASSERT(buf.offset <= buf.node->len);
-        std::size_t rem_in_buf = buf.node->len - buf.offset;
-        
-        if (rem_in_buf > 0) {
-            if (amount == 0) {
-                break;
-            }
-            
-            std::size_t take = MinValue(rem_in_buf, amount);
+    AIPSTACK_ASSERT(processLen <= buf.tot_len);
 
-            processChunk(buf.node->ptr + buf.offset, take);
-            
-            buf.tot_len -= take;
-            
-            if (take < rem_in_buf || buf.node->next == nullptr) {
-                buf.offset += take;
-                AIPSTACK_ASSERT(amount == take);
-                break;
-            }
-            
-            amount -= take;
-        } else {
-            if (buf.node->next == nullptr) {
-                AIPSTACK_ASSERT(amount == 0);
+    std::size_t remainLen = buf.tot_len - processLen;
+
+    buf.tot_len = processLen;
+
+    while (true) {
+        IpBufNode const node = *buf.node;
+
+        AIPSTACK_ASSERT(buf.offset <= node.len);
+        std::size_t nodeRemLen = node.len - buf.offset;
+
+        bool nodeConsumed = (buf.tot_len >= nodeRemLen);
+        std::size_t chunkLen = nodeConsumed ? nodeRemLen : buf.tot_len;
+
+        if (chunkLen > 0) {
+            char *chunkPtr = node.ptr + buf.offset;
+
+            std::size_t procLen = processChunk(chunkPtr, chunkLen);
+            AIPSTACK_ASSERT(procLen <= chunkLen);
+
+            buf.tot_len -= procLen;
+            buf.offset += procLen;
+
+            if (procLen < chunkLen) {
+                remainLen += buf.tot_len;
+                buf.tot_len = 0;
                 break;
             }
         }
         
-        buf.node = buf.node->next;
+        if (!nodeConsumed || node.next == nullptr) {
+            break;
+        }
+    
+        buf.node = node.next;
         buf.offset = 0;
     }
+
+    AIPSTACK_ASSERT(buf.tot_len == 0);
+
+    buf.tot_len = remainLen;
 
     return buf;
-}
-
-/**
- * Structure returned by @ref ipBufProcessBytesInt.
- */
-struct IpBufProcessIntResult {
-    /**
-     * The buffer after processing.
-     */
-    IpBufRef buf;
-
-    /**
-     * Whether processing was interrupted.
-     * 
-     * False means that `func` never returned true and all available bytes have been
-     * processed. True means that processing was interrupted `func` returned true last
-     * time it was called, less than all available bytes may have been processed.
-     */
-    bool interrupted;
-};
-
-/**
- * Process and consume up to a number of bytes from the front of the memory range
- * by invoking a callback function on contiguous chunks.
- * 
- * This is a more flexible variation of @ref ipBufProcessBytes which allows the callback
- * function to interrupt processing and to process fewer bytes than it was called
- * for. Additionally, it is permitted to pass `max_amount` greater than `buf.tot_len` in
- * order to simplify common use cases.
- * 
- * The `processChunk` function will be called on the subsequent contiguous chunks of
- * the consumed part of this memory range. It will be passed two arguments: a char
- * pointer to the start of the chunk, and a size_t reference to the length of the chunk.
- * It must return a boolean indicating whether to interrupt processing (true to
- * interrupt, false to continue). The function will not be called on zero-sized chunks.
- * The function may modify the chunk length via the passed reference to possibly report
- * that it has processed less bytes than it was provided with.
- * 
- * The effective number of bytes available for processing is min(`max_amount`,
- * `buf.tot_len`). If `processChunk` never returns true, all of the available bytes will
- * have been processed. If `processChunk` ever returns true, processing stops that time,
- * possibly (but not necessarily) with less than the available number of bytes having
- * been processed.
- * 
- * This function moves forward to subsequent buffers eagerly. This means that when no
- * more bytes will be processed (either because all available bytes have been processed
- * or because `func` returned true), it will move to the next buffer as long as it is
- * at the end of the current buffer and there is a next buffer. See @ref ipBufProcessBytes
- * for why this might be useful.
- * 
- * @tparam FuncImpl Type of function object wrapped by `processChunk`.
- * @param buf Buffer to start with.
- * @param max_amount Maximum number of bytes to process and consume. In any case no more
- *        than `buf.tot_len` bytes will be processed.
- * @param processChunk Function to call in order to process chunks (see above).
- * @return The updated buffer and whether processing was interrupted, encapsulated in a
- *         @ref IpBufProcessIntResult structure (see the struct description).
- */
-template<typename FuncImpl>
-IpBufProcessIntResult ipBufProcessBytesInt (IpBufRef buf, std::size_t max_amount,
-    TypedFunction<bool(char *, std::size_t &), FuncImpl> processChunk)
-{
-    AIPSTACK_ASSERT(buf.node != nullptr);
-    
-    std::size_t amount = MinValue(max_amount, buf.tot_len);
-    
-    bool interrupted = false;
-
-    while (true) {
-        AIPSTACK_ASSERT(buf.offset <= buf.node->len);
-        std::size_t rem_in_buf = buf.node->len - buf.offset;
-        
-        if (rem_in_buf > 0) {
-            if (amount == 0) {
-                break;
-            }
-            
-            std::size_t max_take = MinValue(rem_in_buf, amount);
-
-            std::size_t take = max_take;
-            interrupted = processChunk(buf.node->ptr + buf.offset, take);
-            AIPSTACK_ASSERT(take <= max_take);
-
-            buf.tot_len -= take;
-            amount -= take;
-            
-            if (interrupted) {
-                amount = 0;
-            }
-            
-            if (take < rem_in_buf || buf.node->next == nullptr) {
-                buf.offset += take;
-                continue;
-            }
-        } else {
-            if (buf.node->next == nullptr) {
-                AIPSTACK_ASSERT(amount == 0);
-                break;
-            }
-        }
-        
-        buf.node = buf.node->next;
-        buf.offset = 0;
-    }
-
-    return IpBufProcessIntResult{buf, interrupted};
 }
 
 /**
@@ -278,15 +183,15 @@ IpBufProcessIntResult ipBufProcessBytesInt (IpBufRef buf, std::size_t max_amount
  * This moves to subsequent buffers eagerly (see @ref ipBufProcessBytes).
  * 
  * @param buf Buffer to start with.
- * @param amount Number of bytes to consume. Must be less than or equal
+ * @param skipLen Number of bytes to consume. Must be less than or equal
  *        to `buf.tot_len`.
  * @return Updated buffer after processing.
  */
-inline IpBufRef ipBufSkipBytes (IpBufRef buf, std::size_t amount)
+inline IpBufRef ipBufSkipBytes (IpBufRef buf, std::size_t skipLen)
 {
-    return ipBufProcessBytes(buf, amount, TypedFunction(
-        [](char *, std::size_t) {
-            // Nothing.
+    return ipBufProcessBytes(buf, skipLen, TypedFunction(
+        [](char *, std::size_t chunkLen) {
+            return chunkLen;
         }));
 }
 
@@ -297,17 +202,18 @@ inline IpBufRef ipBufSkipBytes (IpBufRef buf, std::size_t amount)
  * This moves to subsequent buffers eagerly (see @ref ipBufProcessBytes).
  * 
  * @param buf Buffer to start with.
- * @param amount Number of bytes to copy out and consume. Must be less than
+ * @param takeLen Number of bytes to copy out and consume. Must be less than
  *        or equal to `buf.tot_len`.
- * @param dst Location to copy to. May be null only if `amount` is zero.
+ * @param dst Location to copy to. May be null only if `takeLen` is zero.
  * @return Updated buffer after processing.
  */
-inline IpBufRef ipBufTakeBytes (IpBufRef buf, std::size_t amount, char *dst)
+inline IpBufRef ipBufTakeBytes (IpBufRef buf, std::size_t takeLen, char *dst)
 {
-    return ipBufProcessBytes(buf, amount, TypedFunction(
-        [&](char *data, std::size_t len) {
-            std::memcpy(dst, data, len);
-            dst += len;
+    return ipBufProcessBytes(buf, takeLen, TypedFunction(
+        [&](char *chunkData, std::size_t chunkLen) {
+            std::memcpy(dst, chunkData, chunkLen);
+            dst += chunkLen;
+            return chunkLen;
         }));
 }
 
@@ -326,9 +232,10 @@ inline IpBufRef ipBufGiveBytes (IpBufRef buf, MemRef data)
 {
     char const *src = data.ptr;
     return ipBufProcessBytes(buf, data.len, TypedFunction(
-        [&](char *cdata, std::size_t clen) {
-            std::memcpy(cdata, src, clen);
-            src += clen;
+        [&](char *chunkData, std::size_t chunkLen) {
+            std::memcpy(chunkData, src, chunkLen);
+            src += chunkLen;
+            return chunkLen;
         }));
 }
 
@@ -349,8 +256,9 @@ inline IpBufRef ipBufGiveBytes (IpBufRef buf, MemRef data)
 inline IpBufRef ipBufGiveBuf (IpBufRef buf, IpBufRef src)
 {
     return ipBufProcessBytes(buf, src.tot_len, TypedFunction(
-        [&](char *data, std::size_t len) {
-            src = ipBufTakeBytes(src, len, data);
+        [&](char *chunkData, std::size_t chunkLen) {
+            src = ipBufTakeBytes(src, chunkLen, chunkData);
+            return chunkLen;
         }));
 }
 
@@ -373,8 +281,9 @@ inline char ipBufTakeByteMut (IpBufRef &buf)
     char byteVal = 0;
 
     buf = ipBufProcessBytes(buf, 1, TypedFunction(
-        [&](char *data, std::size_t) {
-            byteVal = *data;
+        [&](char *chunkData, std::size_t chunkLen) {
+            byteVal = *chunkData;
+            return chunkLen;
         }));
 
     return byteVal;
@@ -387,98 +296,105 @@ inline char ipBufTakeByteMut (IpBufRef &buf)
  * This moves to subsequent buffers eagerly (see @ref ipBufProcessBytes).
  * 
  * @param buf Buffer to start with.
- * @param byte Value to set bytes to.
- * @param amount Number of bytes to set and consume. Must be less than or equal to
+ * @param setByte Byte value to set bytes to.
+ * @param giveLen Number of bytes to set and consume. Must be less than or equal to
  *        `buf.tot_len`.
  * @return Updated buffer after processing.
  */
-inline IpBufRef ipBufGiveSameBytes (IpBufRef buf, char byte, std::size_t amount)
+inline IpBufRef ipBufGiveSameBytes (IpBufRef buf, char setByte, std::size_t giveLen)
 {
-    return ipBufProcessBytes(buf, amount, TypedFunction(
-        [&](char *data, std::size_t len) {
-            std::memset(data, byte, len);
+    return ipBufProcessBytes(buf, giveLen, TypedFunction(
+        [&](char *chunkData, std::size_t chunkLen) {
+            std::memset(chunkData, setByte, chunkLen);
+            return chunkLen;
         }));
 }
 
 /**
- * Search for the first occurrence of the specified byte while consuming bytes from
- * the front of the memory range.
+ * Search for the first occurrence of the specified byte value while consuming bytes
+ * from the front of the memory range.
  *
- * If `byte` is found within the first `amount` bytes, all bytes up to and including
- * the first occurrence have been consumed. Otherwise, all bytes in the buffer have
- * been consumed.
+ * If `findByte` is found within the first `maxFindLen` bytes, all bytes up to and
+ * including the first occurrence have been consumed. Otherwise, all bytes in the
+ * buffer have been consumed.
  * 
  * @note This function updates the buffer which is passed by reference.
  * 
- * This moves to subsequent buffers eagerly (see @ref ipBufProcessBytesInt).
+ * This moves to subsequent buffers eagerly (see @ref ipBufProcessBytes).
  * 
  * @param buf Buffer to start with and update.
- * @param byte Byte to search for.
- * @param amount Maximum number of bytes to process and consume. In any case no more
- *        than `buf.tot_len` bytes will be processed.
+ * @param findByte Byte value to search for.
+ * @param maxFindLen Maximum number of bytes to process and consume. In any case no 
+ *        more than `buf.tot_len` bytes will be processed.
  * @return Whether the byte was found.
  */
 inline bool ipBufFindByteMut (
-    IpBufRef &buf, char byte, std::size_t amount = std::size_t(-1))
+    IpBufRef &buf, char findByte, std::size_t maxFindLen = std::size_t(-1))
 {
-    IpBufProcessIntResult processRes = ipBufProcessBytesInt(buf, amount, TypedFunction(
-        [&](char *data, std::size_t &len)
-    {
-        void *ch = std::memchr(data, byte, len);
-        if (ch == nullptr) {
-            return false;
-        } else {
-            len = std::size_t((reinterpret_cast<char *>(ch) - data) + 1);
-            return true;
-        }
-    }));
+    std::size_t findLen = MinValue(maxFindLen, buf.tot_len);
 
-    buf = processRes.buf;
-    return processRes.interrupted;
+    bool found = false;
+
+    buf = ipBufProcessBytes(buf, findLen, TypedFunction(
+        [&](char *chunkData, std::size_t chunkLen) -> std::size_t {
+            if (found) {
+                return 0;
+            }
+            void *ch = std::memchr(chunkData, findByte, chunkLen);
+            if (ch == nullptr) {
+                return chunkLen;
+            } else {
+                found = true;
+                return std::size_t((reinterpret_cast<char *>(ch) - chunkData) + 1);
+            }
+        }));
+    
+    return found;
 }
 
 /**
  * Check for and consume a specific prefix at the front of the memory range.
  * 
- * If the prefix is found, the remaining buffer is returned via the `remainder`
+ * If the prefix is found, the remaining buffer is returned via the `remBuf`
  * output parameter.
  * 
- * This moves to subsequent buffers eagerly (see @ref ipBufProcessBytesInt),
- * with respect to the returned `remainder`.
+ * This moves to subsequent buffers eagerly (see @ref ipBufProcessBytes).
  * 
  * @param buf Buffer to start with.
  * @param prefix Prefix to check for (`prefix.ptr` may be null if `prefix.len` is 0).
- * @param remainder If the prefix is found, is set to a reference to the remainder of
- *        this memory range following the prefix (not modified if the prefix is not
- *        found).
+ * @param remBuf If the prefix is found, is set to the updated buffer corresponding to
+          the remainder after the prefix (not modified if the prefix is not found).
  * @return True if the prefix is found, false if not.
  */
-inline bool ipBufStartsWith (IpBufRef buf, MemRef prefix, IpBufRef &remainder)
+inline bool ipBufStartsWith (IpBufRef buf, MemRef prefix, IpBufRef &remBuf)
 {
     if (prefix.len > buf.tot_len) {
         return false;
     }
 
     std::size_t position = 0;
+    bool mismatch = false;
 
-    IpBufProcessIntResult processResult = ipBufProcessBytesInt(buf, prefix.len,
-        TypedFunction(
-        [&](char *data, std::size_t &len) {
-            if (std::memcmp(data, prefix.ptr + position, len) != 0) {
-                return true;
+    IpBufRef updatedBuf = ipBufProcessBytes(buf, prefix.len, TypedFunction(
+        [&](char *chunkData, std::size_t chunkLen) -> std::size_t {
+            if (mismatch) {
+                return 0;
             }
-            position += len;
-            return false;
+            if (std::memcmp(chunkData, prefix.ptr + position, chunkLen) != 0) {
+                mismatch = true;
+                return 0;
+            }
+            position += chunkLen;
+            return chunkLen;
         }));
 
-    if (processResult.interrupted) {
+    if (mismatch) {
         return false;
     }
 
     AIPSTACK_ASSERT(position == prefix.len);
-    AIPSTACK_ASSERT(processResult.buf.tot_len == buf.tot_len - prefix.len);
 
-    remainder = processResult.buf;
+    remBuf = updatedBuf;
     return true;
 }
 
@@ -495,7 +411,7 @@ inline bool ipBufStartsWith (IpBufRef buf, MemRef prefix, IpBufRef &remainder)
  *        `buf.tot_len - offset`.
  * @return The sub-range starting at `offset` whose length is `len`.
  */
-inline IpBufRef ip4BufSubFromTo (IpBufRef buf, std::size_t offset, std::size_t len)
+inline IpBufRef ipBufSubFromTo (IpBufRef buf, std::size_t offset, std::size_t len)
 {
     buf = ipBufSkipBytes(buf, offset);
     return buf.subTo(len);

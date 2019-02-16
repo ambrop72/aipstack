@@ -304,6 +304,8 @@ private:
                 m_sum = swapBytes(m_sum);
                 swapped = !swapped;
             }
+
+            return dataLen;
         }));
         
         // Swap bytes if we swapped an odd number of times.

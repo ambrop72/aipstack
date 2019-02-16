@@ -208,7 +208,7 @@ public:
             {
                 // Parse options in file.
                 region = OptionRegion::File;
-                data = ip4BufSubFromTo(dhcp_header2, 64, 128);
+                data = ipBufSubFromTo(dhcp_header2, 64, 128);
             }
             else if (
                 (region == OptionRegion::Options &&
@@ -218,7 +218,7 @@ public:
             ) {
                 // Parse options in sname.
                 region = OptionRegion::Sname;
-                data = ip4BufSubFromTo(dhcp_header2, 0, 64);
+                data = ipBufSubFromTo(dhcp_header2, 0, 64);
             }
             else {
                 // Done parsing options.
