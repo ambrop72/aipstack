@@ -41,7 +41,6 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/misc/ResourceTuple.h>
 #include <aipstack/structure/LinkedList.h>
-#include <aipstack/structure/LinkModel.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
 #include <aipstack/structure/Accessor.h>
 #include <aipstack/infra/Err.h>
@@ -62,6 +61,7 @@
 #include <aipstack/ip/IpIfaceStateObserver.h>
 #include <aipstack/ip/IpDriverIface.h>
 #include <aipstack/ip/IpMtuRef.h>
+#include <aipstack/ip/IpStackInternalDefs.h>
 #include <aipstack/platform/PlatformFacade.h>
 
 namespace AIpStack {
@@ -225,11 +225,10 @@ private:
         using Protocol = typename TheMatch::MatchProtocol;
     };
 
+    using InternalDefs = IpStackInternalDefs<Arg>;
     using Iface = IpIface<Arg>;
     using IfaceListener = IpIfaceListener<Arg>;
-    
-    using IfaceLinkModel = PointerLinkModel<Iface>;
-    using IfaceListenerLinkModel = PointerLinkModel<IfaceListener>;
+    using IfaceLinkModel = typename InternalDefs::IfaceLinkModel;
     
 public:
     /**
@@ -922,12 +921,7 @@ public:
         return IpErr::Success;
     }
     
-private:
-    using IfaceListenerList = LinkedList<
-        MemberAccessor<IfaceListener, LinkedListNode<IfaceListenerLinkModel>,
-                       &IfaceListener::m_list_node>,
-        IfaceListenerLinkModel, false>;
-    
+private:    
     using IfaceList = LinkedList<
         MemberAccessor<Iface, LinkedListNode<IfaceLinkModel>, &Iface::m_iface_list_node>,
         IfaceLinkModel, false>;

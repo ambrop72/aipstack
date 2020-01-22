@@ -32,17 +32,19 @@
 #include <aipstack/misc/NonCopyable.h>
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/structure/StructureRaiiWrapper.h>
+#include <aipstack/structure/Accessor.h>
 #include <aipstack/infra/ObserverNotification.h>
 #include <aipstack/ip/IpAddr.h>
 #include <aipstack/ip/IpStackTypes.h>
 #include <aipstack/ip/IpIfaceDriverParams.h>
 #include <aipstack/ip/IpHwCommon.h>
+#include <aipstack/ip/IpStackInternalDefs.h>
+#include <aipstack/ip/IpIfaceListener.h>
 
 namespace AIpStack {
 
 #ifndef IN_DOXYGEN
 template<typename> class IpStack;
-template<typename> class IpIfaceListener;
 template<typename> class IpIfaceStateObserver;
 template<typename> class IpDriverIface;
 #endif
@@ -278,8 +280,19 @@ public:
     }
 
 private:
-    LinkedListNode<typename IpStack<Arg>::IfaceLinkModel> m_iface_list_node;
-    StructureRaiiWrapper<typename IpStack<Arg>::IfaceListenerList> m_listeners_list;
+    using InternalDefs = IpStackInternalDefs<Arg>;
+    using IfaceListener = IpIfaceListener<Arg>;
+    using IfaceLinkModel = typename InternalDefs::IfaceLinkModel;
+    using IfaceListenerLinkModel = typename InternalDefs::IfaceListenerLinkModel;
+
+    using IfaceListenerList = LinkedList<
+        MemberAccessor<IfaceListener, LinkedListNode<IfaceListenerLinkModel>,
+                       &IfaceListener::m_list_node>,
+        IfaceListenerLinkModel, false>;
+
+private:
+    LinkedListNode<IfaceLinkModel> m_iface_list_node;
+    StructureRaiiWrapper<IfaceListenerList> m_listeners_list;
     Observable<IpIfaceStateObserver<Arg>> m_state_observable;
     IpStack<Arg> *m_stack;
     IpIfaceDriverParams m_params;

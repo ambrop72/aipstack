@@ -32,6 +32,7 @@
 #include <aipstack/structure/LinkedList.h>
 #include <aipstack/infra/Buf.h>
 #include <aipstack/ip/IpStackTypes.h>
+#include <aipstack/ip/IpStackInternalDefs.h>
 #include <aipstack/proto/Ip4Proto.h>
 
 namespace AIpStack {
@@ -57,6 +58,7 @@ class IpIfaceListener :
     private NonCopyable<IpIfaceListener<Arg>>
 {
     template<typename> friend class IpStack;
+    template<typename> friend class IpIface;
     
 public:
     /**
@@ -115,7 +117,11 @@ public:
     }
     
 private:
-    LinkedListNode<typename IpStack<Arg>::IfaceListenerLinkModel> m_list_node;
+    using InternalDefs = IpStackInternalDefs<Arg>;
+    using IfaceListenerLinkModel = typename InternalDefs::IfaceListenerLinkModel;
+
+private:
+    LinkedListNode<IfaceListenerLinkModel> m_list_node;
     IpIface<Arg> *m_iface;
     Ip4Protocol m_proto;
     Ip4DgramHandler m_ip4_handler;
