@@ -37,7 +37,7 @@ namespace AIpStack {
 #ifndef IN_DOXYGEN
 
 namespace TypedFunctionPrivate {
-    // Internal template used to implement GetFuncType.
+    // Internal template used to implement TypedFunctionFuncType.
     template<typename Impl, typename Void>
     struct GetFuncTypeImpl {
         static_assert(!std::is_same_v<Impl, Impl>,
@@ -63,17 +63,26 @@ namespace TypedFunctionPrivate {
     
         using Type = typename ExtractFuncType<decltype(&ClassType::operator())>::Type;
     };
-
-    // Get the function type corresponding to a callable type which is
-    // supported by TypedFunction.
-    template<typename Impl>
-    using GetFuncType = typename GetFuncTypeImpl<Impl, void>::Type;
 }
 
 template<typename FuncType, typename Impl>
 class TypedFunction;
 
 #endif
+
+/**
+ * Deduce the function type from a callable type for use with @ref
+ * TypedFunction<RetType(ArgTypes...), Impl> "TypedFunction".
+ * 
+ * The result is a function type (e.g. `void(int, float)`) determined by deducing the
+ * return and argument types from the `Impl` type.
+ * 
+ * @tparam Impl Callable type for which to get the function type. It must satisfy
+ *         the requirements of TypedFunction.
+ */
+template<typename Impl>
+using TypedFunctionFuncType =
+    typename TypedFunctionPrivate::GetFuncTypeImpl<Impl, void>::Type;
 
 /**
  * Type-preserving non-polymorphic function wrapper.
@@ -99,13 +108,13 @@ class TypedFunction;
  * }
  * ```
  * 
- * A new TypedFunction object is created using the constructor @ref TypedFunction(Impl)
- * by providing a callable object of type `Impl`, which will be stored within the
- * TypedFunction object. Often this will be done in combination with the @ref
- * AIpStack::TypedFunction(Impl) "TypedFunction(Impl)" deduction guide. For example:
+ * The preferred method of creating a new TypedFunction object is by calling the @ref
+ * makeTypedFunction function providing a callable object. The callable object will
+ * be stored in the resulting TypedFunction object and the `Impl` template parameter
+ * of TypedFunction will reflect the type of the stored callable. For example:
  * 
  * ```
- * TypedFunction([](bool arg) { return arg ? 1 : 2; })
+ * makeTypedFunction([](bool arg) { return arg ? 1 : 2; })
  * ```
  * 
  * Once a TypedFunction object is constructed, @ref operator()(ArgTypes...) const can
@@ -119,7 +128,7 @@ class TypedFunction;
  *   type `RetType (C::*)(ArgTypes...)` for some type `C`.
  * 
  * If `Impl` does not specify the requirements above, a compile error will result.
- * Note particularly that the returne and argument types of `Impl` must match the
+ * Note particularly that the return and argument types of `Impl` must match the
  * template parameters `RetType` and `ArgTypes`.
  * 
  * @tparam RetType Return type.
@@ -129,15 +138,14 @@ class TypedFunction;
 template<typename RetType, typename ...ArgTypes, typename Impl>
 class TypedFunction<RetType(ArgTypes...), Impl>
 {
-    static_assert(
-        std::is_same_v<TypedFunctionPrivate::GetFuncType<Impl>, RetType(ArgTypes...)>);
+    static_assert(std::is_same_v<TypedFunctionFuncType<Impl>, RetType(ArgTypes...)>);
     
 public:
     /**
      * Construct a TypedFunction object storing the specified callable object.
      * 
      * @param impl The callable object to store. It will be moved (if possible) or
-     *        copied into the new TypedFunction object.
+     *        copied into the TypedFunction object.
      */
     constexpr TypedFunction(Impl impl) :
         m_impl(std::move(impl))
@@ -162,16 +170,22 @@ private:
 };
 
 /**
- * Deduction guide for constructing @ref TypedFunction<RetType(ArgTypes...), Impl>
- * "TypedFunction".
+ * Utility function for constructing @ref TypedFunction<RetType(ArgTypes...), Impl>
+ * "TypedFunction" from a callable object.
  * 
- * This deduction guide deduces the return and argument types, provided that the
- * `Impl` type satisfied the requirements of TypedFunction.
+ * This function automatically deduces the return and argument from the `Impl` type.
  * 
- * @tparam Impl Type of callable object to be stored within TypedFunction.
+ * @tparam Impl Type of callable object to be stored within TypedFunction. It must
+ *         satisfy the requirements of TypedFunction.
+ * @param impl The callable object to store. It will be moved (if possible) or
+ *        copied into the TypedFunction object.
  */
 template<typename Impl>
-TypedFunction(Impl) -> TypedFunction<TypedFunctionPrivate::GetFuncType<Impl>, Impl>;
+constexpr auto makeTypedFunction(Impl impl) ->
+    TypedFunction<TypedFunctionFuncType<Impl>, Impl>
+{
+    return TypedFunction<TypedFunctionFuncType<Impl>, Impl>(std::move(impl));
+}
 
 /** @} */
 }

@@ -284,7 +284,7 @@ private:
     {
         bool swapped = false;
 
-        ipBufProcessBytes(buf, buf.tot_len, TypedFunction(
+        ipBufProcessBytes(buf, buf.tot_len, makeTypedFunction(
             [&](char *dataPtr, std::size_t dataLen)
         {
             // Calculate sum of buffer.

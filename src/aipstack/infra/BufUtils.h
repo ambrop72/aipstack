@@ -189,7 +189,7 @@ IpBufRef ipBufProcessBytes (IpBufRef buf, std::size_t processLen,
  */
 inline IpBufRef ipBufSkipBytes (IpBufRef buf, std::size_t skipLen)
 {
-    return ipBufProcessBytes(buf, skipLen, TypedFunction(
+    return ipBufProcessBytes(buf, skipLen, makeTypedFunction(
         [](char *, std::size_t chunkLen) {
             return chunkLen;
         }));
@@ -209,7 +209,7 @@ inline IpBufRef ipBufSkipBytes (IpBufRef buf, std::size_t skipLen)
  */
 inline IpBufRef ipBufTakeBytes (IpBufRef buf, std::size_t takeLen, char *dst)
 {
-    return ipBufProcessBytes(buf, takeLen, TypedFunction(
+    return ipBufProcessBytes(buf, takeLen, makeTypedFunction(
         [&](char *chunkData, std::size_t chunkLen) {
             std::memcpy(dst, chunkData, chunkLen);
             dst += chunkLen;
@@ -231,7 +231,7 @@ inline IpBufRef ipBufTakeBytes (IpBufRef buf, std::size_t takeLen, char *dst)
 inline IpBufRef ipBufGiveBytes (IpBufRef buf, MemRef data)
 {
     char const *src = data.ptr;
-    return ipBufProcessBytes(buf, data.len, TypedFunction(
+    return ipBufProcessBytes(buf, data.len, makeTypedFunction(
         [&](char *chunkData, std::size_t chunkLen) {
             std::memcpy(chunkData, src, chunkLen);
             src += chunkLen;
@@ -255,7 +255,7 @@ inline IpBufRef ipBufGiveBytes (IpBufRef buf, MemRef data)
  */
 inline IpBufRef ipBufGiveBuf (IpBufRef buf, IpBufRef src)
 {
-    return ipBufProcessBytes(buf, src.tot_len, TypedFunction(
+    return ipBufProcessBytes(buf, src.tot_len, makeTypedFunction(
         [&](char *chunkData, std::size_t chunkLen) {
             src = ipBufTakeBytes(src, chunkLen, chunkData);
             return chunkLen;
@@ -280,7 +280,7 @@ inline char ipBufTakeByteMut (IpBufRef &buf)
     
     char byteVal = 0;
 
-    buf = ipBufProcessBytes(buf, 1, TypedFunction(
+    buf = ipBufProcessBytes(buf, 1, makeTypedFunction(
         [&](char *chunkData, std::size_t chunkLen) {
             byteVal = *chunkData;
             return chunkLen;
@@ -303,7 +303,7 @@ inline char ipBufTakeByteMut (IpBufRef &buf)
  */
 inline IpBufRef ipBufGiveSameBytes (IpBufRef buf, char setByte, std::size_t giveLen)
 {
-    return ipBufProcessBytes(buf, giveLen, TypedFunction(
+    return ipBufProcessBytes(buf, giveLen, makeTypedFunction(
         [&](char *chunkData, std::size_t chunkLen) {
             std::memset(chunkData, setByte, chunkLen);
             return chunkLen;
@@ -335,7 +335,7 @@ inline bool ipBufFindByteMut (
 
     bool found = false;
 
-    buf = ipBufProcessBytes(buf, findLen, TypedFunction(
+    buf = ipBufProcessBytes(buf, findLen, makeTypedFunction(
         [&](char *chunkData, std::size_t chunkLen) -> std::size_t {
             if (found) {
                 return 0;
@@ -375,7 +375,7 @@ inline bool ipBufStartsWith (IpBufRef buf, MemRef prefix, IpBufRef &remBuf)
     std::size_t position = 0;
     bool mismatch = false;
 
-    IpBufRef updatedBuf = ipBufProcessBytes(buf, prefix.len, TypedFunction(
+    IpBufRef updatedBuf = ipBufProcessBytes(buf, prefix.len, makeTypedFunction(
         [&](char *chunkData, std::size_t chunkLen) -> std::size_t {
             if (mismatch) {
                 return 0;
